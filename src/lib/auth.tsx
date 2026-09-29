@@ -9,6 +9,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<UserOut>
   logout: () => Promise<void>
   refresh: () => Promise<UserOut | null>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<UserOut>
 }
 
 const AuthCtx = createContext<AuthContextValue | null>(null)
@@ -57,7 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     qc.clear()
   }, [qc])
 
-  const value = useMemo(() => ({ user, loading, login, logout, refresh }), [user, loading, login, logout, refresh])
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    const u = await authApi.changePassword({ current_password: currentPassword, new_password: newPassword })
+    setUser(u)
+    return u
+  }, [])
+
+  const value = useMemo(
+    () => ({ user, loading, login, logout, refresh, changePassword }),
+    [user, loading, login, logout, refresh, changePassword],
+  )
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
 

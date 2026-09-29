@@ -8,6 +8,7 @@ import type {
   AkunMarketplaceIn,
   AkunMarketplaceOut,
   AkunMarketplacePatch,
+  ChangePasswordIn,
   GudangOut,
   LoginIn,
   OAuthCallbackOut,
@@ -44,6 +45,9 @@ export const authApi = {
   login: (body: LoginIn) => api.post<UserOut>('/auth/login', body).then((r) => r.data),
   logout: () => api.post<OkOut>('/auth/logout').then((r) => r.data),
   me: () => api.get<UserOut>('/auth/me').then((r) => r.data),
+  /** Logged-in user changes own password; BE re-issues the cookie and returns UserOut. */
+  changePassword: (body: ChangePasswordIn) =>
+    api.post<UserOut>('/auth/change-password', body).then((r) => r.data),
 }
 
 // --- Akun Marketplace (Toko) ------------------------------------------------

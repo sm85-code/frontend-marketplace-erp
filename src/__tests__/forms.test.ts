@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   akunDefaults,
+  changePasswordDefaults,
+  changePasswordSchema,
   akunSchema,
   listingSchema,
   pesananSchema,
@@ -8,6 +10,7 @@ import {
   produkSchema,
   stokAdjustSchema,
   toAkunCreatePayload,
+  toChangePasswordPayload,
   toAkunPatchPayload,
   toListingCreatePayload,
   toListingPatchPayload,
@@ -137,5 +140,50 @@ describe('pesanan manual form', () => {
         items: [{ produk_id: '', nama_produk: 'a', harga_satuan: '1', qty: '0' }],
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('ganti password form', () => {
+  const ok = { current_password: 'password123', new_password: 'RahasiaBaru1', confirm_password: 'RahasiaBaru1' }
+  const firstError = (v: typeof ok) => {
+    const r = changePasswordSchema.safeParse(v)
+    return r.success ? null : { path: r.error.issues[0].path.join('.'), message: r.error.issues[0].message }
+  }
+
+  it('accepts a valid change and sends only BE fields', () => {
+    const v = changePasswordSchema.parse(ok)
+    expect(toChangePasswordPayload(v)).toEqual({ current_password: 'password123', new_password: 'RahasiaBaru1' })
+  })
+
+  it('requires current password', () => {
+    expect(firstError({ ...ok, current_password: '' })?.path).toBe('current_password')
+  })
+
+  it('enforces min 8 chars on new password', () => {
+    expect(firstError({ ...ok, new_password: 'pendek1', confirm_password: 'pendek1' })?.path).toBe('new_password')
+    expect(changePasswordSchema.safeParse({ ...ok, new_password: '12345678', confirm_password: '12345678' }).success).toBe(true)
+  })
+
+  it('rejects over-long (bcrypt 72 byte) passwords', () => {
+    const long = 'a'.repeat(73)
+    expect(firstError({ ...ok, new_password: long, confirm_password: long })?.path).toBe('new_password')
+  })
+
+  it('new password must differ from current', () => {
+    const same = { current_password: 'SamaSaja99', new_password: 'SamaSaja99', confirm_password: 'SamaSaja99' }
+    expect(firstError(same)).toEqual({ path: 'new_password', message: 'Password baru harus berbeda dari password saat ini' })
+  })
+
+  it('rejects the seeded default password as new password', () => {
+    const v = { current_password: 'LamaSekali1', new_password: 'password123', confirm_password: 'password123' }
+    expect(firstError(v)?.path).toBe('new_password')
+  })
+
+  it('confirmation must match', () => {
+    expect(firstError({ ...ok, confirm_password: 'Beda12345' })?.path).toBe('confirm_password')
+  })
+
+  it('defaults are empty and invalid', () => {
+    expect(changePasswordSchema.safeParse(changePasswordDefaults).success).toBe(false)
   })
 })

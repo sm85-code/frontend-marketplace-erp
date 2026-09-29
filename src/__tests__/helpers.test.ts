@@ -3,7 +3,7 @@ import { getApiError, isPublicPath, resolveBackendOrigin } from '@/api/client'
 import { cleanParams } from '@/api/endpoints'
 import { fmtRp, fmtSignedQty, parseMoney } from '@/lib/format'
 import { buildShopeeRedirectUri, parseShopeeCallback } from '@/lib/oauth'
-import { safeNext } from '@/lib/redirect'
+import { CHANGE_PASSWORD_PATH, forcedPasswordRedirect, safeNext } from '@/lib/redirect'
 
 describe('resolveBackendOrigin', () => {
   it('strips trailing slashes and /api or /api/marketplace-erp suffixes', () => {
@@ -70,5 +70,28 @@ describe('Shopee OAuth helpers', () => {
     expect(parseShopeeCallback('?code=a')).toHaveProperty('error')
     const merchant = parseShopeeCallback('?code=a&main_account_id=9')
     expect('error' in merchant && merchant.error).toMatch(/main_account_id/)
+  })
+})
+
+describe('forcedPasswordRedirect', () => {
+  it('does nothing for users without the flag', () => {
+    expect(forcedPasswordRedirect(null, '/stok')).toBeNull()
+    expect(forcedPasswordRedirect({}, '/stok')).toBeNull()
+    expect(forcedPasswordRedirect({ must_change_password: false }, '/stok')).toBeNull()
+  })
+
+  it('pins flagged users to the Ganti Password page, keeping ?next=', () => {
+    const u = { must_change_password: true }
+    expect(forcedPasswordRedirect(u, '/stok', '?produk_id=1')).toBe(
+      `${CHANGE_PASSWORD_PATH}?next=${encodeURIComponent('/stok?produk_id=1')}`,
+    )
+    expect(forcedPasswordRedirect(u, '/')).toBe(CHANGE_PASSWORD_PATH)
+    expect(forcedPasswordRedirect(u, CHANGE_PASSWORD_PATH)).toBeNull()
+  })
+
+  it('round-trips through safeNext', () => {
+    const target = forcedPasswordRedirect({ must_change_password: true }, '/pesanan', '?status=unpaid')!
+    const next = new URL(target, 'http://x').searchParams.get('next')
+    expect(safeNext(next)).toBe('/pesanan?status=unpaid')
   })
 })

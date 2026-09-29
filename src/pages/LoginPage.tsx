@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/auth'
-import { safeNext } from '@/lib/redirect'
+import { forcedPasswordRedirect, safeNext } from '@/lib/redirect'
 import { loginSchema, type LoginValues } from '@/schemas/forms'
 
 export default function LoginPage() {
@@ -25,13 +25,14 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
 
-  if (!loading && user) return <Navigate to={next} replace />
+  if (!loading && user) return <Navigate to={forcedPasswordRedirect(user, next) ?? next} replace />
 
   const onSubmit = async (values: LoginValues) => {
     setError(null)
     try {
-      await login(values.email.trim(), values.password)
-      navigate(next, { replace: true })
+      const u = await login(values.email.trim(), values.password)
+      // Seeded default-password / owner-created accounts must set their own password first.
+      navigate(forcedPasswordRedirect(u, next) ?? next, { replace: true })
     } catch (err) {
       setError(getApiError(err, 'Login gagal'))
     }
