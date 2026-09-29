@@ -31,6 +31,18 @@ export interface UserOut {
   nama: string
   email: string
   role: string
+  /**
+   * True for the seeded default-password owner and for accounts an owner created
+   * with a temporary password, until POST /auth/change-password succeeds.
+   * Optional so older BE builds (no field) keep working.
+   */
+  must_change_password?: boolean
+}
+
+/** POST /auth/change-password — new_password ≥ 8 chars and must differ from current. */
+export interface ChangePasswordIn {
+  current_password: string
+  new_password: string
 }
 
 // --- Akun Marketplace -----------------------------------------------------

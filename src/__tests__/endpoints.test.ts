@@ -29,11 +29,22 @@ describe('API surface matches sm85-arch marketplace_erp_router', () => {
     expect(last()).toMatchObject({ method: 'GET', url: '/auth/me', withCredentials: true })
   })
 
+  it('does not expose public registration', () => {
+    expect('register' in authApi).toBe(false)
+  })
+
   it('auth routes', async () => {
     await authApi.login({ email: 'a@b.co', password: 'x' })
     expect(last()).toMatchObject({ method: 'POST', url: '/auth/login', data: { email: 'a@b.co', password: 'x' } })
     await authApi.logout()
     expect(last()).toMatchObject({ method: 'POST', url: '/auth/logout' })
+    await authApi.changePassword({ current_password: 'lama12345', new_password: 'baru12345' })
+    expect(last()).toMatchObject({
+      method: 'POST',
+      url: '/auth/change-password',
+      data: { current_password: 'lama12345', new_password: 'baru12345' },
+      withCredentials: true,
+    })
   })
 
   it('akun routes', async () => {

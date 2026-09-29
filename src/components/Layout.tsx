@@ -1,9 +1,10 @@
-import { LogOut, Menu, ShoppingBag, X } from 'lucide-react'
+import { KeyRound, LogOut, Menu, ShoppingBag, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { NAV_ITEMS } from '@/config/nav'
 import { useAuth } from '@/lib/auth'
+import { CHANGE_PASSWORD_PATH } from '@/lib/redirect'
 import { cn } from '@/lib/utils'
 
 function Brand() {
@@ -43,7 +44,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function UserBox() {
+function UserBox({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   return (
@@ -54,6 +55,19 @@ function UserBox() {
           {user?.email} · {user?.role}
         </p>
       </div>
+      <NavLink
+        to={CHANGE_PASSWORD_PATH}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          )
+        }
+      >
+        <KeyRound className="size-4" />
+        Ganti Password
+      </NavLink>
       <Button
         variant="ghost"
         className="w-full justify-start"
@@ -109,7 +123,7 @@ export default function Layout() {
             <div className="flex-1">
               <NavList onNavigate={() => setOpen(false)} />
             </div>
-            <UserBox />
+            <UserBox onNavigate={() => setOpen(false)} />
           </aside>
         </div>
       ) : null}

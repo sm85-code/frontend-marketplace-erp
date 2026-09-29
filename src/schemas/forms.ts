@@ -4,7 +4,7 @@
  * `to*Payload` mappers into the exact BE request bodies.
  */
 import { z } from 'zod'
-import { PLATFORMS, type AkunMarketplaceIn, type AkunMarketplacePatch, type ItemPesananIn, type PesananIn, type ProdukIn, type ProdukListingIn, type ProdukListingPatch, type ProdukPatch, type StokAdjustIn } from '@/api/types'
+import { PLATFORMS, type AkunMarketplaceIn, type ChangePasswordIn, type AkunMarketplacePatch, type ItemPesananIn, type PesananIn, type ProdukIn, type ProdukListingIn, type ProdukListingPatch, type ProdukPatch, type StokAdjustIn } from '@/api/types'
 
 const isNum = (v: string) => v.trim() !== '' && Number.isFinite(Number(v))
 
@@ -41,6 +41,51 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password wajib diisi'),
 })
 export type LoginValues = z.infer<typeof loginSchema>
+
+// --- Ganti Password -------------------------------------------------------------
+
+/** Mirrors BE schemas.PASSWORD_MIN_LENGTH / PASSWORD_MAX_BYTES (bcrypt limit). */
+export const PASSWORD_MIN_LENGTH = 8
+export const PASSWORD_MAX_BYTES = 72
+/** BE rejects the seeded default as a new password. */
+export const DEFAULT_SEED_PASSWORD = 'password123'
+
+const utf8Bytes = (v: string) => new TextEncoder().encode(v).length
+
+export const changePasswordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Password saat ini wajib diisi'),
+    new_password: z
+      .string()
+      .min(PASSWORD_MIN_LENGTH, `Password baru minimal ${PASSWORD_MIN_LENGTH} karakter`)
+      .refine((v) => utf8Bytes(v) <= PASSWORD_MAX_BYTES, { message: 'Password baru terlalu panjang' })
+      .refine((v) => v.trim() !== '', { message: 'Password baru tidak boleh hanya spasi' }),
+    confirm_password: z.string().min(1, 'Ulangi password baru'),
+  })
+  .refine((v) => v.new_password !== v.current_password, {
+    path: ['new_password'],
+    message: 'Password baru harus berbeda dari password saat ini',
+  })
+  .refine((v) => v.new_password !== DEFAULT_SEED_PASSWORD, {
+    path: ['new_password'],
+    message: 'Jangan gunakan password bawaan',
+  })
+  .refine((v) => v.confirm_password === v.new_password, {
+    path: ['confirm_password'],
+    message: 'Konfirmasi password tidak sama',
+  })
+export type ChangePasswordValues = z.infer<typeof changePasswordSchema>
+
+export const changePasswordDefaults: ChangePasswordValues = {
+  current_password: '',
+  new_password: '',
+  confirm_password: '',
+}
+
+/** confirm_password is FE-only; BE body is exactly {current_password, new_password}. */
+export function toChangePasswordPayload(v: ChangePasswordValues): ChangePasswordIn {
+  return { current_password: v.current_password, new_password: v.new_password }
+}
 
 // --- Akun Marketplace -----------------------------------------------------------
 
