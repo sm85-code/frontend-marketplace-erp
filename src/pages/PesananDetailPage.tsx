@@ -1,206 +1,209 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { getApiError } from '@/api/client'
-import { pesananApi } from '@/api/endpoints'
+import * as endpoints from '@/api/endpoints'
+import { fmtDateTime, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
-import { ErrorState, LoadingState, PageHeader, StatusBadge } from '@/components/common'
 import { useConfirm } from '@/components/ConfirmProvider'
-import PesananActions from '@/components/PesananActions'
+import Spinner from '@/components/Spinner'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { akunName, produkName, useAkunList, useById, useProdukList } from '@/hooks/queries'
-import { fmtDateTime, fmtNumber, fmtRp } from '@/lib/format'
-import { platformLabel, STATUS_PESANAN_LABEL, statusPesananLabel, statusPesananTone } from '@/lib/labels'
-import { canDeletePesanan } from '@/lib/pesanan'
-import { cn } from '@/lib/utils'
-
-const PIPELINE = ['unpaid', 'to_ship', 'shipped', 'completed'] as const
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { PLATFORM_LABELS } from '@/config/roles'
+import { STATUS_LABELS, nextActionLabel } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
-  const { id = '' } = useParams()
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const confirm = useConfirm()
-  const q = useQuery({ queryKey: qk.pesananDetail(id), queryFn: () => pesananApi.get(id), enabled: Boolean(id) })
-  const akunMap = useById(useAkunList().data)
-  const produkMap = useById(useProdukList().data)
+  const [kirimDialog, setKirimDialog] = useState(false)
+  const [kurir, setKurir] = useState('')
+  const [nomorResi, setNomorResi] = useState('')
 
-  const remove = useMutation({
-    mutationFn: () => pesananApi.remove(id),
-    onSuccess: () => {
-      toast.success('Pesanan dihapus')
-      qc.invalidateQueries({ queryKey: qk.pesananAll })
-      navigate('/pesanan', { replace: true })
-    },
-    onError: (err) => toast.error(getApiError(err, 'Gagal menghapus pesanan')),
+  const { data: pesanan, isLoading } = useQuery({
+    queryKey: qk.pesananOne(id!),
+    queryFn: () => endpoints.getPesanan(id!),
+    enabled: Boolean(id),
   })
 
-  const back = (
-    <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
-      <Link to="/pesanan">
-        <ArrowLeft /> Kembali ke inbox
-      </Link>
-    </Button>
-  )
+  const statusMut = useMutation({
+    mutationFn: (status: string) => endpoints.ubahStatusPesanan(id!, status),
+    onSuccess: () => {
+      toast.success('Status pesanan diperbarui')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
 
-  if (q.isLoading) return <LoadingState />
-  if (q.isError || !q.data)
-    return (
-      <>
-        {back}
-        <ErrorState message={getApiError(q.error, 'Pesanan tidak ditemukan')} onRetry={() => q.refetch()} />
-      </>
-    )
+  const pengirimanMut = useMutation({
+    mutationFn: () => endpoints.setPengiriman(id!, { kurir, nomor_resi: nomorResi }),
+    onSuccess: () => {
+      toast.success('Info pengiriman disimpan')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      setKirimDialog(false)
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
 
-  const p = q.data
-  const stepIndex = PIPELINE.indexOf(p.status as (typeof PIPELINE)[number])
+  const deleteMut = useMutation({
+    mutationFn: () => endpoints.deletePesanan(id!),
+    onSuccess: () => {
+      toast.success('Pesanan dihapus')
+      navigate('/pesanan')
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  if (isLoading || !pesanan) return <Spinner column label="Memuat pesanan…" />
+
+  const action = nextActionLabel(pesanan.status)
+
+  async function onAction() {
+    if (!action) return
+    if (action.to === 'shipped' && !pesanan!.nomor_resi) {
+      setKirimDialog(true)
+      return
+    }
+    statusMut.mutate(action.to)
+  }
+
+  async function onCancel() {
+    const ok = await confirm({ title: 'Batalkan pesanan?', description: 'Reservasi stok akan dilepas.', destructive: true })
+    if (ok) statusMut.mutate('cancelled')
+  }
+
+  async function onDelete() {
+    const ok = await confirm({ title: 'Hapus pesanan?', description: 'Hanya pesanan belum bayar yang bisa dihapus.', destructive: true })
+    if (ok) deleteMut.mutate()
+  }
 
   return (
-    <>
-      {back}
-      <PageHeader
-        title={`Pesanan ${p.id_eksternal}`}
-        description={`${platformLabel(p.platform)} · ${akunName(akunMap, p.akun_id)} · dibuat ${fmtDateTime(p.created_at)}`}
-        actions={
-          <>
-            <PesananActions pesanan={p} size="default" />
-            {canDeletePesanan(p.status) ? (
-              <Button
-                variant="ghost"
-                className="text-destructive"
-                disabled={remove.isPending}
-                onClick={async () => {
-                  const ok = await confirm({
-                    title: 'Hapus pesanan?',
-                    description: 'Hanya pesanan “Belum Bayar” yang boleh dihapus. Untuk yang lain, gunakan Batalkan.',
-                    confirmLabel: 'Hapus',
-                    destructive: true,
-                  })
-                  if (ok) remove.mutate()
-                }}
-              >
-                <Trash2 /> Hapus
-              </Button>
-            ) : null}
-          </>
-        }
-      />
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Item pesanan</CardTitle>
-          </CardHeader>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produk</TableHead>
-                  <TableHead>SKU induk</TableHead>
-                  <TableHead className="text-right">Harga</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Subtotal</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {p.items.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Tidak ada item
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  p.items.map((it) => (
-                    <TableRow key={it.id}>
-                      <TableCell className="font-medium">{it.nama_produk}</TableCell>
-                      <TableCell className="text-xs">
-                        {it.produk_id ? (
-                          produkName(produkMap, it.produk_id)
-                        ) : (
-                          <span className="text-warning">Belum dipetakan</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">{fmtRp(it.harga_satuan)}</TableCell>
-                      <TableCell className="text-right">{fmtNumber(it.qty)}</TableCell>
-                      <TableCell className="text-right whitespace-nowrap">{fmtRp(it.subtotal)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-                <TableRow>
-                  <TableCell colSpan={4} className="text-right font-semibold">
-                    Total
-                  </TableCell>
-                  <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(p.total)}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-
-        <div className="grid content-start gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <StatusBadge tone={statusPesananTone(p.status)}>{statusPesananLabel(p.status)}</StatusBadge>
-              {p.status === 'cancelled' ? (
-                <p className="text-muted-foreground">Pesanan dibatalkan.</p>
-              ) : (
-                <ol className="grid gap-2">
-                  {PIPELINE.map((s, i) => (
-                    <li key={s} className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          'flex size-5 items-center justify-center rounded-full border text-[10px] font-bold',
-                          i <= stepIndex ? 'border-primary bg-primary text-primary-foreground' : 'text-muted-foreground',
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      <span className={cn(i <= stepIndex ? 'font-medium' : 'text-muted-foreground')}>
-                        {STATUS_PESANAN_LABEL[s]}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              )}
-              <p className="text-xs text-muted-foreground">Diperbarui {fmtDateTime(p.updated_at)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Info</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
-                <dt className="text-muted-foreground">Pembeli</dt>
-                <dd>{p.nama_pembeli || '-'}</dd>
-                <dt className="text-muted-foreground">Platform</dt>
-                <dd>{platformLabel(p.platform)}</dd>
-                <dt className="text-muted-foreground">Toko</dt>
-                <dd>{akunName(akunMap, p.akun_id)}</dd>
-                <dt className="text-muted-foreground">Sinkron</dt>
-                <dd>
-                  {p.tersinkron_marketplace ? (
-                    <StatusBadge tone="success">Tersinkron</StatusBadge>
-                  ) : p.catatan_sinkron ? (
-                    <StatusBadge tone="warning">Belum sinkron</StatusBadge>
-                  ) : (
-                    '-'
-                  )}
-                </dd>
-              </dl>
-              {p.catatan_sinkron ? (
-                <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs">{p.catatan_sinkron}</p>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
+    <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/pesanan">← Kembali</Link>
+        </Button>
+        <h1 className="page-h1 font-heading text-xl font-bold">Pesanan #{pesanan.id_eksternal}</h1>
+        <Badge>{STATUS_LABELS[pesanan.status]}</Badge>
       </div>
-    </>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ringkasan</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div className="text-xs text-muted-foreground">Platform</div>
+            <div className="font-medium">{PLATFORM_LABELS[pesanan.platform]}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Pembeli</div>
+            <div className="font-medium">{pesanan.nama_pembeli || '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Total</div>
+            <div className="font-medium">{fmtRp(pesanan.total)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Dibuat</div>
+            <div className="font-medium">{fmtDateTime(pesanan.created_at)}</div>
+          </div>
+          {pesanan.kurir && (
+            <>
+              <div>
+                <div className="text-xs text-muted-foreground">Kurir</div>
+                <div className="font-medium">{pesanan.kurir}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">No. Resi</div>
+                <div className="font-medium">{pesanan.nomor_resi}</div>
+              </div>
+            </>
+          )}
+          {pesanan.catatan_sinkron && (
+            <div className="col-span-2">
+              <div className="text-xs text-muted-foreground">Catatan Sinkron Marketplace</div>
+              <div className={pesanan.tersinkron_marketplace ? 'text-sm' : 'text-sm text-destructive'}>
+                {pesanan.catatan_sinkron}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Item</CardTitle>
+        </CardHeader>
+        <CardContent className="divide-y">
+          {pesanan.items.map((item) => (
+            <div key={item.id} className="flex items-center justify-between py-2 text-sm">
+              <div>
+                <div className="font-medium">{item.nama_produk}</div>
+                <div className="text-xs text-muted-foreground">
+                  {item.qty} × {fmtRp(item.harga_satuan)}
+                </div>
+              </div>
+              <div className="font-semibold">{fmtRp(item.subtotal)}</div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-wrap gap-2">
+        {action && (
+          <Button onClick={onAction} disabled={statusMut.isPending}>
+            {action.label}
+          </Button>
+        )}
+        {(pesanan.status === 'unpaid' || pesanan.status === 'to_ship') && (
+          <Button variant="destructive" onClick={onCancel} disabled={statusMut.isPending}>
+            Batalkan
+          </Button>
+        )}
+        {pesanan.status === 'unpaid' && (
+          <Button variant="outline" onClick={onDelete} disabled={deleteMut.isPending}>
+            Hapus
+          </Button>
+        )}
+      </div>
+
+      <Dialog open={kirimDialog} onOpenChange={setKirimDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Info Pengiriman</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Kurir</Label>
+              <Input value={kurir} onChange={(e) => setKurir(e.target.value)} placeholder="mis. JNE, J&T, SiCepat" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nomor Resi</Label>
+              <Input value={nomorResi} onChange={(e) => setNomorResi(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKirimDialog(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={async () => {
+                await pengirimanMut.mutateAsync()
+                statusMut.mutate('shipped')
+              }}
+              disabled={!kurir || !nomorResi}
+            >
+              Kirim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

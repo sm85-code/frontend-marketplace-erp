@@ -1,78 +1,96 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { authApi } from '@/api/endpoints'
-import type { UserOut } from '@/api/types'
-
-interface AuthContextValue {
-  user: UserOut | null
-  loading: boolean
-  login: (email: string, password: string) => Promise<UserOut>
-  logout: () => Promise<void>
-  refresh: () => Promise<UserOut | null>
-  changePassword: (currentPassword: string, newPassword: string) => Promise<UserOut>
-}
+import * as endpoints from '@/api/endpoints'
+import type { User } from '@/api/types'
 
 const AuthCtx = createContext<AuthContextValue | null>(null)
+const USER_KEY = 'mpe_user'
+
+interface AuthContextValue {
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<User>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<User>
+  refreshUser: () => Promise<User>
+  logout: () => Promise<void>
+}
+
+function readCachedUser(): User | null {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || 'null') as User | null
+  } catch {
+    return null
+  }
+}
+
+function cacheUser(user: User | null) {
+  try {
+    if (user) localStorage.setItem(USER_KEY, JSON.stringify(user))
+    else localStorage.removeItem(USER_KEY)
+  } catch {
+    /* private mode */
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const qc = useQueryClient()
-  const [user, setUser] = useState<UserOut | null>(null)
+  const [user, setUser] = useState<User | null>(() => readCachedUser())
   const [loading, setLoading] = useState(true)
 
-  const refresh = useCallback(async () => {
-    try {
-      const me = await authApi.me()
-      setUser(me)
-      return me
-    } catch {
-      setUser(null)
-      return null
-    }
-  }, [])
-
   useEffect(() => {
-    let alive = true
-    authApi
+    endpoints
       .me()
-      .then((me) => alive && setUser(me))
-      .catch(() => alive && setUser(null))
-      .finally(() => alive && setLoading(false))
-    return () => {
-      alive = false
-    }
+      .then((u) => {
+        setUser(u)
+        cacheUser(u)
+      })
+      .catch(() => {
+        cacheUser(null)
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = await authApi.login({ email, password })
+    const u = await endpoints.login(email, password)
+    cacheUser(u)
+    setUser(u)
+    return u
+  }, [])
+
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    const u = await endpoints.changePassword(currentPassword, newPassword)
+    cacheUser(u)
+    setUser(u)
+    return u
+  }, [])
+
+  const refreshUser = useCallback(async () => {
+    const u = await endpoints.me()
+    cacheUser(u)
     setUser(u)
     return u
   }, [])
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout()
+      await endpoints.logout()
     } catch {
-      /* cookie may already be gone */
+      /* ignore */
     }
+    cacheUser(null)
     setUser(null)
-    qc.clear()
-  }, [qc])
-
-  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
-    const u = await authApi.changePassword({ current_password: currentPassword, new_password: newPassword })
-    setUser(u)
-    return u
+    window.location.href = '/login'
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, refresh, changePassword }),
-    [user, loading, login, logout, refresh, changePassword],
+    () => ({ user, login, changePassword, refreshUser, logout, loading }),
+    [user, login, changePassword, refreshUser, logout, loading],
   )
+
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthCtx)
-  if (!ctx) throw new Error('useAuth harus digunakan di dalam AuthProvider')
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }

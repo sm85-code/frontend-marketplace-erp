@@ -1,148 +1,64 @@
-/**
- * Types mirror sm85-arch `tenants/marketplace_erp/modules/marketplace_erp/application/schemas.py`
- * (post PR #162). Pydantic v2 serialises `Decimal` as a JSON string, so money fields
- * are typed as `Money` (string on read; number|string accepted on write).
- */
+/** Mirrors tenants/marketplace_erp/modules/marketplace_erp/application/schemas.py field for field. */
 
-export type Money = string
-export type MoneyInput = string | number
+export type Role = 'owner' | 'staff'
 
-/** models.PLATFORM_MARKETPLACE */
-export const PLATFORMS = ['shopee', 'tiktokshop', 'lazada', 'blibli'] as const
-export type Platform = (typeof PLATFORMS)[number]
+export type Platform = 'shopee' | 'tiktokshop' | 'lazada' | 'blibli'
 
-/** models.STATUS_PESANAN */
-export const STATUS_PESANAN = ['unpaid', 'to_ship', 'shipped', 'completed', 'cancelled'] as const
-export type StatusPesanan = (typeof STATUS_PESANAN)[number]
+export type StatusPesanan = 'unpaid' | 'to_ship' | 'shipped' | 'completed' | 'cancelled'
 
-/** models.REASON_STOK_LEDGER */
-export const REASON_STOK_LEDGER = ['adjust', 'reserve', 'release', 'ship', 'return', 'sync_in'] as const
-export type ReasonStokLedger = (typeof REASON_STOK_LEDGER)[number]
+export type StatusSettlement = 'draft' | 'matched' | 'discrepancy' | 'paid'
 
-// --- Auth ---------------------------------------------------------------
+export type StatusIklan = 'draft' | 'aktif' | 'dijeda' | 'selesai'
 
-export interface LoginIn {
-  email: string
-  password: string
-}
+export type StatusAkun = 'belum_terhubung' | 'terhubung' | 'aktif' | 'token_kadaluarsa' | 'nonaktif'
 
-export interface UserOut {
+export interface User {
   id: string
   nama: string
   email: string
-  role: string
-  /**
-   * True for the seeded default-password owner and for accounts an owner created
-   * with a temporary password, until POST /auth/change-password succeeds.
-   * Optional so older BE builds (no field) keep working.
-   */
-  must_change_password?: boolean
+  role: Role
+  must_change_password: boolean
 }
 
-/** POST /auth/change-password — new_password ≥ 8 chars and must differ from current. */
-export interface ChangePasswordIn {
-  current_password: string
-  new_password: string
-}
-
-// --- Akun Marketplace -----------------------------------------------------
-
-export interface AkunMarketplaceIn {
-  platform: string
-  nama_toko: string
-  id_toko_eksternal?: string | null
-  catatan?: string | null
-}
-
-export interface AkunMarketplacePatch {
-  nama_toko?: string | null
-  id_toko_eksternal?: string | null
-  status?: string | null
-  catatan?: string | null
-  access_token?: string | null
-  refresh_token?: string | null
-  /** ISO datetime */
-  token_kedaluwarsa?: string | null
-}
-
-export interface AkunMarketplaceOut {
+export interface AkunMarketplace {
   id: string
-  platform: string
+  platform: Platform
   nama_toko: string
   id_toko_eksternal: string | null
-  /** `belum_terhubung` (default) | `terhubung` (after OAuth) | free-form e.g. `nonaktif` */
   status: string
   catatan: string | null
 }
 
-// --- Produk (SKU induk) + Listing ------------------------------------------
-
-export interface ProdukIn {
-  sku_induk: string
-  nama: string
-  deskripsi?: string
-  harga_dasar: MoneyInput
-  stok?: number
-  foto_url?: string | null
-}
-
-/** NB: BE rejects `stok` on PATCH (use POST /stok/adjust). */
-export interface ProdukPatch {
-  nama?: string | null
-  deskripsi?: string | null
-  harga_dasar?: MoneyInput | null
-  foto_url?: string | null
-  aktif?: boolean | null
-}
-
-export interface ProdukOut {
+export interface Produk {
   id: string
   sku_induk: string
   nama: string
   deskripsi: string
-  harga_dasar: Money
-  /** Available stock cache (after reservations). */
+  harga_dasar: string
   stok: number
   foto_url: string | null
   aktif: boolean
 }
 
-export interface ProdukListingIn {
-  produk_id: string
-  akun_id: string
-  platform: string
-  id_eksternal: string
-  harga_jual?: MoneyInput | null
-  stok_listing?: number | null
-}
-
-export interface ProdukListingPatch {
-  harga_jual?: MoneyInput | null
-  stok_listing?: number | null
-  aktif?: boolean | null
-}
-
-export interface ProdukListingOut {
+export interface ProdukListing {
   id: string
   produk_id: string
   akun_id: string
-  platform: string
+  platform: Platform
   id_eksternal: string
-  harga_jual: Money | null
+  harga_jual: string | null
   stok_listing: number | null
   aktif: boolean
 }
 
-// --- Stock ------------------------------------------------------------------
-
-export interface StokAdjustIn {
-  produk_id: string
-  qty_delta: number
-  catatan?: string | null
-  gudang_id?: string | null
+export interface Gudang {
+  id: string
+  kode: string
+  nama: string
+  aktif: boolean
 }
 
-export interface StokLedgerOut {
+export interface StokLedger {
   id: string
   produk_id: string
   gudang_id: string | null
@@ -154,85 +70,115 @@ export interface StokLedgerOut {
   created_at: string
 }
 
-export interface GudangOut {
-  id: string
-  kode: string
-  nama: string
-  aktif: boolean
-}
-
-// --- Orders OMS --------------------------------------------------------------
-
-export interface ItemPesananIn {
-  nama_produk: string
-  harga_satuan: MoneyInput
-  qty: number
-  produk_id?: string | null
-  listing_id?: string | null
-  subtotal?: MoneyInput | null
-}
-
-export interface PesananIn {
-  platform: string
-  id_eksternal: string
-  akun_id?: string | null
-  status?: string
-  nama_pembeli?: string
-  total?: MoneyInput | null
-  items?: ItemPesananIn[]
-}
-
-export interface PesananStatusIn {
-  status: StatusPesanan
-}
-
-export interface ItemPesananOut {
+export interface ItemPesanan {
   id: string
   produk_id: string | null
   listing_id: string | null
   nama_produk: string
-  harga_satuan: Money
+  harga_satuan: string
   qty: number
-  subtotal: Money
+  subtotal: string
 }
 
-export interface PesananOut {
+export interface Pesanan {
   id: string
-  platform: string
+  platform: Platform
   id_eksternal: string
   akun_id: string | null
-  status: string
+  status: StatusPesanan
   nama_pembeli: string
-  total: Money
+  total: string
   tersinkron_marketplace: boolean
   catatan_sinkron: string | null
-  items: ItemPesananOut[]
+  kurir: string | null
+  nomor_resi: string | null
+  tanggal_kirim: string | null
+  items: ItemPesanan[]
   created_at: string
   updated_at: string
 }
 
-// --- OAuth / sync -------------------------------------------------------------
+export interface StaffAkun {
+  id: string
+  user_id: string
+  akun_id: string
+}
 
-export interface OAuthStartOut {
-  platform: string
+export interface Settlement {
+  id: string
+  akun_id: string
+  platform: Platform
+  periode_mulai: string
+  periode_selesai: string
+  gross_sales: string
+  fee_platform: string
+  fee_payment: string
+  ongkir_subsidi: string
+  penalti: string
+  net: string
+  status: StatusSettlement
+  catatan: string | null
+}
+
+export interface IklanCampaign {
+  id: string
+  akun_id: string
+  platform: Platform
+  produk_id: string | null
+  nama: string
+  status: StatusIklan
+  budget_harian: string
+  tanggal_mulai: string
+  tanggal_selesai: string | null
+  catatan: string | null
+}
+
+export interface IklanMetrikHarian {
+  id: string
+  campaign_id: string
+  tanggal: string
+  impression: number
+  klik: number
+  biaya: string
+}
+
+export interface IklanLaporan {
+  campaign_id: string
+  dari: string
+  sampai: string
+  total_impression: number
+  total_klik: number
+  ctr: string
+  total_biaya: string
+  omzet_atribusi: string
+  roas: string | null
+}
+
+export interface ProdukTerlaris {
+  produk_id: string | null
+  nama_produk: string
+  qty_terjual: number
+  omzet: string
+}
+
+export interface StokKritis {
+  produk_id: string
+  sku_induk: string
+  nama: string
+  stok: number
+}
+
+export interface LaporanRingkas {
+  dari: string
+  sampai: string
+  total_omzet: string
+  jumlah_pesanan_per_status: Record<StatusPesanan, number>
+  produk_terlaris: ProdukTerlaris[]
+  stok_kritis: StokKritis[]
+}
+
+export interface OAuthStart {
+  platform: Platform
   akun_id: string
   authorize_url: string
-}
-
-/** Untyped dict returned by GET /oauth/shopee/callback/{akun_id}. */
-export interface OAuthCallbackOut {
-  ok: boolean
-  akun_id: string
-  status: string
-  id_toko_eksternal: string | null
-  token_kedaluwarsa: string | null
-}
-
-export interface SyncOut {
-  ok: boolean
-  pulled: number
-}
-
-export interface OkOut {
-  ok: boolean
 }

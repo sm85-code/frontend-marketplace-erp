@@ -1,60 +1,115 @@
 import { lazy, Suspense, type ReactNode } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { LoadingState } from '@/components/common'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
-import { useAuth } from '@/lib/auth'
-import { CHANGE_PASSWORD_PATH, forcedPasswordRedirect } from '@/lib/redirect'
-import { SHOPEE_CALLBACK_ROUTE } from '@/lib/oauth'
-import LoginPage from '@/pages/LoginPage'
-import NotFoundPage from '@/pages/NotFoundPage'
+import Spinner from '@/components/Spinner'
+import { ROLES_OWNER_ONLY } from '@/config/roles'
+import { AuthProvider, useAuth } from '@/lib/auth'
+import type { Role } from '@/api/types'
 
-const AkunPage = lazy(() => import('@/pages/AkunPage'))
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const GantiPasswordPage = lazy(() => import('@/pages/GantiPasswordPage'))
-const ListingPage = lazy(() => import('@/pages/ListingPage'))
-const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
-const PesananPage = lazy(() => import('@/pages/PesananPage'))
-const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const AkunPage = lazy(() => import('@/pages/AkunPage'))
 const ShopeeCallbackPage = lazy(() => import('@/pages/ShopeeCallbackPage'))
-const StokPage = lazy(() => import('@/pages/StokPage'))
+const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
+const ListingPage = lazy(() => import('@/pages/ListingPage'))
+const GudangPage = lazy(() => import('@/pages/GudangPage'))
+const PesananPage = lazy(() => import('@/pages/PesananPage'))
+const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
+const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
+const IklanPage = lazy(() => import('@/pages/IklanPage'))
+const IklanDetailPage = lazy(() => import('@/pages/IklanDetailPage'))
+const StaffPage = lazy(() => import('@/pages/StaffPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
-function RequireAuth({ children }: { children: ReactNode }) {
+function PageFallback() {
+  return (
+    <div className="page-loader">
+      <Spinner column size={56} label="Menyiapkan panel..." />
+    </div>
+  )
+}
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return (
+    <ErrorBoundary context="page">
+      <Suspense fallback={<PageFallback />}>{children}</Suspense>
+    </ErrorBoundary>
+  )
+}
+
+function Protected({ children, roles }: { children: ReactNode; roles?: Role[] }) {
   const { user, loading } = useAuth()
   const location = useLocation()
-  if (loading) return <LoadingState label="Memeriksa sesi…" />
-  if (!user) {
-    const next = encodeURIComponent(location.pathname + location.search)
-    return <Navigate to={`/login?next=${next}`} replace />
+  if (loading) return <PageFallback />
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />
+  if (user.must_change_password && location.pathname !== '/ganti-password') {
+    return <Navigate to="/ganti-password" replace state={{ from: location }} />
   }
-  const forced = forcedPasswordRedirect(user, location.pathname, location.search)
-  if (forced) return <Navigate to={forced} replace />
-  return <>{children}</>
+  if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />
+  return <Layout>{children}</Layout>
 }
 
 export default function App() {
   return (
-    <Suspense fallback={<LoadingState />}>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        {/* Shopee redirects here with ?code=&shop_id= — public, BE callback is public too. */}
-        <Route path={`${SHOPEE_CALLBACK_ROUTE}/:akunId`} element={<ShopeeCallbackPage />} />
-        <Route
-          element={
-            <RequireAuth>
-              <Layout />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<Navigate to="/pesanan" replace />} />
-          <Route path={CHANGE_PASSWORD_PATH} element={<GantiPasswordPage />} />
-          <Route path="/toko" element={<AkunPage />} />
-          <Route path="/produk" element={<ProdukPage />} />
-          <Route path="/listing" element={<ListingPage />} />
-          <Route path="/stok" element={<StokPage />} />
-          <Route path="/pesanan" element={<PesananPage />} />
-          <Route path="/pesanan/:id" element={<PesananDetailPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </Suspense>
+    <div className="App">
+      <ErrorBoundary context="app">
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<LazyPage><LoginPage /></LazyPage>} />
+              <Route
+                path="/oauth/shopee/callback/:akunId"
+                element={<LazyPage><ShopeeCallbackPage /></LazyPage>}
+              />
+              <Route
+                path="/ganti-password"
+                element={<Protected><LazyPage><GantiPasswordPage /></LazyPage></Protected>}
+              />
+              <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
+              <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
+              <Route path="/toko" element={<Protected><LazyPage><AkunPage /></LazyPage></Protected>} />
+              <Route
+                path="/produk"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ProdukPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/listing"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ListingPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/gudang"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><GudangPage /></LazyPage></Protected>}
+              />
+              <Route path="/pesanan" element={<Protected><LazyPage><PesananPage /></LazyPage></Protected>} />
+              <Route
+                path="/pesanan/:id"
+                element={<Protected><LazyPage><PesananDetailPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/settlement"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><SettlementPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/iklan"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/iklan/:id"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanDetailPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/staff"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><StaffPage /></LazyPage></Protected>}
+              />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </div>
   )
 }

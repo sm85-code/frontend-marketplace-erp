@@ -1,65 +1,84 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, ShoppingBag } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { getApiError } from '@/api/client'
-import { Field } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
-import { forcedPasswordRedirect, safeNext } from '@/lib/redirect'
-import { loginSchema, type LoginValues } from '@/schemas/forms'
 
 export default function LoginPage() {
-  const { user, loading, login } = useAuth()
+  const { user, login } = useAuth()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
-  const next = safeNext(params.get('next'))
+  const location = useLocation()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } })
+  if (user) {
+    const from = (location.state as { from?: Location })?.from
+    return <Navigate to={from?.pathname || '/dashboard'} replace />
+  }
 
-  if (!loading && user) return <Navigate to={forcedPasswordRedirect(user, next) ?? next} replace />
-
-  const onSubmit = async (values: LoginValues) => {
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault()
     setError(null)
+    setBusy(true)
     try {
-      const u = await login(values.email.trim(), values.password)
-      // Seeded default-password / owner-created accounts must set their own password first.
-      navigate(forcedPasswordRedirect(u, next) ?? next, { replace: true })
+      await login(email, password)
+      navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(getApiError(err, 'Login gagal'))
+      setError(getApiError(err, 'Email atau password salah'))
+    } finally {
+      setBusy(false)
     }
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4">
+    <div className="auth-bg flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader className="items-center text-center">
-          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <ShoppingBag className="size-6" />
+        <CardHeader className="text-center">
+          <div
+            className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
+            style={{ background: 'var(--primary)' }}
+          >
+            M
           </div>
-          <CardTitle>Marketplace ERP</CardTitle>
-          <CardDescription>Masuk ke panel seller multi-channel</CardDescription>
+          <CardTitle className="modern-brand-title text-xl">Marketplace ERP</CardTitle>
+          <CardDescription>Masuk untuk mengelola toko dan pesanan Anda</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Field label="Email" htmlFor="email" error={errors.email?.message}>
-              <Input id="email" type="email" autoComplete="username" autoFocus {...register('email')} />
-            </Field>
-            <Field label="Password" htmlFor="password" error={errors.password?.message}>
-              <Input id="password" type="password" autoComplete="current-password" {...register('password')} />
-            </Field>
-            {error ? <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? <Loader2 className="animate-spin" /> : null}
-              Masuk
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {error && (
+              <p className="rounded-lg border px-3 py-2 text-sm" style={{ borderColor: 'var(--status-error-border)', background: 'var(--status-error-bg)', color: 'var(--status-error)' }}>
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? 'Memproses…' : 'Masuk'}
             </Button>
           </form>
         </CardContent>
