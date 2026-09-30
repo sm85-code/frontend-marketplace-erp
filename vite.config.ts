@@ -18,9 +18,8 @@ export default defineConfig({
     port: 3000,
     allowedHosts: true,
     proxy: {
-      // Dev only: same-origin proxy so the lax/non-secure cookie works on localhost.
       '/api': {
-        target: process.env.DEV_PROXY_TARGET || 'http://localhost:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },

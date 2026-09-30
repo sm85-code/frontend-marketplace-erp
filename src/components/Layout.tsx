@@ -1,138 +1,136 @@
-import { KeyRound, LogOut, Menu, ShoppingBag, X } from 'lucide-react'
-import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import AppearancePopover from '@/components/AppearancePopover'
+import BottomNav from '@/components/BottomNav'
+import WallpaperLayer from '@/components/WallpaperLayer'
 import { Button } from '@/components/ui/button'
-import { NAV_ITEMS } from '@/config/nav'
+import { BOTTOM_NAV_PATHS, filterNavForUser } from '@/config/nav'
+import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
-import { CHANGE_PASSWORD_PATH } from '@/lib/redirect'
-import { cn } from '@/lib/utils'
 
-function Brand() {
-  return (
-    <div className="flex items-center gap-2 px-2">
-      <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ShoppingBag className="size-4" />
-      </div>
-      <div className="leading-tight">
-        <p className="text-sm font-semibold">Marketplace ERP</p>
-        <p className="text-xs text-muted-foreground">Panel Seller</p>
-      </div>
-    </div>
-  )
+function isNavActive(pathname: string, to: string, allPaths: string[]) {
+  const matches = allPaths.filter((p) => pathname === p || pathname.startsWith(`${p}/`))
+  if (matches.length === 0) return false
+  const best = matches.reduce((a, b) => (a.length >= b.length ? a : b))
+  return best === to
 }
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <nav className="grid gap-1">
-      {NAV_ITEMS.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-            )
-          }
-        >
-          <item.icon className="size-4" />
-          {item.label}
-        </NavLink>
-      ))}
-    </nav>
-  )
-}
-
-function UserBox({ onNavigate }: { onNavigate?: () => void }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  return (
-    <div className="border-t pt-3">
-      <div className="px-2 pb-2">
-        <p className="truncate text-sm font-medium">{user?.nama}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {user?.email} · {user?.role}
-        </p>
-      </div>
-      <NavLink
-        to={CHANGE_PASSWORD_PATH}
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-            isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-          )
-        }
-      >
-        <KeyRound className="size-4" />
-        Ganti Password
-      </NavLink>
-      <Button
-        variant="ghost"
-        className="w-full justify-start"
-        onClick={async () => {
-          await logout()
-          navigate('/login', { replace: true })
-        }}
-      >
-        <LogOut /> Keluar
-      </Button>
-    </div>
-  )
-}
-
-export default function Layout() {
+  const location = useLocation()
   const [open, setOpen] = useState(false)
 
+  const visible = useMemo(() => filterNavForUser(user), [user])
+  const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
+
+  const bottomItems = useMemo(() => {
+    const byPath = new Map(visible.map((n) => [n.to, n]))
+    return BOTTOM_NAV_PATHS.map((p) => byPath.get(p)).filter(Boolean) as typeof visible
+  }, [visible])
+
+  const moreActive = useMemo(() => {
+    if (!visible.length) return false
+    const onPrimary = BOTTOM_NAV_PATHS.some((p) => isNavActive(location.pathname, p, [...BOTTOM_NAV_PATHS]))
+    if (onPrimary) return false
+    return visible.some(
+      (n) => !(BOTTOM_NAV_PATHS as readonly string[]).includes(n.to) && isNavActive(location.pathname, n.to, allPaths),
+    )
+  }, [visible, location.pathname, allPaths])
+
+  if (!user) return null
+
   return (
-    <div className="min-h-dvh">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col gap-6 border-r bg-sidebar p-4 lg:flex">
-        <Brand />
-        <div className="flex-1">
-          <NavList />
+    <div className="app-shell flex min-h-screen">
+      <WallpaperLayer />
+      <div
+        className="fixed inset-x-3 top-3 z-40 flex h-14 items-center rounded-2xl px-4 lg:hidden"
+        style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <div
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+            style={{ background: 'var(--primary)' }}
+          >
+            M
+          </div>
+          <span className="font-heading truncate text-sm font-semibold">Marketplace ERP</span>
         </div>
-        <UserBox />
+      </div>
+
+      <aside
+        data-testid="sidebar"
+        className={`fixed top-0 left-0 z-50 flex h-[100dvh] w-72 flex-col overflow-hidden transition-transform lg:sticky lg:transform-none ${
+          open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div
+          className="m-0 flex h-full flex-col overflow-hidden rounded-none lg:m-4 lg:h-[calc(100dvh-2rem)] lg:rounded-2xl"
+          style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
+        >
+          <div className="flex items-center gap-3 p-6">
+            <div
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+              style={{ background: 'var(--primary)' }}
+            >
+              M
+            </div>
+            <div>
+              <div className="font-heading text-base leading-tight font-semibold">Marketplace ERP</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Panel multi-toko
+              </div>
+            </div>
+          </div>
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
+            {visible.map((n) => {
+              const Icon = n.icon
+              const active = isNavActive(location.pathname, n.to, allPaths)
+              return (
+                <NavLink
+                  key={n.to}
+                  to={n.to}
+                  data-testid={`nav-${n.to.replace(/\//g, '-')}`}
+                  onClick={() => setOpen(false)}
+                  className={`side-link ${active ? 'active' : ''}`}
+                >
+                  <span className="nav-ico">
+                    <Icon className="size-4.5" strokeWidth={active ? 2.5 : 2} />
+                  </span>
+                  <span>{n.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+          <div className="shrink-0 p-4">
+            <AppearancePopover triggerClassName="mb-3 w-full justify-start gap-2" align="start" />
+            <div className="mb-3 flex items-center gap-3">
+              <div
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full font-heading text-sm font-semibold text-white"
+                style={{ background: 'var(--primary)' }}
+              >
+                {user.nama?.[0]?.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{user.nama}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {ROLE_LABELS[user.role]}
+                </div>
+              </div>
+            </div>
+            <Button data-testid="logout-btn" onClick={() => void logout()} variant="outline" size="sm" className="w-full">
+              <LogOut className="size-4" /> Keluar
+            </Button>
+          </div>
+        </div>
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/95 px-3 backdrop-blur lg:hidden">
-        <Brand />
-        <Button variant="ghost" size="icon" aria-label="Buka menu" onClick={() => setOpen(true)}>
-          <Menu />
-        </Button>
-      </header>
-
-      {/* Mobile drawer */}
-      {open ? (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Tutup menu"
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-          />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-6 bg-sidebar p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <Brand />
-              <Button variant="ghost" size="icon" aria-label="Tutup menu" onClick={() => setOpen(false)}>
-                <X />
-              </Button>
-            </div>
-            <div className="flex-1">
-              <NavList onNavigate={() => setOpen(false)} />
-            </div>
-            <UserBox onNavigate={() => setOpen(false)} />
-          </aside>
-        </div>
-      ) : null}
-
-      <main className="px-3 py-4 sm:px-6 sm:py-6 lg:ml-60">
-        <div className="mx-auto max-w-7xl">
-          <Outlet />
-        </div>
+      {open && <div className="fixed inset-0 z-40 bg-black/20 lg:hidden" onClick={() => setOpen(false)} />}
+      <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-0 lg:pb-0">
+        <div className="fade-in mx-auto max-w-[1400px] p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+
+      <BottomNav items={bottomItems} onOpenMore={() => setOpen(true)} moreActive={moreActive} />
     </div>
   )
 }

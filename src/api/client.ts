@@ -1,37 +1,22 @@
 import axios from 'axios'
 
-/** Base path of the marketplace_erp tenant on sm85-arch (main.py include_router prefix). */
-export const API_PREFIX = '/api/marketplace-erp'
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000')
+const normalizedBackendUrl = String(BACKEND_URL).replace(/\/+$/, '').replace(/\/api$/i, '')
+export const API = `${normalizedBackendUrl}/api/marketplace-erp`
 
-export function resolveBackendOrigin(raw: string | undefined, fallbackOrigin: string): string {
-  const value = (raw || '').trim() || fallbackOrigin
-  return value.replace(/\/+$/, '').replace(/\/api(\/marketplace-erp)?$/i, '')
-}
+/** Axios client — HttpOnly cookie auth (marketplace_erp_token, withCredentials). */
+const api = axios.create({ baseURL: API, withCredentials: true })
 
-const fallbackOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000'
-export const BACKEND_ORIGIN = resolveBackendOrigin(import.meta.env.VITE_BACKEND_URL, fallbackOrigin)
-export const API_BASE = `${BACKEND_ORIGIN}${API_PREFIX}`
-
-/**
- * Axios client — HttpOnly cookie `marketplace_erp_token` (withCredentials = fetch credentials: 'include').
- */
-const api = axios.create({ baseURL: API_BASE, withCredentials: true })
-
-/** Routes that must not bounce to /login on 401. */
-export function isPublicPath(pathname: string): boolean {
-  return pathname === '/login' || pathname.startsWith('/oauth/')
-}
+const PUBLIC_PATHS = ['/login']
 
 api.interceptors.response.use(
   (r) => r,
   (err: unknown) => {
     const status = (err as { response?: { status?: number } })?.response?.status
-    const url = (err as { config?: { url?: string } })?.config?.url || ''
-    if (status === 401 && !url.startsWith('/auth/') && typeof window !== 'undefined') {
-      if (!isPublicPath(window.location.pathname)) {
-        const next = encodeURIComponent(window.location.pathname + window.location.search)
-        window.location.href = `/login?next=${next}`
-      }
+    if (status === 401 && !PUBLIC_PATHS.includes(window.location.pathname)) {
+      window.location.href = '/login'
     }
     return Promise.reject(err)
   },
@@ -39,24 +24,49 @@ api.interceptors.response.use(
 
 export default api
 
-export function getApiError(error: unknown, fallback = 'Terjadi kesalahan. Silakan coba lagi.'): string {
-  const e = error as {
-    response?: { status?: number; data?: { detail?: unknown } }
-    message?: string
-  }
-  const detail = e?.response?.data?.detail
+export function getApiError(
+  error: unknown,
+  fallback = 'Terjadi kesalahan. Silakan coba lagi.',
+): string {
+  const detail = (error as { response?: { data?: { detail?: unknown } }; message?: string })
+    ?.response?.data?.detail
   if (Array.isArray(detail)) {
-    return detail
-      .map((item: { msg?: string; loc?: unknown[] }) => {
-        const field = Array.isArray(item?.loc) ? item.loc.filter((p) => p !== 'body').join('.') : ''
-        const msg = item?.msg ?? String(item)
-        return field ? `${field}: ${msg}` : msg
-      })
-      .join(', ')
+    return detail.map((item: { msg?: string }) => item.msg ?? String(item)).join(', ')
   }
-  if (typeof detail === 'string' && detail) return detail
-  if (e?.response === undefined && e?.message === 'Network Error') {
-    return 'Tidak dapat menghubungi server (cek VITE_BACKEND_URL / CORS).'
+  if (typeof detail === 'string') return detail
+  return (error as { message?: string })?.message || fallback
+}
+
+export function fmtRp(n: string | number | null | undefined): string {
+  const v = typeof n === 'string' ? Number(n) : (n ?? 0)
+  if (Number.isNaN(v)) return 'Rp 0'
+  return 'Rp ' + Math.round(v).toLocaleString('id-ID')
+}
+
+export function fmtDate(s: string | null | undefined): string {
+  if (!s) return '-'
+  try {
+    return new Date(s).toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return s
   }
-  return e?.message || fallback
+}
+
+export function fmtDateTime(s: string | null | undefined): string {
+  if (!s) return '-'
+  try {
+    return new Date(s).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  } catch {
+    return s
+  }
 }
