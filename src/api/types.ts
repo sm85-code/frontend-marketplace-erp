@@ -40,6 +40,12 @@ export interface Produk {
   aktif: boolean
 }
 
+export interface PublishTokoResult {
+  dibuat: boolean
+  foto_disalin: boolean
+  produk: { id: string; nama: string; harga: string; stok: number; aktif: boolean }
+}
+
 export interface ProdukListing {
   id: string
   produk_id: string
