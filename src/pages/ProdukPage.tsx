@@ -5,6 +5,7 @@ import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { Produk } from '@/api/types'
+import { publishDefaults, publishMessage } from '@/lib/publishToko'
 import { useConfirm } from '@/components/ConfirmProvider'
 import Spinner from '@/components/Spinner'
 import TableShell from '@/components/TableShell'
@@ -26,6 +27,8 @@ export default function ProdukPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Produk | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [publishing, setPublishing] = useState<Produk | null>(null)
+  const [pub, setPub] = useState(publishDefaults({ harga_dasar: '0', stok: 0 }))
 
   const { data, isLoading } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
 
@@ -60,6 +63,16 @@ export default function ProdukPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  const publishMut = useMutation({
+    mutationFn: (vars: { id: string; payload: Parameters<typeof endpoints.publishProdukKeToko>[1] }) =>
+      endpoints.publishProdukKeToko(vars.id, vars.payload),
+    onSuccess: (r) => {
+      toast.success(publishMessage(r))
+      setPublishing(null)
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
   const filtered = (data ?? []).filter(
     (p) => p.nama.toLowerCase().includes(q.toLowerCase()) || p.sku_induk.toLowerCase().includes(q.toLowerCase()),
   )
@@ -74,6 +87,19 @@ export default function ProdukPage() {
     setEditing(p)
     setForm({ sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: '' })
     setDialogOpen(true)
+  }
+
+  function openPublish(p: Produk) {
+    setPublishing(p)
+    setPub(publishDefaults(p))
+  }
+
+  function onPublish() {
+    if (!publishing) return
+    publishMut.mutate({
+      id: publishing.id,
+      payload: { aktif: pub.aktif, harga: pub.harga, stok: Number(pub.stok || 0), salin_foto: pub.salinFoto },
+    })
   }
 
   function onSubmit() {
@@ -154,6 +180,9 @@ export default function ProdukPage() {
                           <Button size="sm" variant="ghost" onClick={() => onToggleAktif(p)}>
                             {p.aktif ? 'Nonaktifkan' : 'Aktifkan'}
                           </Button>
+                          <Button size="sm" variant="ghost" onClick={() => openPublish(p)}>
+                            Ke Toko
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
                             Edit
                           </Button>
@@ -219,6 +248,48 @@ export default function ProdukPage() {
             </Button>
             <Button onClick={onSubmit} disabled={!form.nama || !form.harga_dasar}>
               Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={publishing !== null} onOpenChange={(open) => !open && setPublishing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Publish ke toko</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {publishing?.nama}. Stok toko berdiri sendiri: stok awal hanya dipakai saat pertama kali dipublikasikan.
+              Publish ulang hanya memperbarui nama, deskripsi, harga, dan status.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Harga di toko (Rp)</Label>
+              <Input type="number" value={pub.harga} onChange={(e) => setPub((v) => ({ ...v, harga: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Stok awal di toko</Label>
+              <Input type="number" value={pub.stok} onChange={(e) => setPub((v) => ({ ...v, stok: e.target.value }))} />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={pub.aktif} onChange={(e) => setPub((v) => ({ ...v, aktif: e.target.checked }))} />
+              Langsung tampil di toko
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={pub.salinFoto}
+                onChange={(e) => setPub((v) => ({ ...v, salinFoto: e.target.checked }))}
+              />
+              Salin foto produk
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPublishing(null)}>
+              Batal
+            </Button>
+            <Button onClick={onPublish} disabled={!pub.harga || publishMut.isPending}>
+              Publish
             </Button>
           </DialogFooter>
         </DialogContent>

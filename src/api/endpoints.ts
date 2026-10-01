@@ -10,6 +10,7 @@ import type {
   Pesanan,
   Produk,
   ProdukListing,
+  PublishTokoResult,
   Settlement,
   StaffAkun,
   StokLedger,
@@ -104,6 +105,11 @@ export const updateProduk = (
 ) => api.patch<Produk>(`/produk/${id}`, payload).then((r) => r.data)
 
 export const deleteProduk = (id: string) => api.delete(`/produk/${id}`)
+
+export const publishProdukKeToko = (
+  id: string,
+  payload: { aktif: boolean; harga?: string; stok?: number; salin_foto: boolean },
+) => api.post<PublishTokoResult>(`/produk/${id}/publish-toko`, payload).then((r) => r.data)
 
 // --- Listing -------------------------------------------------------------------
 
