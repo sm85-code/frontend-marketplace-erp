@@ -18,7 +18,19 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 
-const emptyForm = { sku_induk: '', nama: '', deskripsi: '', harga_dasar: '', stok: '0' }
+const emptyForm = {
+  sku_induk: '', nama: '', deskripsi: '', harga_dasar: '', stok: '0',
+  berat_gram: '0', panjang_cm: '0', lebar_cm: '0', tinggi_cm: '0', preorder: false, hari_proses: '2',
+}
+const fisik = (f: typeof emptyForm) => ({
+  berat_gram: Number(f.berat_gram || 0),
+  panjang_cm: f.panjang_cm || '0',
+  lebar_cm: f.lebar_cm || '0',
+  tinggi_cm: f.tinggi_cm || '0',
+  preorder: f.preorder,
+  hari_proses: f.preorder ? Number(f.hari_proses) : 2,
+})
+const prosesValid = (f: typeof emptyForm) => !f.preorder || (/^\d+$/.test(f.hari_proses) && Number(f.hari_proses) >= 3 && Number(f.hari_proses) <= 14)
 
 export default function ProdukPage() {
   const qc = useQueryClient()
@@ -85,7 +97,15 @@ export default function ProdukPage() {
 
   function openEdit(p: Produk) {
     setEditing(p)
-    setForm({ sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: '' })
+    setForm({
+      sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: '',
+      berat_gram: String(p.berat_gram ?? 0),
+      panjang_cm: String(Number(p.panjang_cm ?? 0)),
+      lebar_cm: String(Number(p.lebar_cm ?? 0)),
+      tinggi_cm: String(Number(p.tinggi_cm ?? 0)),
+      preorder: p.preorder ?? false,
+      hari_proses: String(p.hari_proses ?? 2),
+    })
     setDialogOpen(true)
   }
 
@@ -106,7 +126,7 @@ export default function ProdukPage() {
     if (editing) {
       updateMut.mutate({
         id: editing.id,
-        payload: { nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar },
+        payload: { nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar, ...fisik(form) },
       })
     } else {
       createMut.mutate({
@@ -115,6 +135,7 @@ export default function ProdukPage() {
         deskripsi: form.deskripsi,
         harga_dasar: form.harga_dasar,
         stok: Number(form.stok || 0),
+        ...fisik(form),
       })
     }
   }
@@ -235,6 +256,35 @@ export default function ProdukPage() {
                 onChange={(e) => setForm((f) => ({ ...f, harga_dasar: e.target.value }))}
               />
             </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  ['berat_gram', 'Berat (gram)'],
+                  ['panjang_cm', 'Panjang (cm)'],
+                  ['lebar_cm', 'Lebar (cm)'],
+                  ['tinggi_cm', 'Tinggi (cm)'],
+                ] as const
+              ).map(([k, label]) => (
+                <div key={k} className="space-y-1.5">
+                  <Label>{label}</Label>
+                  <Input type="number" min={0} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2 rounded-lg border p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" checked={form.preorder} onChange={(e) => setForm((f) => ({ ...f, preorder: e.target.checked }))} />
+                Pre-order
+              </label>
+              {form.preorder ? (
+                <div className="space-y-1.5">
+                  <Label>Lama proses (hari, 3–14)</Label>
+                  <Input type="number" min={3} max={14} className="max-w-28" value={form.hari_proses} onChange={(e) => setForm((f) => ({ ...f, hari_proses: e.target.value }))} />
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Bukan pre-order: ready stock, diproses 2 hari.</p>
+              )}
+            </div>
             {!editing && (
               <div className="space-y-1.5">
                 <Label>Stok Awal</Label>
@@ -246,7 +296,7 @@ export default function ProdukPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={!form.nama || !form.harga_dasar}>
+            <Button onClick={onSubmit} disabled={!form.nama || !form.harga_dasar || !prosesValid(form)}>
               Simpan
             </Button>
           </DialogFooter>

@@ -38,6 +38,12 @@ export interface Produk {
   stok: number
   foto_url: string | null
   aktif: boolean
+  berat_gram?: number
+  panjang_cm?: string
+  lebar_cm?: string
+  tinggi_cm?: string
+  preorder?: boolean
+  hari_proses?: number
 }
 
 export interface PublishTokoResult {
