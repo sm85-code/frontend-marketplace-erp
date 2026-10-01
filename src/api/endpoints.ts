@@ -91,6 +91,12 @@ export const createProduk = (payload: {
   harga_dasar: string
   stok?: number
   foto_url?: string | null
+  berat_gram?: number
+  panjang_cm?: string
+  lebar_cm?: string
+  tinggi_cm?: string
+  preorder?: boolean
+  hari_proses?: number
 }) => api.post<Produk>('/produk', payload).then((r) => r.data)
 
 export const updateProduk = (
@@ -101,6 +107,12 @@ export const updateProduk = (
     harga_dasar: string
     foto_url: string | null
     aktif: boolean
+    berat_gram: number
+    panjang_cm: string
+    lebar_cm: string
+    tinggi_cm: string
+    preorder: boolean
+    hari_proses: number
   }>,
 ) => api.patch<Produk>(`/produk/${id}`, payload).then((r) => r.data)
 
