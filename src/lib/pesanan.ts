@@ -42,3 +42,31 @@ export function sudahDiproses(p: Pick<Pesanan, 'status_marketplace'>): boolean {
 export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace'>): string {
   return p.status === 'to_ship' && sudahDiproses(p) ? 'Menunggu Kurir' : STATUS_LABELS[p.status]
 }
+
+/** Raw Shopee statuses from which a seller can still cancel (before the courier has the parcel). */
+const BISA_DIBATALKAN = ['UNPAID', 'READY_TO_SHIP', 'PROCESSED', 'RETRY_SHIP']
+
+export const ALASAN_BATAL = [
+  { value: 'CUSTOMER_REQUEST', label: 'Permintaan pembeli' },
+  { value: 'OUT_OF_STOCK', label: 'Stok habis' },
+  { value: 'COD_NOT_SUPPORTED', label: 'COD tidak didukung' },
+] as const
+
+/** A pulled order that still needs "arrange shipment" on the marketplace. */
+export function bisaDiproses(p: Pick<Pesanan, 'status' | 'status_marketplace'>): boolean {
+  return ikutMarketplace(p) && p.status === 'to_ship' && !sudahDiproses(p)
+}
+
+export function bisaDibatalkan(p: Pick<Pesanan, 'status' | 'status_marketplace'>): boolean {
+  return (
+    ikutMarketplace(p) &&
+    (p.status === 'unpaid' || p.status === 'to_ship') &&
+    BISA_DIBATALKAN.includes(p.status_marketplace ?? '')
+  )
+}
+
+export function pecahBatch<T>(items: T[], ukuran: number): T[][] {
+  const batch: T[][] = []
+  for (let i = 0; i < items.length; i += ukuran) batch.push(items.slice(i, i + ukuran))
+  return batch
+}

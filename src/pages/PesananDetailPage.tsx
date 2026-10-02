@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { ikutMarketplace, labelStatus, nextActionLabel, sudahDiproses } from '@/lib/pesanan'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ALASAN_BATAL, bisaDibatalkan, ikutMarketplace, labelStatus, nextActionLabel, sudahDiproses } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -22,6 +23,8 @@ export default function PesananDetailPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [kirimDialog, setKirimDialog] = useState(false)
+  const [batalDialog, setBatalDialog] = useState(false)
+  const [alasanBatal, setAlasanBatal] = useState<string>('CUSTOMER_REQUEST')
   const [kurir, setKurir] = useState('')
   const [nomorResi, setNomorResi] = useState('')
 
@@ -55,6 +58,16 @@ export default function PesananDetailPage() {
     onSuccess: () => {
       toast.success('Pesanan diproses di Shopee. Menunggu kurir pickup.')
       qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  const batalMut = useMutation({
+    mutationFn: () => endpoints.batalkanPesananMarketplace(id!, alasanBatal),
+    onSuccess: () => {
+      toast.success('Pesanan dibatalkan di Shopee')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      setBatalDialog(false)
     },
     onError: (e) => toast.error(getApiError(e)),
   })
@@ -162,6 +175,12 @@ export default function PesananDetailPage() {
             <div className="text-xs text-muted-foreground">Dibuat</div>
             <div className="font-medium">{fmtDateTime(pesanan.created_at)}</div>
           </div>
+          {pesanan.status_marketplace && (
+            <div>
+              <div className="text-xs text-muted-foreground">Status di Shopee</div>
+              <div className="font-medium">{pesanan.status_marketplace}</div>
+            </div>
+          )}
           {pesanan.kurir && (
             <>
               <div>
@@ -230,6 +249,11 @@ export default function PesananDetailPage() {
             Cetak Resi
           </Button>
         )}
+        {bisaDibatalkan(pesanan) && (
+          <Button variant="destructive" onClick={() => setBatalDialog(true)} disabled={batalMut.isPending}>
+            Batalkan di Shopee
+          </Button>
+        )}
         {ikutMp && akunId && !selesai && (
           <Button variant="outline" onClick={() => syncMut.mutate(akunId)} disabled={syncMut.isPending}>
             Sinkronkan Status
@@ -243,6 +267,43 @@ export default function PesananDetailPage() {
             : 'Status pesanan ini mengikuti Shopee. Klik Sinkronkan Status untuk memperbarui.'}
         </p>
       )}
+
+      <Dialog open={batalDialog} onOpenChange={setBatalDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Batalkan pesanan di Shopee?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Pesanan dibatalkan di Shopee dan stok yang dipesan dikembalikan. Hanya bisa sebelum paket dikirim, dan tidak bisa
+              diurungkan.
+            </p>
+            <div className="space-y-1.5">
+              <Label>Alasan</Label>
+              <Select value={alasanBatal} onValueChange={setAlasanBatal}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALASAN_BATAL.map((a) => (
+                    <SelectItem key={a.value} value={a.value}>
+                      {a.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBatalDialog(false)}>
+              Kembali
+            </Button>
+            <Button variant="destructive" onClick={() => batalMut.mutate()} disabled={batalMut.isPending}>
+              Batalkan Pesanan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={kirimDialog} onOpenChange={setKirimDialog}>
         <DialogContent>
