@@ -96,7 +96,7 @@ export default function PesananDetailPage() {
         throw e
       }
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e) => toast.error(getApiError(e, 'Resi belum siap atau server lambat, coba lagi sebentar. Resi A4 biasanya lebih cepat.')),
   })
 
   const deleteMut = useMutation({

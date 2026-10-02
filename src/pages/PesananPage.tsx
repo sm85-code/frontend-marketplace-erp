@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
+import type { TemplateResi } from '@/api/endpoints'
+import type { Pesanan } from '@/api/types'
 import { fmtDate, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
@@ -19,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { STATUS_LABELS, STATUS_ORDER, bisaDiproses, labelStatus, pecahBatch } from '@/lib/pesanan'
+import { STATUS_LABELS, STATUS_ORDER, bisaDicetak, bisaDiproses, kelompokResi, labelStatus, pecahBatch } from '@/lib/pesanan'
 
 const emptyItem = { nama_produk: '', harga_satuan: '', qty: '1' }
 
@@ -95,6 +97,32 @@ export default function PesananPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  const cetakMassalMut = useMutation({
+    mutationFn: async ({ grup, tipe, tab }: { grup: Pesanan[][]; tipe: TemplateResi; tab: (Window | null)[] }) => {
+      // The tabs were opened inside the click (popup blockers); each is filled when its PDF arrives.
+      let berhasil = 0
+      const gagal: string[] = []
+      for (const [i, pesanan] of grup.entries()) {
+        try {
+          const pdf = await endpoints.unduhResiMassal(pesanan.map((p) => p.id), tipe)
+          const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }))
+          if (tab[i]) tab[i]!.location.href = url
+          else window.open(url, '_blank')
+          berhasil += pesanan.length
+        } catch (e) {
+          tab[i]?.close()
+          gagal.push(getApiError(e, 'Resi belum siap atau server lambat, coba lagi sebentar.'))
+        }
+      }
+      return { berhasil, gagal }
+    },
+    onSuccess: ({ berhasil, gagal }) => {
+      if (gagal.length === 0) toast.success(`${berhasil} resi dibuka`)
+      else toast.warning(`${berhasil} resi dibuka, ${gagal.length} kelompok gagal`, { description: gagal.slice(0, 2).join('\n') })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
   const createMut = useMutation({
     mutationFn: endpoints.createPesanan,
     onSuccess: () => {
@@ -127,9 +155,18 @@ export default function PesananPage() {
     })
   }
 
-  const bisaDipilih = (pesananList ?? []).filter(bisaDiproses)
-  const idTerpilih = bisaDipilih.filter((p) => terpilih.has(p.id)).map((p) => p.id)
-  const semuaTerpilih = bisaDipilih.length > 0 && idTerpilih.length === bisaDipilih.length
+  // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
+  const bisaDipilih = (pesananList ?? []).filter((p) => bisaDiproses(p) || bisaDicetak(p))
+  const dipilih = bisaDipilih.filter((p) => terpilih.has(p.id))
+  const idTerpilih = dipilih.filter(bisaDiproses).map((p) => p.id)
+  const dicetak = dipilih.filter(bisaDicetak)
+  const semuaTerpilih = bisaDipilih.length > 0 && dipilih.length === bisaDipilih.length
+
+  function onCetakTerpilih(tipe: TemplateResi) {
+    const grup = kelompokResi(dicetak)
+    const tab = grup.map(() => window.open('', '_blank'))
+    cetakMassalMut.mutate({ grup, tipe, tab })
+  }
 
   function togglePilih(id: string, pilih: boolean) {
     setTerpilih((prev) => {
@@ -175,6 +212,16 @@ export default function PesananPage() {
               {prosesMassalMut.isPending ? 'Memproses…' : `Proses Terpilih (${idTerpilih.length})`}
             </Button>
           )}
+          {dicetak.length > 0 && (
+            <>
+              <Button variant="outline" onClick={() => onCetakTerpilih('THERMAL_AIR_WAYBILL')} disabled={cetakMassalMut.isPending}>
+                {cetakMassalMut.isPending ? 'Menyiapkan resi…' : `Cetak Resi A6 (${dicetak.length})`}
+              </Button>
+              <Button variant="ghost" onClick={() => onCetakTerpilih('NORMAL_AIR_WAYBILL')} disabled={cetakMassalMut.isPending}>
+                A4
+              </Button>
+            </>
+          )}
           <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
             Segarkan
           </Button>
@@ -208,7 +255,7 @@ export default function PesananPage() {
                   <TableRow>
                     <TableHead className="w-8">
                       <Checkbox
-                        aria-label="Pilih semua yang perlu diproses"
+                        aria-label="Pilih semua pesanan yang bisa diproses atau dicetak"
                         checked={semuaTerpilih}
                         disabled={bisaDipilih.length === 0}
                         onCheckedChange={(v) => setTerpilih(v === true ? new Set(bisaDipilih.map((p) => p.id)) : new Set())}
@@ -227,7 +274,7 @@ export default function PesananPage() {
                   {(pesananList ?? []).map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
-                        {bisaDiproses(p) && (
+                        {(bisaDiproses(p) || bisaDicetak(p)) && (
                           <Checkbox
                             aria-label={`Pilih pesanan ${p.id_eksternal}`}
                             checked={terpilih.has(p.id)}
