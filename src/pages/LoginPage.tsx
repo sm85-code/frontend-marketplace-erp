@@ -39,13 +39,8 @@ export default function LoginPage() {
     <div className="auth-bg flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div
-            className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
-            style={{ background: 'var(--primary)' }}
-          >
-            M
-          </div>
-          <CardTitle className="modern-brand-title text-xl">Marketplace ERP</CardTitle>
+          <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="mx-auto mb-2 h-24 w-auto rounded-md bg-white" />
+          <CardTitle className="modern-brand-title text-xl">Ampel Kuning ERP</CardTitle>
           <CardDescription>Masuk untuk mengelola toko dan pesanan Anda</CardDescription>
         </CardHeader>
         <CardContent>
