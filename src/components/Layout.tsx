@@ -48,12 +48,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
         <div className="flex min-w-0 items-center gap-2">
-          <div
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-            style={{ background: 'var(--primary)' }}
-          >
-            M
-          </div>
+          <img src="/favicon.png" alt="" className="h-8 w-8 flex-shrink-0 rounded-md bg-white" />
           <span className="font-heading truncate text-sm font-semibold">Marketplace ERP</span>
         </div>
       </div>
@@ -69,12 +64,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
         >
           <div className="flex items-center gap-3 p-6">
-            <div
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
-              style={{ background: 'var(--primary)' }}
-            >
-              M
-            </div>
+            <img src="/favicon.png" alt="" className="h-11 w-11 flex-shrink-0 rounded-md bg-white" />
             <div>
               <div className="font-heading text-base leading-tight font-semibold">Marketplace ERP</div>
               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
