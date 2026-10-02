@@ -78,15 +78,6 @@ export default function AkunPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
-  const syncMut = useMutation({
-    mutationFn: endpoints.syncPesananAkun,
-    onSuccess: (data) => {
-      toast.success(`Sync selesai — ${data.pulled} pesanan ditarik (${data.baru} baru, ${data.diperbarui} diperbarui)`)
-      qc.invalidateQueries({ queryKey: ['pesanan'] })
-    },
-    onError: (e) => toast.error(getApiError(e, 'Sync belum tersedia untuk platform/akun ini')),
-  })
-
   const syncProdukMut = useMutation({
     mutationFn: endpoints.syncProdukAkun,
     onSuccess: (data) => {
@@ -207,11 +198,6 @@ export default function AkunPage() {
                           {akun.platform === 'shopee' && !akun.id_toko_eksternal && user?.role === 'owner' && (
                             <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
                               Hubungkan Shopee
-                            </Button>
-                          )}
-                          {akun.id_toko_eksternal && (
-                            <Button size="sm" variant="outline" onClick={() => syncMut.mutate(akun.id)}>
-                              Tarik Pesanan
                             </Button>
                           )}
                           {akun.id_toko_eksternal && user?.role === 'owner' && (
