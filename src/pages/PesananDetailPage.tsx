@@ -225,7 +225,7 @@ export default function PesananDetailPage() {
             Proses Pesanan
           </Button>
         )}
-        {ikutMp && diproses && (
+        {ikutMp && diproses && pesanan.status === 'to_ship' && (
           <Button variant="outline" onClick={() => cetakMut.mutate()} disabled={cetakMut.isPending}>
             Cetak Resi
           </Button>
@@ -238,7 +238,9 @@ export default function PesananDetailPage() {
       </div>
       {ikutMp && (
         <p className="text-xs text-muted-foreground">
-          Status pesanan ini mengikuti Shopee. Setelah kurir pickup, klik Sinkronkan Status agar menjadi Dikirim.
+          {pesanan.status === 'to_ship'
+            ? 'Status pesanan ini mengikuti Shopee. Setelah kurir pickup, klik Sinkronkan Status agar menjadi Dikirim.'
+            : 'Status pesanan ini mengikuti Shopee. Klik Sinkronkan Status untuk memperbarui.'}
         </p>
       )}
 
