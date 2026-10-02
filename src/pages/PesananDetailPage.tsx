@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { STATUS_LABELS, nextActionLabel } from '@/lib/pesanan'
+import { ikutMarketplace, labelStatus, nextActionLabel, sudahDiproses } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -50,6 +50,41 @@ export default function PesananDetailPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  const prosesMut = useMutation({
+    mutationFn: () => endpoints.prosesPesananMarketplace(id!),
+    onSuccess: () => {
+      toast.success('Pesanan diproses di Shopee. Menunggu kurir pickup.')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  const syncMut = useMutation({
+    mutationFn: (akunId: string) => endpoints.syncPesananAkun(akunId),
+    onSuccess: () => {
+      toast.success('Status disinkronkan dari Shopee')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  const cetakMut = useMutation({
+    mutationFn: async () => {
+      // Open the tab now (inside the click) so the popup blocker allows it; fill it once the PDF arrives.
+      const tab = window.open('', '_blank')
+      try {
+        const pdf = await endpoints.unduhResi(id!)
+        const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }))
+        if (tab) tab.location.href = url
+        else window.open(url, '_blank')
+      } catch (e) {
+        tab?.close()
+        throw e
+      }
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
   const deleteMut = useMutation({
     mutationFn: () => endpoints.deletePesanan(id!),
     onSuccess: () => {
@@ -62,6 +97,12 @@ export default function PesananDetailPage() {
   if (isLoading || !pesanan) return <Spinner column label="Memuat pesanan…" />
 
   const action = nextActionLabel(pesanan.status)
+  // Orders pulled from Shopee follow Shopee: they are processed and printed from here, and the
+  // status (shipped, completed, cancelled) arrives with the next sync -- no manual Kirim/Selesaikan.
+  const ikutMp = ikutMarketplace(pesanan)
+  const diproses = sudahDiproses(pesanan)
+  const akunId = pesanan.akun_id
+  const selesai = pesanan.status === 'completed' || pesanan.status === 'cancelled'
 
   async function onAction() {
     if (!action) return
@@ -70,6 +111,14 @@ export default function PesananDetailPage() {
       return
     }
     statusMut.mutate(action.to)
+  }
+
+  async function onProses() {
+    const ok = await confirm({
+      title: 'Proses pesanan di Shopee?',
+      description: 'Pengiriman akan diatur di Shopee (kurir pickup). Ini tidak bisa dibatalkan dari sini.',
+    })
+    if (ok) prosesMut.mutate()
   }
 
   async function onCancel() {
@@ -89,7 +138,7 @@ export default function PesananDetailPage() {
           <Link to="/pesanan">← Kembali</Link>
         </Button>
         <h1 className="page-h1 font-heading text-xl font-bold">Pesanan #{pesanan.id_eksternal}</h1>
-        <Badge>{STATUS_LABELS[pesanan.status]}</Badge>
+        <Badge>{labelStatus(pesanan)}</Badge>
       </div>
 
       <Card>
@@ -156,22 +205,42 @@ export default function PesananDetailPage() {
       </Card>
 
       <div className="flex flex-wrap gap-2">
-        {action && (
+        {!ikutMp && action && (
           <Button onClick={onAction} disabled={statusMut.isPending}>
             {action.label}
           </Button>
         )}
-        {(pesanan.status === 'unpaid' || pesanan.status === 'to_ship') && (
+        {!ikutMp && (pesanan.status === 'unpaid' || pesanan.status === 'to_ship') && (
           <Button variant="destructive" onClick={onCancel} disabled={statusMut.isPending}>
             Batalkan
           </Button>
         )}
-        {pesanan.status === 'unpaid' && (
+        {!ikutMp && pesanan.status === 'unpaid' && (
           <Button variant="outline" onClick={onDelete} disabled={deleteMut.isPending}>
             Hapus
           </Button>
         )}
+        {ikutMp && pesanan.status === 'to_ship' && !diproses && (
+          <Button onClick={onProses} disabled={prosesMut.isPending}>
+            Proses Pesanan
+          </Button>
+        )}
+        {ikutMp && diproses && (
+          <Button variant="outline" onClick={() => cetakMut.mutate()} disabled={cetakMut.isPending}>
+            Cetak Resi
+          </Button>
+        )}
+        {ikutMp && akunId && !selesai && (
+          <Button variant="outline" onClick={() => syncMut.mutate(akunId)} disabled={syncMut.isPending}>
+            Sinkronkan Status
+          </Button>
+        )}
       </div>
+      {ikutMp && (
+        <p className="text-xs text-muted-foreground">
+          Status pesanan ini mengikuti Shopee. Setelah kurir pickup, klik Sinkronkan Status agar menjadi Dikirim.
+        </p>
+      )}
 
       <Dialog open={kirimDialog} onOpenChange={setKirimDialog}>
         <DialogContent>
