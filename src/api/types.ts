@@ -194,3 +194,44 @@ export interface OAuthStart {
   akun_id: string
   authorize_url: string
 }
+
+export interface OAuthCallbackToko {
+  akun_id: string
+  id_toko_eksternal: string
+  nama_toko: string
+  baru: boolean
+}
+
+export interface OAuthCallbackResult {
+  ok: boolean
+  akun_id: string
+  status: string
+  toko: OAuthCallbackToko[]
+}
+
+export interface SyncPesananResult {
+  ok: boolean
+  pulled: number
+  baru: number
+  diperbarui: number
+  tidak_berubah: number
+  dilewati: number
+}
+
+export interface SyncProdukResult {
+  ok: boolean
+  pulled: number
+  listing_baru: number
+  sudah_ada: number
+  tanpa_sku_cocok: number
+  contoh_tanpa_sku: { id_eksternal: string; nama_produk: string; sku: string }[]
+}
+
+export interface PushStokHargaResult {
+  ok: boolean
+  dry_run: boolean
+  jumlah: number
+  stok_ok?: number
+  harga_ok?: number
+  gagal?: { id_eksternal: string; alasan: string }[]
+}

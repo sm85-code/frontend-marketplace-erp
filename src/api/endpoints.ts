@@ -6,14 +6,18 @@ import type {
   IklanLaporan,
   IklanMetrikHarian,
   LaporanRingkas,
+  OAuthCallbackResult,
   OAuthStart,
   Pesanan,
   Produk,
   ProdukListing,
   PublishTokoResult,
+  PushStokHargaResult,
   Settlement,
   StaffAkun,
   StokLedger,
+  SyncPesananResult,
+  SyncProdukResult,
   User,
 } from '@/api/types'
 
@@ -69,14 +73,23 @@ export const oauthShopeeStart = (akunId: string, redirectUri?: string) =>
     .get<OAuthStart>('/oauth/shopee/start', { params: { akun_id: akunId, redirect_uri: redirectUri } })
     .then((r) => r.data)
 
-export const oauthShopeeCallback = (akunId: string, code: string, shopId: string) =>
-  api.get(`/oauth/shopee/callback/${akunId}`, { params: { code, shop_id: shopId } }).then((r) => r.data)
+/** Shopee redirects with `shop_id` (shop account) or `main_account_id` (main account, possibly many shops). */
+export const oauthShopeeCallback = (
+  akunId: string,
+  params: { code: string; shop_id?: string; main_account_id?: string },
+) => api.get<OAuthCallbackResult>(`/oauth/shopee/callback/${akunId}`, { params }).then((r) => r.data)
 
 export const syncPesananAkun = (akunId: string) =>
-  api.post<{ ok: boolean; pulled: number }>(`/akun/${akunId}/sync/pesanan`).then((r) => r.data)
+  api.post<SyncPesananResult>(`/akun/${akunId}/sync/pesanan`).then((r) => r.data)
 
 export const syncProdukAkun = (akunId: string) =>
-  api.post<{ ok: boolean; pulled: number }>(`/akun/${akunId}/sync/produk`).then((r) => r.data)
+  api.post<SyncProdukResult>(`/akun/${akunId}/sync/produk`).then((r) => r.data)
+
+/** The backend only sends when dryRun is false; the default preview changes nothing on the marketplace. */
+export const pushStokHargaAkun = (akunId: string, dryRun: boolean) =>
+  api
+    .post<PushStokHargaResult>(`/akun/${akunId}/push/stok-harga`, null, { params: { dry_run: dryRun } })
+    .then((r) => r.data)
 
 // --- Produk (SKU induk) -----------------------------------------------------
 
