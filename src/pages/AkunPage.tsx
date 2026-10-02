@@ -80,7 +80,10 @@ export default function AkunPage() {
 
   const syncMut = useMutation({
     mutationFn: endpoints.syncPesananAkun,
-    onSuccess: (data) => toast.success(`Sync selesai — ${data.pulled} pesanan ditarik`),
+    onSuccess: (data) => {
+      toast.success(`Sync selesai — ${data.pulled} pesanan ditarik (${data.baru} baru, ${data.diperbarui} diperbarui)`)
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
     onError: (e) => toast.error(getApiError(e, 'Sync belum tersedia untuk platform/akun ini')),
   })
 

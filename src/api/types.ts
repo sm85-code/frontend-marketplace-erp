@@ -194,3 +194,26 @@ export interface OAuthStart {
   akun_id: string
   authorize_url: string
 }
+
+export interface OAuthCallbackToko {
+  akun_id: string
+  id_toko_eksternal: string
+  nama_toko: string
+  baru: boolean
+}
+
+export interface OAuthCallbackResult {
+  ok: boolean
+  akun_id: string
+  status: string
+  toko: OAuthCallbackToko[]
+}
+
+export interface SyncPesananResult {
+  ok: boolean
+  pulled: number
+  baru: number
+  diperbarui: number
+  tidak_berubah: number
+  dilewati: number
+}
