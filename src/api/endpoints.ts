@@ -216,10 +216,12 @@ export const batalkanPesananMarketplace = (id: string, alasan: string) =>
 export const prosesPesananMarketplace = (id: string) =>
   api.post<Pesanan>(`/pesanan/${id}/proses`).then((r) => r.data)
 
-/** The marketplace's own shipping label as a PDF blob. */
-export const unduhResi = (id: string) =>
+export type TemplateResi = 'THERMAL_AIR_WAYBILL' | 'NORMAL_AIR_WAYBILL'
+
+/** The marketplace's own shipping label as a PDF blob. Thermal is the 100x150 mm (about A6) template. */
+export const unduhResi = (id: string, tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
   api
-    .get<Blob>(`/pesanan/${id}/resi`, { responseType: 'blob' })
+    .get<Blob>(`/pesanan/${id}/resi`, { params: { tipe }, responseType: 'blob' })
     .then((r) => r.data)
     .catch(async (e) => {
       // With responseType blob an error body is a Blob too; turn it back into JSON so getApiError can read it.
