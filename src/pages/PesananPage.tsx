@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
 import type { Pesanan } from '@/api/types'
-import { fmtDate, fmtRp, getApiError } from '@/api/client'
+import { fmtDate, fmtDateTime, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
 import Spinner from '@/components/Spinner'
@@ -21,7 +21,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { STATUS_LABELS, STATUS_ORDER, bisaDicetak, bisaDiproses, kelompokResi, labelStatus, pecahBatch } from '@/lib/pesanan'
+import {
+  STATUS_LABELS,
+  STATUS_ORDER,
+  bisaDicetak,
+  bisaDiproses,
+  cocokFilterResi,
+  kelompokResi,
+  labelStatus,
+  pecahBatch,
+  sudahDicetak,
+  type FilterResi,
+} from '@/lib/pesanan'
 
 const emptyItem = { nama_produk: '', harga_satuan: '', qty: '1' }
 
@@ -30,6 +41,7 @@ export default function PesananPage() {
   const confirm = useConfirm()
   const [tab, setTab] = useState<string>('all')
   const [terpilih, setTerpilih] = useState<Set<string>>(new Set())
+  const [filterResi, setFilterResi] = useState<FilterResi>('semua')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ platform: 'shopee', id_eksternal: '', akun_id: '', nama_pembeli: '' })
   const [items, setItems] = useState([{ ...emptyItem }])
@@ -117,6 +129,7 @@ export default function PesananPage() {
       return { berhasil, gagal }
     },
     onSuccess: ({ berhasil, gagal }) => {
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
       if (gagal.length === 0) toast.success(`${berhasil} resi dibuka`)
       else toast.warning(`${berhasil} resi dibuka, ${gagal.length} kelompok gagal`, { description: gagal.slice(0, 2).join('\n') })
     },
@@ -156,13 +169,27 @@ export default function PesananPage() {
   }
 
   // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
-  const bisaDipilih = (pesananList ?? []).filter((p) => bisaDiproses(p) || bisaDicetak(p))
+  const tampil = (pesananList ?? []).filter((p) => cocokFilterResi(p, filterResi))
+  const bisaDipilih = tampil.filter((p) => bisaDiproses(p) || bisaDicetak(p))
+  // "Pilih semua" skips labels that were already printed (reprinting is a deliberate, per-order choice).
+  const bisaDipilihSemua = bisaDipilih.filter((p) => !sudahDicetak(p))
   const dipilih = bisaDipilih.filter((p) => terpilih.has(p.id))
   const idTerpilih = dipilih.filter(bisaDiproses).map((p) => p.id)
   const dicetak = dipilih.filter(bisaDicetak)
-  const semuaTerpilih = bisaDipilih.length > 0 && dipilih.length === bisaDipilih.length
+  const semuaTerpilih = bisaDipilihSemua.length > 0 && bisaDipilihSemua.every((p) => terpilih.has(p.id))
 
-  function onCetakTerpilih(tipe: TemplateResi) {
+  async function onCetakTerpilih(tipe: TemplateResi) {
+    const sudah = dicetak.filter(sudahDicetak)
+    if (sudah.length > 0) {
+      const ok = await confirm({
+        title: 'Cetak ulang resi?',
+        description: `${sudah.length} dari ${dicetak.length} pesanan terpilih resinya sudah pernah dicetak (${sudah
+          .slice(0, 3)
+          .map((p) => `#${p.id_eksternal}`)
+          .join(', ')}${sudah.length > 3 ? ', …' : ''}). Tetap cetak semuanya?`,
+      })
+      if (!ok) return
+    }
     const grup = kelompokResi(dicetak)
     const tab = grup.map(() => window.open('', '_blank'))
     cetakMassalMut.mutate({ grup, tipe, tab })
@@ -230,6 +257,21 @@ export default function PesananPage() {
       </div>
       <p className="text-xs text-muted-foreground">{labelSinkron()}</p>
 
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Resi:</span>
+        {(
+          [
+            ['semua', 'Semua'],
+            ['belum', 'Belum dicetak'],
+            ['sudah', 'Sudah dicetak'],
+          ] as const
+        ).map(([nilai, label]) => (
+          <Button key={nilai} size="sm" variant={filterResi === nilai ? 'default' : 'outline'} onClick={() => setFilterResi(nilai)}>
+            {label}
+          </Button>
+        ))}
+      </div>
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="tab-strip">
           <TabsTrigger value="all">Semua</TabsTrigger>
@@ -257,8 +299,8 @@ export default function PesananPage() {
                       <Checkbox
                         aria-label="Pilih semua pesanan yang bisa diproses atau dicetak"
                         checked={semuaTerpilih}
-                        disabled={bisaDipilih.length === 0}
-                        onCheckedChange={(v) => setTerpilih(v === true ? new Set(bisaDipilih.map((p) => p.id)) : new Set())}
+                        disabled={bisaDipilihSemua.length === 0}
+                        onCheckedChange={(v) => setTerpilih(v === true ? new Set(bisaDipilihSemua.map((p) => p.id)) : new Set())}
                       />
                     </TableHead>
                     <TableHead>Tanggal</TableHead>
@@ -271,7 +313,7 @@ export default function PesananPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(pesananList ?? []).map((p) => (
+                  {tampil.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         {(bisaDiproses(p) || bisaDicetak(p)) && (
@@ -289,6 +331,13 @@ export default function PesananPage() {
                       <TableCell>{fmtRp(p.total)}</TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(p.status)}>{labelStatus(p)}</Badge>
+                        {bisaDicetak(p) && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {sudahDicetak(p)
+                              ? `Resi dicetak ${fmtDateTime(p.resi_dicetak_at)}${p.resi_dicetak_oleh ? ` · ${p.resi_dicetak_oleh}` : ''}`
+                              : 'Resi belum dicetak'}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button asChild size="sm" variant="outline">
@@ -297,7 +346,7 @@ export default function PesananPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(pesananList ?? []).length === 0 && (
+                  {tampil.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                         Tidak ada pesanan pada status ini.

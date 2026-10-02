@@ -104,6 +104,9 @@ export interface Pesanan {
   catatan_sinkron: string | null
   /** Marketplace's raw status (e.g. READY_TO_SHIP, PROCESSED); null for orders typed in by hand. */
   status_marketplace: string | null
+  /** When the shipping label was last generated, and by whom (marks "already printed"). */
+  resi_dicetak_at?: string | null
+  resi_dicetak_oleh?: string | null
   kurir: string | null
   nomor_resi: string | null
   tanggal_kirim: string | null

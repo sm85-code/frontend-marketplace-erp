@@ -85,3 +85,15 @@ export function kelompokResi<T extends Pick<Pesanan, 'id' | 'akun_id' | 'kurir'>
   }
   return [...grup.values()].flatMap((g) => pecahBatch(g, maks))
 }
+
+export function sudahDicetak(p: Pick<Pesanan, 'resi_dicetak_at'>): boolean {
+  return Boolean(p.resi_dicetak_at)
+}
+
+export type FilterResi = 'semua' | 'belum' | 'sudah'
+
+/** Label filter for the order list: only orders whose label can be printed take part ('belum' / 'sudah'). */
+export function cocokFilterResi(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'resi_dicetak_at'>, f: FilterResi): boolean {
+  if (f === 'semua') return true
+  return bisaDicetak(p) && sudahDicetak(p) === (f === 'sudah')
+}

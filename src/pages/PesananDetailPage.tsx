@@ -16,7 +16,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PLATFORM_LABELS } from '@/config/roles'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ALASAN_BATAL, bisaDibatalkan, ikutMarketplace, labelStatus, nextActionLabel, sudahDiproses } from '@/lib/pesanan'
+import {
+  ALASAN_BATAL,
+  bisaDibatalkan,
+  ikutMarketplace,
+  labelStatus,
+  nextActionLabel,
+  sudahDicetak,
+  sudahDiproses,
+} from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -96,7 +104,17 @@ export default function PesananDetailPage() {
         throw e
       }
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pesanan'] }),
     onError: (e) => toast.error(getApiError(e, 'Resi belum siap atau server lambat, coba lagi sebentar. Resi A4 biasanya lebih cepat.')),
+  })
+
+  const tandaiMut = useMutation({
+    mutationFn: (dicetak: boolean) => endpoints.tandaiResiDicetak(id!, dicetak),
+    onSuccess: (_, dicetak) => {
+      toast.success(dicetak ? 'Resi ditandai sudah dicetak' : 'Tanda cetak dihapus')
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
   })
 
   const deleteMut = useMutation({
@@ -125,6 +143,19 @@ export default function PesananDetailPage() {
       return
     }
     statusMut.mutate(action.to)
+  }
+
+  async function onCetak(tipe: TemplateResi) {
+    if (sudahDicetak(pesanan!)) {
+      const ok = await confirm({
+        title: 'Cetak ulang resi?',
+        description: `Resi ini sudah dicetak ${fmtDateTime(pesanan!.resi_dicetak_at)}${
+          pesanan!.resi_dicetak_oleh ? ` oleh ${pesanan!.resi_dicetak_oleh}` : ''
+        }. Tetap cetak lagi?`,
+      })
+      if (!ok) return
+    }
+    cetakMut.mutate(tipe)
   }
 
   async function onProses() {
@@ -176,6 +207,15 @@ export default function PesananDetailPage() {
             <div className="text-xs text-muted-foreground">Dibuat</div>
             <div className="font-medium">{fmtDateTime(pesanan.created_at)}</div>
           </div>
+          {sudahDicetak(pesanan) && (
+            <div>
+              <div className="text-xs text-muted-foreground">Resi dicetak</div>
+              <div className="font-medium">
+                {fmtDateTime(pesanan.resi_dicetak_at)}
+                {pesanan.resi_dicetak_oleh ? ` · ${pesanan.resi_dicetak_oleh}` : ''}
+              </div>
+            </div>
+          )}
           {pesanan.status_marketplace && (
             <div>
               <div className="text-xs text-muted-foreground">Status di Shopee</div>
@@ -247,11 +287,14 @@ export default function PesananDetailPage() {
         )}
         {ikutMp && diproses && pesanan.status === 'to_ship' && (
           <>
-            <Button variant="outline" onClick={() => cetakMut.mutate('THERMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+            <Button variant="outline" onClick={() => onCetak('THERMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
               Cetak Resi (A6)
             </Button>
-            <Button variant="ghost" onClick={() => cetakMut.mutate('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+            <Button variant="ghost" onClick={() => onCetak('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
               Resi A4
+            </Button>
+            <Button variant="ghost" onClick={() => tandaiMut.mutate(!sudahDicetak(pesanan))} disabled={tandaiMut.isPending}>
+              {sudahDicetak(pesanan) ? 'Hapus tanda cetak' : 'Tandai sudah dicetak'}
             </Button>
           </>
         )}
