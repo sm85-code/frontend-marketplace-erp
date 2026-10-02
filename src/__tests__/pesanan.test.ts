@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { TRANSISI_STATUS, ikutMarketplace, labelStatus, nextActionLabel, sudahDiproses } from '@/lib/pesanan'
+import {
+  TRANSISI_STATUS,
+  bisaDibatalkan,
+  bisaDiproses,
+  ikutMarketplace,
+  labelStatus,
+  nextActionLabel,
+  pecahBatch,
+  sudahDiproses,
+} from '@/lib/pesanan'
 
 describe('TRANSISI_STATUS', () => {
   it('mirrors the backend linear pipeline (no path back from completed/cancelled)', () => {
@@ -41,5 +50,27 @@ describe('marketplace-driven orders', () => {
     expect(labelStatus({ status: 'to_ship', status_marketplace: 'READY_TO_SHIP' })).toBe('Perlu Diproses')
     expect(labelStatus({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe('Menunggu Kurir')
     expect(labelStatus({ status: 'shipped', status_marketplace: 'SHIPPED' })).toBe('Dikirim')
+  })
+})
+
+describe('bulk actions and cancel', () => {
+  it('only pulled to_ship orders that are not arranged yet can be processed', () => {
+    expect(bisaDiproses({ status: 'to_ship', status_marketplace: 'READY_TO_SHIP' })).toBe(true)
+    expect(bisaDiproses({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe(false)
+    expect(bisaDiproses({ status: 'shipped', status_marketplace: 'SHIPPED' })).toBe(false)
+    expect(bisaDiproses({ status: 'to_ship', status_marketplace: null })).toBe(false)
+  })
+
+  it('can cancel before shipment only', () => {
+    expect(bisaDibatalkan({ status: 'to_ship', status_marketplace: 'READY_TO_SHIP' })).toBe(true)
+    expect(bisaDibatalkan({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe(true)
+    expect(bisaDibatalkan({ status: 'unpaid', status_marketplace: 'UNPAID' })).toBe(true)
+    expect(bisaDibatalkan({ status: 'shipped', status_marketplace: 'SHIPPED' })).toBe(false)
+    expect(bisaDibatalkan({ status: 'to_ship', status_marketplace: null })).toBe(false)
+  })
+
+  it('splits ids into batches', () => {
+    expect(pecahBatch([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]])
+    expect(pecahBatch([], 10)).toEqual([])
   })
 })

@@ -12,7 +12,9 @@ import type {
   Produk,
   ProdukListing,
   PublishTokoResult,
+  ProsesMassalResult,
   PushStokHargaResult,
+  SinkronPesananOtomatis,
   Settlement,
   StaffAkun,
   StokLedger,
@@ -197,6 +199,18 @@ export const createPesanan = (payload: {
 
 export const ubahStatusPesanan = (id: string, status: string) =>
   api.post<Pesanan>(`/pesanan/${id}/status`, { status }).then((r) => r.data)
+
+/** Pull orders for every connected shop; throttled per shop on the server, so calling it often is cheap. */
+export const sinkronPesananOtomatis = (paksa = false) =>
+  api.post<SinkronPesananOtomatis>('/pesanan/sinkron', null, { params: { paksa } }).then((r) => r.data)
+
+/** At most 25 ids per call; the page sends chunks. */
+export const prosesMassalPesanan = (pesananIds: string[]) =>
+  api.post<ProsesMassalResult>('/pesanan/proses-massal', { pesanan_ids: pesananIds }).then((r) => r.data)
+
+/** Cancel on Shopee (only before shipment); reserved stock is released. */
+export const batalkanPesananMarketplace = (id: string, alasan: string) =>
+  api.post<Pesanan>(`/pesanan/${id}/batalkan`, { alasan }).then((r) => r.data)
 
 /** Arrange shipment on the marketplace (courier pickup). Only for orders pulled from Shopee. */
 export const prosesPesananMarketplace = (id: string) =>

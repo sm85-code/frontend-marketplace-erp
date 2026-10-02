@@ -237,3 +237,27 @@ export interface PushStokHargaResult {
   harga_ok?: number
   gagal?: { id_eksternal: string; alasan: string }[]
 }
+
+export interface SinkronTokoResult {
+  akun_id: string
+  nama_toko: string
+  /** ok = pulled, dilewati = synced a moment ago, ditunda = time budget used up, gagal = see pesan */
+  hasil: 'ok' | 'dilewati' | 'ditunda' | 'gagal'
+  baru: number
+  diperbarui: number
+  pesan: string | null
+}
+
+export interface SinkronPesananOtomatis {
+  /** false when live sync is switched off on the server */
+  aktif: boolean
+  jumlah_baru: number
+  jumlah_diperbarui: number
+  toko: SinkronTokoResult[]
+}
+
+export interface ProsesMassalResult {
+  berhasil: number
+  gagal: number
+  hasil: { id: string; id_eksternal: string | null; ok: boolean; pesan: string | null }[]
+}
