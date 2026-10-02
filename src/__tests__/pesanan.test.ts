@@ -4,11 +4,13 @@ import {
   bisaDibatalkan,
   bisaDicetak,
   bisaDiproses,
+  cocokFilterResi,
   ikutMarketplace,
   kelompokResi,
   labelStatus,
   nextActionLabel,
   pecahBatch,
+  sudahDicetak,
   sudahDiproses,
 } from '@/lib/pesanan'
 
@@ -91,5 +93,26 @@ describe('printing labels in bulk', () => {
     expect(grup.map((g) => g.map((x) => x.id))).toEqual([['1', '2'], ['3'], ['4']])
     const banyak = Array.from({ length: 120 }, (_, i) => p(String(i), 'a', 'J&T'))
     expect(kelompokResi(banyak).map((g) => g.length)).toEqual([50, 50, 20])
+  })
+})
+
+describe('printed-label mark', () => {
+  const siap = { status: 'to_ship' as const, status_marketplace: 'PROCESSED' }
+
+  it('knows whether a label was printed', () => {
+    expect(sudahDicetak({ resi_dicetak_at: '2026-10-02T09:00:00Z' })).toBe(true)
+    expect(sudahDicetak({ resi_dicetak_at: null })).toBe(false)
+    expect(sudahDicetak({})).toBe(false) // older backend without the field
+  })
+
+  it('filters printable orders by printed state', () => {
+    const belum = { ...siap, resi_dicetak_at: null }
+    const sudah = { ...siap, resi_dicetak_at: '2026-10-02T09:00:00Z' }
+    const kirim = { status: 'shipped' as const, status_marketplace: 'SHIPPED', resi_dicetak_at: null }
+    expect(cocokFilterResi(belum, 'belum')).toBe(true)
+    expect(cocokFilterResi(sudah, 'belum')).toBe(false)
+    expect(cocokFilterResi(sudah, 'sudah')).toBe(true)
+    expect(cocokFilterResi(kirim, 'belum')).toBe(false) // not printable at all
+    expect(cocokFilterResi(kirim, 'semua')).toBe(true)
   })
 })

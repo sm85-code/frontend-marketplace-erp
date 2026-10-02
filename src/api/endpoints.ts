@@ -239,6 +239,10 @@ export const unduhResi = (id: string, tipe: TemplateResi = 'THERMAL_AIR_WAYBILL'
     .then((r) => r.data)
     .catch(bacaErrorBlob)
 
+/** Mark the label as printed by hand (or clear the mark); printing already marks it automatically. */
+export const tandaiResiDicetak = (id: string, dicetak: boolean) =>
+  api.post<Pesanan>(`/pesanan/${id}/resi/tandai`, { dicetak }).then((r) => r.data)
+
 /** One PDF with the labels of several processed orders (same shop and courier, at most 50). */
 export const unduhResiMassal = (pesananIds: string[], tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
   api
