@@ -12,10 +12,12 @@ import type {
   Produk,
   ProdukListing,
   PublishTokoResult,
+  PushStokHargaResult,
   Settlement,
   StaffAkun,
   StokLedger,
   SyncPesananResult,
+  SyncProdukResult,
   User,
 } from '@/api/types'
 
@@ -81,7 +83,13 @@ export const syncPesananAkun = (akunId: string) =>
   api.post<SyncPesananResult>(`/akun/${akunId}/sync/pesanan`).then((r) => r.data)
 
 export const syncProdukAkun = (akunId: string) =>
-  api.post<{ ok: boolean; pulled: number }>(`/akun/${akunId}/sync/produk`).then((r) => r.data)
+  api.post<SyncProdukResult>(`/akun/${akunId}/sync/produk`).then((r) => r.data)
+
+/** The backend only sends when dryRun is false; the default preview changes nothing on the marketplace. */
+export const pushStokHargaAkun = (akunId: string, dryRun: boolean) =>
+  api
+    .post<PushStokHargaResult>(`/akun/${akunId}/push/stok-harga`, null, { params: { dry_run: dryRun } })
+    .then((r) => r.data)
 
 // --- Produk (SKU induk) -----------------------------------------------------
 

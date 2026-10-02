@@ -87,6 +87,40 @@ export default function AkunPage() {
     onError: (e) => toast.error(getApiError(e, 'Sync belum tersedia untuk platform/akun ini')),
   })
 
+  const syncProdukMut = useMutation({
+    mutationFn: endpoints.syncProdukAkun,
+    onSuccess: (data) => {
+      toast.success(
+        `Sync produk selesai — ${data.pulled} produk dibaca, ${data.listing_baru} listing baru tertaut, ` +
+          `${data.tanpa_sku_cocok} tanpa SKU yang cocok`,
+      )
+      qc.invalidateQueries({ queryKey: ['listing'] })
+    },
+    onError: (e) => toast.error(getApiError(e, 'Sync produk belum tersedia untuk platform/akun ini')),
+  })
+
+  const pushMut = useMutation({
+    mutationFn: async (akun: AkunMarketplace) => {
+      // Preview first: pushing overwrites the stock and price that Shopee holds right now.
+      const preview = await endpoints.pushStokHargaAkun(akun.id, true)
+      const ok = await confirm({
+        title: 'Kirim stok & harga ke Shopee?',
+        description:
+          `${preview.jumlah} listing toko "${akun.nama_toko}" akan dikirim. Stok dan harga di Shopee ` +
+          'akan DITIMPA dengan angka dari ERP. Pastikan stok ERP sudah benar.',
+        destructive: true,
+      })
+      return ok ? endpoints.pushStokHargaAkun(akun.id, false) : null
+    },
+    onSuccess: (data) => {
+      if (!data) return
+      const gagal = data.gagal?.length ?? 0
+      if (gagal) toast.warning(`Terkirim sebagian — ${data.stok_ok} stok, ${data.harga_ok} harga; ${gagal} gagal`)
+      else toast.success(`Terkirim — ${data.stok_ok} stok dan ${data.harga_ok} harga diperbarui`)
+    },
+    onError: (e) => toast.error(getApiError(e, 'Kirim stok & harga belum tersedia untuk platform/akun ini')),
+  })
+
   function openCreate() {
     setEditing(null)
     setForm({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
@@ -179,6 +213,16 @@ export default function AkunPage() {
                             <Button size="sm" variant="outline" onClick={() => syncMut.mutate(akun.id)}>
                               Tarik Pesanan
                             </Button>
+                          )}
+                          {akun.id_toko_eksternal && user?.role === 'owner' && (
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
+                                Tarik Produk
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
+                                Kirim Stok &amp; Harga
+                              </Button>
+                            </>
                           )}
                           {user?.role === 'owner' && (
                             <>
