@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { STATUS_LABELS, STATUS_ORDER } from '@/lib/pesanan'
+import { STATUS_LABELS, STATUS_ORDER, labelStatus } from '@/lib/pesanan'
 
 const emptyItem = { nama_produk: '', harga_satuan: '', qty: '1' }
 
@@ -122,7 +122,7 @@ export default function PesananPage() {
                       <TableCell>{p.nama_pembeli || '—'}</TableCell>
                       <TableCell>{fmtRp(p.total)}</TableCell>
                       <TableCell>
-                        <Badge variant={statusBadgeVariant(p.status)}>{STATUS_LABELS[p.status]}</Badge>
+                        <Badge variant={statusBadgeVariant(p.status)}>{labelStatus(p)}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button asChild size="sm" variant="outline">

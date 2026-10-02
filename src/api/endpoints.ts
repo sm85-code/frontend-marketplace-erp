@@ -198,6 +198,28 @@ export const createPesanan = (payload: {
 export const ubahStatusPesanan = (id: string, status: string) =>
   api.post<Pesanan>(`/pesanan/${id}/status`, { status }).then((r) => r.data)
 
+/** Arrange shipment on the marketplace (courier pickup). Only for orders pulled from Shopee. */
+export const prosesPesananMarketplace = (id: string) =>
+  api.post<Pesanan>(`/pesanan/${id}/proses`).then((r) => r.data)
+
+/** The marketplace's own shipping label as a PDF blob. */
+export const unduhResi = (id: string) =>
+  api
+    .get<Blob>(`/pesanan/${id}/resi`, { responseType: 'blob' })
+    .then((r) => r.data)
+    .catch(async (e) => {
+      // With responseType blob an error body is a Blob too; turn it back into JSON so getApiError can read it.
+      const body = e?.response?.data
+      if (body instanceof Blob) {
+        try {
+          e.response.data = JSON.parse(await body.text())
+        } catch {
+          /* keep the original error */
+        }
+      }
+      throw e
+    })
+
 export const setPengiriman = (id: string, payload: { kurir: string; nomor_resi: string; tanggal_kirim?: string }) =>
   api.post<Pesanan>(`/pesanan/${id}/pengiriman`, payload).then((r) => r.data)
 

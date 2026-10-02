@@ -102,6 +102,8 @@ export interface Pesanan {
   total: string
   tersinkron_marketplace: boolean
   catatan_sinkron: string | null
+  /** Marketplace's raw status (e.g. READY_TO_SHIP, PROCESSED); null for orders typed in by hand. */
+  status_marketplace: string | null
   kurir: string | null
   nomor_resi: string | null
   tanggal_kirim: string | null
