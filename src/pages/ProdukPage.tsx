@@ -7,6 +7,7 @@ import { qk } from '@/api/keys'
 import type { Produk } from '@/api/types'
 import { publishDefaults, publishMessage } from '@/lib/publishToko'
 import { useConfirm } from '@/components/ConfirmProvider'
+import SesuaikanStokDialog from '@/components/SesuaikanStokDialog'
 import Spinner from '@/components/Spinner'
 import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +39,7 @@ export default function ProdukPage() {
   const [q, setQ] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Produk | null>(null)
+  const [stokProduk, setStokProduk] = useState<Produk | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [publishing, setPublishing] = useState<Produk | null>(null)
   const [pub, setPub] = useState(publishDefaults({ harga_dasar: '0', stok: 0 }))
@@ -198,6 +200,9 @@ export default function ProdukPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1.5">
+                          <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
+                            Sesuaikan Stok
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => onToggleAktif(p)}>
                             {p.aktif ? 'Nonaktifkan' : 'Aktifkan'}
                           </Button>
@@ -344,6 +349,8 @@ export default function ProdukPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SesuaikanStokDialog produk={stokProduk} onClose={() => setStokProduk(null)} />
     </div>
   )
 }
