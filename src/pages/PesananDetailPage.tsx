@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
+import type { TemplateResi } from '@/api/endpoints'
 import { fmtDateTime, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
@@ -82,11 +83,11 @@ export default function PesananDetailPage() {
   })
 
   const cetakMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (tipe: TemplateResi) => {
       // Open the tab now (inside the click) so the popup blocker allows it; fill it once the PDF arrives.
       const tab = window.open('', '_blank')
       try {
-        const pdf = await endpoints.unduhResi(id!)
+        const pdf = await endpoints.unduhResi(id!, tipe)
         const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }))
         if (tab) tab.location.href = url
         else window.open(url, '_blank')
@@ -245,9 +246,14 @@ export default function PesananDetailPage() {
           </Button>
         )}
         {ikutMp && diproses && pesanan.status === 'to_ship' && (
-          <Button variant="outline" onClick={() => cetakMut.mutate()} disabled={cetakMut.isPending}>
-            Cetak Resi
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => cetakMut.mutate('THERMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+              Cetak Resi (A6)
+            </Button>
+            <Button variant="ghost" onClick={() => cetakMut.mutate('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+              Resi A4
+            </Button>
+          </>
         )}
         {bisaDibatalkan(pesanan) && (
           <Button variant="destructive" onClick={() => setBatalDialog(true)} disabled={batalMut.isPending}>
