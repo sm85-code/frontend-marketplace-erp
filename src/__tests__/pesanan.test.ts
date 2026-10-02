@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   TRANSISI_STATUS,
   bisaDibatalkan,
+  bisaDicetak,
   bisaDiproses,
   ikutMarketplace,
+  kelompokResi,
   labelStatus,
   nextActionLabel,
   pecahBatch,
@@ -72,5 +74,22 @@ describe('bulk actions and cancel', () => {
   it('splits ids into batches', () => {
     expect(pecahBatch([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]])
     expect(pecahBatch([], 10)).toEqual([])
+  })
+})
+
+describe('printing labels in bulk', () => {
+  it('only arranged orders that still wait for the courier can be printed', () => {
+    expect(bisaDicetak({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe(true)
+    expect(bisaDicetak({ status: 'to_ship', status_marketplace: 'READY_TO_SHIP' })).toBe(false)
+    expect(bisaDicetak({ status: 'shipped', status_marketplace: 'SHIPPED' })).toBe(false)
+    expect(bisaDicetak({ status: 'to_ship', status_marketplace: null })).toBe(false)
+  })
+
+  it('splits a selection per shop and courier, and by the 50 label limit', () => {
+    const p = (id: string, akun: string, kurir: string | null) => ({ id, akun_id: akun, kurir })
+    const grup = kelompokResi([p('1', 'a', 'J&T'), p('2', 'a', ' j&t '), p('3', 'a', 'JNE'), p('4', 'b', 'J&T')])
+    expect(grup.map((g) => g.map((x) => x.id))).toEqual([['1', '2'], ['3'], ['4']])
+    const banyak = Array.from({ length: 120 }, (_, i) => p(String(i), 'a', 'J&T'))
+    expect(kelompokResi(banyak).map((g) => g.length)).toEqual([50, 50, 20])
   })
 })

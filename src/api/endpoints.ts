@@ -218,23 +218,33 @@ export const prosesPesananMarketplace = (id: string) =>
 
 export type TemplateResi = 'THERMAL_AIR_WAYBILL' | 'NORMAL_AIR_WAYBILL'
 
+// With responseType blob an error body is a Blob too; turn it back into JSON so getApiError can read it.
+const bacaErrorBlob = async (e: unknown): Promise<never> => {
+  const err = e as { response?: { data?: unknown } }
+  const body = err?.response?.data
+  if (body instanceof Blob) {
+    try {
+      err.response!.data = JSON.parse(await body.text())
+    } catch {
+      /* keep the original error */
+    }
+  }
+  throw e
+}
+
 /** The marketplace's own shipping label as a PDF blob. Thermal is the 100x150 mm (about A6) template. */
 export const unduhResi = (id: string, tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
   api
     .get<Blob>(`/pesanan/${id}/resi`, { params: { tipe }, responseType: 'blob' })
     .then((r) => r.data)
-    .catch(async (e) => {
-      // With responseType blob an error body is a Blob too; turn it back into JSON so getApiError can read it.
-      const body = e?.response?.data
-      if (body instanceof Blob) {
-        try {
-          e.response.data = JSON.parse(await body.text())
-        } catch {
-          /* keep the original error */
-        }
-      }
-      throw e
-    })
+    .catch(bacaErrorBlob)
+
+/** One PDF with the labels of several processed orders (same shop and courier, at most 50). */
+export const unduhResiMassal = (pesananIds: string[], tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
+  api
+    .post<Blob>('/pesanan/resi-massal', { pesanan_ids: pesananIds, tipe }, { responseType: 'blob' })
+    .then((r) => r.data)
+    .catch(bacaErrorBlob)
 
 export const setPengiriman = (id: string, payload: { kurir: string; nomor_resi: string; tanggal_kirim?: string }) =>
   api.post<Pesanan>(`/pesanan/${id}/pengiriman`, payload).then((r) => r.data)

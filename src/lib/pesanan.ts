@@ -70,3 +70,18 @@ export function pecahBatch<T>(items: T[], ukuran: number): T[][] {
   for (let i = 0; i < items.length; i += ukuran) batch.push(items.slice(i, i + ukuran))
   return batch
 }
+
+/** A pulled order that is arranged on Shopee and still waits for the courier: its label can be printed. */
+export function bisaDicetak(p: Pick<Pesanan, 'status' | 'status_marketplace'>): boolean {
+  return ikutMarketplace(p) && p.status === 'to_ship' && p.status_marketplace === 'PROCESSED'
+}
+
+/** Shopee prints one shop and one courier per PDF, so a selection is split into those groups (at most `maks` each). */
+export function kelompokResi<T extends Pick<Pesanan, 'id' | 'akun_id' | 'kurir'>>(pesanan: T[], maks = 50): T[][] {
+  const grup = new Map<string, T[]>()
+  for (const p of pesanan) {
+    const kunci = `${p.akun_id ?? ''}|${(p.kurir ?? '').trim().toLowerCase()}`
+    grup.set(kunci, [...(grup.get(kunci) ?? []), p])
+  }
+  return [...grup.values()].flatMap((g) => pecahBatch(g, maks))
+}
