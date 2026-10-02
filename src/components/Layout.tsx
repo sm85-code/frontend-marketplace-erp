@@ -49,7 +49,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         <div className="flex min-w-0 items-center gap-2">
           <img src="/favicon.png" alt="" className="h-8 w-8 flex-shrink-0 rounded-md bg-white" />
-          <span className="font-heading truncate text-sm font-semibold">Marketplace ERP</span>
+          <span className="font-heading truncate text-sm font-semibold">Ampel Kuning ERP</span>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3 p-6">
             <img src="/favicon.png" alt="" className="h-11 w-11 flex-shrink-0 rounded-md bg-white" />
             <div>
-              <div className="font-heading text-base leading-tight font-semibold">Marketplace ERP</div>
+              <div className="font-heading text-base leading-tight font-semibold">Ampel Kuning ERP</div>
               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 Panel multi-toko
               </div>

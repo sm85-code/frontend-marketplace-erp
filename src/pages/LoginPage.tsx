@@ -40,7 +40,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="mx-auto mb-2 h-24 w-auto rounded-md bg-white" />
-          <CardTitle className="modern-brand-title text-xl">Marketplace ERP</CardTitle>
+          <CardTitle className="modern-brand-title text-xl">Ampel Kuning ERP</CardTitle>
           <CardDescription>Masuk untuk mengelola toko dan pesanan Anda</CardDescription>
         </CardHeader>
         <CardContent>
