@@ -48,7 +48,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
         <div className="flex min-w-0 items-center gap-2">
-          <img src="/favicon.png" alt="" className="h-8 w-8 flex-shrink-0 rounded-md bg-white" />
+          <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
           <span className="font-heading truncate text-sm font-semibold">Ampel Kuning ERP</span>
         </div>
       </div>
@@ -63,8 +63,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           className="m-0 flex h-full flex-col overflow-hidden rounded-none lg:m-4 lg:h-[calc(100dvh-2rem)] lg:rounded-2xl"
           style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
         >
-          <div className="flex items-center gap-3 p-6">
-            <img src="/favicon.png" alt="" className="h-11 w-11 flex-shrink-0 rounded-md bg-white" />
+          <div className="flex flex-col items-start gap-2 p-6">
+            <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-16 w-auto flex-shrink-0 rounded-md bg-white" />
             <div>
               <div className="font-heading text-base leading-tight font-semibold">Ampel Kuning ERP</div>
               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
