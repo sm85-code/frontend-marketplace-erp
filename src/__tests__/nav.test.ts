@@ -45,8 +45,8 @@ describe('menu order follows the daily workflow', () => {
 })
 
 describe('phone bottom bar', () => {
-  it('owner: the four most important tabs, in workflow order', () => {
-    expect(itemBawah(filterNavForUser({ role: 'owner' })).map((n) => n.to)).toEqual(['/dashboard', '/pesanan', '/katalog', '/produk'])
+  it('owner: the four most important tabs, left to right as agreed', () => {
+    expect(itemBawah(filterNavForUser({ role: 'owner' })).map((n) => n.to)).toEqual(['/dashboard', '/produk', '/katalog', '/pesanan'])
   })
 
   it('staff: dashboard, orders, shop and profile', () => {

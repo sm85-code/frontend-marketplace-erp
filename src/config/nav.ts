@@ -24,6 +24,8 @@ export interface NavItem {
   grup: GrupNav
   /** Priority for the phone bottom bar (1 = first to get a slot). Items without it live under "Lainnya". */
   bawah?: number
+  /** Left-to-right position on the phone bottom bar (independent of the sidebar order). */
+  posisiBawah?: number
 }
 
 export type GrupNav = 'harian' | 'produk' | 'keuangan' | 'pengaturan'
@@ -41,19 +43,19 @@ export const SLOT_BAWAH = 4
 
 export const ALL_ROLES: Role[] = ['admin', 'owner', 'staff']
 
-/** The order of this list IS the order in the sidebar, the drawer and the bottom bar. */
+/** The order of this list is the order in the sidebar and the drawer; the phone bottom bar uses `posisiBawah`. */
 export const NAV: NavItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES, grup: 'harian', bawah: 2 },
-  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES, grup: 'harian', bawah: 1 },
-  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 3 },
-  { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 4 },
+  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES, grup: 'harian', bawah: 2, posisiBawah: 1 },
+  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES, grup: 'harian', bawah: 1, posisiBawah: 4 },
+  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 3, posisiBawah: 3 },
+  { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 4, posisiBawah: 2 },
   { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
-  { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES, grup: 'pengaturan', bawah: 5 },
+  { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES, grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Staff', icon: Users, roles: ROLES_OWNER_ONLY, grup: 'pengaturan' },
-  { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, roles: ALL_ROLES, grup: 'pengaturan', bawah: 6 },
+  { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, roles: ALL_ROLES, grup: 'pengaturan', bawah: 6, posisiBawah: 6 },
 ]
 
 /** Visible items split into their sidebar sections (empty sections are dropped), keeping NAV order. */
@@ -61,7 +63,7 @@ export function kelompokNav(items: NavItem[]): { grup: (typeof GRUP_NAV)[number]
   return GRUP_NAV.map((grup) => ({ grup, items: items.filter((n) => n.grup === grup.id) })).filter((g) => g.items.length > 0)
 }
 
-/** The tabs of the phone bottom bar: the highest-priority visible items, shown in workflow (NAV) order. */
+/** The tabs of the phone bottom bar: the highest-priority visible items, shown left to right by `posisiBawah`. */
 export function itemBawah(items: NavItem[], maks = SLOT_BAWAH): NavItem[] {
   const terpilih = new Set(
     items
@@ -69,7 +71,7 @@ export function itemBawah(items: NavItem[], maks = SLOT_BAWAH): NavItem[] {
       .sort((a, b) => (a.bawah as number) - (b.bawah as number))
       .slice(0, maks),
   )
-  return items.filter((n) => terpilih.has(n))
+  return items.filter((n) => terpilih.has(n)).sort((a, b) => (a.posisiBawah ?? 99) - (b.posisiBawah ?? 99))
 }
 
 export function filterNavForUser(
