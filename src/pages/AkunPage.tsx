@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
+import { mulaiProgres, type Progres } from '@/lib/progres'
 import type { AkunMarketplace, Platform } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { BarHalaman, type KolomTabel, TabelLokal } from '@/components/daftar'
@@ -90,15 +91,17 @@ export default function AkunPage() {
 
   const syncProdukMut = useMutation({
     mutationFn: endpoints.syncProdukAkun,
-    onSuccess: (data) => {
-      toast.success(
+    onMutate: (akunId: string): Progres =>
+      mulaiProgres(`Menarik produk ${akunList?.find((a) => a.id === akunId)?.nama_toko ?? 'toko'} dari Shopee (bisa 1–2 menit)`),
+    onSuccess: (data, _id, progres) => {
+      progres.selesai(
         `Sync produk selesai — ${data.pulled} produk dibaca, ${data.listing_baru} listing baru tertaut, ` +
           `${data.tanpa_sku_cocok} tanpa SKU yang cocok. Lihat semuanya di menu Katalog Shopee.`,
       )
       qc.invalidateQueries({ queryKey: ['listing'] })
       qc.invalidateQueries({ queryKey: ['katalog'] })
     },
-    onError: (e) => toast.error(getApiError(e, 'Sync produk belum tersedia untuk platform/akun ini')),
+    onError: (e, _id, progres) => progres?.gagal(getApiError(e, 'Sync produk belum tersedia untuk platform/akun ini')),
   })
 
   const pushMut = useMutation({
@@ -112,13 +115,18 @@ export default function AkunPage() {
           'akan DITIMPA dengan angka dari ERP. Pastikan stok ERP sudah benar.',
         destructive: true,
       })
-      return ok ? endpoints.pushStokHargaAkun(akun.id, false) : null
-    },
-    onSuccess: (data) => {
-      if (!data) return
-      const gagal = data.gagal?.length ?? 0
-      if (gagal) toast.warning(`Terkirim sebagian — ${data.stok_ok} stok, ${data.harga_ok} harga; ${gagal} gagal`)
-      else toast.success(`Terkirim — ${data.stok_ok} stok dan ${data.harga_ok} harga diperbarui`)
+      if (!ok) return null
+      const progres = mulaiProgres(`Mengirim stok & harga ${akun.nama_toko} ke Shopee`)
+      try {
+        const hasil = await endpoints.pushStokHargaAkun(akun.id, false)
+        const gagal = hasil.gagal?.length ?? 0
+        if (gagal) progres.sebagian(`Terkirim sebagian — ${hasil.stok_ok} stok, ${hasil.harga_ok} harga; ${gagal} gagal`)
+        else progres.selesai(`Terkirim — ${hasil.stok_ok} stok dan ${hasil.harga_ok} harga diperbarui`)
+        return hasil
+      } catch (e) {
+        progres.gagal(getApiError(e, 'Kirim stok & harga belum tersedia untuk platform/akun ini'))
+        return null
+      }
     },
     onError: (e) => toast.error(getApiError(e, 'Kirim stok & harga belum tersedia untuk platform/akun ini')),
   })
