@@ -6,10 +6,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary/15 text-primary',
+        default: 'bg-primary/15 text-[color-mix(in_oklab,var(--primary)_65%,black)] dark:text-[color-mix(in_oklab,var(--primary)_65%,white)]',
         secondary: 'bg-muted text-foreground',
         outline: 'border border-border text-foreground',
-        destructive: 'bg-destructive/15 text-destructive',
+        destructive: 'bg-destructive/15 text-[color-mix(in_oklab,var(--destructive)_65%,black)] dark:text-[color-mix(in_oklab,var(--destructive)_65%,white)]',
       },
     },
     defaultVariants: { variant: 'default' },

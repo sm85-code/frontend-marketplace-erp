@@ -114,6 +114,8 @@ export interface Pesanan {
   kurir: string | null
   nomor_resi: string | null
   tanggal_kirim: string | null
+  /** When the buyer placed the order on the marketplace; null for older rows (fall back to created_at). */
+  dipesan_at?: string | null
   items: ItemPesanan[]
   created_at: string
   updated_at: string
@@ -332,4 +334,60 @@ export interface KirimKatalogHasil {
   pesan?: string
   produk_toko_id?: string
   foto?: number
+}
+
+// --- Pesanan: filterable, paged list and chip counts ---
+
+export type TahapPesanan = 'belum_bayar' | 'perlu_diproses' | 'menunggu_kurir' | 'dikirim' | 'selesai' | 'dibatalkan'
+
+export interface PesananHalaman {
+  total: number
+  halaman: number
+  per_halaman: number
+  items: Pesanan[]
+}
+
+export interface RingkasanPesanan {
+  tahap: Record<TahapPesanan | 'semua', number>
+  toko: { akun_id: string; nama_toko: string; jumlah: number }[]
+  total_toko: number
+}
+
+// --- Dashboard tables ---
+
+export interface DashboardToko {
+  akun_id: string | null
+  nama_toko: string
+  pesanan: number
+  omzet: string
+  belum_bayar: number
+  perlu_diproses: number
+  menunggu_kurir: number
+  dikirim: number
+  selesai: number
+  dibatalkan: number
+  pesanan_terbaru: string | null
+}
+
+export interface DashboardProduk {
+  nama_produk: string
+  qty_terjual: number
+  omzet: string
+  pesanan: number
+  toko: { nama_toko: string; qty: number }[]
+}
+
+export interface Dashboard {
+  dari: string
+  sampai: string
+  data_sejak: string | null
+  total_omzet: string
+  total_pesanan: number
+  rata_rata_pesanan: string
+  jumlah_toko: number
+  per_toko: DashboardToko[]
+  per_tahap: { tahap: TahapPesanan; jumlah: number; nilai: string }[]
+  produk_terlaris: DashboardProduk[]
+  per_hari: { tanggal: string; pesanan: number; omzet: string }[]
+  stok_kritis: StokKritis[]
 }

@@ -10,6 +10,7 @@ import {
   labelStatus,
   nextActionLabel,
   pecahBatch,
+  ringkasItem,
   sudahDicetak,
   sudahDiproses,
 } from '@/lib/pesanan'
@@ -114,5 +115,17 @@ describe('printed-label mark', () => {
     expect(cocokFilterResi(sudah, 'sudah')).toBe(true)
     expect(cocokFilterResi(kirim, 'belum')).toBe(false) // not printable at all
     expect(cocokFilterResi(kirim, 'semua')).toBe(true)
+  })
+})
+
+describe('ringkasItem', () => {
+  const item = (nama_produk: string, qty: number) => ({ nama_produk, qty }) as never
+
+  it('lists up to two products with quantity and counts the rest', () => {
+    expect(ringkasItem({ items: [] })).toBe('—')
+    expect(ringkasItem({ items: [item('Kursi', 2)] })).toBe('Kursi ×2')
+    expect(ringkasItem({ items: [item('Kursi', 2), item('Meja', 1), item('Alas', 1), item('Rak', 3)] })).toBe(
+      'Kursi ×2, Meja ×1 (+2 lainnya)',
+    )
   })
 })

@@ -4,6 +4,7 @@ import type {
   Gudang,
   IklanCampaign,
   IklanLaporan,
+  Dashboard,
   IklanMetrikHarian,
   KatalogDetail,
   KatalogList,
@@ -13,11 +14,13 @@ import type {
   OAuthCallbackResult,
   OAuthStart,
   Pesanan,
+  PesananHalaman,
   Produk,
   ProdukListing,
   PublishTokoResult,
   ProsesMassalResult,
   PushStokHargaResult,
+  RingkasanPesanan,
   SinkronPesananOtomatis,
   Settlement,
   StaffAkun,
@@ -207,6 +210,26 @@ export const transferStok = (payload: {
 
 export const listPesanan = (params: { platform?: string; akun_id?: string; status?: string } = {}) =>
   api.get<Pesanan[]>('/pesanan', { params }).then((r) => r.data)
+
+export interface FilterPesanan {
+  akun_id?: string
+  tahap?: string
+  resi?: string
+  q?: string
+  dari?: string
+  sampai?: string
+}
+
+/** Server-side filtered and paged list for the Pesanan page. */
+export const daftarPesanan = (params: FilterPesanan & { urut?: string; halaman?: number; per_halaman?: number }) =>
+  api.get<PesananHalaman>('/pesanan/daftar', { params }).then((r) => r.data)
+
+/** Counts for the status and shop chips (each row ignores its own filter). */
+export const ringkasanPesanan = (params: Pick<FilterPesanan, 'akun_id' | 'tahap' | 'q' | 'dari' | 'sampai'>) =>
+  api.get<RingkasanPesanan>('/pesanan/ringkasan', { params }).then((r) => r.data)
+
+export const laporanDashboard = (dari: string, sampai: string) =>
+  api.get<Dashboard>('/laporan/dashboard', { params: { dari, sampai } }).then((r) => r.data)
 
 export const getPesanan = (id: string) => api.get<Pesanan>(`/pesanan/${id}`).then((r) => r.data)
 
