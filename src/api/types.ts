@@ -290,6 +290,14 @@ export interface KatalogItem {
   status: string
   dikirim_toko_id: string | null
   dikirim_at: string | null
+  /** First photos only; the detail has all of them. */
+  foto: string[]
+  deskripsi_ringkas: string
+  berat_gram: number
+  panjang_cm: string
+  lebar_cm: string
+  tinggi_cm: string
+  diambil_at: string
 }
 
 export interface KatalogVarian {
@@ -301,12 +309,7 @@ export interface KatalogVarian {
 
 export interface KatalogDetail extends KatalogItem {
   deskripsi: string
-  foto: string[]
   varian: KatalogVarian[]
-  berat_gram: number
-  panjang_cm: string
-  lebar_cm: string
-  tinggi_cm: string
 }
 
 export interface KatalogList {
