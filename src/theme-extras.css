@@ -160,7 +160,9 @@
 }
 
 .spinner-wrap { display: inline-flex; align-items: center; gap: 0.6rem; }
-.spinner-wrap--column { flex-direction: column; justify-content: center; gap: 0.85rem; }
+/* The stacked spinner fills its container and centres itself, wherever a page puts it (card, table area, page). */
+.spinner-wrap--column { display: flex; width: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 0.85rem; padding-block: 2.5rem; }
+.page-loader .spinner-wrap--column { padding-block: 0; }
 .spinner-rings { position: relative; display: inline-block; flex-shrink: 0; }
 .spinner-ring {
   position: absolute; top: 0; left: 0; border-radius: 50%; border-style: solid;
