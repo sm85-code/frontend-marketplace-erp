@@ -84,7 +84,8 @@ export default function IklanPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Catatan kampanye</CardTitle>
+          <CardTitle>Catatan lokal</CardTitle>
+          <p className="text-sm text-muted-foreground">Pengingat saja. Tidak membuat iklan di Shopee.</p>
         </CardHeader>
         <CardContent>
           {isLoading ? (
