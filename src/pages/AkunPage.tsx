@@ -201,7 +201,7 @@ export default function AkunPage() {
               namaDari={(a) => a.nama_toko}
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
               aksi={(akun) => (
-                <div className="flex max-w-[22rem] flex-wrap justify-end gap-1.5">
+                <div className="flex flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap">
                   {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                     <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
                       Hubungkan Shopee
@@ -219,7 +219,7 @@ export default function AkunPage() {
                   )}
                   {isOwnerLevel(user?.role) && (
                     <>
-                      <Button size="sm" variant="ghost" onClick={() => openEdit(akun)}>
+                      <Button size="sm" variant="outline" onClick={() => openEdit(akun)}>
                         Edit
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => onDelete(akun)}>
@@ -229,7 +229,7 @@ export default function AkunPage() {
                   )}
                 </div>
               )}
-              minWidth={760}
+              minWidth={980}
             />
             {(akunList ?? []).length === 0 && (
               <p className="py-8 text-center text-muted-foreground">Belum ada toko. Tambahkan toko pertama Anda.</p>

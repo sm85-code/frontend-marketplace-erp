@@ -116,6 +116,24 @@ export default function StaffPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  const deleteUserMut = useMutation({
+    mutationFn: endpoints.deleteUser,
+    onSuccess: () => {
+      toast.success('Akun dihapus')
+      qc.invalidateQueries({ queryKey: ['users'] })
+      qc.invalidateQueries({ queryKey: ['staff-akun'] })
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  async function onDeleteUser(u: User) {
+    const ok = await confirm({
+      title: `Hapus akun ${u.nama}?`,
+      description: 'Akun ini tidak bisa login lagi dan penugasan tokonya ikut dihapus. Tindakan ini tidak bisa dibatalkan.',
+    })
+    if (ok) deleteUserMut.mutate(u.id)
+  }
+
   async function onRemove(id: string) {
     const ok = await confirm({ title: 'Hapus penugasan?', description: 'Staff ini tidak akan lagi bisa mengakses toko tersebut.' })
     if (ok) removeMut.mutate(id)
@@ -148,9 +166,16 @@ export default function StaffPage() {
               aksi={
                 adalahAdmin
                   ? (u) => (
-                      <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
-                        Ubah
-                      </Button>
+                      <div className="flex flex-nowrap items-center justify-end gap-1.5">
+                        <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
+                          Ubah
+                        </Button>
+                        {u.id !== saya?.id && (
+                          <Button size="sm" variant="destructive" onClick={() => onDeleteUser(u)} disabled={deleteUserMut.isPending}>
+                            Hapus
+                          </Button>
+                        )}
+                      </div>
                     )
                   : undefined
               }
