@@ -68,7 +68,11 @@ export const updateAkun = (
   }>,
 ) => api.patch<AkunMarketplace>(`/akun/${id}`, payload).then((r) => r.data)
 
-export const deleteAkun = (id: string) => api.delete(`/akun/${id}`)
+/** `bersamaPesanan` also deletes the shop's orders (for clearing test data). */
+export const deleteAkun = (id: string, bersamaPesanan = false) =>
+  api.delete<{ ok: boolean; pesanan_dihapus: number; listing_dihapus: number }>(`/akun/${id}`, {
+    params: bersamaPesanan ? { bersama_pesanan: true } : undefined,
+  })
 
 export const oauthShopeeStart = (akunId: string, redirectUri?: string) =>
   api
