@@ -143,6 +143,58 @@ export interface Settlement {
   catatan: string | null
 }
 
+/** Money Shopee released for one order (get_escrow_list + get_escrow_detail). Amounts are strings (decimals). */
+export interface SettlementPesanan {
+  id: string
+  akun_id: string
+  nama_toko: string | null
+  order_sn: string
+  dirilis_at: string | null
+  jumlah_cair: string
+  penjualan: string
+  voucher_penjual: string
+  komisi: string
+  layanan: string
+  transaksi: string
+  ongkir: string
+  subsidi_ongkir: string
+  penyesuaian: string
+}
+
+export interface SettlementPesananHalaman {
+  total: number
+  halaman: number
+  per_halaman: number
+  items: SettlementPesanan[]
+}
+
+export interface SettlementRingkasanBaris {
+  pesanan: number
+  jumlah_cair: string
+  penjualan: string
+  voucher_penjual: string
+  komisi: string
+  layanan: string
+  transaksi: string
+  ongkir: string
+  subsidi_ongkir: string
+  penyesuaian: string
+}
+
+export interface SettlementRingkasan {
+  toko: (SettlementRingkasanBaris & { akun_id: string; nama_toko: string; dirilis_terakhir: string | null })[]
+  total: SettlementRingkasanBaris
+}
+
+export interface SyncSettlementHasil {
+  ok: boolean
+  ditemukan: number
+  baru: number
+  diperbarui: number
+  /** Orders found but not read yet (the pull is capped per call): pull again until 0. */
+  sisa: number
+}
+
 export interface IklanCampaign {
   id: string
   akun_id: string
