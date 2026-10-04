@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
@@ -12,6 +12,7 @@ import {
   FilterTanggal,
   Medan,
   Paginasi,
+  PanelProgres,
   PemilihKolom,
   TabelData,
   TabelLokal,
@@ -27,6 +28,8 @@ import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
 import { kolomRingkasanToko, kolomSettlementPesanan } from './kolom'
 
 const PER_HALAMAN = 50
+/** A shop with a big backlog is pulled again by itself, up to this many times in one go. */
+const MAKS_PUTARAN = 8
 const AWAL = { toko: '', q: '', tanggal: '30', dari: '', sampai: '', urut: 'dirilis:desc' }
 const PRESET: PresetTanggal[] = ['semua', 'hari_ini', '7', '30', '90', 'bulan_ini', 'kustom']
 const HARI_TARIK = [
@@ -61,30 +64,49 @@ export default function DanaShopee() {
     placeholderData: (prev) => prev,
   })
 
+  // Progress of the pull: one shop after another, each shop repeated while Shopee still has orders waiting.
+  const [progres, setProgres] = useState<{ selesai: number; total: number; keterangan: string; mulai: number } | null>(null)
+  const berhenti = useRef(false)
   const tarikMut = useMutation({
     mutationFn: async () => {
-      // One shop after another: each pull is capped on the server, so one slow shop never blocks the whole request.
+      berhenti.current = false
+      const mulai = Date.now()
       let baru = 0
       let sisa = 0
       const gagal: string[] = []
-      for (const t of tokoShopee) {
-        try {
-          const h = await endpoints.syncSettlementAkun(t.id, Number(hariTarik))
-          baru += h.baru
-          sisa += h.sisa
-        } catch (e) {
-          gagal.push(`${t.nama_toko}: ${getApiError(e)}`)
+      for (const [i, t] of tokoShopee.entries()) {
+        if (berhenti.current) break
+        let putaran = 0
+        for (;;) {
+          putaran += 1
+          setProgres({
+            selesai: i,
+            total: tokoShopee.length,
+            mulai,
+            keterangan: `Toko ${i + 1} dari ${tokoShopee.length}: ${t.nama_toko}${putaran > 1 ? ` (lanjutan ${putaran})` : ''} · ${baru} pesanan baru sejauh ini`,
+          })
+          try {
+            const h = await endpoints.syncSettlementAkun(t.id, Number(hariTarik))
+            baru += h.baru
+            sisa = h.sisa
+            qc.invalidateQueries({ queryKey: ['settlement-pesanan'] }) // the tables fill up while it runs
+          } catch (e) {
+            gagal.push(`${t.nama_toko}: ${getApiError(e)}`)
+            sisa = 0
+          }
+          if (sisa === 0 || berhenti.current || putaran >= MAKS_PUTARAN) break
         }
       }
-      return { baru, sisa, gagal }
+      return { baru, sisa, gagal, dihentikan: berhenti.current }
     },
-    onSuccess: ({ baru, sisa, gagal }) => {
+    onSuccess: ({ baru, sisa, gagal, dihentikan }) => {
       qc.invalidateQueries({ queryKey: ['settlement-pesanan'] })
-      const ringkas = `${baru} pesanan baru${sisa > 0 ? `, masih ada ${sisa} — tekan Tarik lagi` : ''}`
+      const ringkas = `${baru} pesanan baru${dihentikan ? ' (dihentikan)' : ''}${sisa > 0 ? `, masih ada ${sisa} — tekan Tarik lagi` : ''}`
       if (gagal.length === 0) toast.success(`Dana cair ditarik: ${ringkas}`)
       else toast.warning(`Dana cair: ${ringkas}; ${gagal.length} toko gagal`, { description: gagal.slice(0, 3).join('\n') })
     },
     onError: (e) => toast.error(getApiError(e)),
+    onSettled: () => setProgres(null),
   })
 
   const semuaKolom = kolomSettlementPesanan()
@@ -128,7 +150,7 @@ export default function DanaShopee() {
           <FilterPilih id="dana-hari" label="Tarik dari Shopee" nilai={hariTarik} onUbah={setHariTarik} opsi={HARI_TARIK} />
           <FilterAksi>
             <Button onClick={() => tarikMut.mutate()} disabled={tarikMut.isPending || tokoShopee.length === 0}>
-              {tarikMut.isPending ? 'Menarik…' : 'Tarik sekarang'}
+              {tarikMut.isPending ? 'Sedang menarik…' : 'Tarik sekarang'}
             </Button>
           </FilterAksi>
           {f.berubah && (
@@ -139,6 +161,19 @@ export default function DanaShopee() {
             </FilterAksi>
           )}
         </BarFilter>
+
+        {progres && (
+          <PanelProgres
+            judul="Menarik dana cair dari Shopee"
+            selesai={progres.selesai}
+            total={progres.total}
+            keterangan={progres.keterangan}
+            mulai={progres.mulai}
+            onBatal={() => {
+              berhenti.current = true
+            }}
+          />
+        )}
 
         {ringkasanMuat ? (
           <Spinner column label="Memuat dana cair…" />

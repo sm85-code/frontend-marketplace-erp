@@ -6,6 +6,7 @@ import type { TemplateResi } from '@/api/endpoints'
 import type { Pesanan } from '@/api/types'
 import { getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
+import { mulaiProgres, type Progres } from '@/lib/progres'
 import { useConfirm } from '@/components/ConfirmProvider'
 import {
   BarFilter,
@@ -81,13 +82,14 @@ export default function PesananPage() {
 
   const segarkanMut = useMutation({
     mutationFn: () => endpoints.sinkronPesananOtomatis(true),
-    onSuccess: (data) => {
-      if (!data.aktif) toast.info('Sinkron Shopee belum diaktifkan di server.')
-      else toast.success(`Disegarkan — ${data.jumlah_baru} baru, ${data.jumlah_diperbarui} diperbarui`)
+    onMutate: (): Progres => mulaiProgres('Menyegarkan pesanan dari semua toko Shopee'),
+    onSuccess: (data, _v, progres) => {
+      if (!data.aktif) progres.sebagian('Sinkron Shopee belum diaktifkan di server.')
+      else progres.selesai(`Disegarkan — ${data.jumlah_baru} baru, ${data.jumlah_diperbarui} diperbarui`)
       qc.invalidateQueries({ queryKey: ['pesanan'] })
       qc.invalidateQueries({ queryKey: ['pesanan-sinkron'] })
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e, _v, progres) => progres?.gagal(getApiError(e)),
   })
 
   const prosesMassalMut = useMutation({

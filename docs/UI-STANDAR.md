@@ -13,7 +13,8 @@ halaman hanya mendeklarasikan isinya. Kalau ada revisi gaya, ubah di sana, bukan
 5. **Filter berbentuk dropdown berlabel**, sejajar, tidak memenuhi layar. Di HP filter terlipat.
 6. **Semua tabel bisa disortir** (klik judul kolom; di HP juga lewat dropdown *Urutan*).
 7. **Tabel tetap tabel di HP** (bukan kartu); geser samping, kolom identitas dan Aksi menempel.
-8. **Menu mengikuti alur kerja** dan sama di desktop dan HP.
+8. **Penarikan data tidak boleh terlihat diam.** Setiap aksi yang menarik data dari marketplace memakai `mulaiProgres()` (toast yang bertahan dan menghitung detik, `src/lib/progres.ts`); penarikan beberapa langkah (toko demi toko) memakai `PanelProgres` (bar, keterangan, tombol Hentikan).
+9. **Menu mengikuti alur kerja** dan sama di desktop dan HP.
 
 ## 2. Skala huruf dan kepadatan (token)
 
@@ -43,6 +44,7 @@ Kontrol (input, dropdown, tombol di bar filter) tingginya **44px** (target sentu
 | `TabelData` | tabel di semua lebar layar (di HP digeser samping), dari **satu** deklarasi kolom. **Tidak ada tampilan kartu.** |
 | `TabelLokal` | `TabelData` + sortir di browser, untuk data yang dimuat penuh |
 | `KepalaUrut` | judul kolom yang bisa diklik (`aria-sort`) |
+| `PanelProgres` | bar progres untuk penarikan bertahap (jumlah langkah selesai, keterangan, waktu berjalan, Hentikan) |
 | `PemilihKolom` | pilih kolom yang tampil (diingat di browser) |
 | `Paginasi` | nomor halaman, target 44px |
 | `BarPilihan` | bilah bawah untuk aksi massal |
