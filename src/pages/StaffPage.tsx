@@ -19,13 +19,13 @@ import { useAuth } from '@/lib/auth'
 import type { AkunMarketplace, Role, StaffAkun, User } from '@/api/types'
 
 const kolomPengguna: KolomTabel<User>[] = [
-  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, kartu: 'utama', sel: (u) => u.nama, nilai: (u) => u.nama },
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, sel: (u) => u.nama, nilai: (u) => u.nama },
   { kunci: 'username', judul: 'Username', kelas: 'font-mono', sel: (u) => u.username ?? '—', nilai: (u) => u.username },
   { kunci: 'email', judul: 'Email', sel: (u) => u.email ?? <span className="text-muted-foreground">—</span>, nilai: (u) => u.email },
   {
     kunci: 'role',
     judul: 'Role',
-    kartu: 'utama',
+   
     sel: (u) => <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{ROLE_LABELS[u.role]}</Badge>,
     nilai: (u) => u.role,
   },
@@ -44,8 +44,8 @@ function kolomPenugasan({
     return a ? `${a.nama_toko} (${PLATFORM_LABELS[a.platform]})` : '—'
   }
   return [
-    { kunci: 'staff', judul: 'Staff', kartu: 'utama', sel: staff, nilai: staff },
-    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'staff', judul: 'Staff', sel: staff, nilai: staff },
+    { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
   ]
 }
 

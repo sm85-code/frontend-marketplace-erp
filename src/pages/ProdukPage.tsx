@@ -33,8 +33,8 @@ const fisik = (f: typeof emptyForm) => ({
 const prosesValid = (f: typeof emptyForm) => !f.preorder || (/^\d+$/.test(f.hari_proses) && Number(f.hari_proses) >= 3 && Number(f.hari_proses) <= 14)
 
 const kolomProduk: KolomTabel<Produk>[] = [
-  { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, kartu: 'utama', sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
-  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', kartu: 'utama', sel: (p) => p.nama, nilai: (p) => p.nama },
+  { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', sel: (p) => p.nama, nilai: (p) => p.nama },
   { kunci: 'harga', judul: 'Harga Dasar', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.harga_dasar), nilai: (p) => Number(p.harga_dasar) },
   { kunci: 'stok', judul: 'Stok', rata: 'kanan', sel: (p) => p.stok, nilai: (p) => p.stok },
   { kunci: 'status', judul: 'Status', sel: (p) => <Badge variant={p.aktif ? 'default' : 'secondary'}>{p.aktif ? 'Aktif' : 'Nonaktif'}</Badge>, nilai: (p) => p.aktif },

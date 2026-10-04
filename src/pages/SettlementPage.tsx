@@ -45,11 +45,11 @@ function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Sett
       kunci: 'periode',
       judul: 'Periode',
       kelas: 'whitespace-nowrap',
-      kartu: 'utama',
+     
       sel: (s) => `${fmtDate(s.periode_mulai)} – ${fmtDate(s.periode_selesai)}`,
       nilai: (s) => new Date(s.periode_mulai),
     },
-    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
     { kunci: 'gross', judul: 'Gross', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(s.gross_sales), nilai: (s) => Number(s.gross_sales) },
     { kunci: 'fee', judul: 'Fee', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(potongan(s)), nilai: potongan },
     { kunci: 'net', judul: 'Net', rata: 'kanan', kelas: 'whitespace-nowrap font-semibold', sel: (s) => fmtRp(s.net), nilai: (s) => Number(s.net) },

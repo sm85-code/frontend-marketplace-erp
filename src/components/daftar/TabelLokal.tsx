@@ -23,7 +23,6 @@ export default function TabelLokal<T>({
   aksi?: (item: T) => ReactNode
   judulAksi?: string
   minWidth?: number
-  hp?: 'kartu' | 'tabel'
   footer?: ReactNode
 }) {
   const nilaiDari = (item: T, kunci: string) => kolom.find((k) => k.kunci === kunci)?.nilai?.(item)
