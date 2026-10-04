@@ -85,11 +85,11 @@ export default function PerformaShopee() {
           gagal.push(`${t.nama_toko}: ${getApiError(e)}`)
         }
       }
-      return { hari, gagal, dihentikan: berhenti.current }
+      return { hari, gagal, dihentikan: berhenti.current, jumlah: sasaran.length }
     },
-    onSuccess: ({ hari, gagal, dihentikan }) => {
+    onSuccess: ({ gagal, dihentikan, jumlah }) => {
       qc.invalidateQueries({ queryKey: ['iklan-toko'] })
-      const ringkas = `${sasaran.length} toko, ${hariSinkron} hari${dihentikan ? ' (dihentikan)' : ''}`
+      const ringkas = `${jumlah} toko, ${hariSinkron} hari${dihentikan ? ' (dihentikan)' : ''}`
       if (gagal.length === 0) toast.success(`Sinkronisasi iklan selesai: ${ringkas}`)
       else toast.warning(`Sinkronisasi iklan: ${ringkas}; ${gagal.length} toko gagal`, { description: gagal.slice(0, 3).join('\n') })
     },
