@@ -378,6 +378,7 @@ export const listKatalog = (params: {
   akun_id?: string
   q?: string
   belum_dikirim?: boolean
+  urut?: string
   halaman?: number
   per_halaman?: number
 }) => api.get<KatalogList>('/katalog-shopee', { params }).then((r) => r.data)
