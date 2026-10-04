@@ -6,7 +6,7 @@ import { getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
+import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,10 +14,40 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PLATFORM_LABELS, ROLES_ADMIN_ONLY, ROLE_LABELS, rolesYangBolehDibuat } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
-import type { Role, User } from '@/api/types'
+import type { AkunMarketplace, Role, StaffAkun, User } from '@/api/types'
+
+const kolomPengguna: KolomTabel<User>[] = [
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, kartu: 'utama', sel: (u) => u.nama, nilai: (u) => u.nama },
+  { kunci: 'username', judul: 'Username', kelas: 'font-mono', sel: (u) => u.username ?? '—', nilai: (u) => u.username },
+  { kunci: 'email', judul: 'Email', sel: (u) => u.email ?? <span className="text-muted-foreground">—</span>, nilai: (u) => u.email },
+  {
+    kunci: 'role',
+    judul: 'Role',
+    kartu: 'utama',
+    sel: (u) => <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{ROLE_LABELS[u.role]}</Badge>,
+    nilai: (u) => u.role,
+  },
+]
+
+function kolomPenugasan({
+  userMap,
+  akunMap,
+}: {
+  userMap: Map<string, User>
+  akunMap: Map<string, AkunMarketplace>
+}): KolomTabel<StaffAkun>[] {
+  const staff = (r: StaffAkun) => userMap.get(r.user_id)?.nama ?? '—'
+  const toko = (r: StaffAkun) => {
+    const a = akunMap.get(r.akun_id)
+    return a ? `${a.nama_toko} (${PLATFORM_LABELS[a.platform]})` : '—'
+  }
+  return [
+    { kunci: 'staff', judul: 'Staff', kartu: 'utama', sel: staff, nilai: staff },
+    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+  ]
+}
 
 export default function StaffPage() {
   const qc = useQueryClient()
@@ -94,15 +124,12 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Staff</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
+      <BarHalaman judul="Staff">
+        <Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko
           </Button>
           <Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button>
-        </div>
-      </div>
+      </BarHalaman>
 
       <Card>
         <CardHeader>
@@ -112,38 +139,24 @@ export default function StaffPage() {
           {isLoading ? (
             <Spinner column label="Memuat pengguna…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    {adalahAdmin && <TableHead className="text-right">Aksi</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(users ?? []).map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.nama}</TableCell>
-                      <TableCell className="font-mono text-sm">{u.username ?? '—'}</TableCell>
-                      <TableCell>{u.email ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                      <TableCell>
-                        <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{ROLE_LABELS[u.role]}</Badge>
-                      </TableCell>
-                      {adalahAdmin && (
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
-                            Ubah
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableShell>
+            <TabelLokal
+              label="Daftar pengguna"
+              items={users}
+              kolom={kolomPengguna}
+              idDari={(u) => u.id}
+              namaDari={(u) => u.nama}
+              urutAwal={{ kunci: 'nama', arah: 'asc' }}
+              aksi={
+                adalahAdmin
+                  ? (u) => (
+                      <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
+                        Ubah
+                      </Button>
+                    )
+                  : undefined
+              }
+              minWidth={600}
+            />
           )}
         </CardContent>
       </Card>
@@ -153,40 +166,23 @@ export default function StaffPage() {
           <CardTitle>Penugasan Staff ke Toko</CardTitle>
         </CardHeader>
         <CardContent>
-          <TableShell>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Toko</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(staffAkun ?? []).map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{userMap.get(row.user_id)?.nama ?? '—'}</TableCell>
-                    <TableCell>
-                      {akunMap.get(row.akun_id)?.nama_toko ?? '—'}
-                      {akunMap.get(row.akun_id) && ` (${PLATFORM_LABELS[akunMap.get(row.akun_id)!.platform]})`}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="destructive" onClick={() => onRemove(row.id)}>
-                        Hapus
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {(staffAkun ?? []).length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="py-6 text-center text-muted-foreground">
-                      Belum ada penugasan.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableShell>
+          <>
+            <TabelLokal
+              label="Penugasan staff ke toko"
+              items={staffAkun}
+              kolom={kolomPenugasan({ userMap, akunMap })}
+              idDari={(r) => r.id}
+              namaDari={(r) => r.id}
+              urutAwal={{ kunci: 'staff', arah: 'asc' }}
+              aksi={(row) => (
+                <Button size="sm" variant="destructive" onClick={() => onRemove(row.id)}>
+                  Hapus
+                </Button>
+              )}
+              minWidth={460}
+            />
+            {(staffAkun ?? []).length === 0 && <p className="py-6 text-center text-muted-foreground">Belum ada penugasan.</p>}
+          </>
         </CardContent>
       </Card>
 
@@ -197,12 +193,12 @@ export default function StaffPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Nama</Label>
-              <Input value={userForm.nama} onChange={(e) => setUserForm((f) => ({ ...f, nama: e.target.value }))} />
+              <Label htmlFor="staff-nama-1">Nama</Label>
+              <Input id="staff-nama-1" value={userForm.nama} onChange={(e) => setUserForm((f) => ({ ...f, nama: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Username</Label>
-              <Input
+              <Label htmlFor="staff-username-2">Username</Label>
+              <Input id="staff-username-2"
                 value={userForm.username}
                 autoCapitalize="none"
                 onChange={(e) => setUserForm((f) => ({ ...f, username: e.target.value }))}
@@ -210,17 +206,17 @@ export default function StaffPage() {
               <p className="text-xs text-muted-foreground">3–32 karakter: huruf, angka, titik, garis bawah, atau strip. Dipakai untuk login.</p>
             </div>
             <div className="space-y-1.5">
-              <Label>Email (opsional)</Label>
-              <Input type="email" value={userForm.email} onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))} />
+              <Label htmlFor="staff-email-opsional-3">Email (opsional)</Label>
+              <Input id="staff-email-opsional-3" type="email" value={userForm.email} onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Password Sementara</Label>
-              <Input type="text" value={userForm.password} onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))} minLength={8} />
+              <Label htmlFor="staff-password-sementara-4">Password Sementara</Label>
+              <Input id="staff-password-sementara-4" type="text" value={userForm.password} onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))} minLength={8} />
             </div>
             <div className="space-y-1.5">
-              <Label>Role</Label>
+              <Label htmlFor="staff-role-5">Role</Label>
               <Select value={userForm.role} onValueChange={(v) => setUserForm((f) => ({ ...f, role: v as Role }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="staff-role-5" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -254,8 +250,8 @@ export default function StaffPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Username</Label>
-              <Input
+              <Label htmlFor="staff-username-6">Username</Label>
+              <Input id="staff-username-6"
                 value={editForm.username}
                 autoCapitalize="none"
                 onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
@@ -263,13 +259,13 @@ export default function StaffPage() {
               <p className="text-xs text-muted-foreground">Hanya admin yang bisa mengubah username. Pengguna masuk dengan username ini.</p>
             </div>
             <div className="space-y-1.5">
-              <Label>Nama</Label>
-              <Input value={editForm.nama} onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))} />
+              <Label htmlFor="staff-nama-7">Nama</Label>
+              <Input id="staff-nama-7" value={editForm.nama} onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Role</Label>
+              <Label htmlFor="staff-role-8">Role</Label>
               <Select value={editForm.role} onValueChange={(v) => setEditForm((f) => ({ ...f, role: v as Role }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="staff-role-8" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -309,9 +305,9 @@ export default function StaffPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Staff</Label>
+              <Label htmlFor="staff-staff-9">Staff</Label>
               <Select value={assignForm.user_id} onValueChange={(v) => setAssignForm((f) => ({ ...f, user_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="staff-staff-9" className="w-full">
                   <SelectValue placeholder="Pilih staff" />
                 </SelectTrigger>
                 <SelectContent>
@@ -324,9 +320,9 @@ export default function StaffPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Toko</Label>
+              <Label htmlFor="staff-toko-10">Toko</Label>
               <Select value={assignForm.akun_id} onValueChange={(v) => setAssignForm((f) => ({ ...f, akun_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="staff-toko-10" className="w-full">
                   <SelectValue placeholder="Pilih toko" />
                 </SelectTrigger>
                 <SelectContent>

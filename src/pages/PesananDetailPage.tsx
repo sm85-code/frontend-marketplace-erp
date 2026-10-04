@@ -328,9 +328,9 @@ export default function PesananDetailPage() {
               diurungkan.
             </p>
             <div className="space-y-1.5">
-              <Label>Alasan</Label>
+              <Label htmlFor="pesanandetail-alasan-1">Alasan</Label>
               <Select value={alasanBatal} onValueChange={setAlasanBatal}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="pesanandetail-alasan-1" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -361,12 +361,12 @@ export default function PesananDetailPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Kurir</Label>
-              <Input value={kurir} onChange={(e) => setKurir(e.target.value)} placeholder="mis. JNE, J&T, SiCepat" />
+              <Label htmlFor="pesanandetail-kurir-2">Kurir</Label>
+              <Input id="pesanandetail-kurir-2" value={kurir} onChange={(e) => setKurir(e.target.value)} placeholder="mis. JNE, J&T, SiCepat" />
             </div>
             <div className="space-y-1.5">
-              <Label>Nomor Resi</Label>
-              <Input value={nomorResi} onChange={(e) => setNomorResi(e.target.value)} />
+              <Label htmlFor="pesanandetail-nomor-resi-3">Nomor Resi</Label>
+              <Input id="pesanandetail-nomor-resi-3" value={nomorResi} onChange={(e) => setNomorResi(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

@@ -6,15 +6,14 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtDate, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
-import type { StatusIklan } from '@/api/types'
+import type { IklanMetrikHarian, StatusIklan } from '@/api/types'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
+import { type KolomTabel, TabelLokal } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 const TRANSISI: Record<StatusIklan, StatusIklan[]> = {
   draft: ['aktif', 'selesai'],
@@ -28,6 +27,13 @@ function isoDaysAgo(days: number) {
   d.setDate(d.getDate() - days)
   return d.toISOString().slice(0, 10)
 }
+
+const kolomMetrik: KolomTabel<IklanMetrikHarian>[] = [
+  { kunci: 'tanggal', judul: 'Tanggal', kelas: 'whitespace-nowrap', sel: (m) => fmtDate(m.tanggal), nilai: (m) => new Date(m.tanggal) },
+  { kunci: 'impression', judul: 'Impression', rata: 'kanan', sel: (m) => m.impression.toLocaleString('id-ID'), nilai: (m) => m.impression },
+  { kunci: 'klik', judul: 'Klik', rata: 'kanan', sel: (m) => m.klik.toLocaleString('id-ID'), nilai: (m) => m.klik },
+  { kunci: 'biaya', judul: 'Biaya', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (m) => fmtRp(m.biaya), nilai: (m) => Number(m.biaya) },
+]
 
 export default function IklanDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -109,12 +115,12 @@ export default function IklanDetailPage() {
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1.5">
-              <Label>Dari</Label>
-              <Input type="date" value={dari} onChange={(e) => setDari(e.target.value)} />
+              <Label htmlFor="iklandetail-dari-1">Dari</Label>
+              <Input id="iklandetail-dari-1" type="date" value={dari} onChange={(e) => setDari(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Sampai</Label>
-              <Input type="date" value={sampai} onChange={(e) => setSampai(e.target.value)} />
+              <Label htmlFor="iklandetail-sampai-2">Sampai</Label>
+              <Input id="iklandetail-sampai-2" type="date" value={sampai} onChange={(e) => setSampai(e.target.value)} />
             </div>
           </div>
           {laporan && (
@@ -160,55 +166,39 @@ export default function IklanDetailPage() {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="space-y-1.5">
-              <Label>Tanggal</Label>
-              <Input type="date" value={metrikForm.tanggal} onChange={(e) => setMetrikForm((f) => ({ ...f, tanggal: e.target.value }))} />
+              <Label htmlFor="iklandetail-tanggal-3">Tanggal</Label>
+              <Input id="iklandetail-tanggal-3" type="date" value={metrikForm.tanggal} onChange={(e) => setMetrikForm((f) => ({ ...f, tanggal: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Impression</Label>
-              <Input type="number" value={metrikForm.impression} onChange={(e) => setMetrikForm((f) => ({ ...f, impression: e.target.value }))} />
+              <Label htmlFor="iklandetail-impression-4">Impression</Label>
+              <Input id="iklandetail-impression-4" type="number" value={metrikForm.impression} onChange={(e) => setMetrikForm((f) => ({ ...f, impression: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Klik</Label>
-              <Input type="number" value={metrikForm.klik} onChange={(e) => setMetrikForm((f) => ({ ...f, klik: e.target.value }))} />
+              <Label htmlFor="iklandetail-klik-5">Klik</Label>
+              <Input id="iklandetail-klik-5" type="number" value={metrikForm.klik} onChange={(e) => setMetrikForm((f) => ({ ...f, klik: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Biaya (Rp)</Label>
-              <Input type="number" value={metrikForm.biaya} onChange={(e) => setMetrikForm((f) => ({ ...f, biaya: e.target.value }))} />
+              <Label htmlFor="iklandetail-biaya-rp-6">Biaya (Rp)</Label>
+              <Input id="iklandetail-biaya-rp-6" type="number" value={metrikForm.biaya} onChange={(e) => setMetrikForm((f) => ({ ...f, biaya: e.target.value }))} />
             </div>
           </div>
           <Button onClick={() => metrikMut.mutate()} disabled={metrikMut.isPending}>
             Simpan Metrik Hari Ini
           </Button>
 
-          <TableShell>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Impression</TableHead>
-                  <TableHead>Klik</TableHead>
-                  <TableHead className="text-right">Biaya</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(metrikList ?? []).map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell>{fmtDate(m.tanggal)}</TableCell>
-                    <TableCell>{m.impression}</TableCell>
-                    <TableCell>{m.klik}</TableCell>
-                    <TableCell className="text-right">{fmtRp(m.biaya)}</TableCell>
-                  </TableRow>
-                ))}
-                {(metrikList ?? []).length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
-                      Belum ada data spend harian.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableShell>
+          <>
+            <TabelLokal
+              label="Spend harian campaign"
+              items={metrikList}
+              kolom={kolomMetrik}
+              idDari={(m) => m.id}
+              namaDari={(m) => fmtDate(m.tanggal)}
+              urutAwal={{ kunci: 'tanggal', arah: 'desc' }}
+              hp="tabel"
+              minWidth={420}
+            />
+            {(metrikList ?? []).length === 0 && <p className="py-6 text-center text-muted-foreground">Belum ada data spend harian.</p>}
+          </>
         </CardContent>
       </Card>
     </div>

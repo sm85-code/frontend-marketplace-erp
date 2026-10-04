@@ -1,8 +1,8 @@
 /* Shell / sidebar extras ported from frontend-siabumdes (adapted for oklch tokens). */
 
 .nav-ico {
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 0.55rem;
   display: inline-flex;
   align-items: center;
@@ -22,10 +22,10 @@
 .side-link {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 0.75rem;
-  font-size: 0.88rem;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.7rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 500;
   text-decoration: none;
@@ -220,4 +220,135 @@
 
 .tab-strip::-webkit-scrollbar {
   display: none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Layout helpers shared by all list pages (Pesanan, Katalog, Dashboard).
+   - .bar-halaman : page title on the left, actions on the right, wraps on phones.
+   - .bar-filter  : labelled filter controls on one even grid. Inputs, selects and buttons get the same
+                    44px height (also the minimum touch target), so a row never "jumps"; the grid
+                    reflows by itself: many columns on desktop, 2 on a phone, 1 on a very narrow one.
+   ------------------------------------------------------------------------------------------------ */
+.bar-halaman {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.bar-filter {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.bar-filter > .span-2 {
+  grid-column: span 2;
+}
+
+.bar-filter input,
+.bar-filter [data-slot='select-trigger'],
+.bar-filter [data-slot='button'] {
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 1rem;
+}
+
+/* A plain control (checkbox + text) that must line up with the inputs next to it. */
+.bar-filter .kontrol {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 40rem) {
+  .bar-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bar-filter > .span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 20rem) {
+  .bar-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Pagination: touch-sized buttons that wrap instead of overflowing. */
+.paginasi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.paginasi [data-slot='button'] {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+
+/* ------------------------------------------------------------------------------------------------
+   Type scale and density for data (tables, cards, filter controls).
+   Phones show the most: smaller text and tighter rows; the user can pick Kecil / Sedang / Besar in
+   Tampilan (html[data-huruf]). Tap targets stay >= 44px through control height, not font size.
+   ------------------------------------------------------------------------------------------------ */
+:root {
+  --skala-huruf: 1;
+  --teks-data: calc(0.8125rem * var(--skala-huruf)); /* 13px: table cells, card values */
+  --teks-kecil: calc(0.75rem * var(--skala-huruf)); /* 12px: second lines, hints */
+  --teks-judul: calc(0.6875rem * var(--skala-huruf)); /* 11px: column headings */
+  --pad-sel-x: 0.625rem;
+  --pad-sel-y: 0.4rem;
+}
+
+@media (max-width: 47.99rem) {
+  :root {
+    --teks-data: calc(0.75rem * var(--skala-huruf)); /* 12px */
+    --teks-kecil: calc(0.6875rem * var(--skala-huruf)); /* 11px */
+    --teks-judul: calc(0.625rem * var(--skala-huruf)); /* 10px */
+    --pad-sel-x: 0.5rem;
+    --pad-sel-y: 0.3rem;
+  }
+}
+
+:root[data-huruf='kecil'] {
+  --skala-huruf: 0.92;
+}
+
+:root[data-huruf='besar'] {
+  --skala-huruf: 1.14;
+}
+
+.teks-data {
+  font-size: var(--teks-data);
+}
+
+.teks-kecil {
+  font-size: var(--teks-kecil);
+}
+
+.teks-judul {
+  font-size: var(--teks-judul);
+}
+
+/* Page title scales down on phones so it does not eat the first screen. */
+.page-h1 {
+  font-size: 1.25rem;
+}
+@media (min-width: 48rem) {
+  .page-h1 {
+    font-size: 1.5rem;
+  }
+}
+
+.bar-filter input,
+.bar-filter [data-slot='select-trigger'],
+.bar-filter [data-slot='button'],
+.bar-filter .kontrol {
+  font-size: var(--teks-data);
 }

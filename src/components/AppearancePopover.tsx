@@ -2,6 +2,7 @@ import { Palette } from 'lucide-react'
 import {
   BASE_COLORS,
   FONTS,
+  HURUF,
   MODES,
   THEMES,
   WALLPAPERS,
@@ -9,6 +10,7 @@ import {
   type BaseColor,
   type ColorTheme,
   type FontId,
+  type HurufId,
   type Mode,
   type WallpaperId,
 } from '@/lib/theme'
@@ -36,6 +38,8 @@ export default function AppearancePopover({
     setWallpaper,
     mode,
     setMode,
+    huruf,
+    setHuruf,
   } = useTheme()
 
   return (
@@ -137,6 +141,24 @@ export default function AppearancePopover({
             {FONTS.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="huruf-switcher">
+            Ukuran huruf data
+          </label>
+          <select
+            id="huruf-switcher"
+            data-testid="huruf-switcher"
+            className={selectClass}
+            value={huruf}
+            onChange={(e) => setHuruf(e.target.value as HurufId)}
+          >
+            {HURUF.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.label}
               </option>
             ))}
           </select>

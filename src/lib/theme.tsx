@@ -46,6 +46,13 @@ export const WALLPAPERS = [
   { id: 'aurora', label: 'Aurora' },
 ] as const
 
+export const HURUF = [
+  { id: 'kecil', label: 'Kecil (lebih banyak data)' },
+  { id: 'sedang', label: 'Sedang (bawaan)' },
+  { id: 'besar', label: 'Besar' },
+] as const
+
+export type HurufId = (typeof HURUF)[number]['id']
 export type FontId = (typeof FONTS)[number]['id']
 export type ColorTheme = (typeof THEMES)[number]['id']
 export type BaseColor = (typeof BASE_COLORS)[number]['id']
@@ -57,12 +64,14 @@ const THEME_KEY = 'mpe-theme'
 const BASE_KEY = 'mpe-base'
 const WALLPAPER_KEY = 'mpe-wallpaper'
 const MODE_KEY = 'mpe-mode'
+const HURUF_KEY = 'mpe-huruf'
 
 const VALID_FONTS = FONTS.map((f) => f.id) as string[]
 const VALID_THEMES = THEMES.map((t) => t.id) as string[]
 const VALID_BASE_COLORS = BASE_COLORS.map((b) => b.id) as string[]
 const VALID_WALLPAPERS = WALLPAPERS.map((w) => w.id) as string[]
 const VALID_MODES = MODES.map((m) => m.id) as string[]
+const VALID_HURUF = HURUF.map((h) => h.id) as string[]
 
 function readStored<T extends string>(key: string, validIds: string[], fallback: T): T {
   try {
@@ -85,6 +94,9 @@ interface ThemeContextValue {
   setWallpaper: (w: WallpaperId) => void
   mode: Mode
   setMode: (m: Mode) => void
+  /** Size of the text in tables and cards (scales the --teks-* tokens in theme-extras.css). */
+  huruf: HurufId
+  setHuruf: (h: HurufId) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -99,6 +111,8 @@ const ThemeContext = createContext<ThemeContextValue>({
   setWallpaper: () => {},
   mode: 'light',
   setMode: () => {},
+  huruf: 'sedang',
+  setHuruf: () => {},
 })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -113,6 +127,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     readStored(WALLPAPER_KEY, VALID_WALLPAPERS, 'none'),
   )
   const [mode, setMode] = useState<Mode>(() => readStored(MODE_KEY, VALID_MODES, 'light'))
+  const [huruf, setHuruf] = useState<HurufId>(() => readStored(HURUF_KEY, VALID_HURUF, 'sedang'))
 
   useEffect(() => {
     document.documentElement.setAttribute('data-font', font)
@@ -159,6 +174,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [mode])
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-huruf', huruf)
+    try {
+      localStorage.setItem(HURUF_KEY, huruf)
+    } catch {
+      /* private mode */
+    }
+  }, [huruf])
+
   return (
     <ThemeContext.Provider
       value={{
@@ -173,6 +197,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setWallpaper,
         mode,
         setMode,
+        huruf,
+        setHuruf,
       }}
     >
       {children}

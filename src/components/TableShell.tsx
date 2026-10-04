@@ -12,7 +12,10 @@ export default function TableShell({
   label?: string
 }) {
   return (
-    <div className="w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" {...(label ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}>
+    <div
+      // `relative` makes this the containing block of the hidden (sr-only, absolutely positioned) texts inside the
+      // table, so they are clipped here instead of stretching the whole page sideways.
+      className="relative w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" {...(label ? { role: 'region', 'aria-label': label, tabIndex: 0 } : {})}>
       <div style={{ minWidth }}>{children}</div>
     </div>
   )
