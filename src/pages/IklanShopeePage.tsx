@@ -35,7 +35,7 @@ export default function IklanShopeePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Iklan Shopee</h1>
+      <h2 className="text-lg font-semibold">Kelola di Shopee</h2>
       <p className="text-sm text-muted-foreground">Seluruh API iklan yang terdokumentasi. Iklan otomatis dan GMV Max hanya jalan jika toko di-whitelist Shopee.</p>
       <div className="max-w-md space-y-2">
         <Label>Toko</Label>
