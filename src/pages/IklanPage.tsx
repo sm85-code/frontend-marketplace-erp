@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PLATFORM_LABELS } from '@/config/roles'
 import PerformaShopee from './iklan/PerformaShopee'
+import IklanShopee from './IklanShopeePage'
 
 const emptyForm = { akun_id: '', produk_id: '', nama: '', budget_harian: '0', tanggal_mulai: '' }
 
@@ -38,6 +39,7 @@ function kolomCampaign(akunMap: Map<string, AkunMarketplace>): KolomTabel<IklanC
 }
 
 export default function IklanPage() {
+
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -107,6 +109,7 @@ export default function IklanPage() {
         </CardContent>
       </Card>
 
+      <IklanShopee />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
