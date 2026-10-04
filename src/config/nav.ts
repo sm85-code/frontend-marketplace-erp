@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Boxes,
   Home,
+  LayoutGrid,
   Link2,
   Megaphone,
   Package,
@@ -30,6 +31,7 @@ export const ALL_ROLES: Role[] = ['admin', 'owner', 'staff']
 export const NAV: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES },
   { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES },
+  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY },
   { to: '/produk', label: 'Produk (SKU)', icon: Package, roles: ROLES_OWNER_ONLY },
   { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY },
