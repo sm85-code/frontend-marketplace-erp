@@ -28,13 +28,28 @@ export function ringkasKirim(hasil: KirimKatalogHasil[]): string {
   return bagian.length ? `Terkirim ke toko web: ${bagian.join(', ')}` : 'Tidak ada produk yang dikirim'
 }
 
+/**
+ * Product status as Shopee reports it (item_status) and as Seller Centre words it. The filter, the status column and
+ * the grid cards all read this list, so a wording change is made here only.
+ */
+export const STATUS_SHOPEE = [
+  { value: 'NORMAL', label: 'Aktif' },
+  { value: 'UNLIST', label: 'Tidak aktif' },
+  { value: 'BANNED', label: 'Diblokir' },
+  { value: 'REVIEWING', label: 'Sedang ditinjau' },
+] as const
+
+export const STATUS_AWAL_KATALOG = 'NORMAL'
+
+export const labelStatusShopee = (status: string): string => STATUS_SHOPEE.find((s) => s.value === status)?.label ?? status
+
 export const URUTAN_KATALOG = [
   { value: 'toko', label: 'Toko' },
   { value: 'nama', label: 'Nama (judul sama berdekatan)' },
   { value: 'harga_naik', label: 'Harga termurah' },
   { value: 'harga_turun', label: 'Harga termahal' },
   { value: 'stok', label: 'Stok terbanyak' },
-  { value: 'terbaru', label: 'Terakhir ditarik' },
+  { value: 'terbaru', label: 'Terakhir disinkronkan' },
 ] as const
 
 /** "20×10×5" or "—" when the shop did not fill the package size. */

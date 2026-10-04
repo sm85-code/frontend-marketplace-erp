@@ -2,7 +2,7 @@ import { fmtDate } from '@/api/client'
 import type { KatalogItem } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
-import { rentangHarga, ukuranPaket } from '@/lib/katalog'
+import { labelStatusShopee, rentangHarga, ukuranPaket } from '@/lib/katalog'
 
 const Kosong = () => <span className="text-muted-foreground">—</span>
 
@@ -106,8 +106,8 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       kunci: 'status',
       judul: 'Status tayang',
       kelas: 'whitespace-nowrap',
-      urut: { kunci: 'status', label: ['Tayang dulu', 'Tidak tayang dulu'] },
-      sel: (p) => (p.status === 'NORMAL' ? <Badge variant="secondary">Tayang</Badge> : <Badge variant="outline">Tidak tayang</Badge>),
+      urut: { kunci: 'status', label: ['Aktif dulu', 'Tidak aktif dulu'] },
+      sel: (p) => <Badge variant={p.status === 'NORMAL' ? 'secondary' : 'outline'}>{labelStatusShopee(p.status)}</Badge>,
     },
     {
       kunci: 'dikirim',
@@ -118,7 +118,7 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
     },
     {
       kunci: 'diambil',
-      judul: 'Terakhir ditarik',
+      judul: 'Terakhir disinkronkan',
       bawaan: false,
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'diambil', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },

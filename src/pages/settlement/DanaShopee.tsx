@@ -32,7 +32,7 @@ const PER_HALAMAN = 50
 const MAKS_PUTARAN = 8
 const AWAL = { toko: '', q: '', tanggal: '30', dari: '', sampai: '', urut: 'dirilis:desc' }
 const PRESET: PresetTanggal[] = ['semua', 'hari_ini', '7', '30', '90', 'bulan_ini', 'kustom']
-const HARI_TARIK = [
+const HARI_SINKRON = [
   { value: '7', label: '7 hari terakhir' },
   { value: '15', label: '15 hari terakhir' },
   { value: '30', label: '30 hari terakhir' },
@@ -45,7 +45,7 @@ const potong = (v: string) => fmtRp(-Math.abs(Number(v)))
 export default function DanaShopee() {
   const qc = useQueryClient()
   const f = useFilterDaftar(AWAL)
-  const [hariTarik, setHariTarik] = useState('15')
+  const [hariSinkron, setHariSinkron] = useState('15')
 
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const tokoShopee = (akunList ?? []).filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
@@ -67,7 +67,7 @@ export default function DanaShopee() {
   // Progress of the pull: one shop after another, each shop repeated while Shopee still has orders waiting.
   const [progres, setProgres] = useState<{ selesai: number; total: number; keterangan: string; mulai: number } | null>(null)
   const berhenti = useRef(false)
-  const tarikMut = useMutation({
+  const sinkronMut = useMutation({
     mutationFn: async () => {
       berhenti.current = false
       const mulai = Date.now()
@@ -86,7 +86,7 @@ export default function DanaShopee() {
             keterangan: `Toko ${i + 1} dari ${tokoShopee.length}: ${t.nama_toko}${putaran > 1 ? ` (lanjutan ${putaran})` : ''} · ${baru} pesanan baru sejauh ini`,
           })
           try {
-            const h = await endpoints.syncSettlementAkun(t.id, Number(hariTarik))
+            const h = await endpoints.syncSettlementAkun(t.id, Number(hariSinkron))
             baru += h.baru
             sisa = h.sisa
             qc.invalidateQueries({ queryKey: ['settlement-pesanan'] }) // the tables fill up while it runs
@@ -101,9 +101,9 @@ export default function DanaShopee() {
     },
     onSuccess: ({ baru, sisa, gagal, dihentikan }) => {
       qc.invalidateQueries({ queryKey: ['settlement-pesanan'] })
-      const ringkas = `${baru} pesanan baru${dihentikan ? ' (dihentikan)' : ''}${sisa > 0 ? `, masih ada ${sisa} — tekan Tarik lagi` : ''}`
-      if (gagal.length === 0) toast.success(`Dana cair ditarik: ${ringkas}`)
-      else toast.warning(`Dana cair: ${ringkas}; ${gagal.length} toko gagal`, { description: gagal.slice(0, 3).join('\n') })
+      const ringkas = `${baru} pesanan baru${dihentikan ? ' (dihentikan)' : ''}${sisa > 0 ? `, masih ada ${sisa} — tekan Sinkronisasi lagi` : ''}`
+      if (gagal.length === 0) toast.success(`Sinkronisasi dana cair selesai: ${ringkas}`)
+      else toast.warning(`Sinkronisasi dana cair: ${ringkas}; ${gagal.length} toko gagal`, { description: gagal.slice(0, 3).join('\n') })
     },
     onError: (e) => toast.error(getApiError(e)),
     onSettled: () => setProgres(null),
@@ -147,10 +147,10 @@ export default function DanaShopee() {
           <Medan>
             <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
           </Medan>
-          <FilterPilih id="dana-hari" label="Tarik dari Shopee" nilai={hariTarik} onUbah={setHariTarik} opsi={HARI_TARIK} />
+          <FilterPilih id="dana-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           <FilterAksi>
-            <Button onClick={() => tarikMut.mutate()} disabled={tarikMut.isPending || tokoShopee.length === 0}>
-              {tarikMut.isPending ? 'Sedang menarik…' : 'Tarik sekarang'}
+            <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
+              {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
             </Button>
           </FilterAksi>
           {f.berubah && (
@@ -164,7 +164,7 @@ export default function DanaShopee() {
 
         {progres && (
           <PanelProgres
-            judul="Menarik dana cair dari Shopee"
+            judul="Sinkronisasi dana cair dari Shopee"
             selesai={progres.selesai}
             total={progres.total}
             keterangan={progres.keterangan}
@@ -181,7 +181,7 @@ export default function DanaShopee() {
           <div className="space-y-2 rounded-lg border p-8 text-center text-muted-foreground">
             <p>Belum ada dana cair pada periode ini.</p>
             <p className="teks-kecil">
-              {tokoShopee.length === 0 ? 'Hubungkan toko Shopee dulu di menu Toko.' : 'Pilih jumlah hari lalu tekan “Tarik sekarang”.'}
+              {tokoShopee.length === 0 ? 'Hubungkan toko Shopee dulu di menu Toko.' : 'Pilih jumlah hari lalu tekan “Sinkronisasi sekarang”.'}
             </p>
           </div>
         ) : (

@@ -13,7 +13,7 @@ halaman hanya mendeklarasikan isinya. Kalau ada revisi gaya, ubah di sana, bukan
 5. **Filter berbentuk dropdown berlabel**, sejajar, tidak memenuhi layar. Di HP filter terlipat.
 6. **Semua tabel bisa disortir** (klik judul kolom; di HP juga lewat dropdown *Urutan*).
 7. **Tabel tetap tabel di HP** (bukan kartu); geser samping, kolom identitas dan Aksi menempel.
-8. **Penarikan data tidak boleh terlihat diam.** Setiap aksi yang menarik data dari marketplace memakai `mulaiProgres()` (toast yang bertahan dan menghitung detik, `src/lib/progres.ts`); penarikan beberapa langkah (toko demi toko) memakai `PanelProgres` (bar, keterangan, tombol Hentikan).
+8. **Sinkronisasi data tidak boleh terlihat diam.** Kata yang dipakai untuk mengambil data dari marketplace adalah **Sinkronisasi** (bukan "Tarik"). Setiap aksi sinkronisasi memakai `mulaiProgres()` (toast yang bertahan dan menghitung detik, `src/lib/progres.ts`); sinkronisasi beberapa langkah (toko demi toko) memakai `PanelProgres` (bar, keterangan, tombol Hentikan).
 9. **Menu mengikuti alur kerja** dan sama di desktop dan HP.
 
 ## 2. Skala huruf dan kepadatan (token)

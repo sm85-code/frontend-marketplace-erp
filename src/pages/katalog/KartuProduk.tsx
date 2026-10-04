@@ -1,7 +1,7 @@
 import type { KatalogItem } from '@/api/types'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { rentangHarga } from '@/lib/katalog'
+import { labelStatusShopee, rentangHarga } from '@/lib/katalog'
 
 /** One product as a photo card (the Grid view). */
 export default function KartuProduk({
@@ -35,7 +35,7 @@ export default function KartuProduk({
           <div className="teks-kecil flex flex-wrap items-center gap-1 text-muted-foreground">
             <span>stok {item.stok_shopee ?? '—'}</span>
             {item.jumlah_varian > 0 && <span>· {item.jumlah_varian} varian</span>}
-            {item.status !== 'NORMAL' && <Badge variant="outline">Tidak tayang</Badge>}
+            {item.status !== 'NORMAL' && <Badge variant="outline">{labelStatusShopee(item.status)}</Badge>}
             {item.dikirim_toko_id && <Badge>Sudah di toko web</Badge>}
           </div>
         </div>
