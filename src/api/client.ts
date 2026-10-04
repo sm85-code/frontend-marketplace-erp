@@ -61,6 +61,11 @@ export function fmtDate(s: string | null | undefined): string {
   }
 }
 
+export function fmtTime(s: string | null | undefined): string {
+  if (!s) return '—'
+  return new Date(s).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':')
+}
+
 export function fmtDateTime(s: string | null | undefined): string {
   if (!s) return '-'
   try {

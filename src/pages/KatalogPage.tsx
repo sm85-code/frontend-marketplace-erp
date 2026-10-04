@@ -7,6 +7,7 @@ import { fmtDate, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { KatalogItem, KirimKatalogHasil } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
+import Medan from '@/components/Medan'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ import {
   type KolomKatalog,
 } from '@/lib/katalog'
 
+const SEMUA_TOKO = 'semua' // a Select item cannot have an empty value
 const KUNCI_TAMPILAN = 'katalog.tampilan'
 const KUNCI_KOLOM = 'katalog.kolom'
 
@@ -165,24 +167,31 @@ export default function KatalogPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filter toko">
-        <FilterChip aktif={akunId === ''} onClick={() => pilihToko('')}>
-          Semua <span className="opacity-70">({ringkasan?.total ?? 0})</span>
-        </FilterChip>
-        {(ringkasan?.toko ?? []).map((t) => (
-          <FilterChip key={t.akun_id} aktif={akunId === t.akun_id} onClick={() => pilihToko(t.akun_id)}>
-            {t.nama_toko} <span className="opacity-70">({t.jumlah})</span>
-          </FilterChip>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          className="max-w-xs"
-          placeholder="Cari nama atau SKU…"
-          value={cari}
-          onChange={(e) => setCari(e.target.value)}
-        />
+      <div className="flex flex-wrap items-end gap-3">
+        <Medan label="Cari" untuk="katalog-cari">
+          <Input
+            id="katalog-cari"
+            className="w-full sm:w-72"
+            placeholder="Nama atau SKU"
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+          />
+        </Medan>
+        <Medan label="Toko" untuk="katalog-toko">
+          <Select value={akunId || SEMUA_TOKO} onValueChange={(v) => pilihToko(v === SEMUA_TOKO ? '' : v)}>
+            <SelectTrigger id="katalog-toko" className="w-[280px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEMUA_TOKO}>Semua toko ({ringkasan?.total ?? '…'})</SelectItem>
+              {(ringkasan?.toko ?? []).map((t) => (
+                <SelectItem key={t.akun_id} value={t.akun_id}>
+                  {t.nama_toko} ({t.jumlah})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={belumDikirim}
@@ -199,69 +208,81 @@ export default function KatalogPage() {
         {isFetching && !isLoading && <Spinner size={18} />}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex overflow-hidden rounded-md border" role="group" aria-label="Tampilan">
-          <button
-            type="button"
-            onClick={() => ubahTampilan('grid')}
-            aria-pressed={tampilan === 'grid'}
-            className={'flex items-center gap-1.5 px-3 py-1.5 text-sm ' + (tampilan === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted')}
-          >
-            <LayoutGrid className="size-4" /> Grid
-          </button>
-          <button
-            type="button"
-            onClick={() => ubahTampilan('list')}
-            aria-pressed={tampilan === 'list'}
-            className={'flex items-center gap-1.5 px-3 py-1.5 text-sm ' + (tampilan === 'list' ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted')}
-          >
-            <List className="size-4" /> List
-          </button>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <span id="katalog-tampilan" className="text-sm font-medium">
+            Tampilan
+          </span>
+          <div className="inline-flex overflow-hidden rounded-md border" role="group" aria-labelledby="katalog-tampilan">
+            {(
+              [
+                ['grid', 'Grid', LayoutGrid],
+                ['list', 'List', List],
+              ] as const
+            ).map(([nilai, label, Ikon]) => (
+              <button
+                key={nilai}
+                type="button"
+                onClick={() => ubahTampilan(nilai)}
+                aria-pressed={tampilan === nilai}
+                className={
+                  'flex h-9 items-center gap-1.5 px-3 text-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring ' +
+                  (tampilan === nilai ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted')
+                }
+              >
+                <Ikon className="size-4" aria-hidden="true" /> {label}
+              </button>
+            ))}
+          </div>
         </div>
-        <Select
-          value={urut}
-          onValueChange={(v) => {
-            setUrut(v)
-            setHalaman(1)
-          }}
-        >
-          <SelectTrigger className="w-[260px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {URUTAN_KATALOG.map((u) => (
-              <SelectItem key={u.value} value={u.value}>
-                {u.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={String(perHalaman)}
-          onValueChange={(v) => {
-            setPerHalaman(Number(v))
-            setHalaman(1)
-          }}
-        >
-          <SelectTrigger className="w-[130px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[24, 48, 100].map((n) => (
-              <SelectItem key={n} value={String(n)}>
-                {n} / halaman
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Medan label="Urutan" untuk="katalog-urut">
+          <Select
+            value={urut}
+            onValueChange={(v) => {
+              setUrut(v)
+              setHalaman(1)
+            }}
+          >
+            <SelectTrigger id="katalog-urut" className="w-[260px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {URUTAN_KATALOG.map((u) => (
+                <SelectItem key={u.value} value={u.value}>
+                  {u.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
+        <Medan label="Per halaman" untuk="katalog-per-halaman">
+          <Select
+            value={String(perHalaman)}
+            onValueChange={(v) => {
+              setPerHalaman(Number(v))
+              setHalaman(1)
+            }}
+          >
+            <SelectTrigger id="katalog-per-halaman" className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[24, 48, 100].map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n} produk
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
         {tampilan === 'list' && (
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Columns3 className="mr-1.5 size-4" /> Kolom ({kolom.length}/{KOLOM_KATALOG.length})
+              <Button variant="outline">
+                <Columns3 className="mr-1.5 size-4" aria-hidden="true" /> Kolom ({kolom.length}/{KOLOM_KATALOG.length})
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-64 space-y-2">
+            <PopoverContent align="start" className="w-64 space-y-2" aria-label="Pilih kolom yang ditampilkan">
               <div className="text-sm font-medium">Kolom yang ditampilkan</div>
               <div className="max-h-72 space-y-1.5 overflow-y-auto">
                 {KOLOM_KATALOG.map((k) => (
@@ -399,23 +420,6 @@ export default function KatalogPage() {
   )
 }
 
-function FilterChip({ aktif, onClick, children }: { aktif: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={aktif}
-      onClick={onClick}
-      className={
-        'shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors ' +
-        (aktif ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-muted')
-      }
-    >
-      {children}
-    </button>
-  )
-}
-
 function KartuProduk({
   item,
   dipilih,
@@ -446,7 +450,7 @@ function KartuProduk({
           </Badge>
           <div className="line-clamp-2 min-h-[2.5rem] text-sm">{item.nama}</div>
           <div className="text-sm font-semibold">{rentangHarga(item.harga_min, item.harga_max)}</div>
-          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
             <span>stok {item.stok_shopee ?? '—'}</span>
             {item.jumlah_varian > 0 && <span>· {item.jumlah_varian} varian</span>}
             {item.status !== 'NORMAL' && <Badge variant="outline">Tidak tayang</Badge>}
@@ -460,9 +464,14 @@ function KartuProduk({
 
 const LABEL_KOLOM = Object.fromEntries(KOLOM_KATALOG.map((k) => [k.key, k.label])) as Record<KolomKatalog, string>
 
-function Gambar({ src, ukuran, onClick }: { src: string; ukuran: string; onClick: () => void }) {
+function Gambar({ src, ukuran, nama, onClick }: { src: string; ukuran: string; nama: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="shrink-0">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Lihat detail ${nama}`}
+      className="shrink-0 rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
       <img src={src} alt="" loading="lazy" className={`${ukuran} rounded border object-cover`} />
     </button>
   )
@@ -489,16 +498,16 @@ function TabelProduk({
     const buka = () => onBuka(item.id)
     switch (k) {
       case 'foto':
-        return item.foto[0] ? <Gambar src={item.foto[0]} ukuran="size-16" onClick={buka} /> : <span className="text-xs text-muted-foreground">—</span>
+        return item.foto[0] ? <Gambar src={item.foto[0]} ukuran="size-16" nama={item.nama} onClick={buka} /> : <span className="text-sm text-muted-foreground">—</span>
       case 'semuaFoto':
         return item.foto.length ? (
           <div className="flex gap-1">
             {item.foto.map((u) => (
-              <Gambar key={u} src={u} ukuran="size-12" onClick={buka} />
+              <Gambar key={u} src={u} ukuran="size-12" nama={item.nama} onClick={buka} />
             ))}
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         )
       case 'toko':
         return <span className="font-medium">{item.nama_toko}</span>
@@ -509,7 +518,7 @@ function TabelProduk({
           </button>
         )
       case 'sku':
-        return <span className="font-mono text-xs">{item.sku || '—'}</span>
+        return <span className="font-mono text-sm">{item.sku || '—'}</span>
       case 'harga':
         return <span className="whitespace-nowrap font-semibold">{rentangHarga(item.harga_min, item.harga_max)}</span>
       case 'stok':
@@ -521,15 +530,15 @@ function TabelProduk({
       case 'ukuran':
         return <span className="whitespace-nowrap">{ukuranPaket(item.panjang_cm, item.lebar_cm, item.tinggi_cm)}</span>
       case 'deskripsi':
-        return <div className="line-clamp-4 text-xs text-muted-foreground">{item.deskripsi_ringkas || '—'}</div>
+        return <div className="line-clamp-4 text-sm text-muted-foreground">{item.deskripsi_ringkas || '—'}</div>
       case 'status':
         return item.status === 'NORMAL' ? <Badge variant="secondary">Tayang</Badge> : <Badge variant="outline">Tidak tayang</Badge>
       case 'dikirim':
-        return item.dikirim_toko_id ? <Badge>Sudah</Badge> : <span className="text-xs text-muted-foreground">Belum</span>
+        return item.dikirim_toko_id ? <Badge>Sudah</Badge> : <span className="text-sm text-muted-foreground">Belum</span>
       case 'diambil':
-        return <span className="whitespace-nowrap text-xs">{fmtDate(item.diambil_at)}</span>
+        return <span className="whitespace-nowrap text-sm">{fmtDate(item.diambil_at)}</span>
       case 'itemId':
-        return <span className="font-mono text-xs">{item.item_id}</span>
+        return <span className="font-mono text-sm">{item.item_id}</span>
     }
   }
 
@@ -546,8 +555,9 @@ function TabelProduk({
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-lg border">
+    <div className="w-full overflow-x-auto rounded-lg border" role="region" aria-label="Daftar produk katalog, geser ke samping untuk kolom lain">
       <Table>
+        <caption className="sr-only">Produk Shopee dari semua toko</caption>
         <TableHeader>
           <TableRow>
             <TableHead className="w-10">

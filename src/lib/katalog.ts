@@ -66,12 +66,12 @@ export const KOLOM_KATALOG: { key: KolomKatalog; label: string; bawaan: boolean 
 export const KOLOM_BAWAAN: KolomKatalog[] = KOLOM_KATALOG.filter((k) => k.bawaan).map((k) => k.key)
 
 export const URUTAN_KATALOG = [
-  { value: 'toko', label: 'Urut: Toko' },
-  { value: 'nama', label: 'Urut: Nama (judul sama berdekatan)' },
-  { value: 'harga_naik', label: 'Urut: Harga termurah' },
-  { value: 'harga_turun', label: 'Urut: Harga termahal' },
-  { value: 'stok', label: 'Urut: Stok terbanyak' },
-  { value: 'terbaru', label: 'Urut: Terakhir ditarik' },
+  { value: 'toko', label: 'Toko' },
+  { value: 'nama', label: 'Nama (judul sama berdekatan)' },
+  { value: 'harga_naik', label: 'Harga termurah' },
+  { value: 'harga_turun', label: 'Harga termahal' },
+  { value: 'stok', label: 'Stok terbanyak' },
+  { value: 'terbaru', label: 'Terakhir ditarik' },
 ] as const
 
 /** Saved column choice -> valid keys in display order; anything unknown or unreadable falls back to the defaults. */

@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
-import type { Pesanan } from '@/api/types'
-import { fmtDate, fmtDateTime, fmtRp, getApiError } from '@/api/client'
+import type { Pesanan, TahapPesanan } from '@/api/types'
+import { fmtDate, fmtDateTime, fmtRp, fmtTime, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
+import Medan from '@/components/Medan'
 import Spinner from '@/components/Spinner'
 import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
@@ -19,15 +20,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PLATFORM_LABELS } from '@/config/roles'
+import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import {
-  STATUS_LABELS,
-  STATUS_ORDER,
+  TAHAP_LABELS,
+  TAHAP_ORDER,
+  URUTAN_PESANAN,
   bisaDicetak,
   bisaDiproses,
-  cocokFilterResi,
   kelompokResi,
+  ringkasItem,
   labelStatus,
   pecahBatch,
   sudahDicetak,
@@ -35,12 +37,21 @@ import {
 } from '@/lib/pesanan'
 
 const emptyItem = { nama_produk: '', harga_satuan: '', qty: '1' }
+const PER_HALAMAN = 50
+const SEMUA = 'semua' // a Select item cannot have an empty value
 
 export default function PesananPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
-  const [tab, setTab] = useState<string>('all')
-  const [terpilih, setTerpilih] = useState<Set<string>>(new Set())
+  const [tahap, setTahap] = useState<TahapPesanan | ''>('')
+  const [akunId, setAkunId] = useState('')
+  const [cari, setCari] = useState('')
+  const [q, setQ] = useState('')
+  const [preset, setPreset] = useState<PresetTanggal>('semua')
+  const [kustom, setKustom] = useState({ dari: '', sampai: '' })
+  const [urut, setUrut] = useState('terbaru')
+  const [halaman, setHalaman] = useState(1)
+  const [terpilih, setTerpilih] = useState<Map<string, Pesanan>>(new Map())
   const [filterResi, setFilterResi] = useState<FilterResi>('semua')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ platform: 'shopee', id_eksternal: '', akun_id: '', nama_pembeli: '' })
@@ -49,9 +60,40 @@ export default function PesananPage() {
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
 
-  const { data: pesananList, isLoading } = useQuery({
-    queryKey: qk.pesanan({ status: tab === 'all' ? undefined : tab }),
-    queryFn: () => endpoints.listPesanan({ status: tab === 'all' ? undefined : tab }),
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setQ(cari.trim())
+      setHalaman(1)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [cari])
+
+  // Every filter change goes back to page 1.
+  function ubahFilter(fn: () => void) {
+    fn()
+    setHalaman(1)
+  }
+
+  const { dari, sampai } = rentangTanggal(preset, kustom)
+  const kriteria = { q: q || undefined, dari, sampai }
+  const { data: ringkasan } = useQuery({
+    queryKey: qk.pesananRingkasan({ ...kriteria, akun_id: akunId || undefined, tahap: tahap || undefined }),
+    queryFn: () => endpoints.ringkasanPesanan({ ...kriteria, akun_id: akunId || undefined, tahap: tahap || undefined }),
+    placeholderData: (prev) => prev,
+  })
+  const paramDaftar = {
+    ...kriteria,
+    akun_id: akunId || undefined,
+    tahap: tahap || undefined,
+    resi: filterResi === 'semua' ? undefined : filterResi,
+    urut,
+    halaman,
+    per_halaman: PER_HALAMAN,
+  }
+  const { data: pesananList, isLoading, isFetching } = useQuery({
+    queryKey: qk.pesananDaftar(paramDaftar),
+    queryFn: () => endpoints.daftarPesanan(paramDaftar),
+    placeholderData: (prev) => prev,
   })
 
   // Opening or refreshing this page pulls fresh orders from Shopee in the background (the server
@@ -103,7 +145,7 @@ export default function PesananPage() {
             .map((g) => `#${g.id_eksternal ?? '?'}: ${g.pesan ?? 'gagal'}`)
             .join('\n'),
         })
-      setTerpilih(new Set())
+      setTerpilih(new Map())
       qc.invalidateQueries({ queryKey: ['pesanan'] })
     },
     onError: (e) => toast.error(getApiError(e)),
@@ -169,11 +211,13 @@ export default function PesananPage() {
   }
 
   // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
-  const tampil = (pesananList ?? []).filter((p) => cocokFilterResi(p, filterResi))
+  const tampil = pesananList?.items ?? []
+  const totalHalaman = pesananList ? Math.max(1, Math.ceil(pesananList.total / pesananList.per_halaman)) : 1
   const bisaDipilih = tampil.filter((p) => bisaDiproses(p) || bisaDicetak(p))
   // "Pilih semua" skips labels that were already printed (reprinting is a deliberate, per-order choice).
   const bisaDipilihSemua = bisaDipilih.filter((p) => !sudahDicetak(p))
-  const dipilih = bisaDipilih.filter((p) => terpilih.has(p.id))
+  // The selection survives page and filter changes, so one batch can be built across pages.
+  const dipilih = [...terpilih.values()].filter((p) => bisaDiproses(p) || bisaDicetak(p))
   const idTerpilih = dipilih.filter(bisaDiproses).map((p) => p.id)
   const dicetak = dipilih.filter(bisaDicetak)
   const semuaTerpilih = bisaDipilihSemua.length > 0 && bisaDipilihSemua.every((p) => terpilih.has(p.id))
@@ -195,11 +239,22 @@ export default function PesananPage() {
     cetakMassalMut.mutate({ grup, tipe, tab })
   }
 
-  function togglePilih(id: string, pilih: boolean) {
+  function togglePilih(p: Pesanan, pilih: boolean) {
     setTerpilih((prev) => {
-      const next = new Set(prev)
-      if (pilih) next.add(id)
-      else next.delete(id)
+      const next = new Map(prev)
+      if (pilih) next.set(p.id, p)
+      else next.delete(p.id)
+      return next
+    })
+  }
+
+  function pilihSemuaHalaman(pilih: boolean) {
+    setTerpilih((prev) => {
+      const next = new Map(prev)
+      for (const p of bisaDipilihSemua) {
+        if (pilih) next.set(p.id, p)
+        else next.delete(p.id)
+      }
       return next
     })
   }
@@ -257,42 +312,133 @@ export default function PesananPage() {
       </div>
       <p className="text-xs text-muted-foreground">{labelSinkron()}</p>
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Resi:</span>
-        {(
-          [
-            ['semua', 'Semua'],
-            ['belum', 'Belum dicetak'],
-            ['sudah', 'Sudah dicetak'],
-          ] as const
-        ).map(([nilai, label]) => (
-          <Button key={nilai} size="sm" variant={filterResi === nilai ? 'default' : 'outline'} onClick={() => setFilterResi(nilai)}>
-            {label}
+      <div className="flex flex-wrap items-end gap-3">
+        <Medan label="Cari" untuk="pesanan-cari">
+          <Input
+            id="pesanan-cari"
+            className="w-full sm:w-72"
+            placeholder="No. pesanan, pembeli, resi, produk"
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+          />
+        </Medan>
+        <Medan label="Status" untuk="pesanan-status">
+          <Select value={tahap || SEMUA} onValueChange={(v) => ubahFilter(() => setTahap(v === SEMUA ? '' : (v as TahapPesanan)))}>
+            <SelectTrigger id="pesanan-status" className="w-[210px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEMUA}>Semua status ({ringkasan?.tahap.semua ?? '…'})</SelectItem>
+              {TAHAP_ORDER.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {TAHAP_LABELS[t]} ({ringkasan?.tahap[t] ?? '…'})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
+        <Medan label="Toko" untuk="pesanan-toko">
+          <Select value={akunId || SEMUA} onValueChange={(v) => ubahFilter(() => setAkunId(v === SEMUA ? '' : v))}>
+            <SelectTrigger id="pesanan-toko" className="w-[260px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEMUA}>Semua toko ({ringkasan?.total_toko ?? '…'})</SelectItem>
+              {(ringkasan?.toko ?? []).map((t) => (
+                <SelectItem key={t.akun_id} value={t.akun_id}>
+                  {t.nama_toko} ({t.jumlah})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
+        <Medan label="Tanggal pesan" untuk="pesanan-tanggal">
+          <Select value={preset} onValueChange={(v) => ubahFilter(() => setPreset(v as PresetTanggal))}>
+            <SelectTrigger id="pesanan-tanggal" className="w-[170px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(PRESET_LABEL) as PresetTanggal[]).map((k) => (
+                <SelectItem key={k} value={k}>
+                  {PRESET_LABEL[k]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
+        {preset === 'kustom' && (
+          <>
+            <Medan label="Dari" untuk="pesanan-dari">
+              <Input id="pesanan-dari" type="date" className="w-[150px]" value={kustom.dari} onChange={(e) => ubahFilter(() => setKustom((k) => ({ ...k, dari: e.target.value })))} />
+            </Medan>
+            <Medan label="Sampai" untuk="pesanan-sampai">
+              <Input id="pesanan-sampai" type="date" className="w-[150px]" value={kustom.sampai} onChange={(e) => ubahFilter(() => setKustom((k) => ({ ...k, sampai: e.target.value })))} />
+            </Medan>
+          </>
+        )}
+        <Medan label="Resi" untuk="pesanan-resi">
+          <Select value={filterResi} onValueChange={(v) => ubahFilter(() => setFilterResi(v as FilterResi))}>
+            <SelectTrigger id="pesanan-resi" className="w-[190px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="semua">Semua</SelectItem>
+              <SelectItem value="belum">Belum dicetak</SelectItem>
+              <SelectItem value="sudah">Sudah dicetak</SelectItem>
+            </SelectContent>
+          </Select>
+        </Medan>
+        <Medan label="Urutan" untuk="pesanan-urut">
+          <Select value={urut} onValueChange={(v) => ubahFilter(() => setUrut(v))}>
+            <SelectTrigger id="pesanan-urut" className="w-[190px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {URUTAN_PESANAN.map((u) => (
+                <SelectItem key={u.value} value={u.value}>
+                  {u.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Medan>
+        {(tahap || akunId || q || preset !== 'semua' || filterResi !== 'semua') && (
+          <Button
+            variant="ghost"
+            onClick={() =>
+              ubahFilter(() => {
+                setTahap('')
+                setAkunId('')
+                setCari('')
+                setQ('')
+                setPreset('semua')
+                setFilterResi('semua')
+              })
+            }
+          >
+            Reset filter
           </Button>
-        ))}
+        )}
+        {isFetching && !isLoading && <Spinner size={18} />}
       </div>
-
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="tab-strip">
-          <TabsTrigger value="all">Semua</TabsTrigger>
-          {STATUS_ORDER.map((s) => (
-            <TabsTrigger key={s} value={s}>
-              {STATUS_LABELS[s]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
 
       <Card>
         <CardHeader>
-          <CardTitle>Inbox Pesanan</CardTitle>
+          <CardTitle>
+            Inbox Pesanan{' '}
+            <span className="text-sm font-normal text-muted-foreground">
+              {pesananList ? `${pesananList.total} pesanan` : ''}
+              {terpilih.size > 0 ? ` · ${terpilih.size} dipilih` : ''}
+            </span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Spinner column label="Memuat pesanan…" />
           ) : (
-            <TableShell>
+            <TableShell minWidth={1000} label="Daftar pesanan, geser ke samping untuk kolom lain">
               <Table>
+                <caption className="sr-only">Daftar pesanan sesuai filter</caption>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-8">
@@ -300,16 +446,17 @@ export default function PesananPage() {
                         aria-label="Pilih semua pesanan yang bisa diproses atau dicetak"
                         checked={semuaTerpilih}
                         disabled={bisaDipilihSemua.length === 0}
-                        onCheckedChange={(v) => setTerpilih(v === true ? new Set(bisaDipilihSemua.map((p) => p.id)) : new Set())}
+                        onCheckedChange={(v) => pilihSemuaHalaman(v === true)}
                       />
                     </TableHead>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Platform</TableHead>
+                    <TableHead>Tanggal pesan</TableHead>
+                    <TableHead>No. Pesanan</TableHead>
                     <TableHead>Toko</TableHead>
-                    <TableHead>Pembeli</TableHead>
-                    <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    <TableHead>Produk</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Kurir / Resi</TableHead>
+                    <TableHead className="sticky right-0 bg-card text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -320,26 +467,39 @@ export default function PesananPage() {
                           <Checkbox
                             aria-label={`Pilih pesanan ${p.id_eksternal}`}
                             checked={terpilih.has(p.id)}
-                            onCheckedChange={(v) => togglePilih(p.id, v === true)}
+                            onCheckedChange={(v) => togglePilih(p, v === true)}
                           />
                         )}
                       </TableCell>
-                      <TableCell>{fmtDate(p.created_at)}</TableCell>
-                      <TableCell>{PLATFORM_LABELS[p.platform]}</TableCell>
-                      <TableCell>{p.akun_id ? (akunMap.get(p.akun_id)?.nama_toko ?? '—') : '—'}</TableCell>
-                      <TableCell>{p.nama_pembeli || '—'}</TableCell>
-                      <TableCell>{fmtRp(p.total)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">
+                        <div>{fmtDate(p.dipesan_at ?? p.created_at)}</div>
+                        <div className="text-muted-foreground">{fmtTime(p.dipesan_at ?? p.created_at)}</div>
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={statusBadgeVariant(p.status)}>{labelStatus(p)}</Badge>
+                        <div className="font-mono text-sm">{p.id_eksternal}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {PLATFORM_LABELS[p.platform]}
+                          {p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[120px] text-sm">{p.akun_id ? (akunMap.get(p.akun_id)?.nama_toko ?? '—') : '—'}</TableCell>
+                      <TableCell className="min-w-[140px]">
+                        <Badge variant={statusBadgeVariant(p.status)} className="whitespace-nowrap">{labelStatus(p)}</Badge>
                         {bisaDicetak(p) && (
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="mt-1 text-sm text-muted-foreground">
                             {sudahDicetak(p)
                               ? `Resi dicetak ${fmtDateTime(p.resi_dicetak_at)}${p.resi_dicetak_oleh ? ` · ${p.resi_dicetak_oleh}` : ''}`
                               : 'Resi belum dicetak'}
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="min-w-[190px] max-w-[240px] text-sm">{ringkasItem(p)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{fmtRp(p.total)}</TableCell>
+                      <TableCell className="text-sm">
+                        <div>{p.kurir || '—'}</div>
+                        <div className="font-mono text-muted-foreground">{p.nomor_resi || ''}</div>
+                      </TableCell>
+                      <TableCell className="sticky right-0 bg-card text-right">
                         <Button asChild size="sm" variant="outline">
                           <Link to={`/pesanan/${p.id}`}>Detail</Link>
                         </Button>
@@ -348,14 +508,27 @@ export default function PesananPage() {
                   ))}
                   {tampil.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
-                        Tidak ada pesanan pada status ini.
+                      <TableCell colSpan={10} className="py-8 text-center text-muted-foreground">
+                        Tidak ada pesanan yang cocok dengan filter ini.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </TableShell>
+          )}
+          {pesananList && pesananList.total > pesananList.per_halaman && (
+            <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+              <Button variant="outline" size="sm" disabled={halaman <= 1} onClick={() => setHalaman((h) => h - 1)}>
+                Sebelumnya
+              </Button>
+              <span>
+                Halaman {halaman} / {totalHalaman}
+              </span>
+              <Button variant="outline" size="sm" disabled={halaman >= totalHalaman} onClick={() => setHalaman((h) => h + 1)}>
+                Berikutnya
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

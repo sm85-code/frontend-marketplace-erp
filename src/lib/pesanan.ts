@@ -1,4 +1,4 @@
-import type { Pesanan, StatusPesanan } from '@/api/types'
+import type { Pesanan, StatusPesanan, TahapPesanan } from '@/api/types'
 
 /** Mirrors backend services._TRANSISI_STATUS (tenants/marketplace_erp). */
 export const TRANSISI_STATUS: Record<StatusPesanan, StatusPesanan[]> = {
@@ -96,4 +96,30 @@ export type FilterResi = 'semua' | 'belum' | 'sudah'
 export function cocokFilterResi(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'resi_dicetak_at'>, f: FilterResi): boolean {
   if (f === 'semua') return true
   return bisaDicetak(p) && sudahDicetak(p) === (f === 'sudah')
+}
+
+export const TAHAP_LABELS: Record<TahapPesanan, string> = {
+  belum_bayar: 'Belum Bayar',
+  perlu_diproses: 'Perlu Diproses',
+  menunggu_kurir: 'Menunggu Kurir',
+  dikirim: 'Dikirim',
+  selesai: 'Selesai',
+  dibatalkan: 'Dibatalkan',
+}
+
+export const TAHAP_ORDER: TahapPesanan[] = ['belum_bayar', 'perlu_diproses', 'menunggu_kurir', 'dikirim', 'selesai', 'dibatalkan']
+
+export const URUTAN_PESANAN = [
+  { value: 'terbaru', label: 'Terbaru' },
+  { value: 'terlama', label: 'Terlama' },
+  { value: 'total_besar', label: 'Total terbesar' },
+  { value: 'total_kecil', label: 'Total terkecil' },
+] as const
+
+/** "Kursi Rotan ×2, Meja ×1 (+2 lainnya)" for the order list. */
+export function ringkasItem(p: Pick<Pesanan, 'items'>, maks = 2): string {
+  if (!p.items.length) return '—'
+  const bagian = p.items.slice(0, maks).map((i) => `${i.nama_produk} ×${i.qty}`)
+  const sisa = p.items.length - maks
+  return sisa > 0 ? `${bagian.join(', ')} (+${sisa} lainnya)` : bagian.join(', ')
 }
