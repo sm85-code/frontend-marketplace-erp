@@ -2,7 +2,7 @@ export const qk = {
   akun: (platform?: string) => ['akun', platform ?? 'all'] as const,
   akunOne: (id: string) => ['akun', 'one', id] as const,
   katalog: (params: Record<string, string | number | boolean | undefined>) => ['katalog', params] as const,
-  katalogRingkasan: () => ['katalog', 'ringkasan'] as const,
+  katalogRingkasan: (params: Record<string, string | undefined> = {}) => ['katalog', 'ringkasan', params] as const,
   katalogOne: (id: string) => ['katalog', 'one', id] as const,
   produk: () => ['produk'] as const,
   produkOne: (id: string) => ['produk', 'one', id] as const,

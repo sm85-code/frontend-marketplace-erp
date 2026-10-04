@@ -374,8 +374,11 @@ export interface KatalogList {
 }
 
 export interface KatalogRingkasan {
+  /** Products in the chosen status (all statuses when none is chosen). */
   total: number
   toko: { akun_id: string; nama_toko: string; jumlah: number }[]
+  /** Products per Shopee status (NORMAL, UNLIST, BANNED, REVIEWING), within the chosen shop. */
+  status: Record<string, number>
 }
 
 export interface KirimKatalogHasil {

@@ -25,7 +25,7 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
-import { bagiBatch, ringkasKirim } from '@/lib/katalog'
+import { bagiBatch, ringkasKirim, STATUS_AWAL_KATALOG, STATUS_SHOPEE } from '@/lib/katalog'
 import { bacaSimpan, tulisSimpan } from '@/lib/simpan'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
@@ -34,7 +34,8 @@ import KartuProduk from './katalog/KartuProduk'
 import { kolomKatalog } from './katalog/kolom'
 
 const PER_HALAMAN = 10
-const AWAL = { toko: '', q: '', belumDikirim: false, urut: 'toko:asc' }
+// Opens on active products (what is for sale on Shopee); the status filter widens it.
+const AWAL = { toko: '', q: '', status: STATUS_AWAL_KATALOG as string, belumDikirim: false, urut: 'toko:asc' }
 const KUNCI_TAMPILAN = 'katalog.tampilan'
 const OPSI_TAMPILAN = [
   { value: 'grid', label: 'Grid', ikon: LayoutGrid },
@@ -54,10 +55,18 @@ export default function KatalogPage() {
   const kolom = useKolomTersimpan('katalog.kolom', semuaKolom)
   const kolomTampil = semuaKolom.filter((k) => kolom.tampil.includes(k.kunci))
 
-  const { data: ringkasan } = useQuery({ queryKey: qk.katalogRingkasan(), queryFn: endpoints.ringkasanKatalog })
+  // Shop counts follow the chosen status and status counts follow the chosen shop, so every option shows what it would list.
+  const kriteriaRingkasan = { status: f.nilai.status || undefined, akun_id: f.nilai.toko || undefined }
+  const { data: ringkasan } = useQuery({
+    queryKey: qk.katalogRingkasan(kriteriaRingkasan),
+    queryFn: () => endpoints.ringkasanKatalog(kriteriaRingkasan),
+    placeholderData: (prev) => prev,
+  })
+  const jumlahSemuaStatus = Object.values(ringkasan?.status ?? {}).reduce((a, b) => a + b, 0)
   const params = {
     akun_id: f.nilai.toko || undefined,
     q: f.nilai.q || undefined,
+    status: f.nilai.status || undefined,
     belum_dikirim: f.nilai.belumDikirim,
     urut: f.nilai.urut,
     halaman: f.halaman,
@@ -120,6 +129,14 @@ export default function KatalogPage() {
           semua={`Semua toko (${ringkasan?.total ?? '…'})`}
           opsi={(ringkasan?.toko ?? []).map((t) => ({ value: t.akun_id, label: `${t.nama_toko} (${t.jumlah})` }))}
         />
+        <FilterPilih
+          id="katalog-status"
+          label="Status tayang"
+          nilai={f.nilai.status}
+          onUbah={(status) => f.ubah({ status })}
+          semua={`Semua status (${ringkasan ? jumlahSemuaStatus : '…'})`}
+          opsi={STATUS_SHOPEE.map((s) => ({ value: s.value, label: `${s.label} (${ringkasan?.status?.[s.value] ?? '…'})` }))}
+        />
         <FilterPilih id="katalog-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
         <PilihTampilan
           id="katalog-tampilan"
@@ -159,9 +176,9 @@ export default function KatalogPage() {
         <Spinner column label="Memuat katalog…" />
       ) : items.length === 0 ? (
         <div className="rounded-lg border p-8 text-center text-muted-foreground">
-          {ringkasan?.total
+          {jumlahSemuaStatus > 0
             ? 'Tidak ada produk yang cocok dengan filter ini.'
-            : 'Katalog masih kosong. Buka menu Toko, lalu klik "Tarik Produk" pada toko Shopee.'}
+            : 'Katalog masih kosong. Buka menu Toko, lalu klik "Sinkronisasi Produk" pada toko Shopee.'}
         </div>
       ) : tampilan === 'list' ? (
         <TabelData

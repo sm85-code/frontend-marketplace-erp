@@ -92,7 +92,7 @@ export default function AkunPage() {
   const syncProdukMut = useMutation({
     mutationFn: endpoints.syncProdukAkun,
     onMutate: (akunId: string): Progres =>
-      mulaiProgres(`Menarik produk ${akunList?.find((a) => a.id === akunId)?.nama_toko ?? 'toko'} dari Shopee (bisa 1–2 menit)`),
+      mulaiProgres(`Sinkronisasi produk ${akunList?.find((a) => a.id === akunId)?.nama_toko ?? 'toko'} dari Shopee (bisa 1–2 menit)`),
     onSuccess: (data, _id, progres) => {
       progres.selesai(
         `Sync produk selesai — ${data.pulled} produk dibaca, ${data.listing_baru} listing baru tertaut, ` +
@@ -218,7 +218,7 @@ export default function AkunPage() {
                   {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                     <>
                       <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
-                        Tarik Produk
+                        Sinkronisasi Produk
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
                         Kirim Stok &amp; Harga

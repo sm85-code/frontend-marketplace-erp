@@ -424,13 +424,15 @@ export const laporanIklan = (campaignId: string, dari: string, sampai: string) =
 export const listKatalog = (params: {
   akun_id?: string
   q?: string
+  status?: string
   belum_dikirim?: boolean
   urut?: string
   halaman?: number
   per_halaman?: number
 }) => api.get<KatalogList>('/katalog-shopee', { params }).then((r) => r.data)
 
-export const ringkasanKatalog = () => api.get<KatalogRingkasan>('/katalog-shopee/ringkasan').then((r) => r.data)
+export const ringkasanKatalog = (params: { status?: string; akun_id?: string } = {}) =>
+  api.get<KatalogRingkasan>('/katalog-shopee/ringkasan', { params }).then((r) => r.data)
 
 export const getKatalog = (id: string) => api.get<KatalogDetail>(`/katalog-shopee/${id}`).then((r) => r.data)
 
