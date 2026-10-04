@@ -32,7 +32,7 @@ import FormPesananManual from './pesanan/FormPesananManual'
 import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
 
 const PER_HALAMAN = 50
-const AWAL = { tahap: '', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
+const AWAL = { tahap: 'perlu_diproses', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
 const PILIHAN_RESI = [
   { value: 'belum', label: 'Belum dicetak' },
   { value: 'sudah', label: 'Sudah dicetak' },

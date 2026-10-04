@@ -73,7 +73,7 @@ sebagai `kolom:asc|desc` dan kuncinya harus dikenal API (`urut.kunci` pada kolom
 Grup: Harian (Dashboard, Pesanan) → Produk (Katalog Shopee, Produk, Listing, Gudang & Stok) →
 Keuangan & Iklan (Settlement, Iklan) → Pengaturan (Toko, Staff, Profil Saya).
 Bilah bawah HP: 4 menu `bawah` berprioritas tertinggi yang boleh dilihat peran itu, ditampilkan menurut urutan alur;
-sisanya lewat *Lainnya* (drawer yang sama). Pemilik: Dashboard, Pesanan, Katalog, Produk. Staf: Dashboard, Pesanan, Toko, Profil.
+sisanya lewat *Lainnya* (drawer yang sama). Urutan kiri ke kanan ditentukan `posisiBawah`. Pemilik: Dashboard, Produk, Katalog, Pesanan, Lainnya. Filter status Pesanan bawaannya *Perlu diproses*. Staf: Dashboard, Pesanan, Toko, Profil.
 
 ## 5. Aksesibilitas (wajib)
 
