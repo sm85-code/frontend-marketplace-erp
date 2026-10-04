@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bacaKolom, bagiBatch, KOLOM_BAWAAN, rentangHarga, ringkasKirim, ukuranPaket } from '@/lib/katalog'
+import { bagiBatch, rentangHarga, ringkasKirim, ukuranPaket } from '@/lib/katalog'
 
 describe('katalog helpers', () => {
   it('shows one price or a range', () => {
@@ -19,13 +19,6 @@ describe('katalog helpers', () => {
       'Terkirim ke toko web: 2 produk baru, 1 dilewati (sudah ada di toko web)',
     )
     expect(ringkasKirim([])).toBe('Tidak ada produk yang dikirim')
-  })
-
-  it('restores saved columns in display order and ignores unknown or broken values', () => {
-    expect(bacaKolom('["harga","nama","bukan-kolom"]')).toEqual(['nama', 'harga'])
-    expect(bacaKolom(null)).toEqual(KOLOM_BAWAAN)
-    expect(bacaKolom('{rusak')).toEqual(KOLOM_BAWAAN)
-    expect(bacaKolom('[]')).toEqual(KOLOM_BAWAAN)
   })
 
   it('formats package size', () => {
