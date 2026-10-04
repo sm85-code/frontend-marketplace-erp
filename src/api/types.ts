@@ -1,6 +1,7 @@
 /** Mirrors tenants/marketplace_erp/modules/marketplace_erp/application/schemas.py field for field. */
 
-export type Role = 'owner' | 'staff'
+/** admin (everything, incl. other users' usernames and roles) > owner > staff (only the shops assigned to it). */
+export type Role = 'admin' | 'owner' | 'staff'
 
 export type Platform = 'shopee' | 'tiktokshop' | 'lazada' | 'blibli'
 
@@ -15,7 +16,10 @@ export type StatusAkun = 'belum_terhubung' | 'terhubung' | 'aktif' | 'token_kada
 export interface User {
   id: string
   nama: string
-  email: string
+  /** Login name; set (and changed) by an admin. */
+  username: string | null
+  /** Optional contact email, also accepted at login. */
+  email: string | null
   role: Role
   must_change_password: boolean
 }

@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { PLATFORM_LABELS } from '@/config/roles'
+import { PLATFORM_LABELS, isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 
 const PLATFORMS: Platform[] = ['shopee', 'tiktokshop', 'lazada', 'blibli']
@@ -177,7 +177,7 @@ export default function AkunPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="page-h1 font-heading text-2xl font-bold">Toko</h1>
-        {user?.role === 'owner' && <Button onClick={openCreate}>Tambah Toko</Button>}
+        {isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}
       </div>
 
       <Card>
@@ -210,12 +210,12 @@ export default function AkunPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-wrap justify-end gap-1.5">
-                          {akun.platform === 'shopee' && !akun.id_toko_eksternal && user?.role === 'owner' && (
+                          {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                             <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
                               Hubungkan Shopee
                             </Button>
                           )}
-                          {akun.id_toko_eksternal && user?.role === 'owner' && (
+                          {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                             <>
                               <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
                                 Tarik Produk
@@ -225,7 +225,7 @@ export default function AkunPage() {
                               </Button>
                             </>
                           )}
-                          {user?.role === 'owner' && (
+                          {isOwnerLevel(user?.role) && (
                             <>
                               <Button size="sm" variant="ghost" onClick={() => openEdit(akun)}>
                                 Edit

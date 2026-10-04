@@ -8,7 +8,7 @@ const USER_KEY = 'mpe_user'
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<User>
+  login: (identitas: string, password: string) => Promise<User>
   changePassword: (currentPassword: string, newPassword: string) => Promise<User>
   refreshUser: () => Promise<User>
   logout: () => Promise<void>
@@ -49,8 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
-    const u = await endpoints.login(email, password)
+  const login = useCallback(async (identitas: string, password: string) => {
+    const u = await endpoints.login(identitas, password)
     cacheUser(u)
     setUser(u)
     return u

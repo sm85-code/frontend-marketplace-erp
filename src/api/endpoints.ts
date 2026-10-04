@@ -20,13 +20,15 @@ import type {
   StokLedger,
   SyncPesananResult,
   SyncProdukResult,
+  Role,
   User,
 } from '@/api/types'
 
 // --- Auth --------------------------------------------------------------------
 
-export const login = (email: string, password: string) =>
-  api.post<User>('/auth/login', { email, password }).then((r) => r.data)
+/** `identitas` is the username or the email. */
+export const login = (identitas: string, password: string) =>
+  api.post<User>('/auth/login', { username: identitas, password }).then((r) => r.data)
 
 export const logout = () => api.post('/auth/logout')
 
@@ -39,8 +41,21 @@ export const changePassword = (current_password: string, new_password: string) =
 
 export const listUsers = () => api.get<User[]>('/users').then((r) => r.data)
 
-export const createUser = (payload: { nama: string; email: string; password: string; role: 'owner' | 'staff' }) =>
-  api.post<User>('/users', payload).then((r) => r.data)
+export const createUser = (payload: {
+  nama: string
+  username: string
+  email?: string | null
+  password: string
+  role: Role
+}) => api.post<User>('/users', payload).then((r) => r.data)
+
+/** Admin only: change an account's username, display name or role. */
+export const updateUser = (id: string, payload: { username?: string; nama?: string; role?: Role }) =>
+  api.patch<User>(`/users/${id}`, payload).then((r) => r.data)
+
+/** Everyone: change their own name and contact email (an empty email removes it). Never the username. */
+export const updateProfil = (payload: { nama?: string; email?: string | null }) =>
+  api.patch<User>('/auth/profil', payload).then((r) => r.data)
 
 // --- Akun Marketplace ------------------------------------------------------
 
