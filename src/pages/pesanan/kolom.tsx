@@ -34,7 +34,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     {
       kunci: 'pesanan',
       judul: 'No. Pesanan',
-      kartu: 'utama',
+     
       tetap: true,
       urut: { kunci: 'nomor' },
       sel: (p) => (
@@ -52,7 +52,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       kunci: 'status',
       judul: 'Status',
       kelas: 'min-w-[120px]',
-      kartu: 'utama',
+     
       urut: { kunci: 'status', label: ['Belum bayar dulu', 'Dibatalkan dulu'] },
       sel: (p) => (
         <>

@@ -28,8 +28,8 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 function kolomCampaign(akunMap: Map<string, AkunMarketplace>): KolomTabel<IklanCampaign>[] {
   const toko = (c: IklanCampaign) => `${akunMap.get(c.akun_id)?.nama_toko ?? '—'} (${PLATFORM_LABELS[c.platform]})`
   return [
-    { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, kartu: 'utama', sel: (c) => c.nama, nilai: (c) => c.nama },
-    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, sel: (c) => c.nama, nilai: (c) => c.nama },
+    { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
     { kunci: 'budget', judul: 'Budget/Hari', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (c) => fmtRp(c.budget_harian), nilai: (c) => Number(c.budget_harian) },
     { kunci: 'mulai', judul: 'Mulai', kelas: 'whitespace-nowrap', sel: (c) => fmtDate(c.tanggal_mulai), nilai: (c) => new Date(c.tanggal_mulai) },
     { kunci: 'status', judul: 'Status', sel: (c) => <Badge variant={statusVariant(c.status)}>{c.status}</Badge>, nilai: (c) => c.status },

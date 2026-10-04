@@ -141,7 +141,6 @@ export default function GudangPage() {
             idDari={(p) => p.id}
             namaDari={(p) => p.nama}
             urutAwal={{ kunci: 'sku', arah: 'asc' }}
-            hp="tabel"
             minWidth={420}
           />
         </CardContent>

@@ -27,8 +27,8 @@ function kolomListing({
   const sku = (l: ProdukListing) => produkMap.get(l.produk_id)?.sku_induk ?? '—'
   const toko = (l: ProdukListing) => akunMap.get(l.akun_id)?.nama_toko ?? '—'
   return [
-    { kunci: 'sku', judul: 'SKU Induk', kelas: 'font-mono', tetap: true, kartu: 'utama', sel: sku, nilai: sku },
-    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'sku', judul: 'SKU Induk', kelas: 'font-mono', tetap: true, sel: sku, nilai: sku },
+    { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
     { kunci: 'platform', judul: 'Platform', sel: (l) => PLATFORM_LABELS[l.platform], nilai: (l) => l.platform },
     { kunci: 'eksternal', judul: 'ID Eksternal', kelas: 'font-mono', sel: (l) => l.id_eksternal, nilai: (l) => l.id_eksternal },
     {

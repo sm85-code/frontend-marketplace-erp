@@ -11,8 +11,9 @@ halaman hanya mendeklarasikan isinya. Kalau ada revisi gaya, ubah di sana, bukan
 3. **Ukuran huruf**: cukup sediakan opsi Kecil / Sedang / Besar (menu *Tampilan*). Bawaan sengaja padat.
 4. **Aksi utama ada di baris** (mis. *Cetak resi*, *Detail*); aksi massal di bilah bawah saat baris dicentang.
 5. **Filter berbentuk dropdown berlabel**, sejajar, tidak memenuhi layar. Di HP filter terlipat.
-6. **Semua tabel bisa disortir** (klik judul kolom; di HP lewat dropdown *Urutan*).
-7. **Menu mengikuti alur kerja** dan sama di desktop dan HP.
+6. **Semua tabel bisa disortir** (klik judul kolom; di HP juga lewat dropdown *Urutan*).
+7. **Tabel tetap tabel di HP** (bukan kartu); geser samping, kolom identitas dan Aksi menempel.
+8. **Menu mengikuti alur kerja** dan sama di desktop dan HP.
 
 ## 2. Skala huruf dan kepadatan (token)
 
@@ -39,7 +40,7 @@ Kontrol (input, dropdown, tombol di bar filter) tingginya **44px** (target sentu
 |---|---|
 | `BarHalaman` | judul + aksi halaman, turun baris di HP |
 | `BarFilter` + `FilterCari/Pilih/Tanggal/Sakelar/Aksi` | filter berlabel dalam satu grid; di HP hanya pencarian terlihat, sisanya di tombol *Filter & urutan (n aktif)* |
-| `TabelData` | tabel (md ke atas) **dan** kartu (HP) dari **satu** deklarasi kolom |
+| `TabelData` | tabel di semua lebar layar (di HP digeser samping), dari **satu** deklarasi kolom. **Tidak ada tampilan kartu.** |
 | `TabelLokal` | `TabelData` + sortir di browser, untuk data yang dimuat penuh |
 | `KepalaUrut` | judul kolom yang bisa diklik (`aria-sort`) |
 | `PemilihKolom` | pilih kolom yang tampil (diingat di browser) |
@@ -55,7 +56,7 @@ Hook pendukung di `src/lib`: `useFilterDaftar` (filter + halaman, filter berubah
 
 ```tsx
 const KOLOM: KolomTabel<Item>[] = [
-  { kunci: 'nama', judul: 'Nama', tetap: true, kartu: 'utama', sel: (i) => i.nama, nilai: (i) => i.nama },
+  { kunci: 'nama', judul: 'Nama', tetap: true, sel: (i) => i.nama, nilai: (i) => i.nama },
   { kunci: 'total', judul: 'Total', rata: 'kanan', sel: (i) => fmtRp(i.total), nilai: (i) => Number(i.total) },
 ]
 <BarHalaman judul="Judul"><Button>Tambah</Button></BarHalaman>

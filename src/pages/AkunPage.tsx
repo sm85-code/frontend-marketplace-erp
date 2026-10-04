@@ -29,7 +29,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 
 const kolomToko: KolomTabel<AkunMarketplace>[] = [
   { kunci: 'platform', judul: 'Platform', sel: (a) => PLATFORM_LABELS[a.platform], nilai: (a) => a.platform },
-  { kunci: 'nama', judul: 'Nama Toko', kelas: 'font-medium', kartu: 'utama', sel: (a) => a.nama_toko, nilai: (a) => a.nama_toko },
+  { kunci: 'nama', judul: 'Nama Toko', kelas: 'font-medium', sel: (a) => a.nama_toko, nilai: (a) => a.nama_toko },
   { kunci: 'shop', judul: 'Shop ID', kelas: 'font-mono', sel: (a) => a.id_toko_eksternal ?? '—', nilai: (a) => a.id_toko_eksternal },
   { kunci: 'status', judul: 'Status', sel: (a) => <Badge variant={statusVariant(a.status)}>{a.status}</Badge>, nilai: (a) => a.status },
 ]

@@ -194,7 +194,6 @@ export default function IklanDetailPage() {
               idDari={(m) => m.id}
               namaDari={(m) => fmtDate(m.tanggal)}
               urutAwal={{ kunci: 'tanggal', arah: 'desc' }}
-              hp="tabel"
               minWidth={420}
             />
             {(metrikList ?? []).length === 0 && <p className="py-6 text-center text-muted-foreground">Belum ada data spend harian.</p>}

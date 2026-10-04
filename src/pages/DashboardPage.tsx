@@ -149,7 +149,6 @@ export default function DashboardPage() {
               idDari={(t) => t.akun_id ?? 'none'}
               namaDari={(t) => t.nama_toko}
               urutAwal={{ kunci: 'omzet', arah: 'desc' }}
-              hp="tabel"
               minWidth={820}
               footer={<TotalToko d={d} />}
             />
@@ -178,7 +177,6 @@ export default function DashboardPage() {
                 ]}
                 idDari={(t) => t.tahap}
                 namaDari={(t) => TAHAP_LABELS[t.tahap]}
-                hp="tabel"
                 minWidth={380}
               />
             </Bagian>
@@ -199,7 +197,6 @@ export default function DashboardPage() {
                     idDari={(h) => h.tanggal}
                     namaDari={(h) => h.tanggal}
                     urutAwal={{ kunci: 'tanggal', arah: 'desc' }}
-                    hp="tabel"
                     minWidth={320}
                   />
                   {hari.length > HARI_DITAMPILKAN && (
@@ -223,7 +220,6 @@ export default function DashboardPage() {
                 idDari={(p) => p.nama_produk}
                 namaDari={(p) => p.nama_produk}
                 urutAwal={{ kunci: 'qty', arah: 'desc' }}
-                hp="tabel"
                 minWidth={700}
               />
             )}
@@ -244,7 +240,6 @@ export default function DashboardPage() {
                 idDari={(p) => p.produk_id}
                 namaDari={(p) => p.nama}
                 urutAwal={{ kunci: 'stok', arah: 'asc' }}
-                hp="tabel"
                 minWidth={380}
               />
             )}
