@@ -23,6 +23,9 @@ import type {
   RingkasanPesanan,
   SinkronPesananOtomatis,
   Settlement,
+  SettlementPesananHalaman,
+  SettlementRingkasan,
+  SyncSettlementHasil,
   StaffAkun,
   StokLedger,
   SyncPesananResult,
@@ -331,6 +334,24 @@ export const createSettlement = (payload: {
   net?: string
   catatan?: string
 }) => api.post<Settlement>('/settlement', payload).then((r) => r.data)
+
+export interface FilterSettlementPesanan {
+  akun_id?: string
+  dari?: string
+  sampai?: string
+  q?: string
+}
+
+/** What Shopee released per order (pulled with syncSettlementAkun). */
+export const daftarSettlementPesanan = (params: FilterSettlementPesanan & { urut?: string; halaman?: number; per_halaman?: number }) =>
+  api.get<SettlementPesananHalaman>('/settlement-pesanan', { params }).then((r) => r.data)
+
+export const ringkasanSettlementPesanan = (params: Pick<FilterSettlementPesanan, 'dari' | 'sampai' | 'q'>) =>
+  api.get<SettlementRingkasan>('/settlement-pesanan/ringkasan', { params }).then((r) => r.data)
+
+/** Pulls the last `hari` days (1..90) of released money from Shopee for one shop. */
+export const syncSettlementAkun = (akunId: string, hari: number) =>
+  api.post<SyncSettlementHasil>(`/akun/${akunId}/sync/settlement`, null, { params: { hari }, timeout: 120_000 }).then((r) => r.data)
 
 export const getSettlement = (id: string) => api.get<Settlement>(`/settlement/${id}`).then((r) => r.data)
 

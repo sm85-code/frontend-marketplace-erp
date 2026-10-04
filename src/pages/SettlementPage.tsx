@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS } from '@/config/roles'
+import DanaShopee from './settlement/DanaShopee'
 
 const emptyForm = {
   akun_id: '',
@@ -104,13 +105,15 @@ export default function SettlementPage() {
     <div className="space-y-4">
       <BarHalaman judul="Settlement">
         <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
-          Catat Settlement
+          Catat Manual
         </Button>
       </BarHalaman>
 
+      <DanaShopee />
+
       <Card>
         <CardHeader>
-          <CardTitle>Rekonsiliasi Pencairan Dana</CardTitle>
+          <CardTitle>Catatan Manual Pencairan</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
