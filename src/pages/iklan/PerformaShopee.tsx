@@ -118,8 +118,8 @@ export default function PerformaShopee() {
             label="Toko"
             nilai={f.nilai.toko}
             onUbah={(toko) => f.ubah({ toko })}
-            semua={`Semua toko (${ringkasan?.toko.length ?? '…'})`}
-            opsi={(ringkasan?.toko ?? []).map((t) => ({ value: t.akun_id, label: t.nama_toko }))}
+            semua={`Semua toko (${tokoShopee.length})`}
+            opsi={tokoShopee.map((t) => ({ value: t.id, label: t.nama_toko }))}
           />
           <FilterTanggal
             id="iklan-tanggal"

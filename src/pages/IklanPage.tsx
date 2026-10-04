@@ -74,15 +74,17 @@ export default function IklanPage() {
     <div className="space-y-4">
       <BarHalaman judul="Iklan">
         <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
-          Buat Campaign Manual
+          Catat kampanye
         </Button>
       </BarHalaman>
 
       <PerformaShopee />
 
+      <IklanShopee />
+
       <Card>
         <CardHeader>
-          <CardTitle>Campaign Manual</CardTitle>
+          <CardTitle>Catatan kampanye</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -90,7 +92,7 @@ export default function IklanPage() {
           ) : (
             <>
               <TabelLokal
-                label="Daftar campaign iklan"
+                label="Catatan kampanye lokal"
                 items={data}
                 kolom={kolomCampaign(akunMap)}
                 idDari={(c) => c.id}
@@ -103,17 +105,16 @@ export default function IklanPage() {
                 )}
                 minWidth={620}
               />
-              {(data ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada campaign iklan.</p>}
+              {(data ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada catatan. Ini bukan iklan di Shopee.</p>}
             </>
           )}
         </CardContent>
       </Card>
 
-      <IklanShopee />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Buat Campaign</DialogTitle>
+            <DialogTitle>Catat kampanye</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
