@@ -3,6 +3,9 @@ import type {
   AkunMarketplace,
   Gudang,
   IklanCampaign,
+  IklanHarianTokoHalaman,
+  IklanRingkasan,
+  SyncIklanHasil,
   IklanLaporan,
   Dashboard,
   IklanMetrikHarian,
@@ -379,6 +382,23 @@ export const laporanRingkas = (dari: string, sampai: string, batasStokKritis = 5
     .then((r) => r.data)
 
 // --- Iklan (ads) -------------------------------------------------------------------
+
+export interface FilterIklanToko {
+  akun_id?: string
+  dari?: string
+  sampai?: string
+}
+
+/** Shopee Ads performance per shop per day (dates are YYYY-MM-DD, Shopee/WIB days). */
+export const daftarIklanHarianToko = (params: FilterIklanToko & { urut?: string; halaman?: number; per_halaman?: number }) =>
+  api.get<IklanHarianTokoHalaman>('/iklan-toko/harian', { params }).then((r) => r.data)
+
+export const ringkasanIklanToko = (params: Pick<FilterIklanToko, 'dari' | 'sampai'>) =>
+  api.get<IklanRingkasan>('/iklan-toko/ringkasan', { params }).then((r) => r.data)
+
+/** Pulls the last `hari` days (1..180) of Shopee Ads performance and the ads balance for one shop. */
+export const syncIklanAkun = (akunId: string, hari: number) =>
+  api.post<SyncIklanHasil>(`/akun/${akunId}/sync/iklan`, null, { params: { hari }, timeout: 120_000 }).then((r) => r.data)
 
 export const listCampaign = (params: { akun_id?: string; platform?: string; status?: string } = {}) =>
   api.get<IklanCampaign[]>('/iklan', { params }).then((r) => r.data)

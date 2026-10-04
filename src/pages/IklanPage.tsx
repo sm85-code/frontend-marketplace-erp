@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PLATFORM_LABELS } from '@/config/roles'
+import PerformaShopee from './iklan/PerformaShopee'
 
 const emptyForm = { akun_id: '', produk_id: '', nama: '', budget_harian: '0', tanggal_mulai: '' }
 
@@ -71,13 +72,15 @@ export default function IklanPage() {
     <div className="space-y-4">
       <BarHalaman judul="Iklan">
         <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
-          Buat Campaign
+          Buat Campaign Manual
         </Button>
       </BarHalaman>
 
+      <PerformaShopee />
+
       <Card>
         <CardHeader>
-          <CardTitle>Campaign Iklan</CardTitle>
+          <CardTitle>Campaign Manual</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
