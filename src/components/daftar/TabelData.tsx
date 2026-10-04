@@ -81,7 +81,7 @@ export default function TabelData<T>({
             <TableHeader>
               <TableRow>
                 {pilihan && (
-                  <TableHead className="sticky left-0 z-[1] w-10 bg-card">
+                  <TableHead className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 bg-card">
                     <Checkbox
                       checked={pilihan.semuaDipilih}
                       disabled={!pilihan.adaYangBisaDipilih}
@@ -102,7 +102,7 @@ export default function TabelData<T>({
                     </TableHead>
                   )
                 })}
-                {aksi && <TableHead className="sticky right-0 bg-card text-right">{judulAksi}</TableHead>}
+                {aksi && <TableHead className="bg-card text-right md:sticky md:right-0">{judulAksi}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -112,7 +112,7 @@ export default function TabelData<T>({
                 return (
                   <TableRow key={id} data-state={dipilih ? 'selected' : undefined} className={dipilih ? 'bg-primary/5' : ''}>
                     {pilihan && (
-                      <TableCell className="sticky left-0 z-[1] bg-card">
+                      <TableCell className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 bg-card">
                         {bisaCentang(item) && (
                           <Checkbox
                             checked={dipilih}
@@ -127,7 +127,7 @@ export default function TabelData<T>({
                         {k.sel(item)}
                       </TableCell>
                     ))}
-                    {aksi && <TableCell className="sticky right-0 bg-card text-right">{aksi(item)}</TableCell>}
+                    {aksi && <TableCell className="bg-card text-right md:sticky md:right-0">{aksi(item)}</TableCell>}
                   </TableRow>
                 )
               })}

@@ -45,7 +45,6 @@ function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Sett
       kunci: 'periode',
       judul: 'Periode',
       kelas: 'whitespace-nowrap',
-     
       sel: (s) => `${fmtDate(s.periode_mulai)} – ${fmtDate(s.periode_selesai)}`,
       nilai: (s) => new Date(s.periode_mulai),
     },

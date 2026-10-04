@@ -28,7 +28,6 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
     {
       kunci: 'foto',
       judul: 'Foto',
-     
       sel: (p) => (p.foto[0] ? <Gambar src={p.foto[0]} ukuran="size-10" nama={p.nama} onBuka={() => onBuka(p.id)} /> : <Kosong />),
     },
     {
@@ -51,15 +50,13 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       kunci: 'toko',
       judul: 'Toko',
       kelas: 'min-w-[120px] font-medium',
-     
       urut: { kunci: 'toko' },
       sel: (p) => p.nama_toko,
     },
     {
       kunci: 'nama',
       judul: 'Nama produk',
-      kelas: 'min-w-[200px] max-w-[300px]',
-     
+      kelas: 'min-w-[9rem] max-w-[10rem] md:min-w-[200px] md:max-w-[300px]',
       tetap: true,
       urut: { kunci: 'nama' },
       sel: (p) => (
