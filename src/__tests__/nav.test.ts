@@ -6,9 +6,10 @@ describe('filterNavForUser', () => {
     expect(filterNavForUser(null)).toEqual([])
   })
 
-  it('owner sees every nav item', () => {
-    const visible = filterNavForUser({ role: 'owner' })
-    expect(visible.length).toBe(NAV.length)
+  it('owner and admin see every nav item', () => {
+    for (const role of ['owner', 'admin'] as const) {
+      expect(filterNavForUser({ role }).length).toBe(NAV.length)
+    }
   })
 
   it('staff is restricted to shared pages only (dashboard, toko, pesanan, profile)', () => {

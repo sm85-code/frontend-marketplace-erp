@@ -7,6 +7,7 @@ import { qk } from '@/api/keys'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 import { STATUS_LABELS, STATUS_ORDER } from '@/lib/pesanan'
 
@@ -26,7 +27,7 @@ export default function DashboardPage() {
   const { data: laporan, isLoading } = useQuery({
     queryKey: qk.laporanRingkas(dariIso, sampaiIso),
     queryFn: () => endpoints.laporanRingkas(dariIso, sampaiIso),
-    enabled: user?.role === 'owner',
+    enabled: isOwnerLevel(user?.role),
   })
 
   const statusChartData = useMemo(
@@ -49,7 +50,7 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">Ringkasan 30 hari terakhir · {akunList?.length ?? 0} toko terhubung</p>
       </div>
 
-      {user?.role !== 'owner' ? (
+      {!isOwnerLevel(user?.role) ? (
         <Card>
           <CardHeader>
             <CardTitle>Selamat datang, {user?.nama}</CardTitle>

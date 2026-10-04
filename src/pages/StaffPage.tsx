@@ -15,13 +15,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { PLATFORM_LABELS, ROLE_LABELS } from '@/config/roles'
+import { PLATFORM_LABELS, ROLES_ADMIN_ONLY, ROLE_LABELS, rolesYangBolehDibuat } from '@/config/roles'
+import { useAuth } from '@/lib/auth'
+import type { Role, User } from '@/api/types'
 
 export default function StaffPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [userDialog, setUserDialog] = useState(false)
-  const [userForm, setUserForm] = useState({ nama: '', email: '', password: '', role: 'staff' as 'owner' | 'staff' })
+  const { user: saya } = useAuth()
+  const adalahAdmin = !!saya && ROLES_ADMIN_ONLY.includes(saya.role)
+  const peranBoleh = rolesYangBolehDibuat(saya?.role)
+  const [userForm, setUserForm] = useState({ nama: '', username: '', email: '', password: '', role: 'staff' as Role })
+  const [editUser, setEditUser] = useState<User | null>(null)
+  const [editForm, setEditForm] = useState({ username: '', nama: '', role: 'staff' as Role })
   const [assignDialog, setAssignDialog] = useState(false)
   const [assignForm, setAssignForm] = useState({ user_id: '', akun_id: '' })
 
@@ -39,10 +46,26 @@ export default function StaffPage() {
       toast.success('Akun dibuat — beri tahu password sementara ke pengguna')
       qc.invalidateQueries({ queryKey: ['users'] })
       setUserDialog(false)
-      setUserForm({ nama: '', email: '', password: '', role: 'staff' })
+      setUserForm({ nama: '', username: '', email: '', password: '', role: 'staff' })
     },
     onError: (e) => toast.error(getApiError(e)),
   })
+
+  const updateUserMut = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { username?: string; nama?: string; role?: Role } }) =>
+      endpoints.updateUser(id, payload),
+    onSuccess: () => {
+      toast.success('Akun diperbarui')
+      qc.invalidateQueries({ queryKey: ['users'] })
+      setEditUser(null)
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+
+  function bukaEdit(u: User) {
+    setEditUser(u)
+    setEditForm({ username: u.username ?? '', nama: u.nama, role: u.role })
+  }
 
   const assignMut = useMutation({
     mutationFn: endpoints.assignStaffAkun,
@@ -77,7 +100,7 @@ export default function StaffPage() {
           <Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko
           </Button>
-          <Button onClick={() => setUserDialog(true)}>Tambah Akun</Button>
+          <Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button>
         </div>
       </div>
 
@@ -94,18 +117,28 @@ export default function StaffPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nama</TableHead>
+                    <TableHead>Username</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
+                    {adalahAdmin && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(users ?? []).map((u) => (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.nama}</TableCell>
-                      <TableCell>{u.email}</TableCell>
+                      <TableCell className="font-mono text-sm">{u.username ?? '—'}</TableCell>
+                      <TableCell>{u.email ?? <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell>
-                        <Badge variant={u.role === 'owner' ? 'default' : 'secondary'}>{ROLE_LABELS[u.role]}</Badge>
+                        <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{ROLE_LABELS[u.role]}</Badge>
                       </TableCell>
+                      {adalahAdmin && (
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
+                            Ubah
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -168,7 +201,16 @@ export default function StaffPage() {
               <Input value={userForm.nama} onChange={(e) => setUserForm((f) => ({ ...f, nama: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Email</Label>
+              <Label>Username</Label>
+              <Input
+                value={userForm.username}
+                autoCapitalize="none"
+                onChange={(e) => setUserForm((f) => ({ ...f, username: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">3–32 karakter: huruf, angka, titik, garis bawah, atau strip. Dipakai untuk login.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Email (opsional)</Label>
               <Input type="email" value={userForm.email} onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
@@ -177,13 +219,16 @@ export default function StaffPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Role</Label>
-              <Select value={userForm.role} onValueChange={(v) => setUserForm((f) => ({ ...f, role: v as 'owner' | 'staff' }))}>
+              <Select value={userForm.role} onValueChange={(v) => setUserForm((f) => ({ ...f, role: v as Role }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
+                  {peranBoleh.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -193,10 +238,65 @@ export default function StaffPage() {
               Batal
             </Button>
             <Button
-              onClick={() => createUserMut.mutate(userForm)}
-              disabled={!userForm.nama || !userForm.email || userForm.password.length < 8}
+              onClick={() => createUserMut.mutate({ ...userForm, email: userForm.email.trim() || null })}
+              disabled={!userForm.nama || !userForm.username.trim() || userForm.password.length < 8 || createUserMut.isPending}
             >
               Buat Akun
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editUser !== null} onOpenChange={(open) => !open && setEditUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ubah Akun</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Username</Label>
+              <Input
+                value={editForm.username}
+                autoCapitalize="none"
+                onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">Hanya admin yang bisa mengubah username. Pengguna masuk dengan username ini.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nama</Label>
+              <Input value={editForm.nama} onChange={(e) => setEditForm((f) => ({ ...f, nama: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Role</Label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm((f) => ({ ...f, role: v as Role }))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(['staff', 'owner', 'admin'] as Role[]).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)}>
+              Batal
+            </Button>
+            <Button
+              disabled={!editUser || !editForm.username.trim() || !editForm.nama.trim() || updateUserMut.isPending}
+              onClick={() =>
+                editUser &&
+                updateUserMut.mutate({
+                  id: editUser.id,
+                  payload: { username: editForm.username.trim(), nama: editForm.nama.trim(), role: editForm.role },
+                })
+              }
+            >
+              Simpan
             </Button>
           </DialogFooter>
         </DialogContent>

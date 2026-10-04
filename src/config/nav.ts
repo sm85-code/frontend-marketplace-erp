@@ -25,7 +25,7 @@ export interface NavItem {
 /** Fixed mobile bottom-nav slot order (left→right). Lainnya is appended in BottomNav. */
 export const BOTTOM_NAV_PATHS = ['/dashboard', '/pesanan', '/produk', '/toko'] as const
 
-export const ALL_ROLES: Role[] = ['owner', 'staff']
+export const ALL_ROLES: Role[] = ['admin', 'owner', 'staff']
 
 export const NAV: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES },

@@ -11,7 +11,7 @@ export default function LoginPage() {
   const { user, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [email, setEmail] = useState('')
+  const [identitas, setIdentitas] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -26,10 +26,10 @@ export default function LoginPage() {
     setError(null)
     setBusy(true)
     try {
-      await login(email, password)
+      await login(identitas.trim(), password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(getApiError(err, 'Email atau password salah'))
+      setError(getApiError(err, 'Username/email atau password salah'))
     } finally {
       setBusy(false)
     }
@@ -46,14 +46,15 @@ export default function LoginPage() {
         <CardContent>
           <form className="space-y-4" onSubmit={onSubmit}>
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identitas">Username atau email</Label>
               <Input
-                id="email"
-                type="email"
+                id="identitas"
+                type="text"
                 autoComplete="username"
+                autoCapitalize="none"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identitas}
+                onChange={(e) => setIdentitas(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
