@@ -60,6 +60,9 @@ export const createUser = (payload: {
 export const updateUser = (id: string, payload: { username?: string; nama?: string; role?: Role }) =>
   api.patch<User>(`/users/${id}`, payload).then((r) => r.data)
 
+/** Admin only: delete another account (not yourself, not the last admin). */
+export const deleteUser = (id: string) => api.delete(`/users/${id}`).then(() => undefined)
+
 /** Everyone: change their own name and contact email (an empty email removes it). Never the username. */
 export const updateProfil = (payload: { nama?: string; email?: string | null }) =>
   api.patch<User>('/auth/profil', payload).then((r) => r.data)

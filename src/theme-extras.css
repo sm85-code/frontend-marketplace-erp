@@ -352,3 +352,15 @@
 .bar-filter .kontrol {
   font-size: var(--teks-data);
 }
+
+/* Frozen (sticky) table cells must be opaque so scrolled cells slide under them, yet look the same as the rest of
+   the row: the row's hover and selected tints are repeated here as the same mix over the opaque card colour. */
+.sel-tetap {
+  background-color: var(--card);
+}
+tr:hover > .sel-tetap {
+  background-color: color-mix(in oklab, var(--card), var(--muted) 40%);
+}
+tr[data-state='selected'] > .sel-tetap {
+  background-color: color-mix(in oklab, var(--card), var(--primary) 5%);
+}

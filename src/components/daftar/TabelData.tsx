@@ -70,7 +70,7 @@ export default function TabelData<T>({
   // Frozen columns (checkbox + the identity column) need an opaque background so scrolled cells slide under them.
   const kiriTetap = pilihan ? LEBAR_CENTANG : '0px'
   const gayaTetap = (k: KolomTabel<T>) => (k.tetap ? { position: 'sticky' as const, left: kiriTetap, zIndex: 1 } : undefined)
-  const kelasTetap = (k: KolomTabel<T>) => (k.tetap ? 'bg-card shadow-[1px_0_0_var(--border)]' : '')
+  const kelasTetap = (k: KolomTabel<T>) => (k.tetap ? 'sel-tetap shadow-[1px_0_0_var(--border)]' : '')
 
   return (
     <>
@@ -81,7 +81,7 @@ export default function TabelData<T>({
             <TableHeader>
               <TableRow>
                 {pilihan && (
-                  <TableHead className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 bg-card">
+                  <TableHead className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 sel-tetap">
                     <Checkbox
                       checked={pilihan.semuaDipilih}
                       disabled={!pilihan.adaYangBisaDipilih}
@@ -102,7 +102,7 @@ export default function TabelData<T>({
                     </TableHead>
                   )
                 })}
-                {aksi && <TableHead className="bg-card text-right md:sticky md:right-0">{judulAksi}</TableHead>}
+                {aksi && <TableHead className="sel-tetap text-right md:sticky md:right-0">{judulAksi}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -112,7 +112,7 @@ export default function TabelData<T>({
                 return (
                   <TableRow key={id} data-state={dipilih ? 'selected' : undefined} className={dipilih ? 'bg-primary/5' : ''}>
                     {pilihan && (
-                      <TableCell className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 bg-card">
+                      <TableCell className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 sel-tetap">
                         {bisaCentang(item) && (
                           <Checkbox
                             checked={dipilih}
@@ -127,7 +127,7 @@ export default function TabelData<T>({
                         {k.sel(item)}
                       </TableCell>
                     ))}
-                    {aksi && <TableCell className="bg-card text-right md:sticky md:right-0">{aksi(item)}</TableCell>}
+                    {aksi && <TableCell className="sel-tetap text-right md:sticky md:right-0">{aksi(item)}</TableCell>}
                   </TableRow>
                 )
               })}
