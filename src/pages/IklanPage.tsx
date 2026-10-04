@@ -109,6 +109,7 @@ export default function IklanPage() {
         </CardContent>
       </Card>
 
+      <IklanShopee />
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
