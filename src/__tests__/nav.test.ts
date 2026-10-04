@@ -28,7 +28,7 @@ describe('menu order follows the daily workflow', () => {
     expect(peta).toEqual({
       harian: ['/dashboard', '/pesanan'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
-      keuangan: ['/settlement', '/iklan'],
+      keuangan: ['/settlement', '/iklan', '/iklan/shopee'],
       pengaturan: ['/toko', '/staff', '/profile'],
     })
   })
