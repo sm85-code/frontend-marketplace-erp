@@ -68,13 +68,14 @@ export default function PerformaShopee() {
       const mulai = Date.now()
       let hari = 0
       const gagal: string[] = []
-      for (const [i, t] of tokoShopee.entries()) {
+      const sasaran = f.nilai.toko ? tokoShopee.filter((t) => t.id === f.nilai.toko) : tokoShopee
+      for (const [i, t] of sasaran.entries()) {
         if (berhenti.current) break
         setProgres({
           selesai: i,
-          total: tokoShopee.length,
+          total: sasaran.length,
           mulai,
-          keterangan: `Toko ${i + 1} dari ${tokoShopee.length}: ${t.nama_toko} · ${hari} hari data sejauh ini`,
+          keterangan: `Toko ${i + 1} dari ${sasaran.length}: ${t.nama_toko} · ${hariSinkron} hari`,
         })
         try {
           const h = await endpoints.syncIklanAkun(t.id, Number(hariSinkron))
@@ -88,7 +89,7 @@ export default function PerformaShopee() {
     },
     onSuccess: ({ hari, gagal, dihentikan }) => {
       qc.invalidateQueries({ queryKey: ['iklan-toko'] })
-      const ringkas = `${hari} hari data iklan${dihentikan ? ' (dihentikan)' : ''}`
+      const ringkas = `${sasaran.length} toko, ${hariSinkron} hari${dihentikan ? ' (dihentikan)' : ''}`
       if (gagal.length === 0) toast.success(`Sinkronisasi iklan selesai: ${ringkas}`)
       else toast.warning(`Sinkronisasi iklan: ${ringkas}; ${gagal.length} toko gagal`, { description: gagal.slice(0, 3).join('\n') })
     },
