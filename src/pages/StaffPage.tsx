@@ -25,7 +25,6 @@ const kolomPengguna: KolomTabel<User>[] = [
   {
     kunci: 'role',
     judul: 'Role',
-   
     sel: (u) => <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{ROLE_LABELS[u.role]}</Badge>,
     nilai: (u) => u.role,
   },

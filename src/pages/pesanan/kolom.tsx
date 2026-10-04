@@ -20,6 +20,22 @@ function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
 export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) => string }): KolomTabel<Pesanan>[] {
   return [
     {
+      kunci: 'pesanan',
+      judul: 'No. Pesanan',
+      kelas: 'max-w-[9.5rem] md:max-w-none',
+      tetap: true,
+      urut: { kunci: 'nomor' },
+      sel: (p) => (
+        <>
+          <div className="font-mono font-medium">{p.id_eksternal}</div>
+          <div className="teks-kecil truncate text-muted-foreground">
+            {PLATFORM_LABELS[p.platform]}
+            {p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}
+          </div>
+        </>
+      ),
+    },
+    {
       kunci: 'tanggal',
       judul: 'Tanggal pesan',
       kelas: 'whitespace-nowrap',
@@ -31,28 +47,11 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
         </>
       ),
     },
-    {
-      kunci: 'pesanan',
-      judul: 'No. Pesanan',
-     
-      tetap: true,
-      urut: { kunci: 'nomor' },
-      sel: (p) => (
-        <>
-          <div className="font-mono font-medium">{p.id_eksternal}</div>
-          <div className="teks-kecil text-muted-foreground">
-            {PLATFORM_LABELS[p.platform]}
-            {p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}
-          </div>
-        </>
-      ),
-    },
     { kunci: 'toko', judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (p) => namaToko(p.akun_id) },
     {
       kunci: 'status',
       judul: 'Status',
       kelas: 'min-w-[120px]',
-     
       urut: { kunci: 'status', label: ['Belum bayar dulu', 'Dibatalkan dulu'] },
       sel: (p) => (
         <>
@@ -113,11 +112,11 @@ export function AksiPesanan({
   return (
     <div className="flex flex-nowrap items-center justify-end gap-2">
       {bisaDicetak(p) && (
-        <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" onClick={() => onCetak(p)} disabled={cetakSibuk}>
+        <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" className="h-9 px-3" onClick={() => onCetak(p)} disabled={cetakSibuk}>
           {sudahDicetak(p) ? 'Cetak ulang resi' : 'Cetak resi'}
         </Button>
       )}
-      <Button asChild size="sm" variant="outline">
+      <Button asChild size="sm" variant="outline" className="h-9 px-3">
         <Link to={`/pesanan/${p.id}`}>Detail</Link>
       </Button>
     </div>
