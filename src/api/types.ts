@@ -233,6 +233,9 @@ export interface SyncProdukResult {
   listing_baru: number
   sudah_ada: number
   tanpa_sku_cocok: number
+  katalog_baru?: number
+  katalog_diperbarui?: number
+  katalog_dihapus?: number
   contoh_tanpa_sku: { id_eksternal: string; nama_produk: string; sku: string }[]
 }
 
@@ -267,4 +270,63 @@ export interface ProsesMassalResult {
   berhasil: number
   gagal: number
   hasil: { id: string; id_eksternal: string | null; ok: boolean; pesan: string | null }[]
+}
+
+// --- Katalog Shopee (read-only snapshot per shop; sent to the online store on demand) ---
+
+export interface KatalogItem {
+  id: string
+  akun_id: string
+  nama_toko: string | null
+  item_id: string
+  nama: string
+  sku: string
+  foto_utama: string | null
+  jumlah_foto: number
+  harga_min: string | null
+  harga_max: string | null
+  stok_shopee: number | null
+  jumlah_varian: number
+  status: string
+  dikirim_toko_id: string | null
+  dikirim_at: string | null
+}
+
+export interface KatalogVarian {
+  nama: string
+  sku: string
+  harga: string
+  stok: number | null
+}
+
+export interface KatalogDetail extends KatalogItem {
+  deskripsi: string
+  foto: string[]
+  varian: KatalogVarian[]
+  berat_gram: number
+  panjang_cm: string
+  lebar_cm: string
+  tinggi_cm: string
+}
+
+export interface KatalogList {
+  total: number
+  halaman: number
+  per_halaman: number
+  items: KatalogItem[]
+}
+
+export interface KatalogRingkasan {
+  total: number
+  toko: { akun_id: string; nama_toko: string; jumlah: number }[]
+}
+
+export interface KirimKatalogHasil {
+  id: string
+  nama: string
+  nama_toko: string | null
+  hasil: 'dibuat' | 'diperbarui' | 'dilewati'
+  pesan?: string
+  produk_toko_id?: string
+  foto?: number
 }

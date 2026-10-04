@@ -87,9 +87,10 @@ export default function AkunPage() {
     onSuccess: (data) => {
       toast.success(
         `Sync produk selesai — ${data.pulled} produk dibaca, ${data.listing_baru} listing baru tertaut, ` +
-          `${data.tanpa_sku_cocok} tanpa SKU yang cocok`,
+          `${data.tanpa_sku_cocok} tanpa SKU yang cocok. Lihat semuanya di menu Katalog Shopee.`,
       )
       qc.invalidateQueries({ queryKey: ['listing'] })
+      qc.invalidateQueries({ queryKey: ['katalog'] })
     },
     onError: (e) => toast.error(getApiError(e, 'Sync produk belum tersedia untuk platform/akun ini')),
   })

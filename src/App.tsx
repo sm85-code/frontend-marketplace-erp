@@ -13,6 +13,7 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AkunPage = lazy(() => import('@/pages/AkunPage'))
 const ShopeeCallbackPage = lazy(() => import('@/pages/ShopeeCallbackPage'))
+const KatalogPage = lazy(() => import('@/pages/KatalogPage'))
 const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
 const ListingPage = lazy(() => import('@/pages/ListingPage'))
 const GudangPage = lazy(() => import('@/pages/GudangPage'))
@@ -71,6 +72,10 @@ export default function App() {
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected><LazyPage><AkunPage /></LazyPage></Protected>} />
+              <Route
+                path="/katalog"
+                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><KatalogPage /></LazyPage></Protected>}
+              />
               <Route
                 path="/produk"
                 element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ProdukPage /></LazyPage></Protected>}

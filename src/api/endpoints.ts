@@ -5,6 +5,10 @@ import type {
   IklanCampaign,
   IklanLaporan,
   IklanMetrikHarian,
+  KatalogDetail,
+  KatalogList,
+  KatalogRingkasan,
+  KirimKatalogHasil,
   LaporanRingkas,
   OAuthCallbackResult,
   OAuthStart,
@@ -367,3 +371,21 @@ export const listMetrikHarian = (campaignId: string) =>
 
 export const laporanIklan = (campaignId: string, dari: string, sampai: string) =>
   api.get<IklanLaporan>(`/iklan/${campaignId}/laporan`, { params: { dari, sampai } }).then((r) => r.data)
+
+// --- Katalog Shopee ----------------------------------------------------------
+
+export const listKatalog = (params: {
+  akun_id?: string
+  q?: string
+  belum_dikirim?: boolean
+  halaman?: number
+  per_halaman?: number
+}) => api.get<KatalogList>('/katalog-shopee', { params }).then((r) => r.data)
+
+export const ringkasanKatalog = () => api.get<KatalogRingkasan>('/katalog-shopee/ringkasan').then((r) => r.data)
+
+export const getKatalog = (id: string) => api.get<KatalogDetail>(`/katalog-shopee/${id}`).then((r) => r.data)
+
+/** Copies the chosen products to the online store as drafts with stock 0 (max 20 per call). Never writes to Shopee. */
+export const kirimKatalogKeToko = (payload: { ids: string[]; aktif?: boolean; timpa?: boolean }) =>
+  api.post<{ ok: boolean; hasil: KirimKatalogHasil[] }>('/katalog-shopee/kirim-toko', payload).then((r) => r.data)
