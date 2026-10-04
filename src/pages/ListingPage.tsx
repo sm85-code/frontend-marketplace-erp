@@ -4,10 +4,10 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
-import type { Platform } from '@/api/types'
+import type { AkunMarketplace, Platform, Produk, ProdukListing } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
+import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,8 +15,31 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PLATFORM_LABELS } from '@/config/roles'
+
+function kolomListing({
+  produkMap,
+  akunMap,
+}: {
+  produkMap: Map<string, Produk>
+  akunMap: Map<string, AkunMarketplace>
+}): KolomTabel<ProdukListing>[] {
+  const sku = (l: ProdukListing) => produkMap.get(l.produk_id)?.sku_induk ?? '—'
+  const toko = (l: ProdukListing) => akunMap.get(l.akun_id)?.nama_toko ?? '—'
+  return [
+    { kunci: 'sku', judul: 'SKU Induk', kelas: 'font-mono', tetap: true, kartu: 'utama', sel: sku, nilai: sku },
+    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'platform', judul: 'Platform', sel: (l) => PLATFORM_LABELS[l.platform], nilai: (l) => l.platform },
+    { kunci: 'eksternal', judul: 'ID Eksternal', kelas: 'font-mono', sel: (l) => l.id_eksternal, nilai: (l) => l.id_eksternal },
+    {
+      kunci: 'override',
+      judul: 'Harga/Stok Override',
+      kelas: 'whitespace-nowrap',
+      sel: (l) => `${l.harga_jual ? fmtRp(l.harga_jual) : 'ikut dasar'} / ${l.stok_listing ?? 'ikut stok'}`,
+    },
+    { kunci: 'status', judul: 'Status', sel: (l) => <Badge variant={l.aktif ? 'default' : 'secondary'}>{l.aktif ? 'Aktif' : 'Nonaktif'}</Badge>, nilai: (l) => l.aktif },
+  ]
+}
 
 export default function ListingPage() {
   const qc = useQueryClient()
@@ -77,12 +100,11 @@ export default function ListingPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Listing</h1>
+      <BarHalaman judul="Listing">
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
         </Button>
-      </div>
+      </BarHalaman>
 
       <Card>
         <CardHeader>
@@ -92,54 +114,28 @@ export default function ListingPage() {
           {isLoading ? (
             <Spinner column label="Memuat listing…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>SKU Induk</TableHead>
-                    <TableHead>Toko</TableHead>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>ID Eksternal</TableHead>
-                    <TableHead>Harga/Stok Override</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(listing ?? []).map((l) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="font-mono text-xs">{produkMap.get(l.produk_id)?.sku_induk ?? '—'}</TableCell>
-                      <TableCell>{akunMap.get(l.akun_id)?.nama_toko ?? '—'}</TableCell>
-                      <TableCell>{PLATFORM_LABELS[l.platform]}</TableCell>
-                      <TableCell>{l.id_eksternal}</TableCell>
-                      <TableCell>
-                        {l.harga_jual ? fmtRp(l.harga_jual) : 'ikut dasar'} / {l.stok_listing ?? 'ikut stok'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={l.aktif ? 'default' : 'secondary'}>{l.aktif ? 'Aktif' : 'Nonaktif'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <Button size="sm" variant="ghost" onClick={() => toggleMut.mutate({ id: l.id, aktif: !l.aktif })}>
-                            {l.aktif ? 'Nonaktifkan' : 'Aktifkan'}
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => onDelete(l.id)}>
-                            Hapus
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(listing ?? []).length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                        Belum ada listing.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableShell>
+            <>
+              <TabelLokal
+                label="Mapping SKU induk ke listing toko"
+                items={listing}
+                kolom={kolomListing({ produkMap, akunMap })}
+                idDari={(l) => l.id}
+                namaDari={(l) => l.id_eksternal}
+                urutAwal={{ kunci: 'sku', arah: 'asc' }}
+                aksi={(l) => (
+                  <div className="flex flex-nowrap justify-end gap-1.5">
+                    <Button size="sm" variant="ghost" onClick={() => toggleMut.mutate({ id: l.id, aktif: !l.aktif })}>
+                      {l.aktif ? 'Nonaktifkan' : 'Aktifkan'}
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onDelete(l.id)}>
+                      Hapus
+                    </Button>
+                  </div>
+                )}
+                minWidth={760}
+              />
+              {(listing ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada listing.</p>}
+            </>
           )}
         </CardContent>
       </Card>
@@ -151,9 +147,9 @@ export default function ListingPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Produk (SKU Induk)</Label>
+              <Label htmlFor="listing-produk-sku-induk-1">Produk (SKU Induk)</Label>
               <Select value={form.produk_id} onValueChange={(v) => setForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="listing-produk-sku-induk-1" className="w-full">
                   <SelectValue placeholder="Pilih produk" />
                 </SelectTrigger>
                 <SelectContent>
@@ -166,9 +162,9 @@ export default function ListingPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Toko</Label>
+              <Label htmlFor="listing-toko-2">Toko</Label>
               <Select value={form.akun_id} onValueChange={(v) => setForm((f) => ({ ...f, akun_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="listing-toko-2" className="w-full">
                   <SelectValue placeholder="Pilih toko" />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,16 +177,16 @@ export default function ListingPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>ID Eksternal (id produk di toko)</Label>
-              <Input value={form.id_eksternal} onChange={(e) => setForm((f) => ({ ...f, id_eksternal: e.target.value }))} />
+              <Label htmlFor="listing-id-eksternal-id-produk-d-3">ID Eksternal (id produk di toko)</Label>
+              <Input id="listing-id-eksternal-id-produk-d-3" value={form.id_eksternal} onChange={(e) => setForm((f) => ({ ...f, id_eksternal: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Harga Jual Override (opsional)</Label>
-              <Input type="number" value={form.harga_jual} onChange={(e) => setForm((f) => ({ ...f, harga_jual: e.target.value }))} />
+              <Label htmlFor="listing-harga-jual-override-opsi-4">Harga Jual Override (opsional)</Label>
+              <Input id="listing-harga-jual-override-opsi-4" type="number" value={form.harga_jual} onChange={(e) => setForm((f) => ({ ...f, harga_jual: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Stok Override (opsional)</Label>
-              <Input
+              <Label htmlFor="listing-stok-override-opsional-5">Stok Override (opsional)</Label>
+              <Input id="listing-stok-override-opsional-5"
                 type="number"
                 value={form.stok_listing}
                 onChange={(e) => setForm((f) => ({ ...f, stok_listing: e.target.value }))}

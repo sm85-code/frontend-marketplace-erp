@@ -17,16 +17,7 @@ function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
  * Every column of the order list, declared once: it drives the table (desktop), the cards (phone),
  * the column picker and the sort dropdown. `urut.kunci` must be a sort key the API knows.
  */
-export function kolomPesanan({
-  namaToko,
-  onCetak,
-  cetakSibuk,
-}: {
-  namaToko: (akunId: string | null) => string
-  /** Prints the label of this one order (the click opens the tab, so it must run inside the click handler). */
-  onCetak: (p: Pesanan) => void
-  cetakSibuk: boolean
-}): KolomTabel<Pesanan>[] {
+export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) => string }): KolomTabel<Pesanan>[] {
   return [
     {
       kunci: 'tanggal',
@@ -44,6 +35,7 @@ export function kolomPesanan({
       kunci: 'pesanan',
       judul: 'No. Pesanan',
       kartu: 'utama',
+      tetap: true,
       urut: { kunci: 'nomor' },
       sel: (p) => (
         <>
@@ -75,7 +67,17 @@ export function kolomPesanan({
         </>
       ),
     },
-    { kunci: 'produk', judul: 'Produk', kelas: 'min-w-[170px] max-w-[260px]', sel: (p) => ringkasItem(p) },
+    {
+      kunci: 'produk',
+      judul: 'Produk',
+      kelas: 'min-w-[160px] max-w-[240px]',
+      // Two lines at most keep rows short; the full text is in the tooltip and on the detail page.
+      sel: (p) => (
+        <span className="line-clamp-2" title={ringkasItem(p, 20)}>
+          {ringkasItem(p)}
+        </span>
+      ),
+    },
     {
       kunci: 'total',
       judul: 'Total',
@@ -94,27 +96,30 @@ export function kolomPesanan({
         </>
       ),
     },
-    {
-      kunci: 'cetak',
-      judul: 'Cetak resi',
-      kelas: 'whitespace-nowrap',
-      sel: (p) =>
-        bisaDicetak(p) ? (
-          <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" onClick={() => onCetak(p)} disabled={cetakSibuk}>
-            {sudahDicetak(p) ? 'Cetak ulang' : 'Cetak resi'}
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-    },
   ]
 }
 
-/** The "Detail" link at the end of each row / card. */
-export function AksiDetail({ p }: { p: Pesanan }) {
+/** What each row / card offers: print the label (only when it can be printed) and open the detail. */
+export function AksiPesanan({
+  p,
+  onCetak,
+  cetakSibuk,
+}: {
+  p: Pesanan
+  /** Prints the label of this one order (the click opens the tab, so it must run inside the click handler). */
+  onCetak: (p: Pesanan) => void
+  cetakSibuk: boolean
+}) {
   return (
-    <Button asChild size="sm" variant="outline">
-      <Link to={`/pesanan/${p.id}`}>Detail</Link>
-    </Button>
+    <div className="flex flex-nowrap items-center justify-end gap-2">
+      {bisaDicetak(p) && (
+        <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" onClick={() => onCetak(p)} disabled={cetakSibuk}>
+          {sudahDicetak(p) ? 'Cetak ulang resi' : 'Cetak resi'}
+        </Button>
+      )}
+      <Button asChild size="sm" variant="outline">
+        <Link to={`/pesanan/${p.id}`}>Detail</Link>
+      </Button>
+    </div>
   )
 }

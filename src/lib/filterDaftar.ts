@@ -19,7 +19,7 @@ export function useFilterDaftar<F extends Record<string, string | boolean>>(awal
   }, [awal])
 
   /** True when anything differs from the defaults (shows "Reset filter"). */
-  const berubah = (Object.keys(awal) as (keyof F)[]).some((k) => nilai[k] !== awal[k])
+  const jumlahAktif = (Object.keys(awal) as (keyof F)[]).filter((k) => nilai[k] !== awal[k]).length
 
-  return { nilai, ubah, reset, berubah, halaman, setHalaman }
+  return { nilai, ubah, reset, berubah: jumlahAktif > 0, jumlahAktif, halaman, setHalaman }
 }

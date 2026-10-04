@@ -62,8 +62,8 @@ export default function SesuaikanStokDialog({ produk, onClose }: { produk: Produ
               </Button>
             </div>
             <div className="space-y-1.5">
-              <Label>{mode === 'ubah' ? 'Perubahan (+ masuk, - keluar)' : 'Jumlah stok yang benar'}</Label>
-              <Input
+              <Label htmlFor="sesuaikanstok-mode-ubah-perubahan-masu-1">{mode === 'ubah' ? 'Perubahan (+ masuk, - keluar)' : 'Jumlah stok yang benar'}</Label>
+              <Input id="sesuaikanstok-mode-ubah-perubahan-masu-1"
                 type="number"
                 inputMode="numeric"
                 placeholder={mode === 'ubah' ? 'mis. 10 atau -3' : 'mis. 25'}
@@ -79,8 +79,8 @@ export default function SesuaikanStokDialog({ produk, onClose }: { produk: Produ
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label>Catatan (opsional)</Label>
-              <Textarea value={catatan} onChange={(e) => setCatatan(e.target.value)} placeholder="mis. stok awal, barang rusak" />
+              <Label htmlFor="sesuaikanstok-catatan-opsional-2">Catatan (opsional)</Label>
+              <Textarea id="sesuaikanstok-catatan-opsional-2" value={catatan} onChange={(e) => setCatatan(e.target.value)} placeholder="mis. stok awal, barang rusak" />
             </div>
           </div>
         )}

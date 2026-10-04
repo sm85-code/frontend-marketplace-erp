@@ -108,8 +108,10 @@ export default function KatalogPage() {
     <div className="space-y-4 pb-24">
       <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web." />
 
-      <BarFilter>
-        <FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />
+      <BarFilter
+        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
+        utama={<FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
+      >
         <FilterPilih
           id="katalog-toko"
           label="Toko"

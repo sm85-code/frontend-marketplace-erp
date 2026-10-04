@@ -14,6 +14,8 @@ export interface KolomTabel<T> extends DefinisiKolom {
   sel: (item: T) => ReactNode
   /** Extra classes for the table cell (min width, no wrapping). */
   kelas?: string
+  /** Identity column (order no., product name): stays in view while the table is scrolled sideways. At most one. */
+  tetap?: boolean
   /** Right-align (numbers and amounts). */
   rata?: 'kanan'
   /** Value of this column for sorting in the browser (see TabelLokal). */
@@ -33,6 +35,8 @@ export interface PilihanTabel<T> {
   adaYangBisaDipilih: boolean
   onUbahSemua: (pilih: boolean) => void
 }
+
+const LEBAR_CENTANG = '2.5rem' // keep in step with w-10 on the checkbox column
 
 export default function TabelData<T>({
   label,
@@ -69,6 +73,10 @@ export default function TabelData<T>({
   footer?: ReactNode
 }) {
   const bisaCentang = (item: T) => !!pilihan && (pilihan.bisaDipilih?.(item) ?? true)
+  // Frozen columns (checkbox + the identity column) need an opaque background so scrolled cells slide under them.
+  const kiriTetap = pilihan ? LEBAR_CENTANG : '0px'
+  const gayaTetap = (k: KolomTabel<T>) => (k.tetap ? { position: 'sticky' as const, left: kiriTetap, zIndex: 1 } : undefined)
+  const kelasTetap = (k: KolomTabel<T>) => (k.tetap ? 'bg-card shadow-[1px_0_0_var(--border)]' : '')
   const utama = kolom.filter((k) => k.kartu === 'utama')
   const baris = kolom.filter((k) => !k.kartu)
 
@@ -81,7 +89,7 @@ export default function TabelData<T>({
             <TableHeader>
               <TableRow>
                 {pilihan && (
-                  <TableHead className="w-10">
+                  <TableHead className="sticky left-0 z-[1] w-10 bg-card">
                     <Checkbox
                       checked={pilihan.semuaDipilih}
                       disabled={!pilihan.adaYangBisaDipilih}
@@ -93,11 +101,11 @@ export default function TabelData<T>({
                 {kolom.map((k) => {
                   const rata = k.rata === 'kanan' ? 'text-right' : ''
                   return k.urut && onUrut ? (
-                    <KepalaUrut key={k.kunci} kunci={k.urut.kunci} urut={urut ?? null} onUrut={onUrut} arahAwal={k.urut.arahAwal} className={`whitespace-nowrap ${rata}`}>
+                    <KepalaUrut key={k.kunci} kunci={k.urut.kunci} urut={urut ?? null} onUrut={onUrut} arahAwal={k.urut.arahAwal} className={`whitespace-nowrap ${rata} ${kelasTetap(k)}`} style={gayaTetap(k)}>
                       {k.judul}
                     </KepalaUrut>
                   ) : (
-                    <TableHead key={k.kunci} className={`whitespace-nowrap ${rata}`}>
+                    <TableHead key={k.kunci} className={`whitespace-nowrap ${rata} ${kelasTetap(k)}`} style={gayaTetap(k)}>
                       {k.judul}
                     </TableHead>
                   )
@@ -112,7 +120,7 @@ export default function TabelData<T>({
                 return (
                   <TableRow key={id} data-state={dipilih ? 'selected' : undefined} className={dipilih ? 'bg-primary/5' : ''}>
                     {pilihan && (
-                      <TableCell>
+                      <TableCell className="sticky left-0 z-[1] bg-card">
                         {bisaCentang(item) && (
                           <Checkbox
                             checked={dipilih}
@@ -123,7 +131,7 @@ export default function TabelData<T>({
                       </TableCell>
                     )}
                     {kolom.map((k) => (
-                      <TableCell key={k.kunci} className={`${k.rata === 'kanan' ? 'text-right' : ''} ${k.kelas ?? ''}`}>
+                      <TableCell key={k.kunci} className={`${k.rata === 'kanan' ? 'text-right' : ''} ${k.kelas ?? ''} ${kelasTetap(k)}`} style={gayaTetap(k)}>
                         {k.sel(item)}
                       </TableCell>
                     ))}
@@ -142,24 +150,28 @@ export default function TabelData<T>({
           const id = idDari(item)
           const dipilih = !!pilihan?.terpilih(id)
           return (
-            <li key={id} className={`rounded-xl border bg-card p-4 ${dipilih ? 'ring-2 ring-primary' : ''}`}>
+            <li key={id} className={`rounded-xl border bg-card p-3 ${dipilih ? 'ring-2 ring-primary' : ''}`}>
               <div className="flex items-start gap-3">
-                {bisaCentang(item) && pilihan && (
-                  <Checkbox
-                    className="mt-1"
-                    checked={dipilih}
-                    onCheckedChange={(v) => pilihan.onUbah(item, v === true)}
-                    aria-label={`Pilih ${namaDari(item)}`}
-                  />
-                )}
-                <div className="min-w-0 flex-1 space-y-1.5 text-sm">
+                {pilihan &&
+                  (bisaCentang(item) ? (
+                    <Checkbox
+                      className="mt-1"
+                      checked={dipilih}
+                      onCheckedChange={(v) => pilihan.onUbah(item, v === true)}
+                      aria-label={`Pilih ${namaDari(item)}`}
+                    />
+                  ) : (
+                    // keeps the cards of one list aligned when only some rows can be ticked
+                    <span className="size-4 shrink-0" aria-hidden="true" />
+                  ))}
+                <div className="min-w-0 flex-1 space-y-1.5 text-[length:var(--teks-data)]">
                   {utama.map((k) => (
                     <div key={k.kunci}>{k.sel(item)}</div>
                   ))}
                 </div>
               </div>
               {baris.length > 0 && (
-                <dl className="mt-3 grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+                <dl className="mt-2 grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-2 gap-y-1 text-[length:var(--teks-data)]">
                   {baris.map((k) => (
                     <div key={k.kunci} className="contents">
                       <dt className="text-muted-foreground">{k.judul}</dt>
@@ -168,7 +180,7 @@ export default function TabelData<T>({
                   ))}
                 </dl>
               )}
-              {aksi && <div className="mt-3 flex flex-wrap gap-2">{aksi(item)}</div>}
+              {aksi && <div className="mt-2 flex flex-wrap gap-2">{aksi(item)}</div>}
             </li>
           )
         })}

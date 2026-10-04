@@ -21,26 +21,56 @@ export interface NavItem {
   shortLabel?: string
   icon: LucideIcon
   roles: Role[]
+  grup: GrupNav
+  /** Priority for the phone bottom bar (1 = first to get a slot). Items without it live under "Lainnya". */
+  bawah?: number
 }
 
-/** Fixed mobile bottom-nav slot order (left→right). Lainnya is appended in BottomNav. */
-export const BOTTOM_NAV_PATHS = ['/dashboard', '/pesanan', '/produk', '/toko'] as const
+export type GrupNav = 'harian' | 'produk' | 'keuangan' | 'pengaturan'
+
+/** Sidebar sections in the order of the daily workflow: work the orders, manage products, money, then setup. */
+export const GRUP_NAV: { id: GrupNav; label: string }[] = [
+  { id: 'harian', label: 'Harian' },
+  { id: 'produk', label: 'Produk' },
+  { id: 'keuangan', label: 'Keuangan & Iklan' },
+  { id: 'pengaturan', label: 'Pengaturan' },
+]
+
+/** How many tabs the phone bottom bar shows before "Lainnya". */
+export const SLOT_BAWAH = 4
 
 export const ALL_ROLES: Role[] = ['admin', 'owner', 'staff']
 
+/** The order of this list IS the order in the sidebar, the drawer and the bottom bar. */
 export const NAV: NavItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES },
-  { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES },
-  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY },
-  { to: '/produk', label: 'Produk (SKU)', icon: Package, roles: ROLES_OWNER_ONLY },
-  { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY },
-  { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY },
-  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES },
-  { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_OWNER_ONLY },
-  { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_OWNER_ONLY },
-  { to: '/staff', label: 'Staff', icon: Users, roles: ROLES_OWNER_ONLY },
-  { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, roles: ALL_ROLES },
+  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES, grup: 'harian', bawah: 2 },
+  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES, grup: 'harian', bawah: 1 },
+  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 3 },
+  { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 4 },
+  { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
+  { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
+  { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
+  { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
+  { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES, grup: 'pengaturan', bawah: 5 },
+  { to: '/staff', label: 'Staff', icon: Users, roles: ROLES_OWNER_ONLY, grup: 'pengaturan' },
+  { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, roles: ALL_ROLES, grup: 'pengaturan', bawah: 6 },
 ]
+
+/** Visible items split into their sidebar sections (empty sections are dropped), keeping NAV order. */
+export function kelompokNav(items: NavItem[]): { grup: (typeof GRUP_NAV)[number]; items: NavItem[] }[] {
+  return GRUP_NAV.map((grup) => ({ grup, items: items.filter((n) => n.grup === grup.id) })).filter((g) => g.items.length > 0)
+}
+
+/** The tabs of the phone bottom bar: the highest-priority visible items, shown in workflow (NAV) order. */
+export function itemBawah(items: NavItem[], maks = SLOT_BAWAH): NavItem[] {
+  const terpilih = new Set(
+    items
+      .filter((n) => n.bawah !== undefined)
+      .sort((a, b) => (a.bawah as number) - (b.bawah as number))
+      .slice(0, maks),
+  )
+  return items.filter((n) => terpilih.has(n))
+}
 
 export function filterNavForUser(
   user: { role: Role } | null | undefined,

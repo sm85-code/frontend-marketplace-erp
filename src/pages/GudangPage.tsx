@@ -4,8 +4,9 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtDateTime, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
+import type { Gudang, Produk, StokLedger } from '@/api/types'
+import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,8 +14,39 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+
+const kolomStok: KolomTabel<Produk>[] = [
+  { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
+  { kunci: 'nama', judul: 'Nama', sel: (p) => p.nama, nilai: (p) => p.nama },
+  { kunci: 'stok', judul: 'Stok Tersedia', rata: 'kanan', kelas: 'font-semibold', sel: (p) => p.stok, nilai: (p) => p.stok },
+]
+
+function kolomLedger({
+  produkMap,
+  gudangMap,
+}: {
+  produkMap: Map<string, Produk>
+  gudangMap: Map<string, Gudang>
+}): KolomTabel<StokLedger>[] {
+  const sku = (r: StokLedger) => produkMap.get(r.produk_id)?.sku_induk ?? '—'
+  const gudang = (r: StokLedger) => (r.gudang_id ? (gudangMap.get(r.gudang_id)?.kode ?? '—') : '—')
+  return [
+    { kunci: 'waktu', judul: 'Waktu', kelas: 'whitespace-nowrap', sel: (r) => fmtDateTime(r.created_at), nilai: (r) => new Date(r.created_at) },
+    { kunci: 'produk', judul: 'Produk', kelas: 'font-mono', sel: sku, nilai: sku },
+    { kunci: 'gudang', judul: 'Gudang', sel: gudang, nilai: gudang },
+    { kunci: 'alasan', judul: 'Alasan', sel: (r) => <Badge variant="outline">{r.reason}</Badge>, nilai: (r) => r.reason },
+    {
+      kunci: 'delta',
+      judul: 'Delta',
+      rata: 'kanan',
+      kelas: 'font-mono',
+      sel: (r) => <span className={r.qty_delta < 0 ? 'text-destructive' : ''}>{`${r.qty_delta > 0 ? '+' : ''}${r.qty_delta}`}</span>,
+      nilai: (r) => r.qty_delta,
+    },
+    { kunci: 'catatan', judul: 'Catatan', kelas: 'text-muted-foreground', sel: (r) => r.catatan ?? '—' },
+  ]
+}
 
 export default function GudangPage() {
   const qc = useQueryClient()
@@ -72,18 +104,15 @@ export default function GudangPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Gudang &amp; Stok</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setGudangDialog(true)}>
+      <BarHalaman judul="Gudang &amp; Stok">
+        <Button variant="outline" onClick={() => setGudangDialog(true)}>
             Tambah Gudang
           </Button>
           <Button variant="outline" onClick={() => setTransferDialog(true)} disabled={(gudangList?.length ?? 0) < 2}>
             Transfer Antar Gudang
           </Button>
           <Button onClick={() => setAdjustDialog(true)}>Sesuaikan Stok</Button>
-        </div>
-      </div>
+      </BarHalaman>
 
       <Card>
         <CardHeader>
@@ -105,26 +134,16 @@ export default function GudangPage() {
           <CardTitle>Stok Produk Saat Ini</CardTitle>
         </CardHeader>
         <CardContent>
-          <TableShell>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Nama</TableHead>
-                  <TableHead className="text-right">Stok Tersedia</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(produkList ?? []).map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-mono text-xs">{p.sku_induk}</TableCell>
-                    <TableCell>{p.nama}</TableCell>
-                    <TableCell className="text-right font-semibold">{p.stok}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableShell>
+          <TabelLokal
+            label="Stok tersedia per produk induk"
+            items={produkList}
+            kolom={kolomStok}
+            idDari={(p) => p.id}
+            namaDari={(p) => p.nama}
+            urutAwal={{ kunci: 'sku', arah: 'asc' }}
+            hp="tabel"
+            minWidth={420}
+          />
         </CardContent>
       </Card>
 
@@ -133,60 +152,31 @@ export default function GudangPage() {
           <CardTitle>Kartu Stok (Ledger)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Select value={ledgerFilter || 'all'} onValueChange={(v) => setLedgerFilter(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-full sm:w-64">
-              <SelectValue placeholder="Semua produk" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua produk</SelectItem>
-              {(produkList ?? []).map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nama}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full sm:w-72">
+            <FilterPilih
+              id="gudang-filter-produk"
+              label="Produk"
+              nilai={ledgerFilter}
+              onUbah={setLedgerFilter}
+              semua="Semua produk"
+              opsi={(produkList ?? []).map((p) => ({ value: p.id, label: p.nama }))}
+            />
+          </div>
           {ledgerLoading ? (
             <Spinner column label="Memuat kartu stok…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Waktu</TableHead>
-                    <TableHead>Produk</TableHead>
-                    <TableHead>Gudang</TableHead>
-                    <TableHead>Alasan</TableHead>
-                    <TableHead className="text-right">Delta</TableHead>
-                    <TableHead>Catatan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(ledger ?? []).map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{fmtDateTime(row.created_at)}</TableCell>
-                      <TableCell>{produkMap.get(row.produk_id)?.sku_induk ?? '—'}</TableCell>
-                      <TableCell>{row.gudang_id ? (gudangMap.get(row.gudang_id)?.kode ?? '—') : '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{row.reason}</Badge>
-                      </TableCell>
-                      <TableCell className={`text-right font-mono ${row.qty_delta < 0 ? 'text-destructive' : ''}`}>
-                        {row.qty_delta > 0 ? '+' : ''}
-                        {row.qty_delta}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{row.catatan ?? '—'}</TableCell>
-                    </TableRow>
-                  ))}
-                  {(ledger ?? []).length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                        Belum ada pergerakan stok.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableShell>
+            <>
+              <TabelLokal
+                label="Riwayat pergerakan stok"
+                items={ledger}
+                kolom={kolomLedger({ produkMap, gudangMap })}
+                idDari={(r) => r.id}
+                namaDari={(r) => r.reason}
+                urutAwal={{ kunci: 'waktu', arah: 'desc' }}
+                minWidth={640}
+              />
+              {(ledger ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada pergerakan stok.</p>}
+            </>
           )}
         </CardContent>
       </Card>
@@ -198,12 +188,12 @@ export default function GudangPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Kode</Label>
-              <Input value={gudangForm.kode} onChange={(e) => setGudangForm((f) => ({ ...f, kode: e.target.value }))} />
+              <Label htmlFor="gudang-kode-1">Kode</Label>
+              <Input id="gudang-kode-1" value={gudangForm.kode} onChange={(e) => setGudangForm((f) => ({ ...f, kode: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Nama</Label>
-              <Input value={gudangForm.nama} onChange={(e) => setGudangForm((f) => ({ ...f, nama: e.target.value }))} />
+              <Label htmlFor="gudang-nama-2">Nama</Label>
+              <Input id="gudang-nama-2" value={gudangForm.nama} onChange={(e) => setGudangForm((f) => ({ ...f, nama: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
@@ -224,9 +214,9 @@ export default function GudangPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Produk</Label>
+              <Label htmlFor="gudang-produk-3">Produk</Label>
               <Select value={adjustForm.produk_id} onValueChange={(v) => setAdjustForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="gudang-produk-3" className="w-full">
                   <SelectValue placeholder="Pilih produk" />
                 </SelectTrigger>
                 <SelectContent>
@@ -239,20 +229,20 @@ export default function GudangPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Perubahan (+ masuk, - keluar)</Label>
-              <Input
+              <Label htmlFor="gudang-perubahan-masuk-keluar-4">Perubahan (+ masuk, - keluar)</Label>
+              <Input id="gudang-perubahan-masuk-keluar-4"
                 type="number"
                 value={adjustForm.qty_delta}
                 onChange={(e) => setAdjustForm((f) => ({ ...f, qty_delta: e.target.value }))}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Gudang (opsional, default: Gudang Utama)</Label>
+              <Label htmlFor="gudang-gudang-opsional-default--5">Gudang (opsional, default: Gudang Utama)</Label>
               <Select
                 value={adjustForm.gudang_id || 'default'}
                 onValueChange={(v) => setAdjustForm((f) => ({ ...f, gudang_id: v === 'default' ? '' : v }))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="gudang-gudang-opsional-default--5" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,8 +256,8 @@ export default function GudangPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Catatan</Label>
-              <Textarea value={adjustForm.catatan} onChange={(e) => setAdjustForm((f) => ({ ...f, catatan: e.target.value }))} />
+              <Label htmlFor="gudang-catatan-6">Catatan</Label>
+              <Textarea id="gudang-catatan-6" value={adjustForm.catatan} onChange={(e) => setAdjustForm((f) => ({ ...f, catatan: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
@@ -298,9 +288,9 @@ export default function GudangPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>Produk</Label>
+              <Label htmlFor="gudang-produk-7">Produk</Label>
               <Select value={transferForm.produk_id} onValueChange={(v) => setTransferForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="gudang-produk-7" className="w-full">
                   <SelectValue placeholder="Pilih produk" />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,9 +304,9 @@ export default function GudangPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Dari Gudang</Label>
+                <Label htmlFor="gudang-dari-gudang-8">Dari Gudang</Label>
                 <Select value={transferForm.dari_gudang_id} onValueChange={(v) => setTransferForm((f) => ({ ...f, dari_gudang_id: v }))}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="gudang-dari-gudang-8" className="w-full">
                     <SelectValue placeholder="Pilih" />
                   </SelectTrigger>
                   <SelectContent>
@@ -329,9 +319,9 @@ export default function GudangPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Ke Gudang</Label>
+                <Label htmlFor="gudang-ke-gudang-9">Ke Gudang</Label>
                 <Select value={transferForm.ke_gudang_id} onValueChange={(v) => setTransferForm((f) => ({ ...f, ke_gudang_id: v }))}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="gudang-ke-gudang-9" className="w-full">
                     <SelectValue placeholder="Pilih" />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,12 +335,12 @@ export default function GudangPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Qty</Label>
-              <Input type="number" value={transferForm.qty} onChange={(e) => setTransferForm((f) => ({ ...f, qty: e.target.value }))} />
+              <Label htmlFor="gudang-qty-10">Qty</Label>
+              <Input id="gudang-qty-10" type="number" value={transferForm.qty} onChange={(e) => setTransferForm((f) => ({ ...f, qty: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Catatan</Label>
-              <Textarea value={transferForm.catatan} onChange={(e) => setTransferForm((f) => ({ ...f, catatan: e.target.value }))} />
+              <Label htmlFor="gudang-catatan-11">Catatan</Label>
+              <Textarea id="gudang-catatan-11" value={transferForm.catatan} onChange={(e) => setTransferForm((f) => ({ ...f, catatan: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>

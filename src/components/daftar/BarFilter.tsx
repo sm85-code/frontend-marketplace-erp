@@ -1,4 +1,6 @@
+import { ChevronDown, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,8 +11,25 @@ import Medan from './Medan'
  * Filters of a list page. Put the controls below inside; the grid, the equal control height and the phone
  * layout come from the global `.bar-filter` styles, so a page only declares WHICH filters it has.
  */
-export function BarFilter({ children }: { children: ReactNode }) {
-  return <div className="bar-filter">{children}</div>
+export function BarFilter({ utama, aktif = 0, children }: { utama?: ReactNode; aktif?: number; children: ReactNode }) {
+  const [buka, setBuka] = useState(false)
+  return (
+    <div className="bar-filter">
+      {utama}
+      {/* Phones: the search stays visible and the other filters fold behind one button (data comes first).
+          md and up: everything is shown in the same grid (display: contents). */}
+      <div className="md:hidden" style={{ gridColumn: '1 / -1' }}>
+        <Button variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls="filter-lainnya">
+          <SlidersHorizontal className="size-4" aria-hidden="true" />
+          Filter &amp; urutan{aktif > 0 ? ` (${aktif} aktif)` : ''}
+          <ChevronDown className={`ml-auto size-4 transition-transform ${buka ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </Button>
+      </div>
+      <div id="filter-lainnya" className={buka ? 'contents' : 'hidden md:contents'}>
+        {children}
+      </div>
+    </div>
+  )
 }
 
 /** Search box: types freely, tells the page only after a short pause. `nilai` follows resets from outside. */

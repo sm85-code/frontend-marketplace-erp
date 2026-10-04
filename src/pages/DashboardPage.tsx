@@ -26,8 +26,9 @@ function Kartu({ label, nilai, catatan }: { label: string; nilai: string; catata
     <Card>
       <CardContent className="p-3 sm:p-6">
         <div className="teks-kecil text-muted-foreground">{label}</div>
-        <div className="text-lg font-bold sm:text-2xl">{nilai}</div>
-        {catatan && <div className="teks-kecil mt-0.5 text-muted-foreground">{catatan}</div>}
+        <div className="text-base font-bold tabular-nums sm:text-2xl">{nilai}</div>
+        {/* the explanation is a luxury: on phones it only costs height */}
+        {catatan && <div className="teks-kecil mt-0.5 hidden text-muted-foreground sm:block">{catatan}</div>}
       </CardContent>
     </Card>
   )
@@ -102,7 +103,7 @@ export default function DashboardPage() {
         deskripsi={`${PRESET_LABEL[preset]} · ${d?.jumlah_toko ?? 0} toko terhubung · berdasarkan tanggal pelanggan memesan`}
       >
         {isOwnerLevel(user?.role) && (
-          <div className="bar-filter w-48">
+          <div className="w-48">
             <FilterPilih
               id="dashboard-periode"
               label="Periode"

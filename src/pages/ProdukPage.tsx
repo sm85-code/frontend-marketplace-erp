@@ -8,15 +8,14 @@ import type { Produk } from '@/api/types'
 import { publishDefaults, publishMessage } from '@/lib/publishToko'
 import { useConfirm } from '@/components/ConfirmProvider'
 import SesuaikanStokDialog from '@/components/SesuaikanStokDialog'
+import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 
 const emptyForm = {
@@ -32,6 +31,14 @@ const fisik = (f: typeof emptyForm) => ({
   hari_proses: f.preorder ? Number(f.hari_proses) : 2,
 })
 const prosesValid = (f: typeof emptyForm) => !f.preorder || (/^\d+$/.test(f.hari_proses) && Number(f.hari_proses) >= 3 && Number(f.hari_proses) <= 14)
+
+const kolomProduk: KolomTabel<Produk>[] = [
+  { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, kartu: 'utama', sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', kartu: 'utama', sel: (p) => p.nama, nilai: (p) => p.nama },
+  { kunci: 'harga', judul: 'Harga Dasar', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.harga_dasar), nilai: (p) => Number(p.harga_dasar) },
+  { kunci: 'stok', judul: 'Stok', rata: 'kanan', sel: (p) => p.stok, nilai: (p) => p.stok },
+  { kunci: 'status', judul: 'Status', sel: (p) => <Badge variant={p.aktif ? 'default' : 'secondary'}>{p.aktif ? 'Aktif' : 'Nonaktif'}</Badge>, nilai: (p) => p.aktif },
+]
 
 export default function ProdukPage() {
   const qc = useQueryClient()
@@ -157,10 +164,9 @@ export default function ProdukPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Produk (SKU Induk)</h1>
+      <BarHalaman judul="Produk (SKU Induk)">
         <Button onClick={openCreate}>Tambah Produk</Button>
-      </div>
+      </BarHalaman>
 
       <Card>
         <CardHeader>
@@ -176,59 +182,37 @@ export default function ProdukPage() {
           {isLoading ? (
             <Spinner column label="Memuat produk…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Harga Dasar</TableHead>
-                    <TableHead>Stok</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-mono text-xs">{p.sku_induk}</TableCell>
-                      <TableCell className="font-medium">{p.nama}</TableCell>
-                      <TableCell>{fmtRp(p.harga_dasar)}</TableCell>
-                      <TableCell>{p.stok}</TableCell>
-                      <TableCell>
-                        <Badge variant={p.aktif ? 'default' : 'secondary'}>{p.aktif ? 'Aktif' : 'Nonaktif'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
-                            Sesuaikan Stok
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => onToggleAktif(p)}>
-                            {p.aktif ? 'Nonaktifkan' : 'Aktifkan'}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => openPublish(p)}>
-                            Ke Toko
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => onDelete(p)}>
-                            Hapus
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                        Belum ada produk.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableShell>
+            <>
+              <TabelLokal
+                label="Daftar produk induk (SKU)"
+                items={filtered}
+                kolom={kolomProduk}
+                idDari={(p) => p.id}
+                namaDari={(p) => p.nama}
+                urutAwal={{ kunci: 'sku', arah: 'asc' }}
+                aksi={(p) => (
+                  <div className="flex max-w-[24rem] flex-wrap justify-end gap-1.5">
+                    <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
+                      Sesuaikan Stok
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onToggleAktif(p)}>
+                      {p.aktif ? 'Nonaktifkan' : 'Aktifkan'}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => openPublish(p)}>
+                      Ke Toko
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => onDelete(p)}>
+                      Hapus
+                    </Button>
+                  </div>
+                )}
+                minWidth={780}
+              />
+              {filtered.length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada produk.</p>}
+            </>
           )}
         </CardContent>
       </Card>
@@ -241,21 +225,21 @@ export default function ProdukPage() {
           <div className="space-y-3">
             {!editing && (
               <div className="space-y-1.5">
-                <Label>SKU Induk</Label>
-                <Input value={form.sku_induk} onChange={(e) => setForm((f) => ({ ...f, sku_induk: e.target.value }))} />
+                <Label htmlFor="produk-sku-induk-1">SKU Induk</Label>
+                <Input id="produk-sku-induk-1" value={form.sku_induk} onChange={(e) => setForm((f) => ({ ...f, sku_induk: e.target.value }))} />
               </div>
             )}
             <div className="space-y-1.5">
-              <Label>Nama Produk</Label>
-              <Input value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} />
+              <Label htmlFor="produk-nama-produk-2">Nama Produk</Label>
+              <Input id="produk-nama-produk-2" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Deskripsi</Label>
-              <Textarea value={form.deskripsi} onChange={(e) => setForm((f) => ({ ...f, deskripsi: e.target.value }))} />
+              <Label htmlFor="produk-deskripsi-3">Deskripsi</Label>
+              <Textarea id="produk-deskripsi-3" value={form.deskripsi} onChange={(e) => setForm((f) => ({ ...f, deskripsi: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Harga Dasar (Rp)</Label>
-              <Input
+              <Label htmlFor="produk-harga-dasar-rp-4">Harga Dasar (Rp)</Label>
+              <Input id="produk-harga-dasar-rp-4"
                 type="number"
                 value={form.harga_dasar}
                 onChange={(e) => setForm((f) => ({ ...f, harga_dasar: e.target.value }))}
@@ -271,8 +255,8 @@ export default function ProdukPage() {
                 ] as const
               ).map(([k, label]) => (
                 <div key={k} className="space-y-1.5">
-                  <Label>{label}</Label>
-                  <Input type="number" min={0} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
+                  <Label htmlFor="produk-label-5">{label}</Label>
+                  <Input id="produk-label-5" type="number" min={0} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
                 </div>
               ))}
             </div>
@@ -283,8 +267,8 @@ export default function ProdukPage() {
               </label>
               {form.preorder ? (
                 <div className="space-y-1.5">
-                  <Label>Lama proses (hari, 3–14)</Label>
-                  <Input type="number" min={3} max={14} className="max-w-28" value={form.hari_proses} onChange={(e) => setForm((f) => ({ ...f, hari_proses: e.target.value }))} />
+                  <Label htmlFor="produk-lama-proses-hari-3-14-6">Lama proses (hari, 3–14)</Label>
+                  <Input id="produk-lama-proses-hari-3-14-6" type="number" min={3} max={14} className="max-w-28" value={form.hari_proses} onChange={(e) => setForm((f) => ({ ...f, hari_proses: e.target.value }))} />
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">Bukan pre-order: ready stock, diproses 2 hari.</p>
@@ -292,8 +276,8 @@ export default function ProdukPage() {
             </div>
             {!editing && (
               <div className="space-y-1.5">
-                <Label>Stok Awal</Label>
-                <Input type="number" value={form.stok} onChange={(e) => setForm((f) => ({ ...f, stok: e.target.value }))} />
+                <Label htmlFor="produk-stok-awal-7">Stok Awal</Label>
+                <Input id="produk-stok-awal-7" type="number" value={form.stok} onChange={(e) => setForm((f) => ({ ...f, stok: e.target.value }))} />
               </div>
             )}
           </div>
@@ -319,12 +303,12 @@ export default function ProdukPage() {
               Publish ulang hanya memperbarui nama, deskripsi, harga, dan status.
             </p>
             <div className="space-y-1.5">
-              <Label>Harga di toko (Rp)</Label>
-              <Input type="number" value={pub.harga} onChange={(e) => setPub((v) => ({ ...v, harga: e.target.value }))} />
+              <Label htmlFor="produk-harga-di-toko-rp-8">Harga di toko (Rp)</Label>
+              <Input id="produk-harga-di-toko-rp-8" type="number" value={pub.harga} onChange={(e) => setPub((v) => ({ ...v, harga: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Stok awal di toko</Label>
-              <Input type="number" value={pub.stok} onChange={(e) => setPub((v) => ({ ...v, stok: e.target.value }))} />
+              <Label htmlFor="produk-stok-awal-di-toko-9">Stok awal di toko</Label>
+              <Input id="produk-stok-awal-di-toko-9" type="number" value={pub.stok} onChange={(e) => setPub((v) => ({ ...v, stok: e.target.value }))} />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={pub.aktif} onChange={(e) => setPub((v) => ({ ...v, aktif: e.target.checked }))} />

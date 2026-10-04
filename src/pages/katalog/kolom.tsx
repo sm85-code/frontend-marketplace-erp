@@ -29,7 +29,7 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       kunci: 'foto',
       judul: 'Foto',
       kartu: 'utama',
-      sel: (p) => (p.foto[0] ? <Gambar src={p.foto[0]} ukuran="size-14" nama={p.nama} onBuka={() => onBuka(p.id)} /> : <Kosong />),
+      sel: (p) => (p.foto[0] ? <Gambar src={p.foto[0]} ukuran="size-10" nama={p.nama} onBuka={() => onBuka(p.id)} /> : <Kosong />),
     },
     {
       kunci: 'semuaFoto',
@@ -40,7 +40,7 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
         p.foto.length ? (
           <div className="flex gap-1">
             {p.foto.map((u) => (
-              <Gambar key={u} src={u} ukuran="size-11" nama={p.nama} onBuka={() => onBuka(p.id)} />
+              <Gambar key={u} src={u} ukuran="size-9" nama={p.nama} onBuka={() => onBuka(p.id)} />
             ))}
           </div>
         ) : (
@@ -60,9 +60,10 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       judul: 'Nama produk',
       kelas: 'min-w-[200px] max-w-[300px]',
       kartu: 'utama',
+      tetap: true,
       urut: { kunci: 'nama' },
       sel: (p) => (
-        <button type="button" onClick={() => onBuka(p.id)} className="text-left hover:underline">
+        <button type="button" onClick={() => onBuka(p.id)} title={p.nama} className="line-clamp-2 text-left hover:underline">
           {p.nama}
         </button>
       ),

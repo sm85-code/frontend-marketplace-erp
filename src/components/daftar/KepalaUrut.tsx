@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { TableHead } from '@/components/ui/table'
 import type { ArahUrut, Urut } from '@/lib/urut'
 
@@ -14,6 +14,7 @@ export default function KepalaUrut({
   onUrut,
   arahAwal = 'asc',
   className = '',
+  style,
   children,
 }: {
   kunci: string
@@ -22,13 +23,14 @@ export default function KepalaUrut({
   /** Direction on the first click ('desc' for dates and amounts). */
   arahAwal?: ArahUrut
   className?: string
+  style?: CSSProperties
   children: ReactNode
 }) {
   const aktif = urut?.kunci === kunci
   const arah = aktif ? urut.arah : null
   const Ikon = arah === 'asc' ? ArrowUp : arah === 'desc' ? ArrowDown : ChevronsUpDown
   return (
-    <TableHead className={className} aria-sort={arah === 'asc' ? 'ascending' : arah === 'desc' ? 'descending' : 'none'}>
+    <TableHead className={className} style={style} aria-sort={arah === 'asc' ? 'ascending' : arah === 'desc' ? 'descending' : 'none'}>
       <button
         type="button"
         onClick={() => onUrut(kunci, arahAwal)}

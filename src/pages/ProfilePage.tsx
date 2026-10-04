@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ROLE_LABELS } from '@/config/roles'
@@ -42,7 +42,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-md">
       <Card>
         <CardHeader>
-          <CardTitle>Profil Saya</CardTitle>
+          <h1 className="font-heading text-base leading-none font-semibold tracking-tight">Profil Saya</h1>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

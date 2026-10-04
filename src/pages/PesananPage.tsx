@@ -29,7 +29,7 @@ import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
 import FormPesananManual from './pesanan/FormPesananManual'
-import { AksiDetail, kolomPesanan } from './pesanan/kolom'
+import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
 
 const PER_HALAMAN = 50
 const AWAL = { tahap: '', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
@@ -149,11 +149,7 @@ export default function PesananPage() {
     cetakMut.mutate({ grup: [[p]], tipe: 'THERMAL_AIR_WAYBILL', tab: [window.open('', '_blank')] })
   }
 
-  const semuaKolom = kolomPesanan({
-    namaToko: (id) => (id ? (akunMap.get(id)?.nama_toko ?? '—') : '—'),
-    onCetak: cetakSatu,
-    cetakSibuk: cetakMut.isPending,
-  })
+  const semuaKolom = kolomPesanan({ namaToko: (id) => (id ? (akunMap.get(id)?.nama_toko ?? '—') : '—') })
   const kolom = useKolomTersimpan('pesanan.kolom', semuaKolom)
 
   // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
@@ -211,8 +207,10 @@ export default function PesananPage() {
         <Button onClick={() => setFormBuka(true)}>Pesanan Manual</Button>
       </BarHalaman>
 
-      <BarFilter>
-        <FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />
+      <BarFilter
+        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
+        utama={<FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
+      >
         <FilterPilih
           id="pesanan-status"
           label="Status"
@@ -276,7 +274,7 @@ export default function PesananPage() {
             adaYangBisaDipilih: bisaDipilihSemua.length > 0,
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
-          aksi={(p) => <AksiDetail p={p} />}
+          aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={cetakMut.isPending} />}
           minWidth={900}
         />
       )}

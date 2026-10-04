@@ -6,8 +6,8 @@ import { getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { AkunMarketplace, Platform } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
+import { BarHalaman, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS, isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
@@ -27,6 +26,13 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
   if (status === 'token_kadaluarsa' || status === 'nonaktif') return 'destructive'
   return 'secondary'
 }
+
+const kolomToko: KolomTabel<AkunMarketplace>[] = [
+  { kunci: 'platform', judul: 'Platform', sel: (a) => PLATFORM_LABELS[a.platform], nilai: (a) => a.platform },
+  { kunci: 'nama', judul: 'Nama Toko', kelas: 'font-medium', kartu: 'utama', sel: (a) => a.nama_toko, nilai: (a) => a.nama_toko },
+  { kunci: 'shop', judul: 'Shop ID', kelas: 'font-mono', sel: (a) => a.id_toko_eksternal ?? '—', nilai: (a) => a.id_toko_eksternal },
+  { kunci: 'status', judul: 'Status', sel: (a) => <Badge variant={statusVariant(a.status)}>{a.status}</Badge>, nilai: (a) => a.status },
+]
 
 export default function AkunPage() {
   const { user } = useAuth()
@@ -176,10 +182,7 @@ export default function AkunPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Toko</h1>
-        {isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}
-      </div>
+      <BarHalaman judul="Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
 
       <Card>
         <CardHeader>
@@ -189,67 +192,49 @@ export default function AkunPage() {
           {isLoading ? (
             <Spinner column label="Memuat toko…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Platform</TableHead>
-                    <TableHead>Nama Toko</TableHead>
-                    <TableHead>Shop ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(akunList ?? []).map((akun) => (
-                    <TableRow key={akun.id}>
-                      <TableCell>{PLATFORM_LABELS[akun.platform]}</TableCell>
-                      <TableCell className="font-medium">{akun.nama_toko}</TableCell>
-                      <TableCell>{akun.id_toko_eksternal ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant(akun.status)}>{akun.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
-                            <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
-                              Hubungkan Shopee
-                            </Button>
-                          )}
-                          {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
-                                Tarik Produk
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
-                                Kirim Stok &amp; Harga
-                              </Button>
-                            </>
-                          )}
-                          {isOwnerLevel(user?.role) && (
-                            <>
-                              <Button size="sm" variant="ghost" onClick={() => openEdit(akun)}>
-                                Edit
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => onDelete(akun)}>
-                                Hapus
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(akunList ?? []).length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                        Belum ada toko. Tambahkan toko pertama Anda.
-                      </TableCell>
-                    </TableRow>
+            <>
+            <TabelLokal
+              label="Daftar toko marketplace"
+              items={akunList}
+              kolom={kolomToko}
+              idDari={(a) => a.id}
+              namaDari={(a) => a.nama_toko}
+              urutAwal={{ kunci: 'nama', arah: 'asc' }}
+              aksi={(akun) => (
+                <div className="flex max-w-[22rem] flex-wrap justify-end gap-1.5">
+                  {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
+                    <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
+                      Hubungkan Shopee
+                    </Button>
                   )}
-                </TableBody>
-              </Table>
-            </TableShell>
+                  {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
+                        Tarik Produk
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
+                        Kirim Stok &amp; Harga
+                      </Button>
+                    </>
+                  )}
+                  {isOwnerLevel(user?.role) && (
+                    <>
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(akun)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => onDelete(akun)}>
+                        Hapus
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+              minWidth={760}
+            />
+            {(akunList ?? []).length === 0 && (
+              <p className="py-8 text-center text-muted-foreground">Belum ada toko. Tambahkan toko pertama Anda.</p>
+            )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -262,9 +247,9 @@ export default function AkunPage() {
           <div className="space-y-3">
             {!editing && (
               <div className="space-y-1.5">
-                <Label>Platform</Label>
+                <Label htmlFor="akun-platform-1">Platform</Label>
                 <Select value={form.platform} onValueChange={(v) => setForm((f) => ({ ...f, platform: v }))}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger id="akun-platform-1" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,23 +263,23 @@ export default function AkunPage() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label>Nama Toko</Label>
-              <Input
+              <Label htmlFor="akun-nama-toko-2">Nama Toko</Label>
+              <Input id="akun-nama-toko-2"
                 value={form.nama_toko}
                 onChange={(e) => setForm((f) => ({ ...f, nama_toko: e.target.value }))}
                 placeholder="mis. Toko Ampel Kuning 1"
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Shop ID (opsional, diisi otomatis saat OAuth)</Label>
-              <Input
+              <Label htmlFor="akun-shop-id-opsional-diisi-o-3">Shop ID (opsional, diisi otomatis saat OAuth)</Label>
+              <Input id="akun-shop-id-opsional-diisi-o-3"
                 value={form.id_toko_eksternal}
                 onChange={(e) => setForm((f) => ({ ...f, id_toko_eksternal: e.target.value }))}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Catatan</Label>
-              <Textarea value={form.catatan} onChange={(e) => setForm((f) => ({ ...f, catatan: e.target.value }))} />
+              <Label htmlFor="akun-catatan-4">Catatan</Label>
+              <Textarea id="akun-catatan-4" value={form.catatan} onChange={(e) => setForm((f) => ({ ...f, catatan: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>

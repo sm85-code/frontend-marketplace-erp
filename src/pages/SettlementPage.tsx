@@ -4,8 +4,9 @@ import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtDate, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
+import type { AkunMarketplace, Settlement } from '@/api/types'
+import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +14,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS } from '@/config/roles'
 
@@ -34,6 +34,27 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
   if (status === 'matched' || status === 'paid') return 'default'
   if (status === 'discrepancy') return 'destructive'
   return 'secondary'
+}
+
+const potongan = (s: Settlement) => Number(s.fee_platform) + Number(s.fee_payment) + Number(s.ongkir_subsidi) + Number(s.penalti)
+
+function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Settlement>[] {
+  const toko = (s: Settlement) => `${akunMap.get(s.akun_id)?.nama_toko ?? '—'} (${PLATFORM_LABELS[s.platform]})`
+  return [
+    {
+      kunci: 'periode',
+      judul: 'Periode',
+      kelas: 'whitespace-nowrap',
+      kartu: 'utama',
+      sel: (s) => `${fmtDate(s.periode_mulai)} – ${fmtDate(s.periode_selesai)}`,
+      nilai: (s) => new Date(s.periode_mulai),
+    },
+    { kunci: 'toko', judul: 'Toko', kartu: 'utama', sel: toko, nilai: toko },
+    { kunci: 'gross', judul: 'Gross', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(s.gross_sales), nilai: (s) => Number(s.gross_sales) },
+    { kunci: 'fee', judul: 'Fee', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(potongan(s)), nilai: potongan },
+    { kunci: 'net', judul: 'Net', rata: 'kanan', kelas: 'whitespace-nowrap font-semibold', sel: (s) => fmtRp(s.net), nilai: (s) => Number(s.net) },
+    { kunci: 'status', judul: 'Status', sel: (s) => <Badge variant={statusVariant(s.status)}>{s.status}</Badge>, nilai: (s) => s.status },
+  ]
 }
 
 export default function SettlementPage() {
@@ -82,12 +103,11 @@ export default function SettlementPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-h1 font-heading text-2xl font-bold">Settlement</h1>
+      <BarHalaman judul="Settlement">
         <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
           Catat Settlement
         </Button>
-      </div>
+      </BarHalaman>
 
       <Card>
         <CardHeader>
@@ -97,55 +117,25 @@ export default function SettlementPage() {
           {isLoading ? (
             <Spinner column label="Memuat settlement…" />
           ) : (
-            <TableShell>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Periode</TableHead>
-                    <TableHead>Toko</TableHead>
-                    <TableHead>Gross</TableHead>
-                    <TableHead>Fee</TableHead>
-                    <TableHead>Net</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(data ?? []).map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell>
-                        {fmtDate(s.periode_mulai)} – {fmtDate(s.periode_selesai)}
-                      </TableCell>
-                      <TableCell>
-                        {akunMap.get(s.akun_id)?.nama_toko ?? '—'} ({PLATFORM_LABELS[s.platform]})
-                      </TableCell>
-                      <TableCell>{fmtRp(s.gross_sales)}</TableCell>
-                      <TableCell>
-                        {fmtRp(Number(s.fee_platform) + Number(s.fee_payment) + Number(s.ongkir_subsidi) + Number(s.penalti))}
-                      </TableCell>
-                      <TableCell className="font-semibold">{fmtRp(s.net)}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusVariant(s.status)}>{s.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {s.status !== 'paid' && (
-                          <Button size="sm" variant="outline" onClick={() => markPaidMut.mutate(s.id)}>
-                            Tandai Dibayar
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(data ?? []).length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                        Belum ada catatan settlement.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableShell>
+            <>
+              <TabelLokal
+                label="Daftar settlement"
+                items={data}
+                kolom={kolomSettlement(akunMap)}
+                idDari={(s) => s.id}
+                namaDari={(s) => `settlement ${fmtDate(s.periode_mulai)}`}
+                urutAwal={{ kunci: 'periode', arah: 'desc' }}
+                aksi={(s) =>
+                  s.status !== 'paid' && (
+                    <Button size="sm" variant="outline" onClick={() => markPaidMut.mutate(s.id)}>
+                      Tandai Dibayar
+                    </Button>
+                  )
+                }
+                minWidth={760}
+              />
+              {(data ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada catatan settlement.</p>}
+            </>
           )}
         </CardContent>
       </Card>
@@ -157,9 +147,9 @@ export default function SettlementPage() {
           </DialogHeader>
           <div className="max-h-[65vh] space-y-3 overflow-y-auto pr-1">
             <div className="space-y-1.5">
-              <Label>Toko</Label>
+              <Label htmlFor="settlement-toko-1">Toko</Label>
               <Select value={form.akun_id} onValueChange={(v) => setForm((f) => ({ ...f, akun_id: v }))}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="settlement-toko-1" className="w-full">
                   <SelectValue placeholder="Pilih toko" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,43 +163,43 @@ export default function SettlementPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Periode Mulai</Label>
-                <Input type="date" value={form.periode_mulai} onChange={(e) => setForm((f) => ({ ...f, periode_mulai: e.target.value }))} />
+                <Label htmlFor="settlement-periode-mulai-2">Periode Mulai</Label>
+                <Input id="settlement-periode-mulai-2" type="date" value={form.periode_mulai} onChange={(e) => setForm((f) => ({ ...f, periode_mulai: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Periode Selesai</Label>
-                <Input type="date" value={form.periode_selesai} onChange={(e) => setForm((f) => ({ ...f, periode_selesai: e.target.value }))} />
+                <Label htmlFor="settlement-periode-selesai-3">Periode Selesai</Label>
+                <Input id="settlement-periode-selesai-3" type="date" value={form.periode_selesai} onChange={(e) => setForm((f) => ({ ...f, periode_selesai: e.target.value }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Gross Sales</Label>
-                <Input type="number" value={form.gross_sales} onChange={(e) => setForm((f) => ({ ...f, gross_sales: e.target.value }))} />
+                <Label htmlFor="settlement-gross-sales-4">Gross Sales</Label>
+                <Input id="settlement-gross-sales-4" type="number" value={form.gross_sales} onChange={(e) => setForm((f) => ({ ...f, gross_sales: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Fee Platform</Label>
-                <Input type="number" value={form.fee_platform} onChange={(e) => setForm((f) => ({ ...f, fee_platform: e.target.value }))} />
+                <Label htmlFor="settlement-fee-platform-5">Fee Platform</Label>
+                <Input id="settlement-fee-platform-5" type="number" value={form.fee_platform} onChange={(e) => setForm((f) => ({ ...f, fee_platform: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Fee Payment</Label>
-                <Input type="number" value={form.fee_payment} onChange={(e) => setForm((f) => ({ ...f, fee_payment: e.target.value }))} />
+                <Label htmlFor="settlement-fee-payment-6">Fee Payment</Label>
+                <Input id="settlement-fee-payment-6" type="number" value={form.fee_payment} onChange={(e) => setForm((f) => ({ ...f, fee_payment: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Subsidi Ongkir</Label>
-                <Input type="number" value={form.ongkir_subsidi} onChange={(e) => setForm((f) => ({ ...f, ongkir_subsidi: e.target.value }))} />
+                <Label htmlFor="settlement-subsidi-ongkir-7">Subsidi Ongkir</Label>
+                <Input id="settlement-subsidi-ongkir-7" type="number" value={form.ongkir_subsidi} onChange={(e) => setForm((f) => ({ ...f, ongkir_subsidi: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Penalti</Label>
-                <Input type="number" value={form.penalti} onChange={(e) => setForm((f) => ({ ...f, penalti: e.target.value }))} />
+                <Label htmlFor="settlement-penalti-8">Penalti</Label>
+                <Input id="settlement-penalti-8" type="number" value={form.penalti} onChange={(e) => setForm((f) => ({ ...f, penalti: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Net (dana masuk)</Label>
-                <Input type="number" value={form.net} onChange={(e) => setForm((f) => ({ ...f, net: e.target.value }))} />
+                <Label htmlFor="settlement-net-dana-masuk-9">Net (dana masuk)</Label>
+                <Input id="settlement-net-dana-masuk-9" type="number" value={form.net} onChange={(e) => setForm((f) => ({ ...f, net: e.target.value }))} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Catatan</Label>
-              <Textarea value={form.catatan} onChange={(e) => setForm((f) => ({ ...f, catatan: e.target.value }))} />
+              <Label htmlFor="settlement-catatan-10">Catatan</Label>
+              <Textarea id="settlement-catatan-10" value={form.catatan} onChange={(e) => setForm((f) => ({ ...f, catatan: e.target.value }))} />
             </div>
           </div>
           <DialogFooter>
