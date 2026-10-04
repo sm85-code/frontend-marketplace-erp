@@ -195,6 +195,70 @@ export interface SyncSettlementHasil {
   sisa: number
 }
 
+/** Shopee Ads performance of one shop for one day (pulled with syncIklanAkun). Amounts and ratios are strings/null. */
+export interface IklanHarianToko {
+  id: string
+  akun_id: string
+  nama_toko: string | null
+  tanggal: string
+  impression: number
+  clicks: number
+  direct_order: number
+  broad_order: number
+  direct_item_sold: number
+  broad_item_sold: number
+  direct_gmv: string
+  broad_gmv: string
+  expense: string
+  ctr: string | null
+  roas_langsung: string | null
+  roas_luas: string | null
+}
+
+export interface IklanHarianTokoHalaman {
+  total: number
+  halaman: number
+  per_halaman: number
+  items: IklanHarianToko[]
+}
+
+export interface IklanRingkasanAngka {
+  impression: number
+  clicks: number
+  direct_order: number
+  broad_order: number
+  direct_item_sold: number
+  broad_item_sold: number
+  direct_gmv: string
+  broad_gmv: string
+  expense: string
+  ctr: string | null
+  roas_langsung: string | null
+  roas_luas: string | null
+}
+
+export interface IklanRingkasanToko extends IklanRingkasanAngka {
+  akun_id: string
+  nama_toko: string
+  hari: number
+  tanggal_terakhir: string | null
+  saldo: string | null
+  saldo_at: string | null
+}
+
+export interface IklanRingkasan {
+  toko: IklanRingkasanToko[]
+  total: IklanRingkasanAngka & { saldo: string; hari: number }
+}
+
+export interface SyncIklanHasil {
+  ok: boolean
+  hari: number
+  saldo: string | null
+  baru: number
+  diperbarui: number
+}
+
 export interface IklanCampaign {
   id: string
   akun_id: string

@@ -10,6 +10,14 @@ export const PRESET_LABEL: Record<PresetTanggal, string> = {
   kustom: 'Pilih tanggal…',
 }
 
+/** An ISO time -> its day in the browser's time zone as YYYY-MM-DD (what the Ads API takes as a date). */
+export function keTanggal(iso: string | undefined): string | undefined {
+  if (!iso) return undefined
+  const d = new Date(iso)
+  const dua = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${dua(d.getMonth() + 1)}-${dua(d.getDate())}`
+}
+
 const awalHari = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0)
 const akhirHari = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999)
 
