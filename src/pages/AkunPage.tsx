@@ -61,9 +61,13 @@ export default function AkunPage() {
   })
 
   const deleteMut = useMutation({
-    mutationFn: endpoints.deleteAkun,
-    onSuccess: () => {
-      toast.success('Toko dihapus')
+    mutationFn: ({ id, bersamaPesanan }: { id: string; bersamaPesanan: boolean }) => endpoints.deleteAkun(id, bersamaPesanan),
+    onSuccess: ({ data }) => {
+      toast.success(
+        data.pesanan_dihapus > 0 ? `Toko dan ${data.pesanan_dihapus} pesanannya dihapus` : 'Toko dihapus',
+      )
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      qc.invalidateQueries({ queryKey: ['listing'] })
       qc.invalidateQueries({ queryKey: ['akun'] })
     },
     onError: (e) => toast.error(getApiError(e)),
@@ -155,7 +159,18 @@ export default function AkunPage() {
       description: `Toko "${akun.nama_toko}" akan dihapus permanen.`,
       destructive: true,
     })
-    if (ok) deleteMut.mutate(akun.id)
+    if (!ok) return
+    // Orders stay in the ERP after the shop is gone, and a shipped order cannot be deleted afterwards. Ask now.
+    const bersamaPesanan = await confirm({
+      title: 'Hapus juga pesanan toko ini?',
+      description:
+        'Pilih "Ya, hapus pesanan" untuk membuang semua pesanan toko ini sekalian (cocok untuk data uji). ' +
+        'Pilih "Simpan pesanan" bila pesanan harus tetap tercatat. Penghapusan pesanan tidak bisa dibatalkan.',
+      confirmLabel: 'Ya, hapus pesanan',
+      cancelLabel: 'Simpan pesanan',
+      destructive: true,
+    })
+    deleteMut.mutate({ id: akun.id, bersamaPesanan })
   }
 
   return (
