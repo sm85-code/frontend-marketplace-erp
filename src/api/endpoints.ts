@@ -459,3 +459,9 @@ export const getKatalog = (id: string) => api.get<KatalogDetail>(`/katalog-shope
 /** Copies the chosen products to the online store as drafts with stock 0 (max 20 per call). Never writes to Shopee. */
 export const kirimKatalogKeToko = (payload: { ids: string[]; aktif?: boolean; timpa?: boolean }) =>
   api.post<{ ok: boolean; hasil: KirimKatalogHasil[] }>('/katalog-shopee/kirim-toko', payload).then((r) => r.data)
+
+export const daftarAksiIklanShopee = () =>
+  api.get<{ aksi: string; method: string; path: string }[]>("/iklan/shopee/aksi").then((r) => r.data)
+
+export const panggilIklanShopee = (akunId: string, aksi: string, payload: { params?: object; body?: object } = {}) =>
+  api.post(`/akun/${akunId}/iklan/shopee/${aksi}`, payload, { timeout: 60_000 }).then((r) => r.data)

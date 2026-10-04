@@ -21,6 +21,7 @@ const PesananPage = lazy(() => import('@/pages/PesananPage'))
 const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
 const IklanPage = lazy(() => import('@/pages/IklanPage'))
+const IklanShopeePage = lazy(() => import('@/pages/IklanShopeePage'))
 const IklanDetailPage = lazy(() => import('@/pages/IklanDetailPage'))
 const StaffPage = lazy(() => import('@/pages/StaffPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
@@ -98,7 +99,8 @@ export default function App() {
                 element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><SettlementPage /></LazyPage></Protected>}
               />
               <Route
-                path="/iklan"
+                path="/iklan/shopee" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanShopeePage /></LazyPage></Protected>} />
+              <Route path="/iklan"
                 element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
               />
               <Route
