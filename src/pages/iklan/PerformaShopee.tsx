@@ -133,12 +133,6 @@ export default function PerformaShopee() {
           <Medan>
             <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
           </Medan>
-          <FilterPilih id="iklan-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
-          <FilterAksi>
-            <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
-              {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
-            </Button>
-          </FilterAksi>
           {f.berubah && (
             <FilterAksi>
               <Button variant="ghost" onClick={f.reset}>
@@ -147,6 +141,14 @@ export default function PerformaShopee() {
             </FilterAksi>
           )}
         </BarFilter>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[12rem]">
+            <FilterPilih id="iklan-hari" label="Tarik dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
+          </div>
+          <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
+            {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
+          </Button>
+        </div>
 
         {progres && (
           <PanelProgres
