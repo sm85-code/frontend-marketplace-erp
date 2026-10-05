@@ -81,7 +81,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       kunci: 'varian',
       judul: 'Varian',
       kelas: 'min-w-[100px]',
-      sel: (p) => p.items.map((i) => i.model_name).filter(Boolean).length ? "Varian" : "",
+      sel: () => "",
     },
     {
       kunci: 'nilai_varian',
