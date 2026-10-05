@@ -611,3 +611,23 @@ export interface IklanBaru {
   roas_target?: number
   kata_kunci?: { kata: string; bid: number; tipe: 'exact' | 'broad' }[]
 }
+
+export type TindakanSaranAi = 'pause' | 'resume' | 'change_budget' | 'change_roas_target' | 'hapus_kata_kunci' | 'ubah_bid' | 'perhatikan'
+
+export interface SaranAiItem {
+  campaign_id: string
+  nama: string
+  tindakan: TindakanSaranAi
+  nilai: number | null
+  kata: string | null
+  prioritas: 'tinggi' | 'sedang' | 'rendah'
+  alasan: string
+}
+
+export interface SaranAiHasil {
+  ringkasan: string
+  saran: SaranAiItem[]
+  pemakaian: { token_masuk: number; token_keluar: number; biaya_usd: number; biaya_rp: number; model: string | null }
+  kuota_sisa: number | null
+  bulan_ini_usd: number | null
+}

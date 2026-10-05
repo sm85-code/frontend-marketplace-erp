@@ -59,3 +59,21 @@ describe('total', () => {
     expect(totalKampanye(undefined)).toMatchObject({ jumlah: 0, roas: null })
   })
 })
+
+describe('menerapkan saran AI', () => {
+  const dasarSaran = { campaign_id: '1', nama: 'A', nilai: null, kata: null, prioritas: 'sedang' as const, alasan: 'x' }
+  const fmt = (n: number) => `Rp ${n}`
+  it('memetakan setiap tindakan ke endpoint yang benar dan menolak yang datanya kurang', async () => {
+    const { cara, labelTindakan } = await import('@/lib/iklanKampanye')
+    expect(cara({ ...dasarSaran, tindakan: 'pause' })).toEqual({ jenis: 'aksi', payload: { aksi: 'pause' } })
+    expect(cara({ ...dasarSaran, tindakan: 'change_budget', nilai: 70000 })).toEqual({ jenis: 'aksi', payload: { aksi: 'change_budget', budget: 70000 } })
+    expect(cara({ ...dasarSaran, tindakan: 'change_roas_target', nilai: 5 })).toEqual({ jenis: 'aksi', payload: { aksi: 'change_roas_target', roas_target: 5 } })
+    expect(cara({ ...dasarSaran, tindakan: 'hapus_kata_kunci', kata: 'kursi' })).toEqual({ jenis: 'kata', perubahan: [{ aksi: 'delete', kata: 'kursi' }] })
+    expect(cara({ ...dasarSaran, tindakan: 'ubah_bid', kata: 'kursi', nilai: 300 })).toEqual({ jenis: 'kata', perubahan: [{ aksi: 'change_bid_price', kata: 'kursi', bid: 300 }] })
+    expect(cara({ ...dasarSaran, tindakan: 'perhatikan' })).toBeNull()
+    expect(cara({ ...dasarSaran, tindakan: 'change_budget' })).toBeNull()
+    expect(cara({ ...dasarSaran, tindakan: 'ubah_bid', kata: 'kursi' })).toBeNull()
+    expect(labelTindakan({ ...dasarSaran, tindakan: 'change_budget', nilai: 70000 }, fmt)).toBe('Ubah anggaran harian menjadi Rp 70000')
+    expect(labelTindakan({ ...dasarSaran, tindakan: 'hapus_kata_kunci', kata: 'kursi' }, fmt)).toBe('Hapus kata kunci "kursi"')
+  })
+})

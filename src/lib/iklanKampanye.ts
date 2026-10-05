@@ -1,4 +1,4 @@
-import type { KampanyeIklan, KampanyeIklanDaftar } from '@/api/types'
+import type { AksiKampanye, KampanyeIklan, KampanyeIklanDaftar, PerubahanKataKunci, SaranAiItem } from '@/api/types'
 
 const angka = (v: number | string | null | undefined) => (v == null || v === '' ? 0 : Number(v))
 
@@ -104,3 +104,45 @@ export function totalKampanye(d: KampanyeIklanDaftar | undefined) {
 }
 
 export const angkaDari = angka
+
+/** Short Indonesian sentence of what a suggestion would do (also the text of its confirmation). */
+export function labelTindakan(s: SaranAiItem, fmt: (n: number) => string): string {
+  switch (s.tindakan) {
+    case 'pause':
+      return 'Jeda kampanye'
+    case 'resume':
+      return 'Lanjutkan kampanye'
+    case 'change_budget':
+      return `Ubah anggaran harian menjadi ${fmt(s.nilai ?? 0)}`
+    case 'change_roas_target':
+      return `Ubah target ROAS menjadi ${s.nilai}×`
+    case 'hapus_kata_kunci':
+      return `Hapus kata kunci "${s.kata}"`
+    case 'ubah_bid':
+      return `Ubah bid "${s.kata}" menjadi ${fmt(s.nilai ?? 0)}`
+    default:
+      return 'Perlu diperhatikan'
+  }
+}
+
+/** How a suggestion is applied: through the campaign action endpoint or the keyword endpoint; null = note only. */
+export function cara(s: SaranAiItem):
+  | { jenis: 'aksi'; payload: { aksi: AksiKampanye; budget?: number; roas_target?: number } }
+  | { jenis: 'kata'; perubahan: PerubahanKataKunci[] }
+  | null {
+  switch (s.tindakan) {
+    case 'pause':
+    case 'resume':
+      return { jenis: 'aksi', payload: { aksi: s.tindakan } }
+    case 'change_budget':
+      return s.nilai ? { jenis: 'aksi', payload: { aksi: 'change_budget', budget: s.nilai } } : null
+    case 'change_roas_target':
+      return s.nilai ? { jenis: 'aksi', payload: { aksi: 'change_roas_target', roas_target: s.nilai } } : null
+    case 'hapus_kata_kunci':
+      return s.kata ? { jenis: 'kata', perubahan: [{ aksi: 'delete', kata: s.kata }] } : null
+    case 'ubah_bid':
+      return s.kata && s.nilai ? { jenis: 'kata', perubahan: [{ aksi: 'change_bid_price', kata: s.kata, bid: s.nilai }] } : null
+    default:
+      return null
+  }
+}
