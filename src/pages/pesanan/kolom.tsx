@@ -5,7 +5,8 @@ import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { bisaDicetak, labelStatus, ringkasItem, sudahDicetak } from '@/lib/pesanan'
+import { bisaDicetak, labelStatus, sudahDicetak } from '@/lib/pesanan'
+import { ItemRingkas } from './ItemRingkas'
 
 function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
   if (status === 'completed') return 'default'
@@ -21,7 +22,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
   return [
     {
       kunci: 'pesanan',
-      judul: 'order_sn',
+      judul: 'No. Pesanan',
       kelas: 'max-w-[9.5rem] md:max-w-none',
       tetap: true,
       urut: { kunci: 'nomor' },
@@ -37,7 +38,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'tanggal',
-      judul: 'create_time',
+      judul: 'Tanggal Pesan',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'tanggal', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },
       sel: (p) => (
@@ -68,41 +69,37 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'produk',
-      judul: 'item_name',
-      kelas: 'min-w-[160px] max-w-[240px]',
-      // Two lines at most keep rows short; the full text is in the tooltip and on the detail page.
-      sel: (p) => (
-        <span className="line-clamp-2" title={ringkasItem(p, 20)}>
-          {ringkasItem(p)}
-        </span>
-      ),
+      judul: 'Produk',
+      kelas: 'min-w-[200px] max-w-[280px]',
+      sel: (p) => <ItemRingkas items={p.items} />,
     },
     {
       kunci: 'varian',
-      judul: 'model_name',
+      judul: 'Varian',
+      bawaan: false,
       kelas: 'min-w-[100px]',
       sel: (p) => p.items.map((i) => i.model_name).filter(Boolean).join(", "),
     },
-    { kunci: 'ship_by_date', judul: 'ship_by_date', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
-    { kunci: 'sku', judul: 'item_sku', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
-    { kunci: 'sku_model', judul: 'model_sku', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
-    { kunci: 'bayar', judul: 'payment_method', bawaan: false, sel: (p) => p.payment_method || "" },
-    { kunci: 'cod', judul: 'cod', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
-    { kunci: 'ongkir', judul: 'actual_shipping_fee', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
-    { kunci: 'penerima', judul: 'recipient_address.name', bawaan: false, sel: (p) => p.penerima || "" },
-    { kunci: 'kota', judul: 'recipient_address.city', bawaan: false, sel: (p) => p.kota || "" },
-    { kunci: 'catatan', judul: 'note', bawaan: false, sel: (p) => p.note || "" },
-    { kunci: 'batal', judul: 'cancel_reason', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
+    { kunci: 'ship_by_date', judul: 'Kirim Sebelum', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
+    { kunci: 'sku', judul: 'SKU Produk', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
+    { kunci: 'sku_model', judul: 'SKU Varian', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
+    { kunci: 'bayar', judul: 'Metode Bayar', bawaan: false, sel: (p) => p.payment_method || "" },
+    { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
+    { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
+    { kunci: 'penerima', judul: 'Nama Penerima', bawaan: false, sel: (p) => p.penerima || "" },
+    { kunci: 'kota', judul: 'Kota Tujuan', bawaan: false, sel: (p) => p.kota || "" },
+    { kunci: 'catatan', judul: 'Catatan Pembeli', bawaan: false, sel: (p) => p.note || "" },
+    { kunci: 'batal', judul: 'Alasan Batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
     {
       kunci: 'total',
-      judul: 'total_amount',
+      judul: 'Total Pesanan',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'total', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
       sel: (p) => fmtRp(p.total),
     },
     {
       kunci: 'kurir',
-      judul: 'shipping_carrier',
+      judul: 'Kurir & Resi',
       urut: { kunci: 'kurir' },
       sel: (p) => (
         <>

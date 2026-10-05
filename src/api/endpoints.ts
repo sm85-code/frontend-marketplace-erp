@@ -1,5 +1,6 @@
 import api from '@/api/client'
 import type {
+  ResiGabunganHasil,
   SaranAiHasil,
   AksiKampanye,
   IklanBaru,
@@ -304,12 +305,12 @@ export const unduhResi = (id: string, tipe: TemplateResi = 'THERMAL_AIR_WAYBILL'
 export const tandaiResiDicetak = (id: string, dicetak: boolean) =>
   api.post<Pesanan>(`/pesanan/${id}/resi/tandai`, { dicetak }).then((r) => r.data)
 
-/** One PDF with the labels of several processed orders (same shop and courier, at most 50). */
-export const unduhResiMassal = (pesananIds: string[], tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
-  api
-    .post<Blob>('/pesanan/resi-massal', { pesanan_ids: pesananIds, tipe }, { responseType: 'blob' })
-    .then((r) => r.data)
-    .catch(bacaErrorBlob)
+/**
+ * Labels of any selection of processed orders (several shops and couriers) joined into ONE pdf. Orders Shopee refuses
+ * come back in `gagal` with the reason instead of blocking the rest.
+ */
+export const cetakResiGabungan = (pesananIds: string[], tipe: TemplateResi = 'THERMAL_AIR_WAYBILL') =>
+  api.post<ResiGabunganHasil>('/pesanan/resi-gabungan', { pesanan_ids: pesananIds, tipe }, { timeout: 110_000 }).then((r) => r.data)
 
 export const setPengiriman = (id: string, payload: { kurir: string; nomor_resi: string; tanggal_kirim?: string }) =>
   api.post<Pesanan>(`/pesanan/${id}/pengiriman`, payload).then((r) => r.data)

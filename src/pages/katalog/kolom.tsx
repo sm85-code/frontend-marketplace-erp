@@ -63,7 +63,7 @@ export function kolomKatalog(
     },
     {
       kunci: 'semuaFoto',
-      judul: 'Semua foto (maks. 5)',
+      judul: 'Semua Foto (maks. 5)',
       bawaan: false,
       kelas: 'min-w-[270px]',
       sel: (p) =>
@@ -86,7 +86,7 @@ export function kolomKatalog(
     },
     {
       kunci: 'nama',
-      judul: 'item_name',
+      judul: 'Nama Produk',
       kelas: 'min-w-[9rem] max-w-[10rem] md:min-w-[200px] md:max-w-[300px]',
       tetap: true,
       urut: { kunci: 'nama' },
@@ -109,10 +109,10 @@ export function kolomKatalog(
       ),
       selAnak: (v: KatalogVarian) => <span className="teks-data pl-3 font-normal text-muted-foreground">↳ {labelVarian(v)}</span>,
     },
-    { kunci: 'sku', judul: 'item_sku', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
+    { kunci: 'sku', judul: 'SKU', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
     {
       kunci: 'harga',
-      judul: 'price_info.current_price',
+      judul: 'Harga',
       kelas: 'whitespace-nowrap font-semibold',
       urut: { kunci: 'harga', label: ['Termurah', 'Termahal'] },
       sel: (p) => rentangHarga(p.harga_min, p.harga_max),
@@ -128,7 +128,7 @@ export function kolomKatalog(
     },
     {
       kunci: 'stok',
-      judul: 'stock_info_v2',
+      judul: 'Stok',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'stok', arahAwal: 'desc', label: ['Tersedikit', 'Terbanyak'] },
       sel: (p) => p.stok_shopee ?? <Kosong />,
@@ -136,21 +136,21 @@ export function kolomKatalog(
     },
     {
       kunci: 'varian',
-      judul: 'tier_variation.name',
+      judul: 'Jenis Varian',
       kelas: 'whitespace-nowrap',
       sel: (p) => p.sumbu || '',
       selAnak: (v: KatalogVarian) => (v.opsi?.length ? <Tumpuk baris={v.opsi.map((o) => o.tier)} /> : v.sumbu || ''),
     },
     {
       kunci: 'nilai_varian',
-      judul: 'option_list.option',
+      judul: 'Pilihan Varian',
       kelas: 'min-w-[160px] max-w-[240px]',
       sel: (p) => (p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : ''),
       selAnak: (v: KatalogVarian) => (v.opsi?.length ? <Tumpuk baris={v.opsi.map((o) => o.opsi)} /> : v.nama),
     },
     {
       kunci: 'berat',
-      judul: 'weight',
+      judul: 'Berat',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'berat', label: ['Teringan', 'Terberat'] },
       sel: (p) => (p.berat_gram ? `${p.berat_gram / 1000} kg` : <Kosong />),
@@ -160,19 +160,19 @@ export function kolomKatalog(
         return b.nilai ? (b.ikutProduk ? <Ikut>{teksBerat(b.nilai)}</Ikut> : teksBerat(b.nilai)) : <Kosong />
       },
     },
-    { kunci: 'package_length', judul: 'dimension.package_length', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'panjang') },
-    { kunci: 'package_width', judul: 'dimension.package_width', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'lebar') },
-    { kunci: 'package_height', judul: 'dimension.package_height', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'tinggi') },
+    { kunci: 'package_length', judul: 'Panjang Paket', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'panjang') },
+    { kunci: 'package_width', judul: 'Lebar Paket', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'lebar') },
+    { kunci: 'package_height', judul: 'Tinggi Paket', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'tinggi') },
     {
       kunci: 'deskripsi',
-      judul: 'description',
+      judul: 'Deskripsi',
       bawaan: false,
       kelas: 'min-w-[240px] max-w-[340px]',
       sel: (p) => <div className="teks-kecil line-clamp-4 text-muted-foreground">{p.deskripsi_ringkas || '—'}</div>,
     },
     {
       kunci: 'status',
-      judul: 'item_status',
+      judul: 'Status',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'status', label: ['Aktif dulu', 'Tidak aktif dulu'] },
       sel: (p) => <Badge variant={p.status === 'NORMAL' ? 'secondary' : 'outline'}>{labelStatusShopee(p.status)}</Badge>,
@@ -193,14 +193,14 @@ export function kolomKatalog(
       urut: { kunci: 'diambil', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },
       sel: (p) => fmtDate(p.diambil_at),
     },
-    { kunci: 'itemId', judul: 'item_id', bawaan: false, kelas: 'font-mono', sel: (p) => p.item_id },
-    { kunci: 'kategori', judul: 'category_id', bawaan: false, sel: (p) => p.category_id || "" },
-    { kunci: 'merek', judul: 'brand.original_brand_name', bawaan: false, sel: (p) => p.brand || "" },
-    { kunci: 'atribut', judul: 'attribute_list', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
-    { kunci: 'kondisi', judul: 'condition', bawaan: false, sel: (p) => p.condition || "" },
+    { kunci: 'itemId', judul: 'ID Produk', bawaan: false, kelas: 'font-mono', sel: (p) => p.item_id },
+    { kunci: 'kategori', judul: 'ID Kategori', bawaan: false, sel: (p) => p.category_id || "" },
+    { kunci: 'merek', judul: 'Merek', bawaan: false, sel: (p) => p.brand || "" },
+    { kunci: 'atribut', judul: 'Atribut', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
+    { kunci: 'kondisi', judul: 'Kondisi', bawaan: false, sel: (p) => p.condition || "" },
     {
       kunci: 'preorder',
-      judul: 'pre_order',
+      judul: 'Pre-Order',
       sel: (p) => (p.is_pre_order ? `${p.days_to_ship ?? ''} hari` : ''),
       selAnak: (v: KatalogVarian, p: KatalogItem) => {
         if (v.model_id === undefined) return null
@@ -210,14 +210,14 @@ export function kolomKatalog(
         return po.ikutProduk ? <Ikut>{teks}</Ikut> : teks
       },
     },
-    { kunci: 'kurir', judul: 'logistic_info', bawaan: false, sel: (p) => p.logistic_info || "" },
-    { kunci: 'promo', judul: 'has_promotion', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
-    { kunci: 'grosir', judul: 'wholesales', bawaan: false, sel: (p) => p.wholesales || "" },
-    { kunci: 'video', judul: 'video_info', bawaan: false, sel: (p) => p.video_info ? "Ya" : "" },
-    { kunci: 'ukuran_chart', judul: 'size_chart', bawaan: false, sel: (p) => p.size_chart || "" },
-    { kunci: 'bahaya', judul: 'item_dangerous', bawaan: false, sel: (p) => p.item_dangerous ? "Ya" : "" },
-    { kunci: 'dibuat', judul: 'create_time', bawaan: false, sel: (p) => p.create_time ? fmtDate(new Date(p.create_time * 1000).toISOString()) : "" },
-    { kunci: 'diubah', judul: 'update_time', bawaan: false, sel: (p) => p.update_time ? fmtDate(new Date(p.update_time * 1000).toISOString()) : "" },
+    { kunci: 'kurir', judul: 'Pengiriman', bawaan: false, sel: (p) => p.logistic_info || "" },
+    { kunci: 'promo', judul: 'Sedang Promo', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
+    { kunci: 'grosir', judul: 'Harga Grosir', bawaan: false, sel: (p) => p.wholesales || "" },
+    { kunci: 'video', judul: 'Ada Video', bawaan: false, sel: (p) => p.video_info ? "Ya" : "" },
+    { kunci: 'ukuran_chart', judul: 'Panduan Ukuran', bawaan: false, sel: (p) => p.size_chart || "" },
+    { kunci: 'bahaya', judul: 'Barang Berbahaya', bawaan: false, sel: (p) => p.item_dangerous ? "Ya" : "" },
+    { kunci: 'dibuat', judul: 'Dibuat di Shopee', bawaan: false, sel: (p) => p.create_time ? fmtDate(new Date(p.create_time * 1000).toISOString()) : "" },
+    { kunci: 'diubah', judul: 'Diubah di Shopee', bawaan: false, sel: (p) => p.update_time ? fmtDate(new Date(p.update_time * 1000).toISOString()) : "" },
 
   ]
 }
