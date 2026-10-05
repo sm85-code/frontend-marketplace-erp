@@ -92,6 +92,8 @@ export interface ItemPesanan {
   listing_id: string | null
   nama_produk: string
   model_name?: string
+  item_sku?: string
+  model_sku?: string
   harga_satuan: string
   qty: number
   subtotal: string
@@ -118,6 +120,17 @@ export interface Pesanan {
   /** When the buyer placed the order on the marketplace; null for older rows (fall back to created_at). */
   dipesan_at?: string | null
   items: ItemPesanan[]
+  payment_method?: string
+  currency?: string
+  cod?: boolean
+  days_to_ship?: number
+  estimated_shipping_fee?: string
+  actual_shipping_fee?: string
+  note?: string
+  cancel_by?: string
+  cancel_reason?: string
+  penerima?: string
+  kota?: string
   created_at: string
   updated_at: string
 }

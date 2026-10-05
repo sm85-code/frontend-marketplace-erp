@@ -92,6 +92,15 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
         return nilai.length ? <span className="line-clamp-2">{nilai.join(", ")}</span> : ""
       },
     },
+    { kunci: 'sku', judul: 'SKU', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
+    { kunci: 'sku_model', judul: 'SKU varian', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
+    { kunci: 'bayar', judul: 'Pembayaran', bawaan: false, sel: (p) => p.payment_method || "" },
+    { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
+    { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
+    { kunci: 'penerima', judul: 'Penerima', bawaan: false, sel: (p) => p.penerima || "" },
+    { kunci: 'kota', judul: 'Kota', bawaan: false, sel: (p) => p.kota || "" },
+    { kunci: 'catatan', judul: 'Catatan', bawaan: false, sel: (p) => p.note || "" },
+    { kunci: 'batal', judul: 'Alasan batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
     {
       kunci: 'total',
       judul: 'Total',
