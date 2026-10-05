@@ -83,7 +83,7 @@ export default function IklanPage() {
       <BarHalaman judul="Iklan" deskripsi="Performa dan pengelolaan iklan Shopee." />
 
       <Tabs value={tab} onValueChange={(v) => setParams(v === 'performa' ? {} : { tab: v }, { replace: true })}>
-        <TabsList className="h-11 max-w-full overflow-x-auto">
+        <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
           <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
           {bisaKelola && <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>}
           <TabsTrigger value="catatan" className="px-3">Catatan</TabsTrigger>
