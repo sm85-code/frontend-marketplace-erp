@@ -104,3 +104,7 @@ sisanya lewat *Lainnya* (drawer yang sama). Urutan kiri ke kanan ditentukan `pos
 4. Halaman baru: tambahkan ke kit (jangan membuat tabel/filter sendiri).
 
 *Rujukan: panduan UX dari repo `nextlevelbuilder/ui-ux-pro-max-skill` (dibaca sebagai referensi, tidak dipasang).*
+
+## Tab
+
+Pakai `Tabs` dari `@/components/ui/tabs` untuk membagi satu halaman jadi beberapa bagian (contoh: Iklan = Performa, Kampanye Shopee, Catatan). Simpan tab aktif di URL (`?tab=`) supaya F5 dan tombol kembali tidak kehilangan posisi. Aksi yang mengubah data di luar ERP (Shopee) selalu lewat dialog konfirmasi yang menyebut akibatnya.

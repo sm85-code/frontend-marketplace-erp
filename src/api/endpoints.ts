@@ -1,5 +1,10 @@
 import api from '@/api/client'
 import type {
+  AksiKampanye,
+  IklanBaru,
+  KampanyeIklanDaftar,
+  PerubahanKataKunci,
+  SaranIklan,
   AkunMarketplace,
   Gudang,
   IklanCampaign,
@@ -460,8 +465,17 @@ export const getKatalog = (id: string) => api.get<KatalogDetail>(`/katalog-shope
 export const kirimKatalogKeToko = (payload: { ids: string[]; aktif?: boolean; timpa?: boolean }) =>
   api.post<{ ok: boolean; hasil: KirimKatalogHasil[] }>('/katalog-shopee/kirim-toko', payload).then((r) => r.data)
 
-export const daftarAksiIklanShopee = () =>
-  api.get<{ aksi: string; method: string; path: string }[]>("/iklan/shopee/aksi").then((r) => r.data)
+export const daftarKampanyeIklan = (akunId: string, hari: number) =>
+  api.get<KampanyeIklanDaftar>(`/akun/${akunId}/iklan/kampanye`, { params: { hari }, timeout: 90_000 }).then((r) => r.data)
 
-export const panggilIklanShopee = (akunId: string, aksi: string, payload: { params?: object; body?: object } = {}) =>
-  api.post(`/akun/${akunId}/iklan/shopee/${aksi}`, payload, { timeout: 60_000 }).then((r) => r.data)
+export const aksiKampanyeIklan = (akunId: string, campaignId: string, payload: { aksi: AksiKampanye; budget?: number; roas_target?: number }) =>
+  api.post(`/akun/${akunId}/iklan/kampanye/${campaignId}/aksi`, payload, { timeout: 60_000 }).then((r) => r.data)
+
+export const kataKunciKampanyeIklan = (akunId: string, campaignId: string, kataKunci: PerubahanKataKunci[]) =>
+  api.post(`/akun/${akunId}/iklan/kampanye/${campaignId}/kata-kunci`, { kata_kunci: kataKunci }, { timeout: 60_000 }).then((r) => r.data)
+
+export const buatKampanyeIklan = (akunId: string, iklan: IklanBaru) =>
+  api.post(`/akun/${akunId}/iklan/kampanye`, iklan, { timeout: 60_000 }).then((r) => r.data)
+
+export const saranIklan = (akunId: string, itemId: number, opsi: { kata?: string; bidding?: 'auto' | 'manual' } = {}) =>
+  api.get<SaranIklan>(`/akun/${akunId}/iklan/saran`, { params: { item_id: itemId, kata: opsi.kata || undefined, bidding: opsi.bidding }, timeout: 90_000 }).then((r) => r.data)
