@@ -104,6 +104,13 @@ export default function AkunPage() {
     onError: (e, _id, progres) => progres?.gagal(getApiError(e, 'Sync produk belum tersedia untuk platform/akun ini')),
   })
 
+  const syncPesananMut = useMutation({
+    mutationFn: endpoints.syncPesananAkun,
+    onMutate: (akunId: string): Progres => mulaiProgres(`Sinkronisasi pesanan ${akunList?.find((a) => a.id === akunId)?.nama_toko ?? 'toko'}`),
+    onSuccess: (_data, _id, progres) => { progres.selesai("Pesanan ditarik ulang. model_name dan ship_by_date ikut diisi."); qc.invalidateQueries({ queryKey: ["pesanan"] }) },
+    onError: (e, _id, progres) => progres?.gagal(getApiError(e, "Sync pesanan gagal")),
+  })
+
   const pushMut = useMutation({
     mutationFn: async (akun: AkunMarketplace) => {
       // Preview first: pushing overwrites the stock and price that Shopee holds right now.
@@ -219,6 +226,9 @@ export default function AkunPage() {
                     <>
                       <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
                         Sinkronisasi Produk
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => syncPesananMut.mutate(akun.id)}>
+                        Sinkronisasi Pesanan
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
                         Kirim Stok &amp; Harga
