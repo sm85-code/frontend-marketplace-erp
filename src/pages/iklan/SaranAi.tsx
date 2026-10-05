@@ -79,9 +79,10 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
                   <li key={`${s.campaign_id}-${s.tindakan}-${s.kata ?? ''}-${i}`} className="space-y-1.5 p-3 text-sm">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={PRIORITAS[s.prioritas]}>{s.prioritas}</Badge>
+                      {!bisa && <Badge variant="outline">Catatan</Badge>}
                       <span className="font-medium">{s.nama}</span>
                     </div>
-                    <p className="font-semibold">{labelTindakan(s, fmtRp)}</p>
+                    {bisa && <p className="font-semibold">{labelTindakan(s, fmtRp)}</p>}
                     <p className="text-muted-foreground">{s.alasan}</p>
                     {bisa &&
                       (selesai.has(i) ? (
@@ -95,6 +96,12 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
                 )
               })}
             </ul>
+          )}
+          {h.saran.length > 0 && h.saran.every((s) => cara(s) === null) && (
+            <p className="teks-data text-muted-foreground">
+              Semua saran kali ini berupa catatan, jadi tidak ada tombol Terapkan: tidak ada perubahan yang bisa dilakukan dari ERP untuk itu (misalnya isi
+              saldo iklan dilakukan di Seller Centre).
+            </p>
           )}
           <p className="teks-kecil text-muted-foreground">
             Biaya analisis ini sekitar {fmtRp(h.pemakaian.biaya_rp)} ({h.pemakaian.token_masuk.toLocaleString('id-ID')} token masuk,{' '}
