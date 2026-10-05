@@ -1,10 +1,28 @@
 import { fmtDate } from '@/api/client'
-import type { KatalogItem } from '@/api/types'
+import type { KatalogItem, KatalogVarian } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
-import { labelStatusShopee, rentangHarga } from '@/lib/katalog'
+import { fmtRp } from '@/api/client'
+import { labelStatusShopee, labelStatusVarian, labelVarian, nilaiVarian, rentangHarga, teksBerat } from '@/lib/katalog'
 
 const Kosong = () => <span className="text-muted-foreground">—</span>
+
+/** A value the variant did not set itself: shown in muted text because Shopee uses the product's value for it. */
+const Ikut = ({ children }: { children: React.ReactNode }) => (
+  <span className="text-muted-foreground italic" title="Tidak diatur di varian ini: memakai nilai produk">
+    {children}
+  </span>
+)
+/** One line per tier, so tier_variation.name and option_list.option line up row by row in a two-tier variant. */
+const Tumpuk = ({ baris }: { baris: string[] }) => (
+  <span className="block">
+    {baris.map((b, i) => (
+      <span key={i} className="block whitespace-nowrap">
+        {b}
+      </span>
+    ))}
+  </span>
+)
 
 function Gambar({ src, ukuran, nama, onBuka }: { src: string; ukuran: string; nama: string; onBuka: () => void }) {
   return (
@@ -23,12 +41,25 @@ function Gambar({ src, ukuran, nama, onBuka }: { src: string; ukuran: string; na
  * Every column of the catalogue list, declared once. The same list feeds the table (desktop), the cards
  * (phone), the column picker and the sort dropdown. `urut.kunci` must be a sort key the API knows.
  */
-export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogItem>[] {
+export function kolomKatalog(
+  onBuka: (id: string) => void,
+  varianTerbuka: (id: string) => boolean = () => false,
+  onToggleVarian: (id: string) => void = () => undefined,
+): KolomTabel<KatalogItem>[] {
+  // A variant pulled before variants were stored per model has no weight/size/pre-order data at all: leave those cells
+  // empty rather than presenting the product's values as the variant's.
+  const ukuran = (induk: KatalogItem, v: KatalogVarian, sumbu: 'panjang' | 'lebar' | 'tinggi') => {
+    if (v.model_id === undefined) return null
+    const n = nilaiVarian(v, induk)[sumbu]
+    if (!n.nilai) return <Kosong />
+    return n.ikutProduk ? <Ikut>{n.nilai} cm</Ikut> : `${n.nilai} cm`
+  }
   return [
     {
       kunci: 'foto',
       judul: 'Foto',
       sel: (p) => (p.foto[0] ? <Gambar src={p.foto[0]} ukuran="size-10" nama={p.nama} onBuka={() => onBuka(p.id)} /> : <Kosong />),
+      selAnak: (v: KatalogVarian) => (v.foto ? <img src={v.foto} alt="" loading="lazy" className="ml-2 size-8 rounded border object-cover" /> : null),
     },
     {
       kunci: 'semuaFoto',
@@ -60,18 +91,40 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       tetap: true,
       urut: { kunci: 'nama' },
       sel: (p) => (
-        <button type="button" onClick={() => onBuka(p.id)} title={p.nama} className="line-clamp-2 text-left hover:underline">
-          {p.nama}
-        </button>
+        <>
+          <button type="button" onClick={() => onBuka(p.id)} title={p.nama} className="line-clamp-2 text-left hover:underline">
+            {p.nama}
+          </button>
+          {!!p.varian?.length && (
+            <button
+              type="button"
+              onClick={() => onToggleVarian(p.id)}
+              aria-expanded={varianTerbuka(p.id)}
+              className="teks-kecil mt-0.5 text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {varianTerbuka(p.id) ? '▾ Sembunyikan' : '▸ Tampilkan'} {p.varian.length} varian
+            </button>
+          )}
+        </>
       ),
+      selAnak: (v: KatalogVarian) => <span className="teks-data pl-3 font-normal text-muted-foreground">↳ {labelVarian(v)}</span>,
     },
-    { kunci: 'sku', judul: 'item_sku', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong /> },
+    { kunci: 'sku', judul: 'item_sku', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
     {
       kunci: 'harga',
       judul: 'price_info.current_price',
       kelas: 'whitespace-nowrap font-semibold',
       urut: { kunci: 'harga', label: ['Termurah', 'Termahal'] },
       sel: (p) => rentangHarga(p.harga_min, p.harga_max),
+      selAnak: (v: KatalogVarian) =>
+        v.harga ? (
+          <span>
+            {fmtRp(v.harga)}
+            {v.harga_asli && <span className="teks-kecil ml-1 font-normal text-muted-foreground line-through">{fmtRp(v.harga_asli)}</span>}
+          </span>
+        ) : (
+          <Kosong />
+        ),
     },
     {
       kunci: 'stok',
@@ -79,19 +132,37 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'stok', arahAwal: 'desc', label: ['Tersedikit', 'Terbanyak'] },
       sel: (p) => p.stok_shopee ?? <Kosong />,
+      selAnak: (v: KatalogVarian) => v.stok ?? <Kosong />,
     },
-    { kunci: 'varian', judul: 'tier_variation.name', kelas: 'whitespace-nowrap', sel: (p) => p.sumbu || "" },
-    { kunci: 'nilai_varian', judul: 'option_list.option', kelas: 'min-w-[160px] max-w-[240px]', sel: (p) => p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : "" },
+    {
+      kunci: 'varian',
+      judul: 'tier_variation.name',
+      kelas: 'whitespace-nowrap',
+      sel: (p) => p.sumbu || '',
+      selAnak: (v: KatalogVarian) => (v.opsi?.length ? <Tumpuk baris={v.opsi.map((o) => o.tier)} /> : v.sumbu || ''),
+    },
+    {
+      kunci: 'nilai_varian',
+      judul: 'option_list.option',
+      kelas: 'min-w-[160px] max-w-[240px]',
+      sel: (p) => (p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : ''),
+      selAnak: (v: KatalogVarian) => (v.opsi?.length ? <Tumpuk baris={v.opsi.map((o) => o.opsi)} /> : v.nama),
+    },
     {
       kunci: 'berat',
       judul: 'weight',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'berat', label: ['Teringan', 'Terberat'] },
       sel: (p) => (p.berat_gram ? `${p.berat_gram / 1000} kg` : <Kosong />),
+      selAnak: (v: KatalogVarian, p: KatalogItem) => {
+        if (v.model_id === undefined) return null
+        const b = nilaiVarian(v, p).berat
+        return b.nilai ? (b.ikutProduk ? <Ikut>{teksBerat(b.nilai)}</Ikut> : teksBerat(b.nilai)) : <Kosong />
+      },
     },
-    { kunci: 'package_length', judul: 'dimension.package_length', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "" },
-    { kunci: 'package_width', judul: 'dimension.package_width', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "" },
-    { kunci: 'package_height', judul: 'dimension.package_height', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "" },
+    { kunci: 'package_length', judul: 'dimension.package_length', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'panjang') },
+    { kunci: 'package_width', judul: 'dimension.package_width', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'lebar') },
+    { kunci: 'package_height', judul: 'dimension.package_height', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'tinggi') },
     {
       kunci: 'deskripsi',
       judul: 'description',
@@ -105,6 +176,7 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'status', label: ['Aktif dulu', 'Tidak aktif dulu'] },
       sel: (p) => <Badge variant={p.status === 'NORMAL' ? 'secondary' : 'outline'}>{labelStatusShopee(p.status)}</Badge>,
+      selAnak: (v: KatalogVarian) => (labelStatusVarian(v.status) ? <Badge variant="outline">{labelStatusVarian(v.status)}</Badge> : null),
     },
     {
       kunci: 'dikirim',
@@ -126,7 +198,18 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
     { kunci: 'merek', judul: 'brand.original_brand_name', bawaan: false, sel: (p) => p.brand || "" },
     { kunci: 'atribut', judul: 'attribute_list', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
     { kunci: 'kondisi', judul: 'condition', bawaan: false, sel: (p) => p.condition || "" },
-    { kunci: 'preorder', judul: 'pre_order', bawaan: false, sel: (p) => p.is_pre_order ? `${p.days_to_ship ?? ""} hari` : "" },
+    {
+      kunci: 'preorder',
+      judul: 'pre_order',
+      sel: (p) => (p.is_pre_order ? `${p.days_to_ship ?? ''} hari` : ''),
+      selAnak: (v: KatalogVarian, p: KatalogItem) => {
+        if (v.model_id === undefined) return null
+        const po = nilaiVarian(v, p).preorder
+        if (!po.aktif) return po.ikutProduk ? null : <span className="text-muted-foreground">Tidak</span>
+        const teks = `Ya${po.hari ? ` · ${po.hari} hari` : ''}`
+        return po.ikutProduk ? <Ikut>{teks}</Ikut> : teks
+      },
+    },
     { kunci: 'kurir', judul: 'logistic_info', bawaan: false, sel: (p) => p.logistic_info || "" },
     { kunci: 'promo', judul: 'has_promotion', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
     { kunci: 'grosir', judul: 'wholesales', bawaan: false, sel: (p) => p.wholesales || "" },

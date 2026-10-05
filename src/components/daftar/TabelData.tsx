@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import TableShell from '@/components/TableShell'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -17,6 +17,8 @@ export interface KolomTabel<T> extends DefinisiKolom {
   tetap?: boolean
   /** Right-align (numbers and amounts). */
   rata?: 'kanan'
+  /** What this column shows in a sub-row (see `anak`): the child, its parent and its position. Empty = blank cell. */
+  selAnak?: (anak: any, induk: T, indeks: number) => ReactNode // eslint-disable-line @typescript-eslint/no-explicit-any
   /** Value of this column for sorting in the browser (see TabelLokal). */
   nilai?: (item: T) => string | number | boolean | Date | null | undefined
   /** Makes the header clickable for sorting by this key (the page decides where sorting happens). */
@@ -48,6 +50,7 @@ export default function TabelData<T>({
   urut,
   onUrut,
   footer,
+  anak,
 }: {
   /** Names the table for screen readers (caption and scroll region). */
   label: string
@@ -65,6 +68,11 @@ export default function TabelData<T>({
   onUrut?: (kunci: string, arahAwal?: ArahUrut) => void
   /** Rows below the table body, e.g. a totals row (<TableRow>…). */
   footer?: ReactNode
+  /**
+   * Sub-rows under a row (e.g. the variants of a product), laid out in the same columns as their parent: a column
+   * fills its cell with its `selAnak`. Only rows for which `terbuka(id)` is true show them.
+   */
+  anak?: { dari: (item: T) => unknown[]; terbuka: (id: string) => boolean; label: (anak: any, induk: T) => string } // eslint-disable-line @typescript-eslint/no-explicit-any
 }) {
   const bisaCentang = (item: T) => !!pilihan && (pilihan.bisaDipilih?.(item) ?? true)
   // Frozen columns (checkbox + the identity column) need an opaque background so scrolled cells slide under them.
@@ -109,8 +117,10 @@ export default function TabelData<T>({
               {items.map((item) => {
                 const id = idDari(item)
                 const dipilih = !!pilihan?.terpilih(id)
+                const subBaris = anak && anak.terbuka(id) ? anak.dari(item) : []
                 return (
-                  <TableRow key={id} data-state={dipilih ? 'selected' : undefined} className={dipilih ? 'bg-primary/5' : ''}>
+                  <Fragment key={id}>
+                  <TableRow data-state={dipilih ? 'selected' : undefined} className={dipilih ? 'bg-primary/5' : ''}>
                     {pilihan && (
                       <TableCell className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 sel-tetap">
                         {bisaCentang(item) && (
@@ -129,6 +139,18 @@ export default function TabelData<T>({
                     ))}
                     {aksi && <TableCell className="sel-tetap text-right md:sticky md:right-0">{aksi(item)}</TableCell>}
                   </TableRow>
+                  {subBaris.map((a, i) => (
+                    <TableRow key={`${id}-anak-${i}`} data-anak="" aria-label={anak!.label(a, item)} className="bg-muted/40 hover:bg-muted/60">
+                      {pilihan && <TableCell className="sticky left-0 z-[1] w-10 min-w-10 max-w-10 sel-tetap" />}
+                      {kolom.map((k) => (
+                        <TableCell key={k.kunci} className={`${k.rata === 'kanan' ? 'text-right' : ''} ${k.kelas ?? ''} ${kelasTetap(k)}`} style={gayaTetap(k)}>
+                          {k.selAnak?.(a, item, i)}
+                        </TableCell>
+                      ))}
+                      {aksi && <TableCell className="sel-tetap md:sticky md:right-0" />}
+                    </TableRow>
+                  ))}
+                  </Fragment>
                 )
               })}
             </TableBody>

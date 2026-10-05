@@ -422,6 +422,8 @@ export interface KatalogItem {
   jumlah_varian: number
   nilai_varian?: string
   sumbu?: string
+  /** Every variant with its own price, stock, weight, package size and pre-order. */
+  varian?: KatalogVarian[]
   status: string
   dikirim_toko_id: string | null
   dikirim_at: string | null
@@ -453,11 +455,35 @@ export interface KatalogItem {
   gtin_code?: string
 }
 
+/** One tier of a variant: tier_variation.name and the chosen option_list.option. */
+export interface KatalogVarianOpsi {
+  tier: string
+  opsi: string
+}
+
+/**
+ * One variant (model) of a product. Fields after `stok` exist only on catalogues synced after variants were stored
+ * per model; `null` = not set on this variant (Shopee then uses the product's value).
+ */
 export interface KatalogVarian {
+  model_id?: string
   nama: string
+  sumbu?: string
+  opsi?: KatalogVarianOpsi[]
   sku: string
   harga: string
+  /** Price before the promotion, only when higher than `harga`. */
+  harga_asli?: string | null
+  promo?: boolean
   stok: number | null
+  berat_gram?: number | null
+  panjang_cm?: number | null
+  lebar_cm?: number | null
+  tinggi_cm?: number | null
+  preorder?: boolean | null
+  hari_kirim?: number | null
+  status?: string | null
+  foto?: string | null
 }
 
 export interface KatalogDetail extends KatalogItem {
