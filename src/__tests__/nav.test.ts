@@ -6,10 +6,9 @@ describe('filterNavForUser', () => {
     expect(filterNavForUser(null)).toEqual([])
   })
 
-  it('owner and admin see every nav item', () => {
-    for (const role of ['owner', 'admin'] as const) {
-      expect(filterNavForUser({ role }).length).toBe(NAV.length)
-    }
+  it('admin sees every nav item; owner sees all but Iklan', () => {
+    expect(filterNavForUser({ role: 'admin' }).length).toBe(NAV.length)
+    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => to !== '/iklan'))
   })
 
   it('staff only gets the shared pages, in workflow order', () => {
@@ -23,14 +22,22 @@ describe('menu order follows the daily workflow', () => {
     expect(GRUP_NAV.map((g) => g.id)).toEqual(['harian', 'produk', 'keuangan', 'pengaturan'])
   })
 
-  it('groups the owner menu as agreed (Toko lives under Pengaturan)', () => {
-    const peta = Object.fromEntries(kelompokNav(filterNavForUser({ role: 'owner' })).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
+  it('groups the admin menu as agreed (Toko lives under Pengaturan, Iklan is admin-only)', () => {
+    const peta = Object.fromEntries(kelompokNav(filterNavForUser({ role: 'admin' })).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
       harian: ['/dashboard', '/pesanan'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       keuangan: ['/settlement', '/iklan'],
       pengaturan: ['/toko', '/staff', '/profile'],
     })
+  })
+
+  it('hides Iklan from owner and staff (ads move real money: admin only)', () => {
+    for (const role of ['owner', 'staff'] as const) {
+      const semua = kelompokNav(filterNavForUser({ role })).flatMap((g) => g.items.map((n) => n.to))
+      expect(semua).not.toContain('/iklan')
+    }
+    expect(kelompokNav(filterNavForUser({ role: 'owner' })).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/settlement'])
   })
 
   it('drops sections a role cannot see anything in', () => {

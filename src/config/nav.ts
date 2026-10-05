@@ -12,7 +12,7 @@ import {
   Users,
   Warehouse,
 } from 'lucide-react'
-import { ROLES_OWNER_ONLY } from '@/config/roles'
+import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import type { Role } from '@/api/types'
 
 export interface NavItem {
@@ -52,7 +52,7 @@ export const NAV: NavItem[] = [
   { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
-  { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
+  { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES, grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Staff', icon: Users, roles: ROLES_OWNER_ONLY, grup: 'pengaturan' },
   { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, roles: ALL_ROLES, grup: 'pengaturan', bawah: 6, posisiBawah: 6 },
