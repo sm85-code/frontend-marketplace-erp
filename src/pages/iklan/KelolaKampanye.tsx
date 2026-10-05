@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import ModalProduk from './ModalProduk'
 import { aksiTersedia, angkaDari, anggaranTeks, jenisKampanye, saranKampanye, statusKampanye } from '@/lib/iklanKampanye'
 
 const WARNA = { bahaya: 'border-destructive/50 bg-destructive/10', peringatan: 'border-amber-500/50 bg-amber-500/10', baik: 'border-emerald-500/50 bg-emerald-500/10', info: 'bg-muted' }
 
 /** Settings of one Shopee campaign: pause/resume/stop/delete, daily budget, ROAS target, and (manual) keywords. */
-export default function KelolaKampanye({ akunId, kampanye: k, hari, onTutup }: { akunId: string; kampanye: KampanyeIklan; hari: number; onTutup: () => void }) {
+export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee, onTutup }: { akunId: string; kampanye: KampanyeIklan; hari: number; biayaShopee: number | null; onTutup: () => void }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const status = statusKampanye(k.status)
@@ -96,6 +97,24 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, onTutup }: {
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {k.jumlah_produk > 0 && (
+          <section aria-label="Produk diiklankan" className="space-y-2">
+            <h3 className="text-sm font-semibold">Produk diiklankan ({k.jumlah_produk})</h3>
+            <p className="teks-kecil text-muted-foreground">
+              Isi modal supaya Asisten AI tahu kapan iklan ini untung atau rugi.
+              {k.margin.roas_impas != null && ` ROAS impas kampanye ini ${k.margin.roas_impas.toLocaleString('id-ID')}× (rata-rata ${k.margin.terisi} dari ${k.margin.total} produk yang modalnya terisi).`}
+            </p>
+            <ul className="divide-y rounded-md border">
+              {k.produk.map((p) => (
+                <ModalProduk key={p.item_id} akunId={akunId} produk={p} biayaShopee={biayaShopee} />
+              ))}
+            </ul>
+            {k.jumlah_produk > k.produk.length && (
+              <p className="teks-kecil text-muted-foreground">Menampilkan {k.produk.length} dari {k.jumlah_produk} produk. Semua produk ikut dihitung untuk ROAS impas.</p>
+            )}
           </section>
         )}
 

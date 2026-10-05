@@ -76,13 +76,18 @@ export default function IklanPage() {
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
   const bisaKelola = isOwnerLevel(user?.role)
-  const tab = params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' && bisaKelola ? 'kampanye' : 'performa'
+  // Local state is the source of truth (reading it back from the URL raced when tabs were clicked quickly); the URL
+  // only follows, so F5 and shared links keep the tab.
+  const [tab, setTab] = useState(() => (params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' && bisaKelola ? 'kampanye' : 'performa'))
 
   return (
     <div className="space-y-4">
       <BarHalaman judul="Iklan" deskripsi="Performa dan pengelolaan iklan Shopee." />
 
-      <Tabs value={tab} onValueChange={(v) => setParams(v === 'performa' ? {} : { tab: v }, { replace: true })}>
+      <Tabs value={tab} onValueChange={(v) => {
+          setTab(v)
+          setParams(v === 'performa' ? {} : { tab: v }, { replace: true })
+        }}>
         <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
           <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
           {bisaKelola && <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>}
