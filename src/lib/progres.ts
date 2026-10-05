@@ -30,22 +30,26 @@ export function mulaiProgres(judul: string): Progres {
   const teks = () => `${judul} · ${formatDurasi((Date.now() - mulai) / 1000)}${detail ? ` — ${detail}` : ''}`
   const timer = setInterval(() => toast.loading(teks(), { id, duration: Infinity }), 1000)
   const berhenti = () => clearInterval(timer)
+  // The loading toast is removed outright and the result gets a toast of its own: reusing one id left the spinner
+  // on screen when the click opened another tab (the page was hidden while the result arrived).
+  const akhiri = (tampil: () => void) => {
+    berhenti()
+    toast.dismiss(id)
+    tampil()
+  }
   return {
     perbarui: (d) => {
       detail = d
       toast.loading(teks(), { id, duration: Infinity })
     },
     selesai: (pesan) => {
-      berhenti()
-      toast.success(pesan, { id, duration: 6000 })
+      akhiri(() => toast.success(pesan, { duration: 5000 }))
     },
     sebagian: (pesan, deskripsi) => {
-      berhenti()
-      toast.warning(pesan, { id, description: deskripsi, duration: 10000 })
+      akhiri(() => toast.warning(pesan, { description: deskripsi, duration: 10000 }))
     },
     gagal: (pesan) => {
-      berhenti()
-      toast.error(pesan, { id, duration: 10000 })
+      akhiri(() => toast.error(pesan, { duration: 10000 }))
     },
     tutup: () => {
       berhenti()
