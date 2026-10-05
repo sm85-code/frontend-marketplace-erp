@@ -21,7 +21,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
   return [
     {
       kunci: 'pesanan',
-      judul: 'No. Pesanan',
+      judul: 'order_sn',
       kelas: 'max-w-[9.5rem] md:max-w-none',
       tetap: true,
       urut: { kunci: 'nomor' },
@@ -37,7 +37,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'tanggal',
-      judul: 'Tanggal pesan',
+      judul: 'create_time',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'tanggal', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },
       sel: (p) => (
@@ -68,7 +68,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'produk',
-      judul: 'Produk',
+      judul: 'item_name',
       kelas: 'min-w-[160px] max-w-[240px]',
       // Two lines at most keep rows short; the full text is in the tooltip and on the detail page.
       sel: (p) => (
@@ -79,38 +79,30 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'varian',
-      judul: 'Varian',
+      judul: 'model_name',
       kelas: 'min-w-[100px]',
-      sel: () => "",
+      sel: (p) => p.items.map((i) => i.model_name).filter(Boolean).join(", "),
     },
-    {
-      kunci: 'nilai_varian',
-      judul: 'Nilai varian',
-      kelas: 'min-w-[140px] max-w-[220px]',
-      sel: (p) => {
-        const nilai = p.items.map((i) => i.model_name).filter(Boolean)
-        return nilai.length ? <span className="line-clamp-2">{nilai.join(", ")}</span> : ""
-      },
-    },
-    { kunci: 'sku', judul: 'SKU', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
-    { kunci: 'sku_model', judul: 'SKU varian', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
-    { kunci: 'bayar', judul: 'Pembayaran', bawaan: false, sel: (p) => p.payment_method || "" },
-    { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
-    { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
-    { kunci: 'penerima', judul: 'Penerima', bawaan: false, sel: (p) => p.penerima || "" },
-    { kunci: 'kota', judul: 'Kota', bawaan: false, sel: (p) => p.kota || "" },
-    { kunci: 'catatan', judul: 'Catatan', bawaan: false, sel: (p) => p.note || "" },
-    { kunci: 'batal', judul: 'Alasan batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
+    { kunci: 'ship_by_date', judul: 'ship_by_date', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
+    { kunci: 'sku', judul: 'item_sku', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
+    { kunci: 'sku_model', judul: 'model_sku', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
+    { kunci: 'bayar', judul: 'payment_method', bawaan: false, sel: (p) => p.payment_method || "" },
+    { kunci: 'cod', judul: 'cod', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
+    { kunci: 'ongkir', judul: 'actual_shipping_fee', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
+    { kunci: 'penerima', judul: 'recipient_address.name', bawaan: false, sel: (p) => p.penerima || "" },
+    { kunci: 'kota', judul: 'recipient_address.city', bawaan: false, sel: (p) => p.kota || "" },
+    { kunci: 'catatan', judul: 'note', bawaan: false, sel: (p) => p.note || "" },
+    { kunci: 'batal', judul: 'cancel_reason', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
     {
       kunci: 'total',
-      judul: 'Total',
+      judul: 'total_amount',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'total', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
       sel: (p) => fmtRp(p.total),
     },
     {
       kunci: 'kurir',
-      judul: 'Kurir / No. resi',
+      judul: 'shipping_carrier',
       urut: { kunci: 'kurir' },
       sel: (p) => (
         <>

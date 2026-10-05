@@ -131,6 +131,7 @@ export interface Pesanan {
   cancel_reason?: string
   penerima?: string
   kota?: string
+  ship_by_date?: number
   created_at: string
   updated_at: string
 }
