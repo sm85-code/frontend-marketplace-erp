@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
-import { ROLES_OWNER_ONLY } from '@/config/roles'
+import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Role } from '@/api/types'
 
@@ -99,11 +99,11 @@ export default function App() {
               />
               <Route
 path="/iklan"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
+                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
               />
               <Route
                 path="/iklan/:id"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><IklanDetailPage /></LazyPage></Protected>}
+                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanDetailPage /></LazyPage></Protected>}
               />
               <Route
                 path="/staff"

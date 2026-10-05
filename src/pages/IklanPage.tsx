@@ -17,8 +17,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PLATFORM_LABELS } from '@/config/roles'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { isOwnerLevel } from '@/config/roles'
-import { useAuth } from '@/lib/auth'
 import KampanyeShopee from './iklan/KampanyeShopee'
 import PerformaShopee from './iklan/PerformaShopee'
 
@@ -73,12 +71,10 @@ export default function IklanPage() {
     })
   }
 
-  const { user } = useAuth()
   const [params, setParams] = useSearchParams()
-  const bisaKelola = isOwnerLevel(user?.role)
   // Local state is the source of truth (reading it back from the URL raced when tabs were clicked quickly); the URL
   // only follows, so F5 and shared links keep the tab.
-  const [tab, setTab] = useState(() => (params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' && bisaKelola ? 'kampanye' : 'performa'))
+  const [tab, setTab] = useState(() => (params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' ? 'kampanye' : 'performa'))
 
   return (
     <div className="space-y-4">
@@ -90,7 +86,7 @@ export default function IklanPage() {
         }}>
         <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
           <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
-          {bisaKelola && <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>}
+          <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>
           <TabsTrigger value="catatan" className="px-3">Catatan</TabsTrigger>
         </TabsList>
 
@@ -98,11 +94,9 @@ export default function IklanPage() {
           <PerformaShopee />
         </TabsContent>
 
-        {bisaKelola && (
-          <TabsContent value="kampanye" className="text-base">
-            <KampanyeShopee />
-          </TabsContent>
-        )}
+        <TabsContent value="kampanye" className="text-base">
+          <KampanyeShopee />
+        </TabsContent>
 
         <TabsContent value="catatan" className="text-base">
           <Card>

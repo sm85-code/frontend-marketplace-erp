@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -25,7 +25,7 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
-import { bagiBatch, ringkasKirim, STATUS_AWAL_KATALOG, STATUS_SHOPEE } from '@/lib/katalog'
+import { bagiBatch, labelVarian, ringkasKirim, STATUS_AWAL_KATALOG, STATUS_SHOPEE } from '@/lib/katalog'
 import { bacaSimpan, tulisSimpan } from '@/lib/simpan'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
@@ -37,6 +37,7 @@ const PER_HALAMAN = 10
 // Opens on active products (what is for sale on Shopee); the status filter widens it.
 const AWAL = { toko: '', q: '', status: STATUS_AWAL_KATALOG as string, belumDikirim: false, urut: 'toko:asc' }
 const KUNCI_TAMPILAN = 'katalog.tampilan'
+const KUNCI_RINCI_VARIAN = 'katalog.rinciVarian'
 const OPSI_TAMPILAN = [
   { value: 'grid', label: 'Grid', ikon: LayoutGrid },
   { value: 'list', label: 'List', ikon: List },
@@ -51,7 +52,21 @@ export default function KatalogPage() {
   const [detailId, setDetailId] = useState<string | null>(null)
   const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'list' ? 'list' : 'grid'))
 
-  const semuaKolom = useMemo(() => kolomKatalog(setDetailId), [])
+  // Variants are shown as sub-rows under each product (price, weight, size, pre-order per variant). `rinci` is the
+  // default for every product; a click on a product flips just that one.
+  const [rinci, setRinci] = useState(() => bacaSimpan(KUNCI_RINCI_VARIAN) !== 'tidak')
+  const [dibalik, setDibalik] = useState<ReadonlySet<string>>(new Set())
+  const varianTerbuka = useCallback((id: string) => rinci !== dibalik.has(id), [rinci, dibalik])
+  const balikVarian = useCallback(
+    (id: string) =>
+      setDibalik((lama) => {
+        const baru = new Set(lama)
+        if (!baru.delete(id)) baru.add(id)
+        return baru
+      }),
+    [],
+  )
+  const semuaKolom = useMemo(() => kolomKatalog(setDetailId, varianTerbuka, balikVarian), [varianTerbuka, balikVarian])
   const kolom = useKolomTersimpan('katalog.kolom', semuaKolom)
   const kolomTampil = semuaKolom.filter((k) => kolom.tampil.includes(k.kunci))
 
@@ -157,6 +172,18 @@ export default function KatalogPage() {
             />
           </Medan>
         )}
+        {tampilan === 'list' && (
+          <FilterSakelar
+            id="katalog-rinci-varian"
+            label="Rinci per varian"
+            nilai={rinci}
+            onUbah={(v) => {
+              setRinci(v)
+              setDibalik(new Set())
+              tulisSimpan(KUNCI_RINCI_VARIAN, v ? 'ya' : 'tidak')
+            }}
+          />
+        )}
         <FilterSakelar id="katalog-belum" label="Belum dikirim ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} />
         <FilterAksi>
           <Button variant="outline" onClick={() => pilih.ubahBanyak(items.filter((i) => !i.dikirim_toko_id || semuaHalamanDipilih), !semuaHalamanDipilih)} disabled={!items.length}>
@@ -189,6 +216,7 @@ export default function KatalogPage() {
           namaDari={(p) => p.nama}
           urut={urutSekarang}
           onUrut={(kunci, arahAwal) => f.ubah({ urut: urutKeTeks(ubahUrut(urutSekarang, kunci, arahAwal)) })}
+          anak={{ dari: (p) => p.varian ?? [], terbuka: varianTerbuka, label: (v, p) => `Varian ${labelVarian(v)} dari ${p.nama}` }}
           pilihan={{
             terpilih: pilih.ada,
             onUbah: pilih.ubah,
