@@ -2,7 +2,7 @@ import { fmtDate } from '@/api/client'
 import type { KatalogItem } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
-import { labelStatusShopee, rentangHarga, ukuranPaket } from '@/lib/katalog'
+import { labelStatusShopee, rentangHarga } from '@/lib/katalog'
 
 const Kosong = () => <span className="text-muted-foreground">—</span>
 
@@ -55,7 +55,7 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
     },
     {
       kunci: 'nama',
-      judul: 'Nama produk',
+      judul: 'item_name',
       kelas: 'min-w-[9rem] max-w-[10rem] md:min-w-[200px] md:max-w-[300px]',
       tetap: true,
       urut: { kunci: 'nama' },
@@ -65,47 +65,43 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
         </button>
       ),
     },
-    { kunci: 'sku', judul: 'SKU', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong /> },
+    { kunci: 'sku', judul: 'item_sku', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong /> },
     {
       kunci: 'harga',
-      judul: 'Harga',
+      judul: 'price_info.current_price',
       kelas: 'whitespace-nowrap font-semibold',
       urut: { kunci: 'harga', label: ['Termurah', 'Termahal'] },
       sel: (p) => rentangHarga(p.harga_min, p.harga_max),
     },
     {
       kunci: 'stok',
-      judul: 'Stok',
+      judul: 'stock_info_v2',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'stok', arahAwal: 'desc', label: ['Tersedikit', 'Terbanyak'] },
       sel: (p) => p.stok_shopee ?? <Kosong />,
     },
-    { kunci: 'varian', judul: 'Varian', kelas: 'whitespace-nowrap', sel: (p) => p.sumbu || "" },
-    { kunci: 'nilai_varian', judul: 'Nilai varian', kelas: 'min-w-[160px] max-w-[240px]', sel: (p) => p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : "" },
+    { kunci: 'varian', judul: 'tier_variation.name', kelas: 'whitespace-nowrap', sel: (p) => p.sumbu || "" },
+    { kunci: 'nilai_varian', judul: 'option_list.option', kelas: 'min-w-[160px] max-w-[240px]', sel: (p) => p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : "" },
     {
       kunci: 'berat',
-      judul: 'Berat',
+      judul: 'weight',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'berat', label: ['Teringan', 'Terberat'] },
-      sel: (p) => (p.berat_gram ? `${p.berat_gram} g` : <Kosong />),
+      sel: (p) => (p.berat_gram ? `${p.berat_gram / 1000} kg` : <Kosong />),
     },
-    {
-      kunci: 'ukuran',
-      judul: 'Ukuran (P×L×T)',
-      bawaan: false,
-      kelas: 'whitespace-nowrap',
-      sel: (p) => ukuranPaket(p.panjang_cm, p.lebar_cm, p.tinggi_cm),
-    },
+    { kunci: 'package_length', judul: 'dimension.package_length', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "" },
+    { kunci: 'package_width', judul: 'dimension.package_width', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "" },
+    { kunci: 'package_height', judul: 'dimension.package_height', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "" },
     {
       kunci: 'deskripsi',
-      judul: 'Deskripsi (ringkas)',
+      judul: 'description',
       bawaan: false,
       kelas: 'min-w-[240px] max-w-[340px]',
       sel: (p) => <div className="teks-kecil line-clamp-4 text-muted-foreground">{p.deskripsi_ringkas || '—'}</div>,
     },
     {
       kunci: 'status',
-      judul: 'Status tayang',
+      judul: 'item_status',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'status', label: ['Aktif dulu', 'Tidak aktif dulu'] },
       sel: (p) => <Badge variant={p.status === 'NORMAL' ? 'secondary' : 'outline'}>{labelStatusShopee(p.status)}</Badge>,
@@ -125,20 +121,20 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       urut: { kunci: 'diambil', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },
       sel: (p) => fmtDate(p.diambil_at),
     },
-    { kunci: 'itemId', judul: 'ID produk Shopee', bawaan: false, kelas: 'font-mono', sel: (p) => p.item_id },
-    { kunci: 'kategori', judul: 'Kategori', bawaan: false, sel: (p) => p.category_id || "" },
-    { kunci: 'merek', judul: 'Merek', bawaan: false, sel: (p) => p.brand || "" },
-    { kunci: 'atribut', judul: 'Atribut', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
-    { kunci: 'kondisi', judul: 'Kondisi', bawaan: false, sel: (p) => p.condition || "" },
-    { kunci: 'preorder', judul: 'Preorder', bawaan: false, sel: (p) => p.is_pre_order ? `${p.days_to_ship ?? ""} hari` : "" },
-    { kunci: 'kurir', judul: 'Kurir', bawaan: false, sel: (p) => p.logistic_info || "" },
-    { kunci: 'promo', judul: 'Promo', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
-    { kunci: 'grosir', judul: 'Grosir', bawaan: false, sel: (p) => p.wholesales || "" },
-    { kunci: 'video', judul: 'Video', bawaan: false, sel: (p) => p.video_info ? "Ya" : "" },
-    { kunci: 'ukuran_chart', judul: 'Bagan ukuran', bawaan: false, sel: (p) => p.size_chart || "" },
-    { kunci: 'bahaya', judul: 'Berbahaya', bawaan: false, sel: (p) => p.item_dangerous ? "Ya" : "" },
-    { kunci: 'dibuat', judul: 'Dibuat', bawaan: false, sel: (p) => p.create_time ? fmtDate(new Date(p.create_time * 1000).toISOString()) : "" },
-    { kunci: 'diubah', judul: 'Diubah', bawaan: false, sel: (p) => p.update_time ? fmtDate(new Date(p.update_time * 1000).toISOString()) : "" },
+    { kunci: 'itemId', judul: 'item_id', bawaan: false, kelas: 'font-mono', sel: (p) => p.item_id },
+    { kunci: 'kategori', judul: 'category_id', bawaan: false, sel: (p) => p.category_id || "" },
+    { kunci: 'merek', judul: 'brand.original_brand_name', bawaan: false, sel: (p) => p.brand || "" },
+    { kunci: 'atribut', judul: 'attribute_list', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
+    { kunci: 'kondisi', judul: 'condition', bawaan: false, sel: (p) => p.condition || "" },
+    { kunci: 'preorder', judul: 'pre_order', bawaan: false, sel: (p) => p.is_pre_order ? `${p.days_to_ship ?? ""} hari` : "" },
+    { kunci: 'kurir', judul: 'logistic_info', bawaan: false, sel: (p) => p.logistic_info || "" },
+    { kunci: 'promo', judul: 'has_promotion', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
+    { kunci: 'grosir', judul: 'wholesales', bawaan: false, sel: (p) => p.wholesales || "" },
+    { kunci: 'video', judul: 'video_info', bawaan: false, sel: (p) => p.video_info ? "Ya" : "" },
+    { kunci: 'ukuran_chart', judul: 'size_chart', bawaan: false, sel: (p) => p.size_chart || "" },
+    { kunci: 'bahaya', judul: 'item_dangerous', bawaan: false, sel: (p) => p.item_dangerous ? "Ya" : "" },
+    { kunci: 'dibuat', judul: 'create_time', bawaan: false, sel: (p) => p.create_time ? fmtDate(new Date(p.create_time * 1000).toISOString()) : "" },
+    { kunci: 'diubah', judul: 'update_time', bawaan: false, sel: (p) => p.update_time ? fmtDate(new Date(p.update_time * 1000).toISOString()) : "" },
 
   ]
 }
