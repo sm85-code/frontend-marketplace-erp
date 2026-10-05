@@ -2,7 +2,7 @@ import { fmtDate } from '@/api/client'
 import type { KatalogItem } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
-import { labelStatusShopee, rentangHarga, ukuranPaket } from '@/lib/katalog'
+import { labelStatusShopee, rentangHarga } from '@/lib/katalog'
 
 const Kosong = () => <span className="text-muted-foreground">—</span>
 
