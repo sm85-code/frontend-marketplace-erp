@@ -5,6 +5,7 @@ import { aksiTersedia, anggaranTeks, saranKampanye, statusKampanye, totalKampany
 const dasar: KampanyeIklan = {
   campaign_id: '1', nama: 'A', jenis: 'manual', status: 'ongoing', bidding: 'manual', penempatan: 'search', anggaran: 50000,
   mulai: null, selesai: null, item_id: [], roas_target: null, kata_kunci: [], kinerja: null,
+  produk: [], jumlah_produk: 0, margin: { terisi: 0, total: 0, margin_persen: null, roas_impas: null, biaya_shopee_diketahui: false },
 }
 const kinerja = (o: Partial<NonNullable<KampanyeIklan['kinerja']>>) => ({
   impression: 5000, clicks: 100, expense: 50000, direct_order: 5, direct_gmv: 400000, roas: 8, ctr: 0.02, ...o,
@@ -51,7 +52,7 @@ describe('saran otomatis', () => {
 
 describe('total', () => {
   it('menjumlah biaya, GMV, pesanan dan menghitung ROAS', () => {
-    const t = totalKampanye({ saldo: 1, hari: 7, catatan: [], kampanye: [
+    const t = totalKampanye({ saldo: 1, hari: 7, catatan: [], biaya_shopee_persen: null, kampanye: [
       { ...dasar, kinerja: kinerja({ expense: 10000, direct_gmv: 30000 }) },
       { ...dasar, campaign_id: '2', status: 'paused', kinerja: kinerja({ expense: 10000, direct_gmv: 10000, direct_order: 1 }) },
     ] })
@@ -75,5 +76,18 @@ describe('menerapkan saran AI', () => {
     expect(cara({ ...dasarSaran, tindakan: 'ubah_bid', kata: 'kursi' })).toBeNull()
     expect(labelTindakan({ ...dasarSaran, tindakan: 'change_budget', nilai: 70000 }, fmt)).toBe('Ubah anggaran harian menjadi Rp 70000')
     expect(labelTindakan({ ...dasarSaran, tindakan: 'hapus_kata_kunci', kata: 'kursi' }, fmt)).toBe('Hapus kata kunci "kursi"')
+  })
+})
+
+describe('modal dan ROAS impas', () => {
+  it('menghitung pratinjau sama dengan server', async () => {
+    const { hargaAcuan, pratinjauImpas } = await import('@/lib/iklanKampanye')
+    expect(hargaAcuan('500000', 700000)).toBe(600000)
+    expect(hargaAcuan(null, null)).toBeNull()
+    expect(pratinjauImpas('persen', 60, 100000, 0.1)).toEqual({ margin: 30, impas: 3.33 })
+    expect(pratinjauImpas('rp', 300000, 600000, null)).toEqual({ margin: 50, impas: 2 })
+    expect(pratinjauImpas('rp', 300000, null, 0.1)).toBeNull()
+    expect(pratinjauImpas('persen', 0, 100, 0)).toBeNull()
+    expect(pratinjauImpas('persen', 95, 100, 0.1)).toEqual({ margin: -5, impas: null })
   })
 })

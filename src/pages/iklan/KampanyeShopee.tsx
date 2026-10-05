@@ -9,8 +9,9 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { angkaDari, anggaranTeks, jenisKampanye, statusKampanye, totalKampanye } from '@/lib/iklanKampanye'
+import { angkaDari, anggaranTeks, statusKampanye, totalKampanye } from '@/lib/iklanKampanye'
 import BuatIklan from './BuatIklan'
+import { TumpukanFoto } from './FotoProduk'
 import KelolaKampanye from './KelolaKampanye'
 import SaranAi from './SaranAi'
 import { kali } from './kolom'
@@ -36,23 +37,57 @@ function kolomKampanye(): KolomTabel<KampanyeIklan>[] {
   const a = 'whitespace-nowrap'
   const f = (k: KampanyeIklan) => k.kinerja
   return [
-    { kunci: 'nama', judul: 'Kampanye', tetap: true, kelas: 'font-medium min-w-[150px]', sel: (k) => k.nama, nilai: (k) => k.nama },
+    {
+      kunci: 'nama',
+      judul: 'Kampanye',
+      tetap: true,
+      kelas: 'font-medium min-w-[190px] sm:min-w-[215px]',
+      sel: (k) => (
+        <span className="flex items-center gap-3">
+          <TumpukanFoto produk={k.produk} jumlah={k.jumlah_produk} />
+          <span className="min-w-[110px] max-w-[130px] flex-1 sm:max-w-[160px]">
+            <span className="block">{k.nama}</span>
+            {k.produk[0]?.nama && k.produk[0].nama !== k.nama && <span className="teks-kecil block truncate font-normal text-muted-foreground">{k.produk[0].nama}</span>}
+          </span>
+        </span>
+      ),
+      nilai: (k) => k.nama,
+    },
     {
       kunci: 'status',
       judul: 'Status',
       kelas: a,
       sel: (k) => {
         const s = statusKampanye(k.status)
-        return <Badge variant={s.varian}>{s.label}</Badge>
+        return (
+          <span className="block">
+            <Badge variant={s.varian}>{s.label}</Badge>
+            <span className="teks-kecil block text-muted-foreground">{k.bidding === 'auto' ? 'GMV Max' : k.bidding === 'manual' ? 'Manual' : ''}</span>
+          </span>
+        )
       },
       nilai: (k) => k.status ?? '',
     },
-    { kunci: 'jenis', judul: 'Jenis', kelas: a, sel: jenisKampanye, nilai: jenisKampanye },
     { kunci: 'anggaran', judul: 'Anggaran/hari', rata: 'kanan', kelas: a, sel: (k) => anggaranTeks(k.anggaran, fmtRp), nilai: (k) => angkaDari(k.anggaran) },
     { kunci: 'biaya', judul: 'Biaya', rata: 'kanan', kelas: a, sel: (k) => (f(k) ? fmtRp(f(k)!.expense) : '—'), nilai: (k) => angkaDari(f(k)?.expense) },
     { kunci: 'klik', judul: 'Klik', rata: 'kanan', kelas: a, sel: (k) => (f(k) ? angka(f(k)!.clicks) : '—'), nilai: (k) => f(k)?.clicks ?? 0 },
     { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', kelas: a, sel: (k) => (f(k) ? angka(f(k)!.direct_order) : '—'), nilai: (k) => f(k)?.direct_order ?? 0 },
     { kunci: 'gmv', judul: 'GMV iklan', rata: 'kanan', kelas: a, sel: (k) => (f(k) ? fmtRp(f(k)!.direct_gmv) : '—'), nilai: (k) => angkaDari(f(k)?.direct_gmv) },
+    {
+      kunci: 'impas',
+      judul: 'ROAS impas',
+      rata: 'kanan',
+      kelas: a,
+      sel: (k) =>
+        k.margin.roas_impas != null ? (
+          <span className={k.kinerja?.roas != null && angkaDari(k.kinerja.roas) < k.margin.roas_impas && k.kinerja.expense ? 'font-semibold text-destructive' : ''}>
+            {kali(String(k.margin.roas_impas))}
+          </span>
+        ) : (
+          <span className="teks-kecil text-muted-foreground">{k.margin.terisi === 0 ? 'Isi modal' : 'Tidak untung'}</span>
+        ),
+      nilai: (k) => k.margin.roas_impas ?? -1,
+    },
     { kunci: 'roas', judul: 'ROAS', rata: 'kanan', kelas: `${a} font-semibold`, sel: (k) => kali(f(k)?.roas == null ? null : String(f(k)!.roas)), nilai: (k) => (f(k)?.roas == null ? -1 : angkaDari(f(k)!.roas)) },
   ]
 }
@@ -153,7 +188,7 @@ export default function KampanyeShopee() {
                     idDari={(k) => k.campaign_id}
                     namaDari={(k) => k.nama}
                     urutAwal={{ kunci: 'biaya', arah: 'desc' }}
-                    minWidth={880}
+                    minWidth={900}
                     aksi={(k) => (
                       <Button size="sm" variant="outline" onClick={() => setKelola(k)}>
                         Kelola
@@ -166,7 +201,7 @@ export default function KampanyeShopee() {
           </>
         )}
       </CardContent>
-      {aktif && <KelolaKampanye akunId={akunId} kampanye={aktif} hari={data?.hari ?? Number(hari)} onTutup={() => setKelola(null)} />}
+      {aktif && <KelolaKampanye akunId={akunId} kampanye={aktif} hari={data?.hari ?? Number(hari)} biayaShopee={data?.biaya_shopee_persen ?? null} onTutup={() => setKelola(null)} />}
       {buka && <BuatIklan akunId={akunId} onTutup={() => setBuka(false)} />}
     </Card>
   )

@@ -564,6 +564,27 @@ export interface KampanyeKataKunci {
   bid: number | string | null
 }
 
+export interface KampanyeProduk {
+  item_id: string
+  /** null = the item is not in the Katalog Shopee (pull the catalogue to see its name and photo). */
+  nama: string | null
+  foto: string | null
+  harga_min: number | string | null
+  harga_max: number | string | null
+  stok: number | null
+  modal_rp: number | string | null
+  modal_persen: number | string | null
+}
+
+export interface KampanyeMargin {
+  terisi: number
+  total: number
+  margin_persen: number | null
+  /** ROAS at which the ad just pays for itself; null = modal not filled or margin not positive. */
+  roas_impas: number | null
+  biaya_shopee_diketahui: boolean
+}
+
 export interface KampanyeIklan {
   campaign_id: string
   nama: string
@@ -579,6 +600,10 @@ export interface KampanyeIklan {
   roas_target: number | string | null
   kata_kunci: KampanyeKataKunci[]
   kinerja: KampanyeIklanKinerja | null
+  /** First products only (see jumlah_produk for all of them). */
+  produk: KampanyeProduk[]
+  jumlah_produk: number
+  margin: KampanyeMargin
 }
 
 export interface KampanyeIklanDaftar {
@@ -586,6 +611,8 @@ export interface KampanyeIklanDaftar {
   hari: number
   kampanye: KampanyeIklan[]
   catatan: string[]
+  /** Share of sales Shopee kept as fees over the last 90 days (0..1); null = no settlements yet. */
+  biaya_shopee_persen: number | null
 }
 
 export type AksiKampanye = 'pause' | 'resume' | 'stop' | 'delete' | 'change_budget' | 'change_roas_target'

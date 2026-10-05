@@ -483,3 +483,6 @@ export const saranIklan = (akunId: string, itemId: number, opsi: { kata?: string
 
 export const saranAiIklan = (akunId: string, hari: number) =>
   api.post<SaranAiHasil>(`/akun/${akunId}/iklan/saran-ai`, null, { params: { hari }, timeout: 100_000 }).then((r) => r.data)
+
+export const simpanModalProduk = (akunId: string, itemId: string, modal: { modal_rp?: number | null; modal_persen?: number | null }) =>
+  api.put(`/akun/${akunId}/iklan/modal/${itemId}`, modal).then((r) => r.data)

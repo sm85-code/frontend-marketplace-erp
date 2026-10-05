@@ -146,3 +146,22 @@ export function cara(s: SaranAiItem):
       return null
   }
 }
+
+/** Middle of the variants' price range: one number for a whole item (mirrors the server). */
+export function hargaAcuan(min: number | string | null | undefined, max: number | string | null | undefined): number | null {
+  const a = angka(min)
+  const b = angka(max)
+  if (a && b) return (a + b) / 2
+  return a || b || null
+}
+
+export type ModeModal = 'rp' | 'persen'
+
+/** Break-even preview while typing a modal: margin = 1 - modal share - Shopee fees; ROAS must reach 1 / margin. */
+export function pratinjauImpas(mode: ModeModal, nilai: number, harga: number | null, biayaShopee: number | null) {
+  if (!(nilai > 0)) return null
+  const porsi = mode === 'persen' ? nilai / 100 : harga ? nilai / harga : null
+  if (porsi === null) return null
+  const margin = 1 - porsi - (biayaShopee ?? 0)
+  return { margin: Math.round(margin * 1000) / 10, impas: margin > 0 ? Math.round((1 / margin) * 100) / 100 : null }
+}
