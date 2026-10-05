@@ -419,6 +419,24 @@ export interface KatalogItem {
   lebar_cm: string
   tinggi_cm: string
   diambil_at: string
+
+  category_id?: number
+  brand?: string
+  attribute_list?: string
+  create_time?: number
+  update_time?: number
+  condition?: string
+  is_pre_order?: boolean
+  days_to_ship?: number
+  logistic_info?: string
+  has_model?: boolean
+  has_promotion?: boolean
+  deboost?: boolean
+  item_dangerous?: number
+  wholesales?: string
+  video_info?: boolean
+  size_chart?: string
+  gtin_code?: string
 }
 
 export interface KatalogVarian {
