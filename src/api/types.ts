@@ -407,6 +407,7 @@ export interface KatalogItem {
   stok_shopee: number | null
   jumlah_varian: number
   nilai_varian?: string
+  sumbu?: string
   status: string
   dikirim_toko_id: string | null
   dikirim_at: string | null
