@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { angkaDari, anggaranTeks, jenisKampanye, statusKampanye, totalKampanye } from '@/lib/iklanKampanye'
 import BuatIklan from './BuatIklan'
 import KelolaKampanye from './KelolaKampanye'
+import SaranAi from './SaranAi'
 import { kali } from './kolom'
 
 const HARI = [
@@ -120,6 +121,7 @@ export default function KampanyeShopee() {
                 ))}
               </ul>
             )}
+            <SaranAi akunId={akunId} hari={data.hari} />
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {[
                 ['Saldo iklan', data.saldo == null ? '—' : fmtRp(data.saldo)],

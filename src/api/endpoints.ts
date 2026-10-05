@@ -1,5 +1,6 @@
 import api from '@/api/client'
 import type {
+  SaranAiHasil,
   AksiKampanye,
   IklanBaru,
   KampanyeIklanDaftar,
@@ -479,3 +480,6 @@ export const buatKampanyeIklan = (akunId: string, iklan: IklanBaru) =>
 
 export const saranIklan = (akunId: string, itemId: number, opsi: { kata?: string; bidding?: 'auto' | 'manual' } = {}) =>
   api.get<SaranIklan>(`/akun/${akunId}/iklan/saran`, { params: { item_id: itemId, kata: opsi.kata || undefined, bidding: opsi.bidding }, timeout: 90_000 }).then((r) => r.data)
+
+export const saranAiIklan = (akunId: string, hari: number) =>
+  api.post<SaranAiHasil>(`/akun/${akunId}/iklan/saran-ai`, null, { params: { hari }, timeout: 100_000 }).then((r) => r.data)
