@@ -1,9 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
-import type { SaranAiItem } from '@/api/types'
+import { qk } from '@/api/keys'
+import type { SaranAiHasil, SaranAiItem } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,11 +15,21 @@ const PRIORITAS = { tinggi: 'destructive', sedang: 'default', rendah: 'secondary
 export default function SaranAi({ akunId, hari }: { akunId: string; hari: number }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
-  const [selesai, setSelesai] = useState<Set<number>>(new Set())
+  // The result lives in the query cache, per shop: it survives switching tabs or shops (re-running costs money).
+  // Not persisted across a page reload.
+  const kunci = qk.saranAi(akunId)
+  const { data: simpan } = useQuery<{ hasil: SaranAiHasil; selesai: number[] }>({
+    queryKey: kunci,
+    queryFn: skipToken,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+  const h = simpan?.hasil
+  const selesai = new Set(simpan?.selesai ?? [])
 
   const analisis = useMutation({
     mutationFn: () => endpoints.saranAiIklan(akunId, hari),
-    onMutate: () => setSelesai(new Set()),
+    onSuccess: (hasil) => qc.setQueryData(kunci, { hasil, selesai: [] }),
     onError: (e) => toast.error(getApiError(e)),
   })
   const terapkan = useMutation({
@@ -41,12 +51,11 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
     })
     if (!ok) return
     await terapkan.mutateAsync(s)
-    setSelesai((d) => new Set(d).add(i))
+    qc.setQueryData(kunci, (lama: { hasil: SaranAiHasil; selesai: number[] } | undefined) => (lama ? { ...lama, selesai: [...lama.selesai, i] } : lama))
     toast.success('Saran diterapkan di Shopee')
     qc.invalidateQueries({ queryKey: ['iklan-kampanye'] })
   }
 
-  const h = analisis.data
   return (
     <section aria-label="Asisten AI" className="space-y-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
