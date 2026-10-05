@@ -94,9 +94,22 @@ export interface ItemPesanan {
   model_name?: string
   item_sku?: string
   model_sku?: string
+  /** Product photo (stored with the order line, or borrowed from the catalogue for older orders). */
+  foto?: string | null
+  item_id_eksternal?: string | null
   harga_satuan: string
   qty: number
   subtotal: string
+}
+
+export interface ResiGabunganHasil {
+  /** The joined labels, base64. */
+  pdf: string
+  nama_file: string
+  berhasil: number
+  /** Orders that got no label, with Shopee's reason; the others are in the pdf. */
+  gagal: { id: string; id_eksternal: string | null; pesan: string }[]
+  jumlah_pdf: number
 }
 
 export interface Pesanan {

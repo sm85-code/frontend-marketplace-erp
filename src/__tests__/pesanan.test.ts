@@ -6,9 +6,9 @@ import {
   bisaDiproses,
   cocokFilterResi,
   ikutMarketplace,
-  kelompokResi,
   labelStatus,
   nextActionLabel,
+  pdfDariBase64,
   pecahBatch,
   ringkasItem,
   sudahDicetak,
@@ -88,12 +88,10 @@ describe('printing labels in bulk', () => {
     expect(bisaDicetak({ status: 'to_ship', status_marketplace: null })).toBe(false)
   })
 
-  it('splits a selection per shop and courier, and by the 50 label limit', () => {
-    const p = (id: string, akun: string, kurir: string | null) => ({ id, akun_id: akun, kurir })
-    const grup = kelompokResi([p('1', 'a', 'J&T'), p('2', 'a', ' j&t '), p('3', 'a', 'JNE'), p('4', 'b', 'J&T')])
-    expect(grup.map((g) => g.map((x) => x.id))).toEqual([['1', '2'], ['3'], ['4']])
-    const banyak = Array.from({ length: 120 }, (_, i) => p(String(i), 'a', 'J&T'))
-    expect(kelompokResi(banyak).map((g) => g.length)).toEqual([50, 50, 20])
+  it('turns the joined label file from the server (base64) back into a pdf blob', async () => {
+    const blob = pdfDariBase64(btoa('%PDF-1.4 isi'))
+    expect(blob.type).toBe('application/pdf')
+    expect(await blob.text()).toBe('%PDF-1.4 isi')
   })
 })
 

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { FotoItem } from './pesanan/ItemRingkas'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -251,11 +252,15 @@ export default function PesananDetailPage() {
         </CardHeader>
         <CardContent className="divide-y">
           {pesanan.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between py-2 text-sm">
-              <div>
-                <div className="font-medium">{item.nama_produk}</div>
-                <div className="text-xs text-muted-foreground">
-                  {item.qty} × {fmtRp(item.harga_satuan)}
+            <div key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+              <div className="flex min-w-0 items-center gap-3">
+                <FotoItem item={item} ukuran={64} />
+                <div className="min-w-0">
+                  <div className="font-medium">{item.nama_produk}</div>
+                  {item.model_name && <div className="text-xs text-muted-foreground">{item.model_name}</div>}
+                  <div className="text-xs text-muted-foreground">
+                    {item.qty} × {fmtRp(item.harga_satuan)}
+                  </div>
                 </div>
               </div>
               <div className="font-semibold">{fmtRp(item.subtotal)}</div>

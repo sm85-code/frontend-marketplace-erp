@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
-import type { Pesanan } from '@/api/types'
+import type { Pesanan, ResiGabunganHasil } from '@/api/types'
 import { getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { mulaiProgres, type Progres } from '@/lib/progres'
@@ -25,7 +25,7 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
-import { bisaDicetak, bisaDiproses, kelompokResi, pecahBatch, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
+import { bisaDicetak, bisaDiproses, pdfDariBase64, pecahBatch, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
 import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
@@ -119,36 +119,87 @@ export default function PesananPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  /** Opens the joined label file in the tab that the click already opened (pop-up blockers allow only that one). */
+  function bukaResi(h: ResiGabunganHasil, tab: Window | null) {
+    const url = URL.createObjectURL(pdfDariBase64(h.pdf))
+    if (tab) tab.location.href = url
+    else window.open(url, '_blank')
+  }
+  const pesanGagalResi = (gagal: ResiGabunganHasil['gagal']) => gagal.slice(0, 3).map((g) => `#${g.id_eksternal ?? '?'}: ${g.pesan}`).join('\n')
+
+  // Any selection (several shops and couriers) becomes ONE file in ONE tab; orders Shopee refuses are listed, not fatal.
   const cetakMut = useMutation({
-    mutationFn: async ({ grup, tipe, tab }: { grup: Pesanan[][]; tipe: TemplateResi; tab: (Window | null)[] }) => {
-      // The tabs were opened inside the click (popup blockers); each is filled when its PDF arrives.
-      let berhasil = 0
-      const gagal: string[] = []
-      for (const [i, pesanan] of grup.entries()) {
-        try {
-          const pdf = await endpoints.unduhResiMassal(pesanan.map((p) => p.id), tipe)
-          const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }))
-          if (tab[i]) tab[i]!.location.href = url
-          else window.open(url, '_blank')
-          berhasil += pesanan.length
-        } catch (e) {
-          tab[i]?.close()
-          gagal.push(getApiError(e, 'Resi belum siap atau server lambat, coba lagi sebentar.'))
-        }
+    mutationFn: async ({ ids, tipe, tab }: { ids: string[]; tipe: TemplateResi; tab: Window | null }) => {
+      try {
+        const h = await endpoints.cetakResiGabungan(ids, tipe)
+        bukaResi(h, tab)
+        return h
+      } catch (e) {
+        tab?.close()
+        throw e
       }
-      return { berhasil, gagal }
     },
-    onSuccess: ({ berhasil, gagal }) => {
+    onMutate: (): Progres => mulaiProgres('Menyiapkan resi dari Shopee'),
+    onSuccess: (h, _v, progres) => {
       qc.invalidateQueries({ queryKey: ['pesanan'] })
-      if (gagal.length === 0) toast.success(`${berhasil} resi dibuka`)
-      else toast.warning(`${berhasil} resi dibuka, ${gagal.length} kelompok gagal`, { description: gagal.slice(0, 2).join('\n') })
+      if (h.gagal.length === 0) progres.selesai(`${h.berhasil} resi dibuka dalam satu file`)
+      else progres.sebagian(`${h.berhasil} resi dibuka, ${h.gagal.length} pesanan gagal`, pesanGagalResi(h.gagal))
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e, _v, progres) => progres?.gagal(getApiError(e, 'Resi belum siap atau server lambat, coba lagi sebentar.')),
+  })
+
+  // For orders that still need processing: arrange shipment, then print the labels of the ones that worked.
+  const prosesCetakMut = useMutation({
+    mutationFn: async ({ ids, tipe, tab }: { ids: string[]; tipe: TemplateResi; tab: Window | null }) => {
+      const sukses: string[] = []
+      const gagalProses: { id_eksternal: string | null; pesan: string | null }[] = []
+      try {
+        for (const batch of pecahBatch(ids, 10)) {
+          const res = await endpoints.prosesMassalPesanan(batch)
+          for (const h of res.hasil) {
+            if (h.ok) sukses.push(h.id)
+            else gagalProses.push(h)
+          }
+        }
+      } catch (e) {
+        tab?.close()
+        throw e
+      }
+      if (sukses.length === 0) {
+        tab?.close()
+        return { sukses, gagalProses, resi: null as ResiGabunganHasil | null, galatResi: null as string | null }
+      }
+      try {
+        const resi = await endpoints.cetakResiGabungan(sukses, tipe)
+        bukaResi(resi, tab)
+        return { sukses, gagalProses, resi, galatResi: null }
+      } catch (e) {
+        tab?.close()
+        return { sukses, gagalProses, resi: null, galatResi: getApiError(e, 'Resi belum siap di Shopee.') }
+      }
+    },
+    onMutate: (): Progres => mulaiProgres('Memproses pesanan lalu menyiapkan resi'),
+    onSuccess: ({ sukses, gagalProses, resi, galatResi }, _v, progres) => {
+      pilih.kosongkan()
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      const bagianGagalProses = gagalProses.map((g) => `#${g.id_eksternal ?? '?'}: ${g.pesan ?? 'gagal'}`)
+      if (galatResi) {
+        progres.sebagian(`${sukses.length} pesanan diproses, tapi resi belum bisa dicetak`, `${galatResi}\nCetak dari tab Menunggu Kurir beberapa saat lagi.`)
+      } else if (sukses.length === 0) {
+        progres.gagal(`Tidak ada pesanan yang berhasil diproses. ${bagianGagalProses.slice(0, 2).join('; ')}`)
+      } else if (gagalProses.length > 0 || (resi && resi.gagal.length > 0)) {
+        progres.sebagian(
+          `${sukses.length} diproses, ${resi?.berhasil ?? 0} resi dibuka`,
+          [...bagianGagalProses.slice(0, 2), ...(resi ? pesanGagalResi(resi.gagal).split('\n') : [])].filter(Boolean).join('\n'),
+        )
+      } else progres.selesai(`${sukses.length} pesanan diproses, ${resi?.berhasil ?? 0} resi dibuka dalam satu file`)
+    },
+    onError: (e, _v, progres) => progres?.gagal(getApiError(e)),
   })
 
   /** Label of one order from its row button. */
   function cetakSatu(p: Pesanan) {
-    cetakMut.mutate({ grup: [[p]], tipe: 'THERMAL_AIR_WAYBILL', tab: [window.open('', '_blank')] })
+    cetakMut.mutate({ ids: [p.id], tipe: 'THERMAL_AIR_WAYBILL', tab: window.open('', '_blank') })
   }
 
   const semuaKolom = kolomPesanan({ namaToko: (id) => (id ? (akunMap.get(id)?.nama_toko ?? '—') : '—') })
@@ -163,6 +214,7 @@ export default function PesananPage() {
   const idProses = dipilih.filter(bisaDiproses).map((p) => p.id)
   const dicetak = dipilih.filter(bisaDicetak)
   const totalHalaman = daftar ? Math.max(1, Math.ceil(daftar.total / daftar.per_halaman)) : 1
+  const sedangBekerja = prosesMassalMut.isPending || cetakMut.isPending || prosesCetakMut.isPending
   const urutSekarang = teksKeUrut(f.nilai.urut)
 
   async function cetakTerpilih(tipe: TemplateResi) {
@@ -177,8 +229,15 @@ export default function PesananPage() {
       })
       if (!ok) return
     }
-    const grup = kelompokResi(dicetak)
-    cetakMut.mutate({ grup, tipe, tab: grup.map(() => window.open('', '_blank')) })
+    cetakMut.mutate({ ids: dicetak.map((p) => p.id), tipe, tab: window.open('', '_blank') })
+  }
+
+  async function prosesLaluCetak() {
+    const ok = await confirm({
+      title: `Proses ${idProses.length} pesanan lalu cetak resinya?`,
+      description: 'Pengiriman setiap pesanan diatur di Shopee (kurir pickup), lalu resi semua yang berhasil dibuka dalam satu file. Ini tidak bisa dibatalkan dari sini.',
+    })
+    if (ok) prosesCetakMut.mutate({ ids: idProses, tipe: 'THERMAL_AIR_WAYBILL', tab: window.open('', '_blank') })
   }
 
   async function prosesTerpilih() {
@@ -276,7 +335,7 @@ export default function PesananPage() {
             adaYangBisaDipilih: bisaDipilihSemua.length > 0,
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
-          aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={cetakMut.isPending} />}
+          aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} />}
           minWidth={900}
         />
       )}
@@ -291,18 +350,23 @@ export default function PesananPage() {
         </div>
       )}
 
-      <BarPilihan jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={prosesMassalMut.isPending || cetakMut.isPending}>
+      <BarPilihan jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
         {idProses.length > 0 && (
-          <Button onClick={prosesTerpilih} disabled={prosesMassalMut.isPending}>
-            {prosesMassalMut.isPending ? 'Memproses…' : `Proses (${idProses.length})`}
-          </Button>
+          <>
+            <Button onClick={prosesLaluCetak} disabled={sedangBekerja}>
+              {prosesCetakMut.isPending ? 'Memproses…' : `Proses & cetak resi (${idProses.length})`}
+            </Button>
+            <Button variant="outline" onClick={prosesTerpilih} disabled={sedangBekerja}>
+              {prosesMassalMut.isPending ? 'Memproses…' : `Proses saja (${idProses.length})`}
+            </Button>
+          </>
         )}
         {dicetak.length > 0 && (
           <>
-            <Button variant="outline" onClick={() => cetakTerpilih('THERMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+            <Button variant="outline" onClick={() => cetakTerpilih('THERMAL_AIR_WAYBILL')} disabled={sedangBekerja}>
               {cetakMut.isPending ? 'Menyiapkan resi…' : `Cetak resi A6 (${dicetak.length})`}
             </Button>
-            <Button variant="ghost" onClick={() => cetakTerpilih('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+            <Button variant="ghost" onClick={() => cetakTerpilih('NORMAL_AIR_WAYBILL')} disabled={sedangBekerja}>
               A4
             </Button>
           </>

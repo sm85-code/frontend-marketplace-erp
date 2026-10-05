@@ -76,14 +76,12 @@ export function bisaDicetak(p: Pick<Pesanan, 'status' | 'status_marketplace'>): 
   return ikutMarketplace(p) && p.status === 'to_ship' && p.status_marketplace === 'PROCESSED'
 }
 
-/** Shopee prints one shop and one courier per PDF, so a selection is split into those groups (at most `maks` each). */
-export function kelompokResi<T extends Pick<Pesanan, 'id' | 'akun_id' | 'kurir'>>(pesanan: T[], maks = 50): T[][] {
-  const grup = new Map<string, T[]>()
-  for (const p of pesanan) {
-    const kunci = `${p.akun_id ?? ''}|${(p.kurir ?? '').trim().toLowerCase()}`
-    grup.set(kunci, [...(grup.get(kunci) ?? []), p])
-  }
-  return [...grup.values()].flatMap((g) => pecahBatch(g, maks))
+/** The joined label file the server sends as base64, as a PDF blob ready for a tab. */
+export function pdfDariBase64(base64: string): Blob {
+  const biner = atob(base64)
+  const byte = new Uint8Array(biner.length)
+  for (let i = 0; i < biner.length; i++) byte[i] = biner.charCodeAt(i)
+  return new Blob([byte], { type: 'application/pdf' })
 }
 
 export function sudahDicetak(p: Pick<Pesanan, 'resi_dicetak_at'>): boolean {
