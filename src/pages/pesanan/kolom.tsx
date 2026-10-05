@@ -78,6 +78,21 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       ),
     },
     {
+      kunci: 'varian',
+      judul: 'Varian',
+      kelas: 'min-w-[100px]',
+      sel: (p) => p.items.map((i) => i.model_name).filter(Boolean).length ? "Varian" : "",
+    },
+    {
+      kunci: 'nilai_varian',
+      judul: 'Nilai varian',
+      kelas: 'min-w-[140px] max-w-[220px]',
+      sel: (p) => {
+        const nilai = p.items.map((i) => i.model_name).filter(Boolean)
+        return nilai.length ? <span className="line-clamp-2">{nilai.join(", ")}</span> : ""
+      },
+    },
+    {
       kunci: 'total',
       judul: 'Total',
       kelas: 'whitespace-nowrap',
