@@ -126,5 +126,19 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       sel: (p) => fmtDate(p.diambil_at),
     },
     { kunci: 'itemId', judul: 'ID produk Shopee', bawaan: false, kelas: 'font-mono', sel: (p) => p.item_id },
+    { kunci: 'kategori', judul: 'Kategori', bawaan: false, sel: (p) => p.category_id || "" },
+    { kunci: 'merek', judul: 'Merek', bawaan: false, sel: (p) => p.brand || "" },
+    { kunci: 'atribut', judul: 'Atribut', bawaan: false, kelas: 'min-w-[180px]', sel: (p) => p.attribute_list || "" },
+    { kunci: 'kondisi', judul: 'Kondisi', bawaan: false, sel: (p) => p.condition || "" },
+    { kunci: 'preorder', judul: 'Preorder', bawaan: false, sel: (p) => p.is_pre_order ? `${p.days_to_ship ?? ""} hari` : "" },
+    { kunci: 'kurir', judul: 'Kurir', bawaan: false, sel: (p) => p.logistic_info || "" },
+    { kunci: 'promo', judul: 'Promo', bawaan: false, sel: (p) => p.has_promotion ? "Ya" : "" },
+    { kunci: 'grosir', judul: 'Grosir', bawaan: false, sel: (p) => p.wholesales || "" },
+    { kunci: 'video', judul: 'Video', bawaan: false, sel: (p) => p.video_info ? "Ya" : "" },
+    { kunci: 'ukuran_chart', judul: 'Bagan ukuran', bawaan: false, sel: (p) => p.size_chart || "" },
+    { kunci: 'bahaya', judul: 'Berbahaya', bawaan: false, sel: (p) => p.item_dangerous ? "Ya" : "" },
+    { kunci: 'dibuat', judul: 'Dibuat', bawaan: false, sel: (p) => p.create_time ? fmtDate(new Date(p.create_time * 1000).toISOString()) : "" },
+    { kunci: 'diubah', judul: 'Diubah', bawaan: false, sel: (p) => p.update_time ? fmtDate(new Date(p.update_time * 1000).toISOString()) : "" },
+
   ]
 }
