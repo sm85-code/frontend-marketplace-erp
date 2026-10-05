@@ -23,6 +23,7 @@ export const qk = {
   laporanRingkas: (dari: string, sampai: string) => ['laporan-ringkas', dari, sampai] as const,
   iklanHarianToko: (params: Record<string, string | number | undefined>) => ['iklan-toko', 'harian', params] as const,
   iklanRingkasan: (params: Record<string, string | undefined>) => ['iklan-toko', 'ringkasan', params] as const,
+  kampanyeIklan: (akunId: string, hari: number) => ['iklan-kampanye', akunId, hari] as const,
   campaign: (params: Record<string, string | undefined>) => ['iklan', params] as const,
   campaignOne: (id: string) => ['iklan', 'one', id] as const,
   metrikHarian: (campaignId: string) => ['iklan-metrik', campaignId] as const,

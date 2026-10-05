@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { fmtDate, fmtRp, getApiError } from '@/api/client'
@@ -16,8 +16,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PLATFORM_LABELS } from '@/config/roles'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { isOwnerLevel } from '@/config/roles'
+import { useAuth } from '@/lib/auth'
+import KampanyeShopee from './iklan/KampanyeShopee'
 import PerformaShopee from './iklan/PerformaShopee'
-import IklanShopee from './IklanShopeePage'
 
 const emptyForm = { akun_id: '', produk_id: '', nama: '', budget_harian: '0', tanggal_mulai: '' }
 
@@ -70,52 +73,76 @@ export default function IklanPage() {
     })
   }
 
+  const { user } = useAuth()
+  const [params, setParams] = useSearchParams()
+  const bisaKelola = isOwnerLevel(user?.role)
+  const tab = params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' && bisaKelola ? 'kampanye' : 'performa'
+
   return (
     <div className="space-y-4">
-      <BarHalaman judul="Iklan">
-        <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
-          Catat kampanye
-        </Button>
-      </BarHalaman>
+      <BarHalaman judul="Iklan" deskripsi="Performa dan pengelolaan iklan Shopee." />
 
-      <PerformaShopee />
+      <Tabs value={tab} onValueChange={(v) => setParams(v === 'performa' ? {} : { tab: v }, { replace: true })}>
+        <TabsList className="h-11 max-w-full overflow-x-auto">
+          <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
+          {bisaKelola && <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>}
+          <TabsTrigger value="catatan" className="px-3">Catatan</TabsTrigger>
+        </TabsList>
 
-      <IklanShopee />
+        <TabsContent value="performa" className="text-base">
+          <PerformaShopee />
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Catatan lokal</CardTitle>
-          <p className="text-sm text-muted-foreground">Pengingat saja. Tidak membuat iklan di Shopee.</p>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Spinner column label="Memuat campaign…" />
-          ) : (
-            <>
-              <TabelLokal
-                label="Catatan kampanye lokal"
-                items={data}
-                kolom={kolomCampaign(akunMap)}
-                idDari={(c) => c.id}
-                namaDari={(c) => c.nama}
-                urutAwal={{ kunci: 'mulai', arah: 'desc' }}
-                aksi={(c) => (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to={`/iklan/${c.id}`}>Kelola</Link>
-                  </Button>
-                )}
-                minWidth={620}
-              />
-              {(data ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada catatan. Ini bukan iklan di Shopee.</p>}
-            </>
-          )}
-        </CardContent>
-      </Card>
+        {bisaKelola && (
+          <TabsContent value="kampanye" className="text-base">
+            <KampanyeShopee />
+          </TabsContent>
+        )}
+
+        <TabsContent value="catatan" className="text-base">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <CardTitle>Catatan kampanye</CardTitle>
+                  <p className="text-sm text-muted-foreground">Pengingat pribadi di ERP. Tidak membuat atau mengubah iklan di Shopee.</p>
+                </div>
+                <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
+                  Tambah catatan
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Spinner column label="Memuat catatan…" />
+              ) : (
+                <>
+                  <TabelLokal
+                    label="Catatan kampanye"
+                    items={data}
+                    kolom={kolomCampaign(akunMap)}
+                    idDari={(c) => c.id}
+                    namaDari={(c) => c.nama}
+                    urutAwal={{ kunci: 'mulai', arah: 'desc' }}
+                    aksi={(c) => (
+                      <Button asChild size="sm" variant="outline">
+                        <Link to={`/iklan/${c.id}`}>Buka</Link>
+                      </Button>
+                    )}
+                    minWidth={620}
+                  />
+                  {(data ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada catatan.</p>}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Catat kampanye</DialogTitle>
+            <DialogTitle>Tambah catatan kampanye</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">

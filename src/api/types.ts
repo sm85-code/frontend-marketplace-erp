@@ -545,3 +545,69 @@ export interface Dashboard {
   per_hari: { tanggal: string; pesanan: number; omzet: string }[]
   stok_kritis: StokKritis[]
 }
+
+/** One Shopee Ads product campaign with its settings and the performance of the asked period. Numbers arrive as JSON numbers. */
+export interface KampanyeIklanKinerja {
+  impression: number
+  clicks: number
+  expense: number | string
+  direct_order: number
+  direct_gmv: number | string
+  roas: number | string | null
+  ctr: number | string | null
+}
+
+export interface KampanyeKataKunci {
+  kata: string
+  status: string | null
+  tipe: 'exact' | 'broad' | null
+  bid: number | string | null
+}
+
+export interface KampanyeIklan {
+  campaign_id: string
+  nama: string
+  jenis: 'auto' | 'manual' | null
+  status: string | null
+  bidding: 'auto' | 'manual' | null
+  penempatan: string | null
+  /** Daily budget; 0 = unlimited (Shopee). */
+  anggaran: number | string | null
+  mulai: string | null
+  selesai: string | null
+  item_id: string[]
+  roas_target: number | string | null
+  kata_kunci: KampanyeKataKunci[]
+  kinerja: KampanyeIklanKinerja | null
+}
+
+export interface KampanyeIklanDaftar {
+  saldo: number | string | null
+  hari: number
+  kampanye: KampanyeIklan[]
+  catatan: string[]
+}
+
+export type AksiKampanye = 'pause' | 'resume' | 'stop' | 'delete' | 'change_budget' | 'change_roas_target'
+
+export interface PerubahanKataKunci {
+  aksi: 'add' | 'delete' | 'restore' | 'change_bid_price' | 'change_match_type'
+  kata: string
+  bid?: number
+  tipe?: 'exact' | 'broad'
+}
+
+export interface SaranIklan {
+  roas: Record<'rendah' | 'sedang' | 'tinggi', { nilai: number | null; persentil: number | null }> | null
+  anggaran: { min: number | null; rekomendasi: number | null; maks: number | null } | null
+  kata_kunci: { kata: string; skor: number | null; volume: number | null; bid: number | null }[]
+  catatan: string[]
+}
+
+export interface IklanBaru {
+  item_id: number
+  bidding: 'auto' | 'manual'
+  budget: number
+  roas_target?: number
+  kata_kunci?: { kata: string; bid: number; tipe: 'exact' | 'broad' }[]
+}
