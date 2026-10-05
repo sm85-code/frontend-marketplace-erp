@@ -19,6 +19,16 @@ const HARI = [
   { value: '14', label: '14 hari terakhir' },
   { value: '28', label: '28 hari terakhir' },
 ]
+const STATUS = [
+  { value: 'hidup', label: 'Aktif (berjalan + dijeda)' },
+  { value: 'ongoing', label: 'Berjalan' },
+  { value: 'paused', label: 'Dijeda' },
+  { value: 'ended', label: 'Berakhir' },
+  { value: 'semua', label: 'Semua status' },
+]
+const HIDUP = new Set(['ongoing', 'paused', 'scheduled'])
+const cocokStatus = (pilihan: string, status: string | null) =>
+  pilihan === 'semua' ? true : pilihan === 'hidup' ? HIDUP.has(status ?? '') : status === pilihan
 const angka = (v: number) => v.toLocaleString('id-ID')
 
 function kolomKampanye(): KolomTabel<KampanyeIklan>[] {
@@ -53,6 +63,7 @@ export default function KampanyeShopee() {
   const [dipilih, setDipilih] = useState('')
   const akunId = dipilih || toko[0]?.id || ''
   const [hari, setHari] = useState('7')
+  const [status, setStatus] = useState('hidup')
   const [kelola, setKelola] = useState<KampanyeIklan | null>(null)
   const [buka, setBuka] = useState(false)
 
@@ -64,6 +75,7 @@ export default function KampanyeShopee() {
     retry: false,
   })
   const total = totalKampanye(data)
+  const tampil = (data?.kampanye ?? []).filter((k) => cocokStatus(status, k.status))
   const aktif = kelola ? (data?.kampanye.find((k) => k.campaign_id === kelola.campaign_id) ?? kelola) : null
 
   return (
@@ -78,6 +90,7 @@ export default function KampanyeShopee() {
       <CardContent className="space-y-4">
         <BarFilter aktif={0}>
           <FilterPilih id="kampanye-toko" label="Toko" nilai={akunId} onUbah={setDipilih} opsi={toko.map((t) => ({ value: t.id, label: t.nama_toko }))} />
+          <FilterPilih id="kampanye-status" label="Status" nilai={status} onUbah={setStatus} opsi={STATUS} />
           <FilterPilih id="kampanye-hari" label="Performa" nilai={hari} onUbah={setHari} opsi={HARI} />
         </BarFilter>
         <div className="flex flex-wrap gap-2">
@@ -124,20 +137,29 @@ export default function KampanyeShopee() {
             {data.kampanye.length === 0 ? (
               <p className="rounded-lg border p-6 text-center text-muted-foreground">Toko ini belum punya kampanye iklan produk di Shopee.</p>
             ) : (
-              <TabelLokal
-                label="Kampanye iklan Shopee"
-                items={data.kampanye}
-                kolom={kolomKampanye()}
-                idDari={(k) => k.campaign_id}
-                namaDari={(k) => k.nama}
-                urutAwal={{ kunci: 'biaya', arah: 'desc' }}
-                minWidth={880}
-                aksi={(k) => (
-                  <Button size="sm" variant="outline" onClick={() => setKelola(k)}>
-                    Kelola
-                  </Button>
+              <div className="space-y-2">
+                <p className="teks-data text-muted-foreground" aria-live="polite">
+                  Menampilkan {tampil.length} dari {data.kampanye.length} kampanye
+                </p>
+                {tampil.length === 0 ? (
+                  <p className="rounded-lg border p-6 text-center text-muted-foreground">Tidak ada kampanye dengan status ini.</p>
+                ) : (
+                  <TabelLokal
+                    label="Kampanye iklan Shopee"
+                    items={tampil}
+                    kolom={kolomKampanye()}
+                    idDari={(k) => k.campaign_id}
+                    namaDari={(k) => k.nama}
+                    urutAwal={{ kunci: 'biaya', arah: 'desc' }}
+                    minWidth={880}
+                    aksi={(k) => (
+                      <Button size="sm" variant="outline" onClick={() => setKelola(k)}>
+                        Kelola
+                      </Button>
+                    )}
+                  />
                 )}
-              />
+              </div>
             )}
           </>
         )}
