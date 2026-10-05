@@ -80,7 +80,8 @@ export function kolomKatalog(onBuka: (id: string) => void): KolomTabel<KatalogIt
       urut: { kunci: 'stok', arahAwal: 'desc', label: ['Tersedikit', 'Terbanyak'] },
       sel: (p) => p.stok_shopee ?? <Kosong />,
     },
-    { kunci: 'varian', judul: 'Varian', kelas: 'whitespace-nowrap', sel: (p) => p.jumlah_varian || <Kosong /> },
+    { kunci: 'varian', judul: 'Varian', kelas: 'whitespace-nowrap', sel: (p) => p.jumlah_varian ? "Varian" : "" },
+    { kunci: 'nilai_varian', judul: 'Nilai varian', kelas: 'min-w-[160px] max-w-[240px]', sel: (p) => p.nilai_varian ? <span className="line-clamp-2">{p.nilai_varian}</span> : "" },
     {
       kunci: 'berat',
       judul: 'Berat',

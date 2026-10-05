@@ -91,6 +91,7 @@ export interface ItemPesanan {
   produk_id: string | null
   listing_id: string | null
   nama_produk: string
+  model_name?: string
   harga_satuan: string
   qty: number
   subtotal: string
@@ -405,6 +406,7 @@ export interface KatalogItem {
   harga_max: string | null
   stok_shopee: number | null
   jumlah_varian: number
+  nilai_varian?: string
   status: string
   dikirim_toko_id: string | null
   dikirim_at: string | null
