@@ -120,8 +120,8 @@ export const oauthShopeeStart = (akunId: string, redirectUri?: string) =>
 /** Shopee redirects with `shop_id` (shop account) or `main_account_id` (main account, possibly many shops). */
 export const oauthShopeeCallback = (
   akunId: string,
-  params: { code: string; shop_id?: string; main_account_id?: string },
-) => api.get<OAuthCallbackResult>(`/oauth/shopee/callback/${akunId}`, { params }).then((r) => r.data)
+  params: { code: string; nonce: string; shop_id?: string; main_account_id?: string },
+) => api.get<OAuthCallbackResult>(`/oauth/shopee/callback/${encodeURIComponent(akunId)}/${encodeURIComponent(params.nonce)}`, { params: { code: params.code, shop_id: params.shop_id, main_account_id: params.main_account_id } }).then((r) => r.data)
 
 export const syncPesananAkun = (akunId: string) =>
   api.post<SyncPesananResult>(`/akun/${akunId}/sync/pesanan`).then((r) => r.data)
