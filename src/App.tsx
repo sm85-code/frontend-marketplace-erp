@@ -62,7 +62,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LazyPage><LoginPage /></LazyPage>} />
               <Route
-                path="/oauth/shopee/callback/:akunId"
+                path="/oauth/shopee/callback/:akunId/:nonce?"
                 element={<LazyPage><ShopeeCallbackPage /></LazyPage>}
               />
               <Route
