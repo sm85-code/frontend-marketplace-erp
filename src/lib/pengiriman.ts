@@ -1,4 +1,5 @@
 import type { MetodePengiriman, OpsiMetodePengiriman, PengaturanPengiriman } from '@/api/types'
+import { getApiError } from '@/api/client'
 export const LABEL_METODE: Record<MetodePengiriman, string> = {
   dropoff: 'Drop Off — Serahkan ke Gerai', pickup: 'Pickup — Jemput Kurir',
 }
@@ -43,9 +44,12 @@ export async function prosesBatchPengiriman(
     try {
       const res = await submit(batch, Object.fromEntries(batch.map((id) => [id, pengaturan[id]])))
       hasil.push(...res.hasil)
-    } catch {
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status
+      const pesan = status && status >= 400 && status < 500
+        ? getApiError(error) : 'Hasil batch belum pasti. Sinkronkan status sebelum mencoba lagi.'
       hasil.push(...batch.map((id) => ({ id, id_eksternal: null, ok: false,
-        pesan: 'Hasil batch belum pasti. Sinkronkan status sebelum mencoba lagi.' })))
+        pesan })))
       hasil.push(...ids.slice(i + 10).map((id) => ({ id, id_eksternal: null, ok: false,
         pesan: 'Belum diproses karena batch sebelumnya terputus.' })))
       break

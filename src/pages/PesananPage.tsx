@@ -25,7 +25,7 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
-import { bisaDicetak, bisaDiproses, pdfDariBase64, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
+import { bisaDicetak, bisaDiproses, bukaDokumenResi, pdfDariBase64, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
 import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
@@ -118,9 +118,7 @@ export default function PesananPage() {
 
   /** Opens the joined label file in the tab that the click already opened (pop-up blockers allow only that one). */
   function bukaResi(h: ResiGabunganHasil, tab: Window | null) {
-    const url = URL.createObjectURL(pdfDariBase64(h.pdf))
-    if (tab) tab.location.href = url
-    else window.open(url, '_blank')
+    bukaDokumenResi(pdfDariBase64(h.pdf, h.mime_type), h.nama_file, tab)
   }
   const pesanGagalResi = (gagal: ResiGabunganHasil['gagal']) => gagal.slice(0, 3).map((g) => `#${g.id_eksternal ?? '?'}: ${g.pesan}`).join('\n')
 

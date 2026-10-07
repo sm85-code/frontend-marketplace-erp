@@ -24,6 +24,8 @@ import {
   bisaDibatalkan,
   ikutMarketplace,
   labelStatus,
+  labelProses,
+  bukaDokumenResi,
   nextActionLabel,
   sudahDicetak,
   sudahDiproses,
@@ -100,10 +102,10 @@ export default function PesananDetailPage() {
       // Open the tab now (inside the click) so the popup blocker allows it; fill it once the PDF arrives.
       const tab = window.open('', '_blank')
       try {
-        const pdf = await endpoints.unduhResi(id!, tipe)
-        const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }))
-        if (tab) tab.location.href = url
-        else window.open(url, '_blank')
+        const dokumen = await endpoints.unduhResi(id!, tipe)
+        const mime = dokumen.type.split(';')[0]
+        const ext = mime === 'text/html' ? 'html' : mime === 'application/zip' ? 'zip' : mime === 'application/pdf' ? 'pdf' : 'bin'
+        bukaDokumenResi(dokumen, `resi-${id}.${ext}`, tab)
       } catch (e) {
         tab?.close()
         throw e
@@ -287,7 +289,7 @@ export default function PesananDetailPage() {
         )}
         {ikutMp && pesanan.status === 'to_ship' && !diproses && (
           <Button onClick={onProses} disabled={prosesMut.isPending}>
-            Proses Pesanan
+            {labelProses(pesanan)}
           </Button>
         )}
         {ikutMp && diproses && pesanan.status === 'to_ship' && (
