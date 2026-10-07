@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { OpsiMetodePengiriman, PengaturanPengiriman } from '@/api/types'
 import { awalPengiriman, galatPengiriman, prosesBatchPengiriman } from '@/lib/pengiriman'
-import { labelStatus } from '@/lib/pesanan'
+import { labelStatus, labelProses } from '@/lib/pesanan'
 const pickup: OpsiMetodePengiriman = {
   metode: 'pickup', tersedia: true, alasan: null, wajib: ['address_id', 'pickup_time_id'], nama_pengirim: 'Toko', cabang: [],
   alamat: [
@@ -39,6 +39,12 @@ describe('shipping options', () => {
     expect(labelStatus({ ...p, metode_pengiriman: 'pickup' })).toBe('Menunggu Penjemputan Kurir')
     expect(labelStatus(p)).toBe('Menunggu Penyerahan')
   })
+  it('offers a dedicated retry pickup action and status', () => {
+    const p = { status: 'to_ship' as const, status_marketplace: 'RETRY_SHIP' }
+    expect(labelStatus(p)).toBe('Perlu Jadwal Ulang Pickup')
+    expect(labelProses(p)).toBe('Jadwalkan Ulang Pickup')
+    expect(labelProses({ status_marketplace: 'READY_TO_SHIP' })).toBe('Proses Pesanan')
+  })
 })
 describe('bulk shipping', () => {
   const ids = Array.from({ length: 25 }, (_, i) => String(i))
@@ -65,5 +71,12 @@ describe('bulk shipping', () => {
     expect(res.gagal).toBe(15)
     expect(res.hasil.find((h) => h.id === '10')?.pesan).toContain('belum pasti')
     expect(res.hasil.find((h) => h.id === '20')?.pesan).toContain('Belum diproses')
+  })
+  it.each([403, 409, 422, 424])('preserves a known HTTP %s rejection instead of calling it a timeout', async (status) => {
+    const submit = vi.fn().mockRejectedValue({ response: { status, data: { detail: 'Pengaturan ditolak: alamat tidak tersedia' } } })
+    const res = await prosesBatchPengiriman(ids, settings, submit)
+    expect(submit).toHaveBeenCalledOnce()
+    expect(res.hasil[0].pesan).toBe('Pengaturan ditolak: alamat tidak tersedia')
+    expect(res.hasil[10].pesan).toContain('Belum diproses')
   })
 })

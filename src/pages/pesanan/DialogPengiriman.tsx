@@ -49,21 +49,24 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
   ))
   const ready = selected.length - errors.filter(Boolean).length
   const canSubmit = Boolean(metode) && !loading && selected.length > 0 && errors.every((e) => !e)
+  const ulang = targets.filter((p) => hasil[p.id]?.data?.aksi === 'pickup_ulang'
+    || (!hasil[p.id]?.data?.aksi && p.status_marketplace === 'RETRY_SHIP')).length
   function update(id: string, patch: Partial<PengaturanPengiriman>) {
     setPengaturan((prev) => ({ ...prev, [id]: { ...pengaturan[id], ...patch } }))
   }
   function reload() { setHasil({}); setPengaturan({}); setPutaran((n) => n + 1) }
   return <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
     <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-      <DialogHeader><DialogTitle>Atur pengiriman {targets.length} pesanan Shopee</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{ulang === targets.length ? 'Jadwalkan Ulang Pickup' : `Atur pengiriman ${targets.length} pesanan Shopee`}</DialogTitle></DialogHeader>
+      {ulang > 0 && <p className="text-sm">{ulang} pesanan membutuhkan penjadwalan ulang pickup. Pilih alamat dan jadwal terbaru dari Shopee.</p>}
       <fieldset className="space-y-2">
         <legend className="mb-2 text-sm font-medium">Metode pengiriman</legend>
         {(['dropoff', 'pickup'] as const).map((value) => {
-          const supported = loading > 0 || targets.some((p) => hasil[p.id]?.data?.opsi.some((o) => o.metode === value && o.tersedia))
+          const supported = targets.some((p) => hasil[p.id]?.data?.opsi.some((o) => o.metode === value && o.tersedia))
           return <label key={value} className="flex items-center gap-2 text-sm">
             <input type="radio" name="metode-pengiriman" checked={metode === value}
-              disabled={!supported} onChange={() => pilihMetode(value)} />
-            {LABEL_METODE[value]}{!supported && ' (tidak tersedia)'}
+              disabled={loading > 0 || !supported} onChange={() => pilihMetode(value)} />
+            {LABEL_METODE[value]}{!loading && !supported && ' (tidak tersedia)'}
           </label>
         })}
       </fieldset>
@@ -73,7 +76,9 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
         const o = result?.data?.opsi.find((o) => o.metode === metode)
         const s = pengaturan[p.id]
         const a = o?.alamat.find((a) => a.address_id === s?.address_id)
-        const error = result?.error ?? (metode && result ? galatPengiriman(o, s) : null)
+        const error = result?.error ?? (result?.data?.opsi.length === 0
+          ? 'Shopee tidak menyediakan metode pengiriman yang didukung ERP. Gunakan Seller Centre.'
+          : metode && result ? galatPengiriman(o, s) : null)
         const excluded = Boolean(dikecualikan[p.id])
         return <fieldset key={p.id} className="space-y-2 rounded-md border p-3">
           <legend className="px-1 text-sm font-medium">#{p.id_eksternal}</legend>
@@ -124,7 +129,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
         <Button variant="ghost" onClick={reload} disabled={loading > 0}>Muat ulang opsi</Button>
         <Button variant="outline" onClick={onClose}>Batal</Button>
         <Button disabled={!canSubmit} onClick={() => onConfirm(selected.map((p) => p.id), Object.fromEntries(selected.map((p) => [p.id, pengaturan[p.id]])))}>
-          {cetak ? 'Konfirmasi & cetak resi' : 'Konfirmasi pengiriman'}
+          {cetak ? 'Konfirmasi & cetak resi' : ulang === targets.length ? 'Konfirmasi jadwal ulang pickup' : 'Konfirmasi pengiriman'}
         </Button>
       </DialogFooter>
     </DialogContent>

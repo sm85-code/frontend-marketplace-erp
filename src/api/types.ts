@@ -106,6 +106,7 @@ export interface ResiGabunganHasil {
   /** The joined labels, base64. */
   pdf: string
   nama_file: string
+  mime_type?: 'application/pdf' | 'text/html' | 'application/zip'
   berhasil: number
   /** Orders that got no label, with Shopee's reason; the others are in the pdf. */
   gagal: { id: string; id_eksternal: string | null; pesan: string }[]
@@ -722,4 +723,4 @@ export interface OpsiMetodePengiriman {
   }[]
   cabang: { branch_id: number; label: string }[]
 }
-export interface OpsiPengiriman { opsi: OpsiMetodePengiriman[] }
+export interface OpsiPengiriman { opsi: OpsiMetodePengiriman[]; aksi?: 'pengiriman' | 'pickup_ulang' }
