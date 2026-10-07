@@ -1,3 +1,4 @@
+import ProdukKeluargaField from './ProdukKeluargaField'
 import { pemetaanProduk } from '@/lib/pemetaanProduk'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -22,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 const emptyForm = {
+  keluarga_id: '', opsi_varian: [] as { tier: string; opsi: string }[],
   sku_induk: '', nama: '', deskripsi: '', harga_dasar: '', stok: '0',
   berat_gram: '0', panjang_cm: '0', lebar_cm: '0', tinggi_cm: '0', preorder: false, hari_proses: '2',
 }
@@ -37,9 +39,9 @@ const prosesValid = (f: typeof emptyForm) => !f.preorder || (/^\d+$/.test(f.hari
 
 const kolomProduk = (mapping: ReturnType<typeof pemetaanProduk>): KolomTabel<Produk>[] => [
   { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
-  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', sel: (p) => mapping.get(p.id)?.nama ?? p.nama, nilai: (p) => mapping.get(p.id)?.nama ?? p.nama },
-  { kunci: 'tier', judul: 'Jenis Varian', sel: (p) => <div>{mapping.get(p.id)?.opsi?.map((o, i) => <div key={i}>{o.tier}</div>) ?? '—'}</div> },
-  { kunci: 'opsi', judul: 'Pilihan Varian', sel: (p) => <div>{mapping.get(p.id)?.berbeda ? 'Berbeda antar listing · lihat Listing' : mapping.get(p.id)?.opsi?.map((o, i) => <div key={i}>{o.opsi}</div>) ?? '—'}</div> },
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', sel: (p) => p.nama_induk ?? mapping.get(p.id)?.nama ?? p.nama, nilai: (p) => p.nama_induk ?? mapping.get(p.id)?.nama ?? p.nama },
+  { kunci: 'tier', judul: 'Jenis Varian', sel: (p) => <div>{(p.keluarga_id ? p.opsi_varian : mapping.get(p.id)?.opsi)?.map((o, i) => <div key={i}>{o.tier}</div>) ?? '—'}</div> },
+  { kunci: 'opsi', judul: 'Pilihan Varian', sel: (p) => <div>{!p.keluarga_id && mapping.get(p.id)?.berbeda ? 'Berbeda antar listing · lihat Listing' : (p.keluarga_id ? p.opsi_varian : mapping.get(p.id)?.opsi)?.map((o, i) => <div key={i}>{o.opsi}</div>) ?? '—'}</div> },
   { kunci: 'harga', judul: 'Harga Dasar', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.harga_dasar), nilai: (p) => Number(p.harga_dasar) },
   { kunci: 'stok', judul: 'Stok', rata: 'kanan', sel: (p) => p.stok, nilai: (p) => p.stok },
   { kunci: 'berat', judul: 'Berat', kelas: 'whitespace-nowrap', sel: (p) => teksBerat(p.berat_gram), nilai: (p) => p.berat_gram ?? 0 },
@@ -105,7 +107,7 @@ export default function ProdukPage() {
   })
 
   const filtered = (data ?? []).filter(
-    (p) => (mapping.get(p.id)?.nama ?? p.nama).toLowerCase().includes(q.toLowerCase()) || p.nama.toLowerCase().includes(q.toLowerCase()) || p.sku_induk.toLowerCase().includes(q.toLowerCase()),
+    (p) => (p.nama_induk ?? mapping.get(p.id)?.nama ?? p.nama).toLowerCase().includes(q.toLowerCase()) || p.nama.toLowerCase().includes(q.toLowerCase()) || p.sku_induk.toLowerCase().includes(q.toLowerCase()),
   )
 
   function openCreate() {
@@ -117,6 +119,7 @@ export default function ProdukPage() {
   function openEdit(p: Produk) {
     setEditing(p)
     setForm({
+      keluarga_id: p.keluarga_id ?? '', opsi_varian: p.opsi_varian ?? [],
       sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: '',
       berat_gram: String(p.berat_gram ?? 0),
       panjang_cm: String(Number(p.panjang_cm ?? 0)),
@@ -145,10 +148,11 @@ export default function ProdukPage() {
     if (editing) {
       updateMut.mutate({
         id: editing.id,
-        payload: { nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar, ...fisik(form) },
+        payload: { keluarga_id: form.keluarga_id || null, opsi_varian: form.opsi_varian, nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar, ...fisik(form) },
       })
     } else {
       createMut.mutate({
+        keluarga_id: form.keluarga_id || null, opsi_varian: form.opsi_varian,
         sku_induk: form.sku_induk,
         nama: form.nama,
         deskripsi: form.deskripsi,
@@ -175,7 +179,7 @@ export default function ProdukPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Produk (SKU Induk)">
+      <BarHalaman judul="Produk & Varian">
         <Button onClick={openCreate}>Tambah Produk</Button>
       </BarHalaman>
 
@@ -195,7 +199,7 @@ export default function ProdukPage() {
           ) : (
             <>
               <TabelLokal
-                label="Daftar produk induk (SKU)"
+                label="Daftar SKU produk dan varian"
                 items={filtered}
                 kolom={kolomProduk(mapping)}
                 idDari={(p) => p.id}
@@ -229,17 +233,18 @@ export default function ProdukPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {!editing && (
               <div className="space-y-1.5">
-                <Label htmlFor="produk-sku-induk-1">SKU Induk</Label>
+                <Label htmlFor="produk-sku-induk-1">Kode SKU</Label>
                 <Input id="produk-sku-induk-1" value={form.sku_induk} onChange={(e) => setForm((f) => ({ ...f, sku_induk: e.target.value }))} />
               </div>
             )}
+            <ProdukKeluargaField value={form.keluarga_id} options={form.opsi_varian} onChange={(keluarga_id, opsi_varian) => setForm((old) => ({ ...old, keluarga_id, opsi_varian }))} />
             <div className="space-y-1.5">
               <Label htmlFor="produk-nama-produk-2">Nama Produk</Label>
               <Input id="produk-nama-produk-2" value={form.nama} onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))} />
@@ -296,7 +301,7 @@ export default function ProdukPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={createMut.isPending || updateMut.isPending || !form.nama || !form.harga_dasar || !prosesValid(form)}>
+            <Button onClick={onSubmit} disabled={createMut.isPending || updateMut.isPending || !form.nama || !form.harga_dasar || !prosesValid(form) || (Boolean(form.keluarga_id) && form.opsi_varian.some((option) => !option.opsi.trim()))}>
               Simpan
             </Button>
           </DialogFooter>

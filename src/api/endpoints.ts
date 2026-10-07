@@ -143,6 +143,8 @@ export const listProduk = () => api.get<Produk[]>('/produk').then((r) => r.data)
 export const getProduk = (id: string) => api.get<Produk>(`/produk/${id}`).then((r) => r.data)
 
 export const createProduk = (payload: {
+  keluarga_id?: string | null
+  opsi_varian?: { tier: string; opsi: string }[]
   sku_induk: string
   nama: string
   deskripsi?: string
@@ -160,6 +162,8 @@ export const createProduk = (payload: {
 export const updateProduk = (
   id: string,
   payload: Partial<{
+    keluarga_id: string | null
+    opsi_varian: { tier: string; opsi: string }[]
     nama: string
     deskripsi: string
     harga_dasar: string
@@ -505,3 +509,11 @@ export const editProdukShopee = (id: string, fields: { nama?: string; sku?: stri
   api.patch<ShopeeProductMutationResult>(`/katalog-shopee/${id}/produk`, fields).then((r) => r.data)
 export const statusProdukShopee = (id: string, unlist: boolean) =>
   api.post<ShopeeProductMutationResult>(`/katalog-shopee/${id}/status`, { unlist }).then((r) => r.data)
+
+
+export interface ProdukKeluarga { id: string; nama: string; tiers: string[] }
+export const listProdukKeluarga = () => api.get<ProdukKeluarga[]>('/produk-keluarga').then((r) => r.data)
+export const createProdukKeluarga = (payload: { nama: string; tiers: string[] }) => api.post<ProdukKeluarga>('/produk-keluarga', payload).then((r) => r.data)
+export const deleteProdukKeluarga = (id: string) => api.delete(`/produk-keluarga/${id}`)
+
+export const renameProdukKeluarga = (id: string, nama: string) => api.patch<ProdukKeluarga>(`/produk-keluarga/${id}`, { nama }).then((r) => r.data)

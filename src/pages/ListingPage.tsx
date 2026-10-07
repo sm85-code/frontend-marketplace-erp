@@ -29,7 +29,7 @@ function kolomListing({
   const sku = (l: ProdukListing) => produkMap.get(l.produk_id)?.sku_induk ?? '—'
   const toko = (l: ProdukListing) => akunMap.get(l.akun_id)?.nama_toko ?? '—'
   return [
-    { kunci: 'sku', judul: 'SKU Induk', kelas: 'font-mono', tetap: true, sel: sku, nilai: sku },
+    { kunci: 'sku', judul: 'SKU ERP', kelas: 'font-mono', tetap: true, sel: sku, nilai: sku },
     { kunci: 'nama', judul: 'Nama Produk Marketplace', kelas: 'min-w-[180px]', sel: (l) => l.detail_marketplace?.nama_produk ?? 'Belum dipetakan', nilai: (l) => l.detail_marketplace?.nama_produk ?? '' },
     { kunci: 'tier', judul: 'Jenis Varian', sel: (l) => <div>{l.detail_marketplace?.opsi.length ? l.detail_marketplace.opsi.map((o, i) => <div key={i}>{o.tier}</div>) : '—'}</div> },
     { kunci: 'opsi', judul: 'Pilihan Varian', sel: (l) => <div>{l.detail_marketplace?.opsi.length ? l.detail_marketplace.opsi.map((o, i) => <div key={i}>{o.opsi}</div>) : '—'}</div> },
@@ -119,7 +119,7 @@ export default function ListingPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mapping SKU Induk ↔ Listing Toko</CardTitle>
+          <CardTitle>Mapping SKU ERP ↔ Listing Toko</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -127,7 +127,7 @@ export default function ListingPage() {
           ) : (
             <>
               <TabelLokal
-                label="Mapping SKU induk ke listing toko"
+                label="Mapping SKU ERP ke listing toko"
                 items={listing}
                 kolom={kolomListing({ produkMap, akunMap })}
                 idDari={(l) => l.id}
