@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -61,7 +62,7 @@ export default function StaffPage() {
   const [assignDialog, setAssignDialog] = useState(false)
   const [assignForm, setAssignForm] = useState({ user_id: '', akun_id: '' })
 
-  const { data: users, isLoading } = useQuery({ queryKey: qk.users(), queryFn: endpoints.listUsers })
+  const { data: users, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.users(), queryFn: endpoints.listUsers })
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const { data: staffAkun } = useQuery({ queryKey: qk.staffAkun(), queryFn: () => endpoints.listStaffAkun() })
 
@@ -141,6 +142,7 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Staff">
         <Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko

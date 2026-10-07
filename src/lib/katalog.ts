@@ -64,7 +64,7 @@ export const teksBerat = (gram: number | null | undefined): string => (gram ? `$
 /** What a variant really has: its own value, or the product's when the variant left it empty (Shopee does the same). */
 export function nilaiVarian(v: KatalogVarian, induk: Pick<KatalogItem, 'berat_gram' | 'panjang_cm' | 'lebar_cm' | 'tinggi_cm' | 'is_pre_order' | 'days_to_ship'>) {
   const angka = (x: string | number | null | undefined) => Number(x) || 0
-  const sendiri = (nilai: number | null | undefined, cadangan: number) => ({ nilai: nilai ?? cadangan, ikutProduk: !nilai })
+  const sendiri = (nilai: number | null | undefined, cadangan: number) => ({ nilai: nilai ?? cadangan, ikutProduk: nilai == null })
   return {
     berat: sendiri(v.berat_gram, induk.berat_gram),
     panjang: sendiri(v.panjang_cm, angka(induk.panjang_cm)),

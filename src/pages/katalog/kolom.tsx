@@ -3,7 +3,7 @@ import type { KatalogItem, KatalogVarian } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { fmtRp } from '@/api/client'
-import { labelStatusShopee, labelStatusVarian, labelVarian, nilaiVarian, rentangHarga, teksBerat } from '@/lib/katalog'
+import { labelStatusShopee, labelStatusVarian, nilaiVarian, rentangHarga, teksBerat } from '@/lib/katalog'
 
 const Kosong = () => <span className="text-muted-foreground">—</span>
 
@@ -107,7 +107,7 @@ export function kolomKatalog(
           )}
         </>
       ),
-      selAnak: (v: KatalogVarian) => <span className="teks-data pl-3 font-normal text-muted-foreground">↳ {labelVarian(v)}</span>,
+      selAnak: (v: KatalogVarian) => <span className="teks-data pl-3 font-normal text-muted-foreground">↳ SKU {v.sku || v.model_id || '—'}</span>,
     },
     { kunci: 'sku', judul: 'SKU', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
     {

@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -61,7 +62,7 @@ export default function PesananPage() {
     placeholderData: (prev) => prev,
   })
   const paramDaftar = { ...kriteria, resi: f.nilai.resi || undefined, urut: f.nilai.urut, halaman: f.halaman, per_halaman: PER_HALAMAN }
-  const { data: daftar, isLoading, isFetching } = useQuery({
+  const { data: daftar, isLoading, isFetching, error: queryError, refetch: retryQuery } = useQuery({
     queryKey: qk.pesananDaftar(paramDaftar),
     queryFn: () => endpoints.daftarPesanan(paramDaftar),
     placeholderData: (prev) => prev,
@@ -248,6 +249,7 @@ export default function PesananPage() {
 
   return (
     <div className="space-y-4 pb-24">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
           Segarkan

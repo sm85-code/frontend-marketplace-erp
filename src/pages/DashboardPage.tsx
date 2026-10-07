@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
@@ -85,7 +86,7 @@ export default function DashboardPage() {
   // Whole local days, so the key (and the request) stays the same all day long instead of changing every render.
   const { dari = '', sampai = '' } = rentangTanggal(preset)
 
-  const { data: d, isLoading, isFetching } = useQuery({
+  const { data: d, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: qk.dashboard(dari, sampai),
     queryFn: () => endpoints.laporanDashboard(dari, sampai),
     enabled: isOwnerLevel(user?.role),
@@ -123,7 +124,7 @@ export default function DashboardPage() {
             <CardDescription>Buka menu Pesanan untuk melihat toko yang ditugaskan ke Anda.</CardDescription>
           </CardHeader>
         </Card>
-      ) : isLoading || !d ? (
+      ) : error ? <QueryError error={error} retry={refetch} /> : isLoading || !d ? (
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>

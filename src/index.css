@@ -657,3 +657,14 @@ h4,
     @apply font-sans;
   }
 }
+
+/* Shared ERP table rhythm, including touch screens. */
+.bar-halaman { gap: 1rem; align-items: flex-start; }
+.bar-halaman h1 { line-height: 1.25; }
+.app-shell main { min-width: 0; }
+[role="region"] table th { white-space: nowrap; }
+@media (max-width: 767px) {
+  .bar-halaman h1 { font-size: 1.25rem; }
+  [role="region"] table td, [role="region"] table th { padding: .75rem; }
+  [role="region"] { touch-action: pan-x pan-y; }
+}

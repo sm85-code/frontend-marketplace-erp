@@ -90,7 +90,7 @@ export default function SesuaikanStokDialog({ produk, onClose }: { produk: Produ
           </Button>
           <Button
             disabled={!produk || delta === null || delta === 0 || mut.isPending}
-            onClick={() => produk && delta !== null && mut.mutate({ produk_id: produk.id, qty_delta: delta, catatan: catatan || undefined })}
+            onClick={() => produk && delta !== null && mut.mutate({ produk_id: produk.id, qty_delta: delta, expected_stock: mode === 'atur' ? produk.stok : undefined, catatan: catatan || undefined })}
           >
             Simpan
           </Button>

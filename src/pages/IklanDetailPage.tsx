@@ -1,3 +1,5 @@
+import QueryError from '@/components/QueryError'
+import { rentangTanggal } from '@/lib/rentang'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -42,7 +44,7 @@ export default function IklanDetailPage() {
   const [sampai, setSampai] = useState(isoDaysAgo(0))
   const [metrikForm, setMetrikForm] = useState({ tanggal: isoDaysAgo(0), impression: '', klik: '', biaya: '' })
 
-  const { data: campaign, isLoading } = useQuery({
+  const { data: campaign, isLoading, error, refetch } = useQuery({
     queryKey: qk.campaignOne(id!),
     queryFn: () => endpoints.getCampaign(id!),
     enabled: Boolean(id),
@@ -54,7 +56,10 @@ export default function IklanDetailPage() {
   })
   const { data: laporan } = useQuery({
     queryKey: qk.laporanIklan(id!, dari, sampai),
-    queryFn: () => endpoints.laporanIklan(id!, new Date(dari).toISOString(), new Date(sampai).toISOString()),
+    queryFn: () => {
+      const batas = rentangTanggal('kustom', { dari, sampai })
+      return endpoints.laporanIklan(id!, batas.dari!, batas.sampai!)
+    },
     enabled: Boolean(id),
   })
 
@@ -84,10 +89,11 @@ export default function IklanDetailPage() {
   })
 
   const chartData = useMemo(
-    () => (metrikList ?? []).map((m) => ({ tanggal: fmtDate(m.tanggal), biaya: Number(m.biaya), klik: m.klik })),
-    [metrikList],
+    () => (metrikList ?? []).filter((m) => m.tanggal.slice(0, 10) >= dari && m.tanggal.slice(0, 10) <= sampai).map((m) => ({ tanggal: fmtDate(m.tanggal), biaya: Number(m.biaya), klik: m.klik })),
+    [metrikList, dari, sampai],
   )
 
+  if (error) return <QueryError error={error} retry={refetch} />
   if (isLoading || !campaign) return <Spinner column label="Memuat campaign…" />
 
   return (
@@ -110,7 +116,7 @@ export default function IklanDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ROAS</CardTitle>
+          <CardTitle>Rasio penjualan produk terhadap biaya iklan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-end gap-3">
@@ -130,7 +136,7 @@ export default function IklanDetailPage() {
                 <div className="text-lg font-semibold">{fmtRp(laporan.total_biaya)}</div>
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Omzet Atribusi</div>
+                <div className="text-xs text-muted-foreground">Penjualan Produk (estimasi)</div>
                 <div className="text-lg font-semibold">{fmtRp(laporan.omzet_atribusi)}</div>
               </div>
               <div>
