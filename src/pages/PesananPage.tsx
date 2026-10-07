@@ -25,11 +25,14 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
-import { bisaDicetak, bisaDiproses, pdfDariBase64, pecahBatch, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
+import { bisaDicetak, bisaDiproses, pdfDariBase64, sudahDicetak, TAHAP_LABELS, TAHAP_ORDER } from '@/lib/pesanan'
 import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
 import FormPesananManual from './pesanan/FormPesananManual'
+import DialogPengiriman from './pesanan/DialogPengiriman'
+import { prosesBatchPengiriman } from '@/lib/pengiriman'
+import type { PengaturanPengiriman } from '@/api/types'
 import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
 
 const PER_HALAMAN = 50
@@ -45,6 +48,7 @@ export default function PesananPage() {
   const f = useFilterDaftar(AWAL)
   const pilih = useTerpilih<Pesanan>()
   const [formBuka, setFormBuka] = useState(false)
+  const [pengiriman, setPengiriman] = useState<{ pesanan: Pesanan[]; cetak: boolean } | null>(null)
 
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
@@ -93,16 +97,9 @@ export default function PesananPage() {
   })
 
   const prosesMassalMut = useMutation({
-    mutationFn: async (ids: string[]) => {
-      // The server caps one call at 25 orders and each order costs several Shopee calls: go in small chunks.
-      let berhasil = 0
-      const gagal: { id_eksternal: string | null; pesan: string | null }[] = []
-      for (const batch of pecahBatch(ids, 10)) {
-        const res = await endpoints.prosesMassalPesanan(batch)
-        berhasil += res.berhasil
-        gagal.push(...res.hasil.filter((h) => !h.ok))
-      }
-      return { berhasil, gagal }
+    mutationFn: async ({ ids, pengaturan }: { ids: string[]; pengaturan: Record<string, PengaturanPengiriman> }) => {
+      const res = await prosesBatchPengiriman(ids, pengaturan, endpoints.prosesMassalPesanan)
+      return { berhasil: res.berhasil, gagal: res.hasil.filter((h) => !h.ok) }
     },
     onSuccess: ({ berhasil, gagal }) => {
       if (gagal.length === 0) toast.success(`${berhasil} pesanan diproses di Shopee`)
@@ -150,20 +147,13 @@ export default function PesananPage() {
 
   // For orders that still need processing: arrange shipment, then print the labels of the ones that worked.
   const prosesCetakMut = useMutation({
-    mutationFn: async ({ ids, tipe, tab }: { ids: string[]; tipe: TemplateResi; tab: Window | null }) => {
+    mutationFn: async ({ ids, tipe, tab, pengaturan }: { ids: string[]; tipe: TemplateResi; tab: Window | null; pengaturan: Record<string, PengaturanPengiriman> }) => {
       const sukses: string[] = []
       const gagalProses: { id_eksternal: string | null; pesan: string | null }[] = []
-      try {
-        for (const batch of pecahBatch(ids, 10)) {
-          const res = await endpoints.prosesMassalPesanan(batch)
-          for (const h of res.hasil) {
-            if (h.ok) sukses.push(h.id)
-            else gagalProses.push(h)
-          }
-        }
-      } catch (e) {
-        tab?.close()
-        throw e
+      const res = await prosesBatchPengiriman(ids, pengaturan, endpoints.prosesMassalPesanan)
+      for (const h of res.hasil) {
+        if (h.ok) sukses.push(h.id)
+        else gagalProses.push(h)
       }
       if (sukses.length === 0) {
         tab?.close()
@@ -184,7 +174,7 @@ export default function PesananPage() {
       qc.invalidateQueries({ queryKey: ['pesanan'] })
       const bagianGagalProses = gagalProses.map((g) => `#${g.id_eksternal ?? '?'}: ${g.pesan ?? 'gagal'}`)
       if (galatResi) {
-        progres.sebagian(`${sukses.length} pesanan diproses, tapi resi belum bisa dicetak`, `${galatResi}\nCetak dari tab Menunggu Kurir beberapa saat lagi.`)
+        progres.sebagian(`${sukses.length} pesanan diproses, tapi resi belum bisa dicetak`, `${galatResi}\nCetak dari tab Menunggu Penyerahan beberapa saat lagi.`)
       } else if (sukses.length === 0) {
         progres.gagal(`Tidak ada pesanan yang berhasil diproses. ${bagianGagalProses.slice(0, 2).join('; ')}`)
       } else if (gagalProses.length > 0 || (resi && resi.gagal.length > 0)) {
@@ -232,20 +222,19 @@ export default function PesananPage() {
     cetakMut.mutate({ ids: dicetak.map((p) => p.id), tipe, tab: window.open('', '_blank') })
   }
 
-  async function prosesLaluCetak() {
-    const ok = await confirm({
-      title: `Proses ${idProses.length} pesanan lalu cetak resinya?`,
-      description: 'Pengiriman setiap pesanan diatur di Shopee (kurir pickup), lalu resi semua yang berhasil dibuka dalam satu file. Ini tidak bisa dibatalkan dari sini.',
-    })
-    if (ok) prosesCetakMut.mutate({ ids: idProses, tipe: 'THERMAL_AIR_WAYBILL', tab: window.open('', '_blank') })
+  function prosesLaluCetak() {
+    setPengiriman({ pesanan: dipilih.filter(bisaDiproses), cetak: true })
   }
 
-  async function prosesTerpilih() {
-    const ok = await confirm({
-      title: `Proses ${idProses.length} pesanan di Shopee?`,
-      description: 'Pengiriman setiap pesanan akan diatur di Shopee (kurir pickup). Ini tidak bisa dibatalkan dari sini.',
-    })
-    if (ok) prosesMassalMut.mutate(idProses)
+  function prosesTerpilih() {
+    setPengiriman({ pesanan: dipilih.filter(bisaDiproses), cetak: false })
+  }
+
+  function konfirmasiPengiriman(ids: string[], pengaturan: Record<string, PengaturanPengiriman>) {
+    if (pengiriman?.cetak) {
+      prosesCetakMut.mutate({ ids, pengaturan, tipe: 'THERMAL_AIR_WAYBILL', tab: window.open('', '_blank') })
+    } else prosesMassalMut.mutate({ ids, pengaturan })
+    setPengiriman(null)
   }
 
   function labelSinkron(): string {
@@ -373,6 +362,8 @@ export default function PesananPage() {
         )}
       </BarPilihan>
 
+      {pengiriman && <DialogPengiriman pesanan={pengiriman.pesanan} cetak={pengiriman.cetak}
+        onClose={() => setPengiriman(null)} onConfirm={konfirmasiPengiriman} />}
       <FormPesananManual open={formBuka} onOpenChange={setFormBuka} akunList={akunList ?? []} />
     </div>
   )

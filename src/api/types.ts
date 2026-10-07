@@ -124,6 +124,7 @@ export interface Pesanan {
   catatan_sinkron: string | null
   /** Marketplace's raw status (e.g. READY_TO_SHIP, PROCESSED); null for orders typed in by hand. */
   status_marketplace: string | null
+  metode_pengiriman?: MetodePengiriman | 'non_integrated' | null
   /** When the shipping label was last generated, and by whom (marks "already printed"). */
   resi_dicetak_at?: string | null
   resi_dicetak_oleh?: string | null
@@ -697,3 +698,28 @@ export interface SaranAiHasil {
   kuota_sisa: number | null
   bulan_ini_usd: number | null
 }
+
+// Options returned by Shopee for this order, not shared across shops.
+export type MetodePengiriman = 'dropoff' | 'pickup'
+export interface PengaturanPengiriman {
+  metode: MetodePengiriman
+  address_id?: number
+  pickup_time_id?: string
+  branch_id?: number
+  sender_real_name?: string
+}
+export interface OpsiMetodePengiriman {
+  metode: MetodePengiriman
+  tersedia: boolean
+  alasan: string | null
+  wajib: string[]
+  nama_pengirim: string
+  alamat: {
+    address_id: number
+    label: string
+    rekomendasi: boolean
+    jadwal: { pickup_time_id: string; label: string; tanggal?: number | null; rekomendasi: boolean }[]
+  }[]
+  cabang: { branch_id: number; label: string }[]
+}
+export interface OpsiPengiriman { opsi: OpsiMetodePengiriman[] }
