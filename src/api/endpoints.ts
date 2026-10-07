@@ -493,3 +493,15 @@ export const saranAiIklan = (akunId: string, hari: number) =>
 
 export const simpanModalProduk = (akunId: string, itemId: string, modal: { modal_rp?: number | null; modal_persen?: number | null }) =>
   api.put(`/akun/${akunId}/iklan/modal/${itemId}`, modal).then((r) => r.data)
+
+
+export interface ShopeeProductMutationResult {
+  ok: boolean
+  snapshot_diperbarui: boolean
+  warnings: string[]
+  request_id: string | null
+}
+export const editProdukShopee = (id: string, fields: { nama?: string; sku?: string }) =>
+  api.patch<ShopeeProductMutationResult>(`/katalog-shopee/${id}/produk`, fields).then((r) => r.data)
+export const statusProdukShopee = (id: string, unlist: boolean) =>
+  api.post<ShopeeProductMutationResult>(`/katalog-shopee/${id}/status`, { unlist }).then((r) => r.data)

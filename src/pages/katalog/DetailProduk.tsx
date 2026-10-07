@@ -1,3 +1,4 @@
+import KelolaProdukShopee from './KelolaProdukShopee'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
@@ -28,6 +29,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
+            <KelolaProdukShopee key={detail.id} detail={detail} />
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
               <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>
