@@ -668,3 +668,14 @@ h4,
   [role="region"] table td, [role="region"] table th { padding: .75rem; }
   [role="region"] { touch-action: pan-x pan-y; }
 }
+
+/* Shared ERP rhythm without changing table layouts or theme preferences. */
+.erp-content { overflow-wrap: anywhere; }
+.erp-content .bar-halaman { margin-bottom: 1rem; align-items: flex-start; }
+.erp-content .bar-halaman h1, .erp-content .page-h1 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); line-height: 1.35; }
+.erp-content .bar-halaman p { margin-top: .25rem; max-width: 70ch; }
+.erp-content input, .erp-content select, .erp-content textarea { min-height: 2.5rem; }
+@media (max-width: 639px) {
+  .erp-content button { min-height: 2.5rem; }
+  .erp-content .bar-halaman { gap: .75rem; }
+}

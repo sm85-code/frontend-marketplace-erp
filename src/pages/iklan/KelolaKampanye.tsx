@@ -30,15 +30,17 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
 
   const segarkan = () => qc.invalidateQueries({ queryKey: ['iklan-kampanye'] })
   const aksiMut = useMutation({
+    retry: false,
     mutationFn: (p: { aksi: AksiKampanye; budget?: number; roas_target?: number }) => endpoints.aksiKampanyeIklan(akunId, k.campaign_id, p),
     onSuccess: (_d, p) => {
-      toast.success('Perubahan terkirim ke Shopee')
+      toast.success('Perubahan dikonfirmasi Shopee')
       segarkan()
       if (p.aksi === 'delete') onTutup()
     },
     onError: (e) => toast.error(getApiError(e)),
   })
   const kataMut = useMutation({
+    retry: false,
     mutationFn: (p: PerubahanKataKunci[]) => endpoints.kataKunciKampanyeIklan(akunId, k.campaign_id, p),
     onSuccess: () => {
       toast.success('Kata kunci diperbarui di Shopee')
@@ -52,14 +54,16 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
   const sibuk = aksiMut.isPending || kataMut.isPending
 
   async function jalankan(p: { aksi: AksiKampanye; budget?: number; roas_target?: number }, judul: string, uraian: string, merusak = false) {
+    if (sibuk) return
     if (await confirm({ title: judul, description: uraian, confirmLabel: 'Ya, kirim ke Shopee', destructive: merusak })) aksiMut.mutate(p)
   }
   async function ubahKata(p: PerubahanKataKunci, judul: string, uraian: string, merusak = false) {
+    if (sibuk) return
     if (await confirm({ title: judul, description: uraian, confirmLabel: 'Ya, kirim ke Shopee', destructive: merusak })) kataMut.mutate([p])
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onTutup()}>
+    <Dialog open onOpenChange={(o) => !o && !sibuk && onTutup()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">

@@ -19,6 +19,7 @@ const ListingPage = lazy(() => import('@/pages/ListingPage'))
 const GudangPage = lazy(() => import('@/pages/GudangPage'))
 const PesananPage = lazy(() => import('@/pages/PesananPage'))
 const ReturPage = lazy(() => import('@/pages/ReturPage'))
+const PublicationPage = lazy(() => import('@/pages/PublicationPage'))
 const PromosiPage = lazy(() => import('@/pages/PromosiPage'))
 const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
@@ -92,6 +93,7 @@ export default function App() {
               />
               <Route path="/pesanan" element={<Protected><LazyPage><PesananPage /></LazyPage></Protected>} />
               <Route path="/pesanan/retur" element={<Protected><LazyPage><ReturPage /></LazyPage></Protected>} />
+              <Route path="/katalog/publikasi" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PublicationPage /></LazyPage></Protected>} />
               <Route path="/katalog/promosi" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PromosiPage /></LazyPage></Protected>} />
               <Route
                 path="/pesanan/:id"

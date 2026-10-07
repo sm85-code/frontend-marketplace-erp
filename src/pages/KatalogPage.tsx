@@ -134,6 +134,7 @@ export default function KatalogPage() {
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web.">
+        <Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>
         <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>
       </BarHalaman>
 

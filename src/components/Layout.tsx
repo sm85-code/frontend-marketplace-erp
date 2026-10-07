@@ -1,6 +1,7 @@
 import { LogOut, X } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import PanduanFitur from '@/components/PanduanFitur'
 import AppearancePopover from '@/components/AppearancePopover'
 import BottomNav from '@/components/BottomNav'
 import WallpaperLayer from '@/components/WallpaperLayer'
@@ -125,7 +126,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {open && <div className="fixed inset-0 z-40 bg-black/20 lg:hidden" onClick={() => setOpen(false)} />}
       <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-0 lg:pb-0">
-        <div className="fade-in mx-auto max-w-[1400px] p-3 sm:p-5 lg:p-6">{children}</div>
+        <div className="fade-in mx-auto max-w-[1400px] p-3 sm:p-5 lg:p-6 erp-content"><PanduanFitur path={location.pathname} />{children}</div>
       </main>
 
       <BottomNav items={bottomItems} onOpenMore={() => setOpen(true)} moreActive={moreActive} />
