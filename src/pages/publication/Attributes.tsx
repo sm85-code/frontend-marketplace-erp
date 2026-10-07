@@ -46,7 +46,7 @@ export default function Attributes({
                       .filter((o) => o.value)
                       .map((o) => {
                         const v = node.attribute_value_list.find((v) => String(v.value_id) === o.value)!
-                        return { value_id: v.value_id, original_value_name: v.name, ...(v.value_unit ? { value_unit: v.value_unit } : {}) }
+                        return { value_id: v.value_id, original_value_name: v.name, ...((v.value_unit || chosen[0]?.value_unit) ? { value_unit: v.value_unit || chosen[0]?.value_unit } : {}) }
                       }),
                   )
                 }
@@ -64,13 +64,14 @@ export default function Attributes({
             )}
             {custom && (
               <Input
+                id={node.attribute_value_list.length ? undefined : `attribute-${node.attribute_id}`}
                 aria-label={`Nilai lain ${node.name}`}
                 placeholder={`Isi ${node.name} jika tidak ada di pilihan`}
                 value={chosen.find((v) => v.value_id === 0)?.original_value_name ?? ''}
                 onChange={(e) =>
                   update(node.attribute_id, [
                     ...(multiple ? chosen.filter((v) => v.value_id !== 0) : []),
-                    ...(e.target.value ? [{ value_id: 0, original_value_name: e.target.value }] : []),
+                    ...(e.target.value ? [{ value_id: 0, original_value_name: e.target.value, ...(chosen.find(v => v.value_id === 0)?.value_unit ? { value_unit: chosen.find(v => v.value_id === 0)!.value_unit } : {}) }] : []),
                   ])
                 }
               />

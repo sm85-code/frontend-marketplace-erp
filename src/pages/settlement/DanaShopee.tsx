@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -47,18 +48,18 @@ export default function DanaShopee() {
   const f = useFilterDaftar(AWAL)
   const [hariSinkron, setHariSinkron] = useState('15')
 
-  const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
+  const { data: akunList, error: akunError, refetch: retryAkun } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const tokoShopee = (akunList ?? []).filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
 
   const { dari, sampai } = rentangTanggal(f.nilai.tanggal as PresetTanggal, { dari: f.nilai.dari, sampai: f.nilai.sampai })
   const kriteria = { q: f.nilai.q || undefined, dari, sampai }
-  const { data: ringkasan, isLoading: ringkasanMuat } = useQuery({
+  const { data: ringkasan, isLoading: ringkasanMuat, error: ringkasanError, refetch: retryRingkasan } = useQuery({
     queryKey: qk.settlementRingkasan(kriteria),
     queryFn: () => endpoints.ringkasanSettlementPesanan(kriteria),
     placeholderData: (prev) => prev,
   })
   const paramDaftar = { ...kriteria, akun_id: f.nilai.toko || undefined, urut: f.nilai.urut, halaman: f.halaman, per_halaman: PER_HALAMAN }
-  const { data: daftar, isLoading, isFetching } = useQuery({
+  const { data: daftar, isLoading, isFetching, error: daftarError, refetch: retryDaftar } = useQuery({
     queryKey: qk.settlementPesanan(paramDaftar),
     queryFn: () => endpoints.daftarSettlementPesanan(paramDaftar),
     placeholderData: (prev) => prev,
@@ -178,7 +179,8 @@ export default function DanaShopee() {
           />
         )}
 
-        {ringkasanMuat ? (
+        {akunError && <QueryError error={akunError} retry={retryAkun} />}
+        {ringkasanError ? <QueryError error={ringkasanError} retry={retryRingkasan} /> : akunError ? null : ringkasanMuat ? (
           <Spinner column label="Memuat dana cair…" />
         ) : (ringkasan?.toko.length ?? 0) === 0 ? (
           <div className="space-y-2 rounded-lg border p-8 text-center text-muted-foreground">
@@ -218,7 +220,7 @@ export default function DanaShopee() {
 
             <div>
               <h3 className="mb-2 text-sm font-semibold">Rincian per pesanan</h3>
-              {isLoading ? (
+              {daftarError ? <QueryError error={daftarError} retry={retryDaftar} /> : isLoading ? (
                 <Spinner column label="Memuat rincian…" />
               ) : (
                 <TabelData

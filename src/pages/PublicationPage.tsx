@@ -96,26 +96,28 @@ export default function PublicationPage() {
   const upload = useMutation({
     retry: false,
     mutationFn: (file: File) => api.uploadListingPhoto(shop, file),
-    onSuccess: (r) => setForm((f) => ({ ...f, image_ids: [...f.image_ids, r.image_id] })),
+    onSuccess: (r) => setForm((f) => f.image_ids.includes(r.image_id) ? f : ({ ...f, image_ids: [...f.image_ids, r.image_id] })),
   })
+  function applyResult(r: api.PublicationResult) {
+    setResult(r)
+    if (r.ok || r.status === 'belum_dikirim') sessionStorage.removeItem(key)
+    if (r.status === 'belum_dikirim') { setOperation(''); setForm(f => ({ ...f, operation_id: '' })) }
+    if (r.ok) void qc.invalidateQueries({ queryKey: ['katalog'] })
+  }
   const publish = useMutation({
     retry: false,
     mutationFn: (payload: api.Publication) => api.publishListing(shop, payload),
-    onSuccess: (r) => {
-      setResult(r)
-      if (r.ok) {
-        sessionStorage.removeItem(key)
-        void qc.invalidateQueries({ queryKey: ['katalog'] })
-      }
+    onSuccess: applyResult,
+    onError: (e) => {
+      // Framework input validation runs before orchestration or remote writes.
+      const status = (e as { response?: { status?: number } }).response?.status
+      if (status === 422 || status === 403) { sessionStorage.removeItem(key); setOperation(''); setForm(f => ({ ...f, operation_id: '' })) }
     },
   })
   const check = useMutation({
     retry: false,
     mutationFn: () => api.publicationResult(shop, operation),
-    onSuccess: (r) => {
-      setResult(r)
-      if (r.ok) sessionStorage.removeItem(key)
-    },
+    onSuccess: applyResult,
   })
   const busy = publish.isPending || check.isPending || upload.isPending || chartUpload.isPending || copy.isPending
   const locked = busy || !!operation
@@ -307,7 +309,7 @@ export default function PublicationPage() {
     },
   ]
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <BarHalaman judul="Buat / Salin Produk" deskripsi="Produk baru di toko tujuan, dengan pilihan varian terpisah.">
         <Button asChild variant="outline">
           <Link to="/katalog">Kembali ke Katalog</Link>
@@ -318,7 +320,7 @@ export default function PublicationPage() {
         benar-benar tersedia. Harga menggunakan harga asli, bukan harga diskon. Angka harga mengikuti mata uang toko tujuan.
       </p>
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
-      <fieldset disabled={locked} className="space-y-4">
+      <fieldset disabled={locked} className="min-w-0 space-y-4">
         <section className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">1. Toko dan sumber</h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -818,7 +820,7 @@ export default function PublicationPage() {
       {result && (
         <div role="status" className="rounded-lg border bg-card p-4 space-y-2">
           <p>
-            {result.ok ? 'Produk dikonfirmasi' : 'Hasil belum lengkap/pasti'} · {result.status} · ID produk:{' '}
+            {result.ok ? 'Produk dikonfirmasi' : result.status === 'belum_dikirim' ? 'Belum dikirim; formulir dapat diperbaiki' : 'Hasil belum lengkap/pasti'} · {result.status} · ID produk:{' '}
             {result.item_id ?? 'belum tersedia'}
           </p>
           {result.warnings.map((w, i) => (

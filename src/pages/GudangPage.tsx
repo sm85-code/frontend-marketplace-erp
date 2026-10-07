@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -58,9 +59,9 @@ export default function GudangPage() {
   const [transferForm, setTransferForm] = useState({ produk_id: '', dari_gudang_id: '', ke_gudang_id: '', qty: '', catatan: '' })
   const [ledgerFilter, setLedgerFilter] = useState('')
 
-  const { data: gudangList } = useQuery({ queryKey: qk.gudang(), queryFn: endpoints.listGudang })
-  const { data: produkList } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
-  const { data: ledger, isLoading: ledgerLoading } = useQuery({
+  const { data: gudangList, error: gudangError, refetch: retryGudang } = useQuery({ queryKey: qk.gudang(), queryFn: endpoints.listGudang })
+  const { data: produkList, error: produkError, refetch: retryProduk } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
+  const { data: ledger, isLoading: ledgerLoading, error: ledgerError, refetch: retryLedger } = useQuery({
     queryKey: qk.stokLedger(ledgerFilter || undefined),
     queryFn: () => endpoints.listStokLedger(ledgerFilter || undefined),
   })
@@ -113,6 +114,9 @@ export default function GudangPage() {
           </Button>
           <Button onClick={() => setAdjustDialog(true)}>Sesuaikan Stok</Button>
       </BarHalaman>
+      {gudangError && <QueryError error={gudangError} retry={retryGudang} />}
+      {produkError && <QueryError error={produkError} retry={retryProduk} />}
+      {ledgerError && <QueryError error={ledgerError} retry={retryLedger} />}
 
       <Card>
         <CardHeader>
@@ -161,7 +165,7 @@ export default function GudangPage() {
               opsi={(produkList ?? []).map((p) => ({ value: p.id, label: p.nama }))}
             />
           </div>
-          {ledgerLoading ? (
+          {ledgerError ? null : ledgerLoading ? (
             <Spinner column label="Memuat kartu stok…" />
           ) : (
             <>
