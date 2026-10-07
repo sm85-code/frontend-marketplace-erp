@@ -520,3 +520,9 @@ export const createProdukKeluarga = (payload: { nama: string; tiers: string[] })
 export const deleteProdukKeluarga = (id: string) => api.delete(`/produk-keluarga/${id}`)
 
 export const renameProdukKeluarga = (id: string, nama: string) => api.patch<ProdukKeluarga>(`/produk-keluarga/${id}`, { nama }).then((r) => r.data)
+
+export const daftarRetur = (akunId: string, params: { dari: string; sampai: string; halaman: number; per_halaman?: number }) =>
+  api.get<import('./types').ReturHalaman>(`/akun/${encodeURIComponent(akunId)}/retur`, { params }).then((r) => r.data)
+
+export const getRetur = (akunId: string, nomorRetur: string) =>
+  api.get<import('./types').ReturMarketplace>(`/akun/${encodeURIComponent(akunId)}/retur/${encodeURIComponent(nomorRetur)}`).then((r) => r.data)
