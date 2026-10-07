@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtDate, fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { AkunMarketplace, Platform, Produk, ProdukListing } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ukuranPaket, teksBerat } from '@/lib/katalog'
 import { PLATFORM_LABELS } from '@/config/roles'
 
 function kolomListing({
@@ -29,6 +30,14 @@ function kolomListing({
   const toko = (l: ProdukListing) => akunMap.get(l.akun_id)?.nama_toko ?? '—'
   return [
     { kunci: 'sku', judul: 'SKU Induk', kelas: 'font-mono', tetap: true, sel: sku, nilai: sku },
+    { kunci: 'nama', judul: 'Nama Produk Marketplace', kelas: 'min-w-[180px]', sel: (l) => l.detail_marketplace?.nama_produk ?? 'Belum dipetakan', nilai: (l) => l.detail_marketplace?.nama_produk ?? '' },
+    { kunci: 'tier', judul: 'Jenis Varian', sel: (l) => <div>{l.detail_marketplace?.opsi.length ? l.detail_marketplace.opsi.map((o, i) => <div key={i}>{o.tier}</div>) : '—'}</div> },
+    { kunci: 'opsi', judul: 'Pilihan Varian', sel: (l) => <div>{l.detail_marketplace?.opsi.length ? l.detail_marketplace.opsi.map((o, i) => <div key={i}>{o.opsi}</div>) : '—'}</div> },
+    { kunci: 'harga_marketplace', judul: 'Harga Marketplace', kelas: 'whitespace-nowrap', sel: (l) => l.detail_marketplace?.harga != null ? <div>{fmtRp(l.detail_marketplace.harga)}{l.detail_marketplace.harga_asli != null && <div className="text-muted-foreground line-through">{fmtRp(l.detail_marketplace.harga_asli)}</div>}</div> : '—' },
+    { kunci: 'berat', judul: 'Berat Marketplace', kelas: 'whitespace-nowrap', sel: (l) => <span title={l.detail_marketplace?.ikut_produk.includes('berat_gram') ? 'Mengikuti berat produk' : undefined}>{teksBerat(l.detail_marketplace?.berat_gram)}</span> },
+    { kunci: 'dimensi', judul: 'Dimensi Marketplace', kelas: 'whitespace-nowrap', sel: (l) => ukuranPaket(l.detail_marketplace?.panjang_cm, l.detail_marketplace?.lebar_cm, l.detail_marketplace?.tinggi_cm) },
+    { kunci: 'preorder', judul: 'Preorder Marketplace', sel: (l) => l.detail_marketplace?.preorder == null ? '—' : l.detail_marketplace.preorder ? `Ya${l.detail_marketplace.hari_kirim != null ? ` · ${l.detail_marketplace.hari_kirim} hari` : ''}` : 'Tidak' },
+    { kunci: 'sinkron', judul: 'Snapshot Marketplace', bawaan: false, kelas: 'whitespace-nowrap', sel: (l) => l.detail_marketplace ? fmtDate(l.detail_marketplace.diambil_at) : 'Sinkronkan katalog untuk memetakan' },
     { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
     { kunci: 'platform', judul: 'Platform', sel: (l) => PLATFORM_LABELS[l.platform], nilai: (l) => l.platform },
     { kunci: 'eksternal', judul: 'ID Eksternal', kelas: 'font-mono', sel: (l) => l.id_eksternal, nilai: (l) => l.id_eksternal },
@@ -102,7 +111,7 @@ export default function ListingPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Listing">
+      <BarHalaman judul="Listing" deskripsi="Pemetaan SKU ERP ke produk dan varian marketplace. Harga dan ukuran marketplace berasal dari snapshot katalog; sinkronkan katalog untuk memperbaruinya.">
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
         </Button>

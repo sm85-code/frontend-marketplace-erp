@@ -1,3 +1,4 @@
+import { pemetaanProduk } from '@/lib/pemetaanProduk'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -6,6 +7,7 @@ import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { Produk } from '@/api/types'
+import { teksBerat, ukuranPaket } from '@/lib/katalog'
 import { publishDefaults, publishMessage } from '@/lib/publishToko'
 import { useConfirm } from '@/components/ConfirmProvider'
 import SesuaikanStokDialog from '@/components/SesuaikanStokDialog'
@@ -33,11 +35,16 @@ const fisik = (f: typeof emptyForm) => ({
 })
 const prosesValid = (f: typeof emptyForm) => !f.preorder || (/^\d+$/.test(f.hari_proses) && Number(f.hari_proses) >= 3 && Number(f.hari_proses) <= 14)
 
-const kolomProduk: KolomTabel<Produk>[] = [
+const kolomProduk = (mapping: ReturnType<typeof pemetaanProduk>): KolomTabel<Produk>[] => [
   { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', tetap: true, sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
-  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', sel: (p) => p.nama, nilai: (p) => p.nama },
+  { kunci: 'nama', judul: 'Nama', kelas: 'font-medium min-w-[180px]', sel: (p) => mapping.get(p.id)?.nama ?? p.nama, nilai: (p) => mapping.get(p.id)?.nama ?? p.nama },
+  { kunci: 'tier', judul: 'Jenis Varian', sel: (p) => <div>{mapping.get(p.id)?.opsi?.map((o, i) => <div key={i}>{o.tier}</div>) ?? '—'}</div> },
+  { kunci: 'opsi', judul: 'Pilihan Varian', sel: (p) => <div>{mapping.get(p.id)?.berbeda ? 'Berbeda antar listing · lihat Listing' : mapping.get(p.id)?.opsi?.map((o, i) => <div key={i}>{o.opsi}</div>) ?? '—'}</div> },
   { kunci: 'harga', judul: 'Harga Dasar', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.harga_dasar), nilai: (p) => Number(p.harga_dasar) },
   { kunci: 'stok', judul: 'Stok', rata: 'kanan', sel: (p) => p.stok, nilai: (p) => p.stok },
+  { kunci: 'berat', judul: 'Berat', kelas: 'whitespace-nowrap', sel: (p) => teksBerat(p.berat_gram), nilai: (p) => p.berat_gram ?? 0 },
+  { kunci: 'dimensi', judul: 'Dimensi', kelas: 'whitespace-nowrap', sel: (p) => ukuranPaket(p.panjang_cm, p.lebar_cm, p.tinggi_cm) },
+  { kunci: 'preorder', judul: 'Preorder', sel: (p) => p.preorder == null ? '—' : p.preorder ? `Ya · ${p.hari_proses ?? '—'} hari` : 'Tidak', nilai: (p) => p.preorder },
   { kunci: 'status', judul: 'Status', sel: (p) => <Badge variant={p.aktif ? 'default' : 'secondary'}>{p.aktif ? 'Aktif' : 'Nonaktif'}</Badge>, nilai: (p) => p.aktif },
 ]
 
@@ -53,6 +60,8 @@ export default function ProdukPage() {
   const [pub, setPub] = useState(publishDefaults({ harga_dasar: '0', stok: 0 }))
 
   const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
+  const { data: listings } = useQuery({ queryKey: qk.listing(), queryFn: () => endpoints.listListing() })
+  const mapping = pemetaanProduk(listings ?? [])
 
   const createMut = useMutation({
     mutationFn: endpoints.createProduk,
@@ -96,7 +105,7 @@ export default function ProdukPage() {
   })
 
   const filtered = (data ?? []).filter(
-    (p) => p.nama.toLowerCase().includes(q.toLowerCase()) || p.sku_induk.toLowerCase().includes(q.toLowerCase()),
+    (p) => (mapping.get(p.id)?.nama ?? p.nama).toLowerCase().includes(q.toLowerCase()) || p.nama.toLowerCase().includes(q.toLowerCase()) || p.sku_induk.toLowerCase().includes(q.toLowerCase()),
   )
 
   function openCreate() {
@@ -188,7 +197,7 @@ export default function ProdukPage() {
               <TabelLokal
                 label="Daftar produk induk (SKU)"
                 items={filtered}
-                kolom={kolomProduk}
+                kolom={kolomProduk(mapping)}
                 idDari={(p) => p.id}
                 namaDari={(p) => p.nama}
                 urutAwal={{ kunci: 'sku', arah: 'asc' }}

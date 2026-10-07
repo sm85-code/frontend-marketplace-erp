@@ -56,6 +56,24 @@ export interface PublishTokoResult {
   produk: { id: string; nama: string; harga: string; stok: number; aktif: boolean }
 }
 
+export interface ListingMarketplaceDetail {
+  item_id: string
+  model_id: string | null
+  nama_produk: string
+  sku: string
+  opsi: KatalogVarianOpsi[]
+  harga: string | null
+  harga_asli: string | null
+  berat_gram: number | null
+  panjang_cm: string | null
+  lebar_cm: string | null
+  tinggi_cm: string | null
+  preorder: boolean | null
+  hari_kirim: number | null
+  ikut_produk: string[]
+  diambil_at: string
+}
+
 export interface ProdukListing {
   id: string
   produk_id: string
@@ -65,6 +83,7 @@ export interface ProdukListing {
   harga_jual: string | null
   stok_listing: number | null
   aktif: boolean
+  detail_marketplace?: ListingMarketplaceDetail | null
 }
 
 export interface Gudang {
