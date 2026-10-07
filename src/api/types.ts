@@ -34,6 +34,9 @@ export interface AkunMarketplace {
 }
 
 export interface Produk {
+  keluarga_id?: string | null
+  nama_induk?: string | null
+  opsi_varian?: KatalogVarianOpsi[]
   id: string
   sku_induk: string
   nama: string
