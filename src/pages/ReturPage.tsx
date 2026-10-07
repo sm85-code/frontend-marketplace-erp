@@ -6,6 +6,7 @@ import { getApiError } from '@/api/client'
 import type { ReturMarketplace, ReturItem } from '@/api/types'
 import { qk } from '@/api/keys'
 import { BarHalaman, TabelData, type KolomTabel } from '@/components/daftar'
+import SengketaForm from './retur/SengketaForm'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
@@ -56,7 +57,7 @@ export default function ReturPage() {
     </BarHalaman>
     <div className="rounded-lg border bg-card p-4 text-sm space-y-2">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>
-      <p className="text-muted-foreground">Rentang maksimal 15 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti dan sengketa masih melalui Seller Centre.</p>
+      <p className="text-muted-foreground">Rentang maksimal 15 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti foto dan pengajuan sengketa tersedia di Detail; persyaratan mengikuti Shopee.</p>
     </div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     <form className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); apply() }}>
@@ -90,6 +91,7 @@ export default function ReturPage() {
 function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: string }; close: () => void }) {
   const confirm = useConfirm()
   const qc = useQueryClient()
+  const [disputeBusy, setDisputeBusy] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   const detail = useQuery({ queryKey: ['retur', 'detail', selected.akunId, selected.nomor], queryFn: () => endpoints.getRetur(selected.akunId, selected.nomor), retry: false })
   const approve = useMutation({
@@ -112,7 +114,7 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
     { kunci: 'harga', judul: 'Harga Item', rata: 'kanan', sel: (i) => nominalRetur(i.harga, r?.mata_uang ?? null) },
     { kunci: 'refund', judul: 'Refund Item', rata: 'kanan', sel: (i) => nominalRetur(i.nominal_refund, r?.mata_uang ?? null) },
   ]
-  return <Dialog open onOpenChange={(o) => !o && !approve.isPending && close()}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+  return <Dialog open onOpenChange={(o) => !o && !approve.isPending && !disputeBusy && close()}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
     <DialogHeader><DialogTitle>Retur #{selected.nomor}</DialogTitle></DialogHeader>
     {detail.error ? <QueryError error={detail.error} retry={detail.refetch} /> : !r ? <Spinner column label="Memuat detail retur…" /> : <div className="space-y-4 text-sm">
       <div className="flex flex-wrap gap-2"><Badge>{labelRetur(r.status)}</Badge><span>{r.nama_toko}</span><span>{solusiRetur(r.solusi)}</span></div>
@@ -130,7 +132,8 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
       </dl>
       <TabelData label="Barang dalam retur" items={r.items} kolom={items} idDari={(i) => `${i.item_id}:${i.model_id}:${r.items.indexOf(i)}`} namaDari={(i) => i.nama} />
       <p className="text-muted-foreground">Nominal refund item hanya ditampilkan jika diberikan Shopee; harga item bukan pengganti refund. Pastikan barang benar-benar diterima dan diperiksa sebelum mencatat penambahan stok ERP.</p>
-      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || detail.isFetching} onClick={() => { void detail.refetch() }}>Segarkan Detail</Button></div>
+      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || disputeBusy || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || disputeBusy || detail.isFetching} onClick={() => { void detail.refetch() }}>Segarkan Detail</Button></div>
+      <SengketaForm shop={selected.akunId} sn={selected.nomor} disabled={approve.isPending || confirmed} onBusy={setDisputeBusy} onComplete={() => setConfirmed(true)} />
       {approve.error && <p role="alert" className="break-words text-destructive">{getApiError(approve.error)} Segarkan detail sebelum mencoba ulang.</p>}
       {approve.data && <p role="status" className="break-words">Persetujuan dikonfirmasi Shopee. {approve.data.warnings.join(' ')} {approve.data.request_id && `Request ID: ${approve.data.request_id}`}</p>}
     </div>}

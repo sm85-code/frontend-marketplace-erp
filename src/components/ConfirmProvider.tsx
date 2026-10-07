@@ -1,12 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { createContext, useCallback, useRef, useContext, useState, type ReactNode } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
 interface ConfirmOptions {
@@ -24,10 +17,16 @@ interface ConfirmRequest extends Required<ConfirmOptions> {
 const ConfirmContext = createContext<((options: ConfirmOptions) => Promise<boolean>) | null>(null)
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const pending = useRef<((result: boolean) => void) | null>(null)
   const [request, setRequest] = useState<ConfirmRequest | null>(null)
 
   const confirm = useCallback((options: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
+      if (pending.current) {
+        resolve(false)
+        return
+      }
+      pending.current = resolve
       setRequest({
         title: options.title || 'Konfirmasi tindakan',
         description: options.description || 'Apakah Anda yakin ingin melanjutkan?',
@@ -40,7 +39,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const close = (result: boolean) => {
-    request?.resolve(result)
+    const resolve = pending.current
+    pending.current = null
+    resolve?.(result)
     setRequest(null)
   }
 
@@ -51,19 +52,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{request?.title}</DialogTitle>
-            <DialogDescription className="whitespace-pre-line">
-              {request?.description}
-            </DialogDescription>
+            <DialogDescription className="whitespace-pre-line">{request?.description}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => close(false)}>
               {request?.cancelLabel}
             </Button>
-            <Button
-              type="button"
-              variant={request?.destructive ? 'destructive' : 'default'}
-              onClick={() => close(true)}
-            >
+            <Button type="button" variant={request?.destructive ? 'destructive' : 'default'} onClick={() => close(true)}>
               {request?.confirmLabel}
             </Button>
           </DialogFooter>

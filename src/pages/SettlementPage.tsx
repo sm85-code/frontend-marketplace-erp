@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS } from '@/config/roles'
+import TransaksiDana from './settlement/TransaksiDana'
 import DanaShopee from './settlement/DanaShopee'
 
 const emptyForm = {
@@ -112,6 +113,7 @@ export default function SettlementPage() {
       </BarHalaman>
 
       <DanaShopee />
+      <TransaksiDana />
 
       <Card>
         <CardHeader>

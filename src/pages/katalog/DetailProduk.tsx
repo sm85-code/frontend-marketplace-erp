@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
@@ -29,6 +31,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
+            <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>
             <KelolaProdukShopee key={detail.id} detail={detail} />
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>

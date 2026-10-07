@@ -32,6 +32,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
     retry: false,
   })
   const buat = useMutation({
+    retry: false,
     mutationFn: () =>
       endpoints.buatKampanyeIklan(akunId, {
         item_id: itemAngka,
@@ -41,15 +42,16 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
         ...(mode === 'manual' ? { kata_kunci: kata } : {}),
       }),
     onSuccess: () => {
-      toast.success('Iklan dikirim ke Shopee')
+      toast.success('Pembuatan iklan dikonfirmasi Shopee')
       qc.invalidateQueries({ queryKey: ['iklan-kampanye'] })
       onTutup()
     },
     onError: (e) => toast.error(getApiError(e)),
   })
 
-  const bisaKirim = itemSah && Number(anggaran) > 0 && (mode === 'auto' || kata.length > 0)
+  const bisaKirim = itemSah && Number.isFinite(Number(anggaran)) && Number(anggaran) > 0 && (mode === 'auto' || kata.length > 0)
   async function kirim() {
+    if (buat.isPending) return
     const ringkas = [
       `Produk Shopee ${itemId}, ${mode === 'auto' ? 'GMV Max otomatis' : `manual dengan ${kata.length} kata kunci`}.`,
       `Anggaran ${fmtRp(anggaran)} per hari, mulai hari ini tanpa tanggal akhir.`,
@@ -61,7 +63,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
   const s = saran.data
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onTutup()}>
+    <Dialog open onOpenChange={(o) => !o && !buat.isPending && onTutup()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Buat iklan produk</DialogTitle>
