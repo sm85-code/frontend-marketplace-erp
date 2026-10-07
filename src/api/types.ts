@@ -746,3 +746,47 @@ export interface OpsiMetodePengiriman {
   cabang: { branch_id: number; label: string }[]
 }
 export interface OpsiPengiriman { opsi: OpsiMetodePengiriman[]; aksi?: 'pengiriman' | 'pickup_ulang' }
+
+export interface ReturItem {
+  item_id: string | null
+  model_id: string | null
+  nama: string
+  sku: string | null
+  sku_varian: string | null
+  qty: number | null
+  harga: string | null
+  nominal_refund: string | null
+}
+export interface ReturMarketplace {
+  akun_id: string
+  platform: string
+  nama_toko: string
+  pesanan_id: string | null
+  nomor_retur: string
+  nomor_pesanan: string
+  status: string
+  alasan: string | null
+  alasan_pembeli: string | null
+  alasan_peninjauan: string | null
+  nominal_refund: string | null
+  mata_uang: string | null
+  perlu_pengembalian_barang: boolean | null
+  solusi: number | null
+  dibuat_at: number | null
+  diperbarui_at: number | null
+  tenggat_at: number | null
+  tenggat_kirim_at: number | null
+  tenggat_penjual_at: number | null
+  nomor_resi: string | null
+  kurir: string | null
+  status_negosiasi: string | null
+  status_bukti: string | null
+  status_kompensasi: string | null
+  items: ReturItem[]
+}
+export interface ReturHalaman {
+  items: ReturMarketplace[]
+  halaman: number
+  per_halaman: number
+  ada_lagi: boolean
+}
