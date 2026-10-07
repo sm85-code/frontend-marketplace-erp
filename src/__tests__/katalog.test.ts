@@ -48,6 +48,7 @@ describe('varian per model', () => {
   it('memakai nilai varian sendiri, atau nilai produk bila varian tidak mengaturnya', async () => {
     const { nilaiVarian } = await import('@/lib/katalog')
     const sendiri = nilaiVarian({ ...v, berat_gram: 1250, panjang_cm: 50, lebar_cm: null, tinggi_cm: 10, preorder: true, hari_kirim: 7 }, induk)
+    expect(nilaiVarian({ ...v, berat_gram: 0 }, induk).berat).toEqual({ nilai: 0, ikutProduk: false })
     expect(sendiri.berat).toEqual({ nilai: 1250, ikutProduk: false })
     expect(sendiri.panjang).toEqual({ nilai: 50, ikutProduk: false })
     expect(sendiri.lebar).toEqual({ nilai: 30, ikutProduk: true })

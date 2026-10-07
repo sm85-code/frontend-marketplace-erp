@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FotoItem } from './pesanan/ItemRingkas'
 import DialogPengiriman from './pesanan/DialogPengiriman'
@@ -43,7 +44,7 @@ export default function PesananDetailPage() {
   const [kurir, setKurir] = useState('')
   const [nomorResi, setNomorResi] = useState('')
 
-  const { data: pesanan, isLoading } = useQuery({
+  const { data: pesanan, isLoading, error, refetch } = useQuery({
     queryKey: qk.pesananOne(id!),
     queryFn: () => endpoints.getPesanan(id!),
     enabled: Boolean(id),
@@ -133,6 +134,7 @@ export default function PesananDetailPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
+  if (error) return <QueryError error={error} retry={refetch} />
   if (isLoading || !pesanan) return <Spinner column label="Memuat pesanan…" />
 
   const action = nextActionLabel(pesanan.status)
@@ -387,7 +389,7 @@ export default function PesananDetailPage() {
                 await pengirimanMut.mutateAsync()
                 statusMut.mutate('shipped')
               }}
-              disabled={!kurir || !nomorResi}
+              disabled={pengirimanMut.isPending || statusMut.isPending || !kurir || !nomorResi}
             >
               Kirim
             </Button>

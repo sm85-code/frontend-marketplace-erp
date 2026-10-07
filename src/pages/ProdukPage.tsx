@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -51,7 +52,7 @@ export default function ProdukPage() {
   const [publishing, setPublishing] = useState<Produk | null>(null)
   const [pub, setPub] = useState(publishDefaults({ harga_dasar: '0', stok: 0 }))
 
-  const { data, isLoading } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
+  const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
 
   const createMut = useMutation({
     mutationFn: endpoints.createProduk,
@@ -164,6 +165,7 @@ export default function ProdukPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Produk (SKU Induk)">
         <Button onClick={openCreate}>Tambah Produk</Button>
       </BarHalaman>
@@ -285,7 +287,7 @@ export default function ProdukPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={!form.nama || !form.harga_dasar || !prosesValid(form)}>
+            <Button onClick={onSubmit} disabled={createMut.isPending || updateMut.isPending || !form.nama || !form.harga_dasar || !prosesValid(form)}>
               Simpan
             </Button>
           </DialogFooter>

@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -64,7 +65,7 @@ export default function SettlementPage() {
 
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
-  const { data, isLoading } = useQuery({ queryKey: qk.settlement({}), queryFn: () => endpoints.listSettlement() })
+  const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.settlement({}), queryFn: () => endpoints.listSettlement() })
 
   const createMut = useMutation({
     mutationFn: endpoints.createSettlement,
@@ -103,6 +104,7 @@ export default function SettlementPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Settlement">
         <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
           Catat Manual
@@ -208,7 +210,7 @@ export default function SettlementPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={!form.akun_id || !form.periode_mulai || !form.periode_selesai}>
+            <Button onClick={onSubmit} disabled={createMut.isPending || !form.akun_id || !form.periode_mulai || !form.periode_selesai}>
               Simpan
             </Button>
           </DialogFooter>

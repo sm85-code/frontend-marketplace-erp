@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
@@ -50,7 +51,7 @@ export default function KatalogPage() {
   const f = useFilterDaftar(AWAL)
   const pilih = useTerpilih<KatalogItem>()
   const [detailId, setDetailId] = useState<string | null>(null)
-  const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'list' ? 'list' : 'grid'))
+  const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'grid' ? 'grid' : 'list'))
 
   // Variants are shown as sub-rows under each product (price, weight, size, pre-order per variant). `rinci` is the
   // default for every product; a click on a product flips just that one.
@@ -87,7 +88,7 @@ export default function KatalogPage() {
     halaman: f.halaman,
     per_halaman: PER_HALAMAN,
   }
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, error: queryError, refetch: retryQuery } = useQuery({
     queryKey: qk.katalog(params),
     queryFn: () => endpoints.listKatalog(params),
     placeholderData: (prev) => prev,
@@ -130,6 +131,7 @@ export default function KatalogPage() {
 
   return (
     <div className="space-y-4 pb-24">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web." />
 
       <BarFilter

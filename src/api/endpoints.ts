@@ -212,7 +212,7 @@ export const createGudang = (payload: { kode: string; nama: string }) =>
 export const listStokLedger = (produkId?: string, limit = 100) =>
   api.get<StokLedger[]>('/stok/ledger', { params: { produk_id: produkId, limit } }).then((r) => r.data)
 
-export const adjustStok = (payload: { produk_id: string; qty_delta: number; catatan?: string; gudang_id?: string }) =>
+export const adjustStok = (payload: { produk_id: string; qty_delta: number; expected_stock?: number; catatan?: string; gudang_id?: string }) =>
   api.post<Produk>('/stok/adjust', payload).then((r) => r.data)
 
 export const transferStok = (payload: {

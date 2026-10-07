@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
 import { qk } from '@/api/keys'
@@ -11,7 +12,7 @@ import { labelStatusVarian, labelVarian, namaTier, nilaiVarian, rentangHarga, te
 
 /** Dialog with everything about one catalogue product: all photos, full description, variants, size. */
 export default function DetailProduk({ id, onTutup }: { id: string | null; onTutup: () => void }) {
-  const { data: detail, isLoading } = useQuery({
+  const { data: detail, isLoading, error, refetch } = useQuery({
     queryKey: qk.katalogOne(id ?? ''),
     queryFn: () => endpoints.getKatalog(id as string),
     enabled: !!id,
@@ -23,7 +24,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
         <DialogHeader>
           <DialogTitle>{detail?.nama ?? 'Memuat…'}</DialogTitle>
         </DialogHeader>
-        {isLoading || !detail ? (
+        {error ? <QueryError error={error} retry={refetch} /> : isLoading || !detail ? (
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">

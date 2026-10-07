@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -47,7 +48,7 @@ export default function ListingPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ produk_id: '', akun_id: '', id_eksternal: '', harga_jual: '', stok_listing: '' })
 
-  const { data: listing, isLoading } = useQuery({ queryKey: qk.listing(), queryFn: () => endpoints.listListing() })
+  const { data: listing, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.listing(), queryFn: () => endpoints.listListing() })
   const { data: produkList } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
 
@@ -100,6 +101,7 @@ export default function ListingPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Listing">
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
@@ -197,7 +199,7 @@ export default function ListingPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={!form.produk_id || !form.akun_id || !form.id_eksternal}>
+            <Button onClick={onSubmit} disabled={createMut.isPending || !form.produk_id || !form.akun_id || !form.id_eksternal}>
               Simpan
             </Button>
           </DialogFooter>

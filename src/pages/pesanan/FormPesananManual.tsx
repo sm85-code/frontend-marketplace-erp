@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useAuth } from '@/lib/auth'
+import { isOwnerLevel } from '@/config/roles'
 import { PLATFORM_LABELS } from '@/config/roles'
 
-const ITEM_KOSONG = { nama_produk: '', harga_satuan: '', qty: '1' }
+const ITEM_KOSONG = { produk_id: '', nama_produk: '', harga_satuan: '', qty: '1' }
 const FORM_KOSONG = { platform: 'shopee', id_eksternal: '', akun_id: '', nama_pembeli: '' }
 const TANPA_TOKO = '__tanpa__' // a Select item cannot have an empty value
 
@@ -26,6 +28,8 @@ export default function FormPesananManual({
   akunList: AkunMarketplace[]
 }) {
   const qc = useQueryClient()
+  const { user } = useAuth()
+  const { data: produk } = useQuery({ queryKey: ['produk'], queryFn: endpoints.listProduk, enabled: open && isOwnerLevel(user?.role) })
   const [form, setForm] = useState(FORM_KOSONG)
   const [items, setItems] = useState([{ ...ITEM_KOSONG }])
 
@@ -52,7 +56,7 @@ export default function FormPesananManual({
       nama_pembeli: form.nama_pembeli,
       items: items
         .filter((it) => it.nama_produk && it.harga_satuan)
-        .map((it) => ({ nama_produk: it.nama_produk, harga_satuan: it.harga_satuan, qty: Number(it.qty || 1) })),
+        .map((it) => ({ produk_id: it.produk_id || undefined, nama_produk: it.nama_produk, harga_satuan: it.harga_satuan, qty: Number(it.qty || 1) })),
     })
   }
 
@@ -105,10 +109,22 @@ export default function FormPesananManual({
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Item</legend>
             {items.map((it, i) => (
-              <div key={i} className="grid grid-cols-[2fr_1fr_1fr] gap-2">
+              <div key={i} className="space-y-2 rounded-md border p-2">
+                {produk && <Select value={it.produk_id || '__manual__'} onValueChange={(value) => {
+                  const p = produk.find((p) => p.id === value)
+                  ubahItem(i, { produk_id: p?.id || '', nama_produk: p?.nama || it.nama_produk, harga_satuan: p?.harga_dasar || it.harga_satuan })
+                }}>
+                  <SelectTrigger aria-label={`SKU item ${i + 1}`}><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="__manual__">Item tanpa pelacakan stok</SelectItem>
+                    {produk.map((p) => <SelectItem key={p.id} value={p.id}>{p.sku_induk} · {p.nama}</SelectItem>)}
+                  </SelectContent>
+                </Select>}
+                {!it.produk_id && <p className="text-xs text-muted-foreground">Item ini tidak mengurangi stok ERP.</p>}
+                <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
                 <Input aria-label={`Nama produk item ${i + 1}`} placeholder="Nama produk" value={it.nama_produk} onChange={(e) => ubahItem(i, { nama_produk: e.target.value })} />
                 <Input aria-label={`Harga item ${i + 1}`} type="number" placeholder="Harga" value={it.harga_satuan} onChange={(e) => ubahItem(i, { harga_satuan: e.target.value })} />
                 <Input aria-label={`Jumlah item ${i + 1}`} type="number" placeholder="Qty" value={it.qty} onChange={(e) => ubahItem(i, { qty: e.target.value })} />
+                </div>
               </div>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={() => setItems((prev) => [...prev, { ...ITEM_KOSONG }])}>

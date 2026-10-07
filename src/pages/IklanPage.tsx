@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -48,7 +49,7 @@ export default function IklanPage() {
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const { data: produkList } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
-  const { data, isLoading } = useQuery({ queryKey: qk.campaign({}), queryFn: () => endpoints.listCampaign() })
+  const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.campaign({}), queryFn: () => endpoints.listCampaign() })
 
   const createMut = useMutation({
     mutationFn: endpoints.createCampaign,
@@ -78,6 +79,7 @@ export default function IklanPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Iklan" deskripsi="Performa dan pengelolaan iklan Shopee." />
 
       <Tabs value={tab} onValueChange={(v) => {
@@ -194,7 +196,7 @@ export default function IklanPage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
             </Button>
-            <Button onClick={onSubmit} disabled={!form.akun_id || !form.nama}>
+            <Button onClick={onSubmit} disabled={createMut.isPending || !form.akun_id || !form.nama}>
               Simpan
             </Button>
           </DialogFooter>

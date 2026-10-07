@@ -1,3 +1,4 @@
+import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -43,7 +44,7 @@ export default function AkunPage() {
   const [editing, setEditing] = useState<AkunMarketplace | null>(null)
   const [form, setForm] = useState({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
 
-  const { data: akunList, isLoading } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
+  const { data: akunList, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
 
   const createMut = useMutation({
     mutationFn: endpoints.createAkun,
@@ -197,6 +198,7 @@ export default function AkunPage() {
 
   return (
     <div className="space-y-4">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
 
       <Card>

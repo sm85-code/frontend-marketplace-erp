@@ -73,8 +73,10 @@ export default function DanaShopee() {
       const mulai = Date.now()
       let baru = 0
       let sisa = 0
+      let totalSisa = 0
       const gagal: string[] = []
       for (const [i, t] of tokoShopee.entries()) {
+        sisa = 0
         if (berhenti.current) break
         let putaran = 0
         for (;;) {
@@ -96,8 +98,9 @@ export default function DanaShopee() {
           }
           if (sisa === 0 || berhenti.current || putaran >= MAKS_PUTARAN) break
         }
+        totalSisa += sisa
       }
-      return { baru, sisa, gagal, dihentikan: berhenti.current }
+      return { baru, sisa: totalSisa, gagal, dihentikan: berhenti.current }
     },
     onSuccess: ({ baru, sisa, gagal, dihentikan }) => {
       qc.invalidateQueries({ queryKey: ['settlement-pesanan'] })
