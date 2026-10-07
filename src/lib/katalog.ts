@@ -53,9 +53,10 @@ export const URUTAN_KATALOG = [
 ] as const
 
 /** "20×10×5" or "—" when the shop did not fill the package size. */
-export function ukuranPaket(p: string, l: string, t: string): string {
-  const [pp, ll, tt] = [p, l, t].map((v) => Number(v) || 0)
-  return pp || ll || tt ? `${pp}×${ll}×${tt} cm` : '—'
+export function ukuranPaket(p?: string | null, l?: string | null, t?: string | null): string {
+  const nilai = [p, l, t].map((v) => Number(v))
+  const tersedia = nilai.map((v) => Number.isFinite(v) && v > 0)
+  return tersedia.some(Boolean) ? `${nilai.map((v, i) => tersedia[i] ? v : '—').join('×')} cm` : '—'
 }
 
 /** Weight as the list writes it: kilograms, "—" when empty. */

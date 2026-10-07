@@ -24,6 +24,7 @@ describe('katalog helpers', () => {
   it('formats package size', () => {
     expect(ukuranPaket('20.0', '10.0', '5.0')).toBe('20×10×5 cm')
     expect(ukuranPaket('0', '0', '0')).toBe('—')
+    expect(ukuranPaket('20', null, undefined)).toBe('20×—×— cm')
   })
 })
 
