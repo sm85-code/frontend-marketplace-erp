@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import * as endpoints from '@/api/endpoints'
+import { getApiError } from '@/api/client'
 import type { ReturMarketplace, ReturItem } from '@/api/types'
 import { qk } from '@/api/keys'
 import { BarHalaman, TabelData, type KolomTabel } from '@/components/daftar'
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { labelRetur, nominalRetur, rentangAwalRetur, solusiRetur, validasiRentangRetur, waktuRetur } from '@/lib/retur'
+import { useConfirm } from '@/components/ConfirmProvider'
 
 type Filter = { akunId: string; dari: string; sampai: string; halaman: number }
 const columns: KolomTabel<ReturMarketplace>[] = [
@@ -54,7 +56,7 @@ export default function ReturPage() {
     </BarHalaman>
     <div className="rounded-lg border bg-card p-4 text-sm space-y-2">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>
-      <p className="text-muted-foreground">Rentang maksimal 15 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Permintaan retur tidak otomatis menambah stok atau mencatat dana settlement. Tangani persetujuan, bukti, dan sengketa melalui Seller Centre Shopee pada tahap ini.</p>
+      <p className="text-muted-foreground">Rentang maksimal 15 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti dan sengketa masih melalui Seller Centre.</p>
     </div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     <form className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); apply() }}>
@@ -86,7 +88,22 @@ export default function ReturPage() {
 }
 
 function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: string }; close: () => void }) {
+  const confirm = useConfirm()
+  const qc = useQueryClient()
+  const [confirmed, setConfirmed] = useState(false)
   const detail = useQuery({ queryKey: ['retur', 'detail', selected.akunId, selected.nomor], queryFn: () => endpoints.getRetur(selected.akunId, selected.nomor), retry: false })
+  const approve = useMutation({
+    retry: false,
+    mutationFn: () => endpoints.konfirmasiRetur(selected.akunId, selected.nomor),
+    onSuccess: (result) => {
+      setConfirmed(true)
+      if (result.retur) qc.setQueryData(['retur', 'detail', selected.akunId, selected.nomor], result.retur)
+      qc.invalidateQueries({ queryKey: ['retur'] })
+    },
+  })
+  async function onApprove() {
+    if (await confirm({ title: 'Setujui retur/refund di Shopee?', description: `Retur ${selected.nomor} · ${detail.data?.nama_toko}. Anda menyetujui solusi dan refund yang sedang berlaku di Shopee. Keputusan tidak otomatis menambah stok atau settlement ERP.`, destructive: true })) approve.mutate()
+  }
   const r = detail.data
   const items: KolomTabel<ReturItem>[] = [
     { kunci: 'nama', judul: 'Produk', tetap: true, kelas: 'min-w-[180px] max-w-[280px] break-words', sel: (i) => i.nama || '—' },
@@ -95,7 +112,7 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
     { kunci: 'harga', judul: 'Harga Item', rata: 'kanan', sel: (i) => nominalRetur(i.harga, r?.mata_uang ?? null) },
     { kunci: 'refund', judul: 'Refund Item', rata: 'kanan', sel: (i) => nominalRetur(i.nominal_refund, r?.mata_uang ?? null) },
   ]
-  return <Dialog open onOpenChange={(o) => !o && close()}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+  return <Dialog open onOpenChange={(o) => !o && !approve.isPending && close()}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
     <DialogHeader><DialogTitle>Retur #{selected.nomor}</DialogTitle></DialogHeader>
     {detail.error ? <QueryError error={detail.error} retry={detail.refetch} /> : !r ? <Spinner column label="Memuat detail retur…" /> : <div className="space-y-4 text-sm">
       <div className="flex flex-wrap gap-2"><Badge>{labelRetur(r.status)}</Badge><span>{r.nama_toko}</span><span>{solusiRetur(r.solusi)}</span></div>
@@ -113,6 +130,9 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
       </dl>
       <TabelData label="Barang dalam retur" items={r.items} kolom={items} idDari={(i) => `${i.item_id}:${i.model_id}:${r.items.indexOf(i)}`} namaDari={(i) => i.nama} />
       <p className="text-muted-foreground">Nominal refund item hanya ditampilkan jika diberikan Shopee; harga item bukan pengganti refund. Pastikan barang benar-benar diterima dan diperiksa sebelum mencatat penambahan stok ERP.</p>
+      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || detail.isFetching} onClick={() => { void detail.refetch() }}>Segarkan Detail</Button></div>
+      {approve.error && <p role="alert" className="break-words text-destructive">{getApiError(approve.error)} Segarkan detail sebelum mencoba ulang.</p>}
+      {approve.data && <p role="status" className="break-words">Persetujuan dikonfirmasi Shopee. {approve.data.warnings.join(' ')} {approve.data.request_id && `Request ID: ${approve.data.request_id}`}</p>}
     </div>}
   </DialogContent></Dialog>
 }

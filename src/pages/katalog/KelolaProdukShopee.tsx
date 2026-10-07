@@ -10,6 +10,7 @@ import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }) {
   const { user } = useAuth()
@@ -18,10 +19,11 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
   const [editing, setEditing] = useState(false)
   const [nama, setNama] = useState(detail.nama)
   const [sku, setSku] = useState(detail.sku)
+  const [deskripsi, setDeskripsi] = useState(detail.deskripsi)
   const [warnings, setWarnings] = useState<string[]>([])
   const mutation = useMutation({
     retry: false,
-    mutationFn: (operation: { fields?: { nama?: string; sku?: string }; unlist?: boolean }) => operation.fields
+    mutationFn: (operation: { fields?: { nama?: string; sku?: string; deskripsi?: string }; unlist?: boolean }) => operation.fields
       ? endpoints.editProdukShopee(detail.id, operation.fields)
       : endpoints.statusProdukShopee(detail.id, operation.unlist!),
     onSuccess: (result) => {
@@ -44,12 +46,13 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
   const fields = {
     ...(nama.trim() !== detail.nama ? { nama: nama.trim() } : {}),
     ...(sku !== detail.sku ? { sku } : {}),
+    ...(deskripsi !== detail.deskripsi ? { deskripsi } : {}),
   }
   return (
     <section className="space-y-3 rounded-md border p-3" aria-label="Kelola produk di Shopee">
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" disabled={mutation.isPending} onClick={() => {
-          mutation.reset(); setWarnings([]); setNama(detail.nama); setSku(detail.sku); setEditing(true)
+          mutation.reset(); setWarnings([]); setNama(detail.nama); setSku(detail.sku); setDeskripsi(detail.deskripsi); setEditing(true)
         }}>Edit produk Shopee</Button>
         <Button variant="outline" disabled={mutation.isPending} onClick={status}>
           {detail.status === 'NORMAL' ? 'Nonaktifkan di Shopee' : 'Aktifkan di Shopee'}
@@ -58,8 +61,10 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
       {editing && <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); mutation.mutate({ fields }) }}>
         <div className="space-y-1"><Label htmlFor="shopee-product-name">Nama produk</Label><Input id="shopee-product-name" value={nama} onChange={(e) => setNama(e.target.value)} maxLength={255} required /></div>
         <div className="space-y-1"><Label htmlFor="shopee-product-sku">SKU produk induk</Label><Input id="shopee-product-sku" value={sku} onChange={(e) => setSku(e.target.value)} maxLength={128} /></div>
+        <div className="space-y-1"><Label htmlFor="shopee-product-description">Deskripsi produk Shopee</Label><Textarea id="shopee-product-description" rows={5} value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} /></div>
+        <p className="text-xs text-muted-foreground">Edit teks deskripsi maksimal 3.000 karakter. Deskripsi yang tidak diubah tetap dipertahankan. Shopee memeriksa aturan kategori dan format deskripsi.</p>
         <p className="text-sm text-muted-foreground">SKU ini milik produk induk, bukan SKU setiap varian. Mengosongkannya akan menghapus SKU induk di Shopee.</p>
-        <div className="flex gap-2"><Button type="submit" disabled={mutation.isPending || !nama.trim() || !Object.keys(fields).length}>Simpan ke Shopee</Button><Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => setEditing(false)}>Batal</Button></div>
+        <div className="flex gap-2"><Button type="submit" disabled={mutation.isPending || !nama.trim() || !Object.keys(fields).length || (fields.deskripsi !== undefined && (!deskripsi.trim() || deskripsi.length > 3000))}>Simpan ke Shopee</Button><Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => setEditing(false)}>Batal</Button></div>
       </form>}
       {mutation.isPending && <p role="status">Mengirim perubahan ke Shopee…</p>}
       {mutation.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(mutation.error)}</p>}
