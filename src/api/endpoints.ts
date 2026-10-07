@@ -281,6 +281,9 @@ export const prosesMassalPesanan = (pesananIds: string[], pengaturan?: Record<st
 export const batalkanPesananMarketplace = (id: string, alasan: string) =>
   api.post<Pesanan>(`/pesanan/${id}/batalkan`, { alasan }).then((r) => r.data)
 
+export const tanganiPembatalanPembeli = (id: string, operasi: 'ACCEPT' | 'REJECT') =>
+  api.post<Pesanan>(`/pesanan/${id}/pembatalan-pembeli`, { operasi }).then((r) => r.data)
+
 /** Arrange shipment with explicit settings; omitted settings preserve legacy callers. */
 export const opsiPengirimanPesanan = (id: string) =>
   api.get<OpsiPengiriman>(`/pesanan/${id}/opsi-pengiriman`).then((r) => r.data)
