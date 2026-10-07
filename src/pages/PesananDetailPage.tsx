@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FotoItem } from './pesanan/ItemRingkas'
+import DialogPengiriman from './pesanan/DialogPengiriman'
+import type { PengaturanPengiriman } from '@/api/types'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -33,6 +35,7 @@ export default function PesananDetailPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [kirimDialog, setKirimDialog] = useState(false)
+  const [prosesDialog, setProsesDialog] = useState(false)
   const [batalDialog, setBatalDialog] = useState(false)
   const [alasanBatal, setAlasanBatal] = useState<string>('CUSTOMER_REQUEST')
   const [kurir, setKurir] = useState('')
@@ -64,9 +67,10 @@ export default function PesananDetailPage() {
   })
 
   const prosesMut = useMutation({
-    mutationFn: () => endpoints.prosesPesananMarketplace(id!),
-    onSuccess: () => {
-      toast.success('Pesanan diproses di Shopee. Menunggu kurir pickup.')
+    mutationFn: (pengaturan: PengaturanPengiriman) => endpoints.prosesPesananMarketplace(id!, pengaturan),
+    onSuccess: (hasil) => {
+      toast.success(hasil.metode_pengiriman === 'dropoff'
+        ? 'Pesanan diproses. Serahkan paket ke gerai.' : 'Pesanan diproses. Menunggu penjemputan kurir.')
       qc.invalidateQueries({ queryKey: ['pesanan'] })
     },
     onError: (e) => toast.error(getApiError(e)),
@@ -159,12 +163,8 @@ export default function PesananDetailPage() {
     cetakMut.mutate(tipe)
   }
 
-  async function onProses() {
-    const ok = await confirm({
-      title: 'Proses pesanan di Shopee?',
-      description: 'Pengiriman akan diatur di Shopee (kurir pickup). Ini tidak bisa dibatalkan dari sini.',
-    })
-    if (ok) prosesMut.mutate()
+  function onProses() {
+    setProsesDialog(true)
   }
 
   async function onCancel() {
@@ -317,11 +317,13 @@ export default function PesananDetailPage() {
       {ikutMp && (
         <p className="text-xs text-muted-foreground">
           {pesanan.status === 'to_ship'
-            ? 'Status pesanan ini mengikuti Shopee. Setelah kurir pickup, klik Sinkronkan Status agar menjadi Dikirim.'
+            ? 'Status mengikuti Shopee. Setelah paket diserahkan ke gerai atau dijemput kurir, sinkronkan status untuk memperbarui.'
             : 'Status pesanan ini mengikuti Shopee. Klik Sinkronkan Status untuk memperbarui.'}
         </p>
       )}
 
+      {prosesDialog && <DialogPengiriman pesanan={[pesanan]} onClose={() => setProsesDialog(false)}
+        onConfirm={(_ids, pengaturan) => { setProsesDialog(false); prosesMut.mutate(pengaturan[pesanan.id]) }} />}
       <Dialog open={batalDialog} onOpenChange={setBatalDialog}>
         <DialogContent>
           <DialogHeader>

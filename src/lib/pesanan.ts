@@ -39,8 +39,10 @@ export function sudahDiproses(p: Pick<Pesanan, 'status_marketplace'>): boolean {
 }
 
 /** Status label; a processed to_ship order is waiting for the courier, not "needs processing". */
-export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace'>): string {
-  return p.status === 'to_ship' && sudahDiproses(p) ? 'Menunggu Kurir' : STATUS_LABELS[p.status]
+export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'metode_pengiriman'>): string {
+  if (p.status !== 'to_ship' || !sudahDiproses(p)) return STATUS_LABELS[p.status]
+  return p.metode_pengiriman === 'dropoff' ? 'Menunggu Penyerahan ke Gerai'
+    : p.metode_pengiriman === 'pickup' ? 'Menunggu Penjemputan Kurir' : 'Menunggu Penyerahan'
 }
 
 /** Raw Shopee statuses from which a seller can still cancel (before the courier has the parcel). */
@@ -99,7 +101,7 @@ export function cocokFilterResi(p: Pick<Pesanan, 'status' | 'status_marketplace'
 export const TAHAP_LABELS: Record<TahapPesanan, string> = {
   belum_bayar: 'Belum Bayar',
   perlu_diproses: 'Perlu Diproses',
-  menunggu_kurir: 'Menunggu Kurir',
+  menunggu_kurir: 'Menunggu Penyerahan',
   dikirim: 'Dikirim',
   selesai: 'Selesai',
   dibatalkan: 'Dibatalkan',

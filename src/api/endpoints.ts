@@ -1,4 +1,5 @@
 import api from '@/api/client'
+import type { OpsiPengiriman, PengaturanPengiriman } from '@/api/types'
 import type {
   ResiGabunganHasil,
   SaranAiHasil,
@@ -267,16 +268,21 @@ export const sinkronPesananOtomatis = (paksa = false) =>
   api.post<SinkronPesananOtomatis>('/pesanan/sinkron', null, { params: { paksa } }).then((r) => r.data)
 
 /** At most 25 ids per call; the page sends chunks. */
-export const prosesMassalPesanan = (pesananIds: string[]) =>
-  api.post<ProsesMassalResult>('/pesanan/proses-massal', { pesanan_ids: pesananIds }).then((r) => r.data)
+export const prosesMassalPesanan = (pesananIds: string[], pengaturan?: Record<string, PengaturanPengiriman>) =>
+  api.post<ProsesMassalResult>('/pesanan/proses-massal', {
+    pesanan_ids: pesananIds, ...(pengaturan ? { pengaturan } : {}),
+  }).then((r) => r.data)
 
 /** Cancel on Shopee (only before shipment); reserved stock is released. */
 export const batalkanPesananMarketplace = (id: string, alasan: string) =>
   api.post<Pesanan>(`/pesanan/${id}/batalkan`, { alasan }).then((r) => r.data)
 
-/** Arrange shipment on the marketplace (courier pickup). Only for orders pulled from Shopee. */
-export const prosesPesananMarketplace = (id: string) =>
-  api.post<Pesanan>(`/pesanan/${id}/proses`).then((r) => r.data)
+/** Arrange shipment with explicit settings; omitted settings preserve legacy callers. */
+export const opsiPengirimanPesanan = (id: string) =>
+  api.get<OpsiPengiriman>(`/pesanan/${id}/opsi-pengiriman`).then((r) => r.data)
+
+export const prosesPesananMarketplace = (id: string, pengaturan?: PengaturanPengiriman) =>
+  api.post<Pesanan>(`/pesanan/${id}/proses`, pengaturan).then((r) => r.data)
 
 export type TemplateResi = 'THERMAL_AIR_WAYBILL' | 'NORMAL_AIR_WAYBILL'
 
