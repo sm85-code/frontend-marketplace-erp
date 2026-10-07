@@ -22,6 +22,8 @@ import { PLATFORM_LABELS } from '@/config/roles'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ALASAN_BATAL,
+  adaPembatalanPembeli,
+  bisaDiproses,
   bisaDibatalkan,
   ikutMarketplace,
   labelStatus,
@@ -43,6 +45,7 @@ export default function PesananDetailPage() {
   const [alasanBatal, setAlasanBatal] = useState<string>('CUSTOMER_REQUEST')
   const [kurir, setKurir] = useState('')
   const [nomorResi, setNomorResi] = useState('')
+  const [keputusanTerkirimId, setKeputusanTerkirimId] = useState<string>()
 
   const { data: pesanan, isLoading, error, refetch } = useQuery({
     queryKey: qk.pesananOne(id!),
@@ -88,6 +91,29 @@ export default function PesananDetailPage() {
     },
     onError: (e) => toast.error(getApiError(e)),
   })
+
+  const pembatalanPembeliMut = useMutation({
+    mutationFn: (operasi: 'ACCEPT' | 'REJECT') => endpoints.tanganiPembatalanPembeli(id!, operasi),
+    retry: false,
+    onSuccess: (hasil) => {
+      setKeputusanTerkirimId(hasil.id)
+      qc.setQueryData(qk.pesananOne(hasil.id), hasil)
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      qc.invalidateQueries({ queryKey: ['produk'] })
+      toast.success('Keputusan dikirim ke Shopee. Periksa status dan catatan sinkronisasi.')
+    },
+  })
+
+  async function onPembatalanPembeli(operasi: 'ACCEPT' | 'REJECT') {
+    const ok = await confirm({
+      title: operasi === 'ACCEPT' ? 'Terima pembatalan pembeli?' : 'Tolak pembatalan pembeli?',
+      description: operasi === 'ACCEPT'
+        ? 'Keputusan dikirim ke Shopee. Reservasi stok baru dilepas setelah status Dibatalkan dikonfirmasi Shopee.'
+        : 'Pesanan tetap berjalan sesuai keputusan Shopee. Periksa status sebelum melanjutkan pengiriman.',
+      destructive: operasi === 'ACCEPT',
+    })
+    if (ok) pembatalanPembeliMut.mutate(operasi)
+  }
 
   const syncMut = useMutation({
     mutationFn: (akunId: string) => endpoints.syncPesananAkun(akunId),
@@ -273,6 +299,23 @@ export default function PesananDetailPage() {
         </CardContent>
       </Card>
 
+      {adaPembatalanPembeli(pesanan) && (
+        <Card>
+          <CardHeader><CardTitle>Permintaan pembatalan pembeli</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p>Pembeli meminta pembatalan. Pilih Terima untuk menyetujui atau Tolak untuk melanjutkan pesanan sesuai keputusan Shopee. Pengiriman ditunda selama status ini masih berlaku.</p>
+            <p className="text-muted-foreground">Stok tetap direservasi sampai Shopee mengonfirmasi pembatalan. Setelah mengirim keputusan, sinkronkan status jika belum berubah.</p>
+            {pesanan.catatan_sinkron && <p role="status" className="break-words text-muted-foreground">{pesanan.catatan_sinkron}</p>}
+            {pembatalanPembeliMut.error && <p role="alert" className="break-words text-destructive">{getApiError(pembatalanPembeliMut.error)} Sinkronkan status sebelum mencoba lagi.</p>}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="destructive" disabled={pembatalanPembeliMut.isPending || keputusanTerkirimId === pesanan.id || syncMut.isPending}
+                onClick={() => onPembatalanPembeli('ACCEPT')}>Terima Pembatalan</Button>
+              <Button variant="outline" disabled={pembatalanPembeliMut.isPending || keputusanTerkirimId === pesanan.id || syncMut.isPending}
+                onClick={() => onPembatalanPembeli('REJECT')}>Tolak Pembatalan</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="flex flex-wrap gap-2">
         {!ikutMp && action && (
           <Button onClick={onAction} disabled={statusMut.isPending}>
@@ -289,7 +332,7 @@ export default function PesananDetailPage() {
             Hapus
           </Button>
         )}
-        {ikutMp && pesanan.status === 'to_ship' && !diproses && (
+        {ikutMp && bisaDiproses(pesanan) && (
           <Button onClick={onProses} disabled={prosesMut.isPending}>
             {labelProses(pesanan)}
           </Button>
@@ -313,7 +356,7 @@ export default function PesananDetailPage() {
           </Button>
         )}
         {ikutMp && akunId && !selesai && (
-          <Button variant="outline" onClick={() => syncMut.mutate(akunId)} disabled={syncMut.isPending}>
+          <Button variant="outline" onClick={() => syncMut.mutate(akunId)} disabled={syncMut.isPending || pembatalanPembeliMut.isPending}>
             Sinkronkan Status
           </Button>
         )}

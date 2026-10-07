@@ -40,6 +40,7 @@ export function sudahDiproses(p: Pick<Pesanan, 'status_marketplace'>): boolean {
 
 /** Status label; a processed to_ship order is waiting for the courier, not "needs processing". */
 export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'metode_pengiriman'>): string {
+  if (p.status_marketplace === 'IN_CANCEL') return 'Permintaan Pembatalan Pembeli'
   if (p.status === 'to_ship' && p.status_marketplace === 'RETRY_SHIP') return 'Perlu Jadwal Ulang Pickup'
   if (p.status !== 'to_ship' || !sudahDiproses(p)) return STATUS_LABELS[p.status]
   return p.metode_pengiriman === 'dropoff' ? 'Menunggu Penyerahan ke Gerai'
@@ -57,7 +58,11 @@ export const ALASAN_BATAL = [
 
 /** A pulled order that still needs "arrange shipment" on the marketplace. */
 export function bisaDiproses(p: Pick<Pesanan, 'status' | 'status_marketplace'>): boolean {
-  return ikutMarketplace(p) && p.status === 'to_ship' && !sudahDiproses(p)
+  return ikutMarketplace(p) && p.status === 'to_ship' && ['READY_TO_SHIP', 'RETRY_SHIP'].includes(p.status_marketplace ?? '')
+}
+
+export function adaPembatalanPembeli(p: Pick<Pesanan, 'platform' | 'status' | 'status_marketplace'>): boolean {
+  return p.platform === 'shopee' && p.status_marketplace === 'IN_CANCEL' && (p.status === 'unpaid' || p.status === 'to_ship')
 }
 
 export function labelProses(p: Pick<Pesanan, 'status_marketplace'>): string {

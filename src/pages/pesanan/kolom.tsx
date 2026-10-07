@@ -59,6 +59,9 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
           <Badge variant={varianStatus(p.status)} className="whitespace-nowrap">
             {labelStatus(p)}
           </Badge>
+          {p.status_marketplace === 'IN_CANCEL' && (
+            <div className="teks-kecil mt-0.5 text-muted-foreground">Buka detail untuk menerima atau menolak.</div>
+          )}
           {bisaDicetak(p) && (
             <div className="teks-kecil mt-0.5 text-muted-foreground">
               {sudahDicetak(p) ? `Resi dicetak ${fmtDateTime(p.resi_dicetak_at)}` : 'Resi belum dicetak'}
