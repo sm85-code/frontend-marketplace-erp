@@ -2,6 +2,7 @@ import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -132,7 +133,9 @@ export default function KatalogPage() {
   return (
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web." />
+      <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web.">
+        <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>
+      </BarHalaman>
 
       <BarFilter
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}

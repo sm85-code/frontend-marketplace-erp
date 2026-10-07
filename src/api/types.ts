@@ -790,3 +790,39 @@ export interface ReturHalaman {
   per_halaman: number
   ada_lagi: boolean
 }
+
+export interface MutasiMarketplace {
+  ok: boolean
+  id?: string | null
+  request_id: string | null
+  warnings: string[]
+  gagal: { item_id?: number | string; model_id?: number | string; fail_error?: string; fail_message?: string }[]
+  retur?: ReturMarketplace | null
+}
+export interface PromosiBarang {
+  item_id: string
+  model_id: string | null
+  nama: string
+  nama_varian: string | null
+  harga_asli: string | null
+  harga_promo: string | null
+  stok_promo: number | null
+  batas_pembelian: number | null
+}
+export interface Promosi {
+  id: string
+  nama: string
+  status: string
+  mulai_at: number
+  selesai_at: number
+  barang: PromosiBarang[]
+}
+export interface PromosiHalaman { items: Promosi[]; halaman: number; ada_lagi: boolean }
+export interface PromosiDetail extends Promosi { halaman: number; ada_lagi: boolean }
+export interface PromosiProdukInput {
+  operasi: 'tambah' | 'ubah' | 'hapus'
+  katalog_id: string
+  model_id?: string
+  harga?: string
+  batas_pembelian?: number
+}

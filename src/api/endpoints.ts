@@ -508,7 +508,7 @@ export interface ShopeeProductMutationResult {
   warnings: string[]
   request_id: string | null
 }
-export const editProdukShopee = (id: string, fields: { nama?: string; sku?: string }) =>
+export const editProdukShopee = (id: string, fields: { nama?: string; sku?: string; deskripsi?: string }) =>
   api.patch<ShopeeProductMutationResult>(`/katalog-shopee/${id}/produk`, fields).then((r) => r.data)
 export const statusProdukShopee = (id: string, unlist: boolean) =>
   api.post<ShopeeProductMutationResult>(`/katalog-shopee/${id}/status`, { unlist }).then((r) => r.data)
@@ -526,3 +526,16 @@ export const daftarRetur = (akunId: string, params: { dari: string; sampai: stri
 
 export const getRetur = (akunId: string, nomorRetur: string) =>
   api.get<import('./types').ReturMarketplace>(`/akun/${encodeURIComponent(akunId)}/retur/${encodeURIComponent(nomorRetur)}`).then((r) => r.data)
+
+export const konfirmasiRetur = (akunId: string, nomor: string) =>
+  api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/retur/${encodeURIComponent(nomor)}/konfirmasi`).then((r) => r.data)
+export const daftarPromosi = (akunId: string, status_filter: string, halaman: number) =>
+  api.get<import('./types').PromosiHalaman>(`/akun/${encodeURIComponent(akunId)}/promosi`, { params: { status_filter, halaman } }).then((r) => r.data)
+export const getPromosi = (akunId: string, id: string, halaman = 1) =>
+  api.get<import('./types').PromosiDetail>(`/akun/${encodeURIComponent(akunId)}/promosi/${id}`, { params: { halaman } }).then((r) => r.data)
+export const buatPromosi = (akunId: string, data: { nama: string; mulai_at: number; selesai_at: number }) =>
+  api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/promosi`, data).then((r) => r.data)
+export const akhiriPromosi = (akunId: string, id: string, hapus = false) =>
+  api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/promosi/${id}/akhiri`, null, { params: { hapus } }).then((r) => r.data)
+export const kelolaBarangPromosi = (akunId: string, id: string, data: import('./types').PromosiProdukInput) =>
+  api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/promosi/${id}/barang`, data).then((r) => r.data)
