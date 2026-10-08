@@ -37,7 +37,6 @@ type Message = {
   created_timestamp: number
 }
 type Inbox = {
-  role_unverified_count?: number
   conversations: Conversation[]
   page_result: { more?: boolean; next_cursor?: { next_message_time_nano?: string } }
 }
@@ -247,9 +246,11 @@ export default function ChatPage() {
   return (
     <div className="space-y-4">
       <BarHalaman judul="Chat" deskripsi="Baca dan balas percakapan pembeli dari toko yang diizinkan.">
-        <Button variant="outline" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
-          {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
-        </Button>
+        {shop && (
+          <Button variant="secondary" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
+            {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
+          </Button>
+        )}
       </BarHalaman>
       {syncedAt && (
         <p role="status" className="text-xs text-muted-foreground">
@@ -261,10 +262,10 @@ export default function ChatPage() {
         kartu dari toko percakapan. Gambar berasal dari katalog dan pesanan yang tersinkron. Bila hasil kirim belum pasti, periksa riwayat
         terlebih dahulu.
       </p>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
         <select
           aria-label="Toko Chat"
-          className="rounded-md border p-2"
+          className="w-full min-w-0 rounded-md border p-2"
           value={shop}
           onChange={(e) => {
             setShop(e.target.value)
@@ -281,10 +282,10 @@ export default function ChatPage() {
             </option>
           ))}
         </select>
-        <Button variant="outline" disabled={!shop || syncChat.isPending} onClick={() => syncChat.mutate({ shopId: shop })}>
-          Sinkronisasi toko ini
+        <Button variant="outline" className="w-full" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: shop })}>
+          {shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}
         </Button>
-        {!shop && <span className="text-xs text-muted-foreground">Pilih toko untuk sinkronisasi per toko.</span>}
+
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -334,14 +335,6 @@ export default function ChatPage() {
             {r.shop.nama_toko}: {r.error}
           </p>
         ))}
-      {(inbox.data ?? [])
-        .filter((r) => (r.data?.role_unverified_count ?? 0) > 0)
-        .map((r) => (
-          <p key={r.shop.id} role="status" className="text-xs text-muted-foreground">
-            {r.shop.nama_toko}: {r.data?.role_unverified_count} percakapan disembunyikan karena belum terverifikasi sebagai chat pembeli ke
-            penjual.
-          </p>
-        ))}
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
         <section className={`min-w-0 rounded-xl border p-3 ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
           {inbox.isFetching && <p className="text-sm">Memuat percakapan…</p>}
@@ -356,7 +349,9 @@ export default function ChatPage() {
                 <span className="ml-2 text-xs text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
                   · {c.kota || 'Kota belum tersedia'}
                 </span>
-                {c.unread_count > 0 && <span className="text-primary">({c.unread_count} belum dibaca)</span>}
+                {c.unread_count > 0 && (
+                  <span className="ml-2 inline-block rounded bg-blue-100 px-1.5 text-xs text-blue-900"> {c.unread_count} belum dibaca</span>
+                )}
               </div>
               <div className="text-xs text-muted-foreground">
                 {c.shop.nama_toko} · {time(c.last_message_timestamp)}
@@ -365,20 +360,24 @@ export default function ChatPage() {
             </button>
           ))}
           {!inbox.isFetching && !rows.length && <p>Tidak ada percakapan pada cakupan ini.</p>}
-          {(inbox.data ?? [])
-            .filter((r) => r.data?.page_result.more)
-            .map((r) => (
-              <Button
-                key={r.shop.id}
-                variant="outline"
-                onClick={() => {
-                  setShop(r.shop.id)
-                  setCursor(r.data?.page_result.next_cursor?.next_message_time_nano ?? '')
-                }}
-              >
-                Berikutnya · {r.shop.nama_toko}
-              </Button>
-            ))}
+          <div className="mt-3 grid gap-2" aria-label="Riwayat per toko">
+            {(inbox.data ?? [])
+              .filter((r) => r.data?.page_result.more)
+              .map((r) => (
+                <Button
+                  key={r.shop.id}
+                  variant="secondary"
+                  className="w-full justify-between whitespace-normal text-left h-auto min-h-10 py-2"
+                  onClick={() => {
+                    setShop(r.shop.id)
+                    setCursor(r.data?.page_result.next_cursor?.next_message_time_nano ?? '')
+                  }}
+                >
+                  <span className="min-w-0 break-words">{r.shop.nama_toko}</span>
+                  <span className="shrink-0">Lebih lama →</span>
+                </Button>
+              ))}
+          </div>
           {!!cursor && (
             <Button variant="outline" onClick={() => setCursor('')}>
               Kembali ke terbaru
