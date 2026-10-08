@@ -53,7 +53,7 @@ describe('marketplace-driven orders', () => {
 
   it('labels an arranged to_ship order as waiting for the courier', () => {
     expect(labelStatus({ status: 'to_ship', status_marketplace: 'READY_TO_SHIP' })).toBe('Perlu Diproses')
-    expect(labelStatus({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe('Menunggu Penyerahan')
+    expect(labelStatus({ status: 'to_ship', status_marketplace: 'PROCESSED' })).toBe('Menunggu Penyerahan · Metode belum diketahui')
     expect(labelStatus({ status: 'shipped', status_marketplace: 'SHIPPED' })).toBe('Dikirim')
   })
 })

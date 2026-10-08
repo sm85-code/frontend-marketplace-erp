@@ -43,8 +43,8 @@ export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace' | '
   if (p.status_marketplace === 'IN_CANCEL') return 'Permintaan Pembatalan Pembeli'
   if (p.status === 'to_ship' && p.status_marketplace === 'RETRY_SHIP') return 'Perlu Jadwal Ulang Pickup'
   if (p.status !== 'to_ship' || !sudahDiproses(p)) return STATUS_LABELS[p.status]
-  return p.metode_pengiriman === 'dropoff' ? 'Menunggu Penyerahan ke Gerai'
-    : p.metode_pengiriman === 'pickup' ? 'Menunggu Penjemputan Kurir' : 'Menunggu Penyerahan'
+  return p.metode_pengiriman === 'dropoff' ? 'Drop Off · Menunggu Penyerahan ke Gerai'
+    : p.metode_pengiriman === 'pickup' ? 'Pickup · Menunggu Penjemputan Kurir' : 'Menunggu Penyerahan · Metode belum diketahui'
 }
 
 /** Raw Shopee statuses from which a seller can still cancel (before the courier has the parcel). */
