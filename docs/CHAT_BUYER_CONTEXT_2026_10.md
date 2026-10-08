@@ -11,3 +11,13 @@ Pengiriman memakai kartu native item/order (item_id/order_sn), bukan tautan ERP 
 Verifikasi lokal memakai fixture: desktop1440/HP390, urutan terbaru, lokasi, pilihan bergambar, payload pengiriman produk/pesanan, tombol dari detail, tanpa pengiriman otomatis. Backend memeriksa penolakan lintas toko/pembeli/staff yang tidak ditugaskan, payload native, dan receipt. Tidak ada pesan nyata dikirim. Deployment dan izin Chat produksi belum diverifikasi.
 
 Referensi kontrak: Shopee Seller Chat send_message/get_conversation_list/get_one_conversation/get_message (module109); buyer_user_id pada get_order_detail. Situs Open Platform tidak dapat diakses dari lingkungan ini. Bentuk kontrak dicocokkan dengan sumber SDK EcomPHP/shopee-php Chat.php, easycb/easycb-go model_chat.go, dan JimCurryWang/python-shopee pyshopee2/chat.py. Keberhasilan produksi tetap memerlukan izin aplikasi Shopee yang sesuai.
+
+## Pembaruan daftar percakapan
+
+Sinkronisasi Chat mengembalikan kursor ke halaman terbaru dan mengambil ulang daftar serta percakapan aktif. Permintaan awal memakai timestamp nanodetik saat ini dengan arah older; kursor berikutnya dipertahankan sebagai string tanpa kehilangan presisi. Kontrak arah paging belum diverifikasi terhadap layanan produksi.
+
+Belum dibalas memfilter halaman yang dimuat berdasarkan pengirim pesan terakhir: pembeli, bukan jumlah pesan belum dibaca. Identitas pengirim yang tidak tersedia tidak dianggap otomatis perlu balasan.
+
+Alamat dicocokkan dengan buyer_user_id meski username berubah, tetap dalam toko yang sama. Jika tidak ada alamat tujuan pesanan tersinkron, UI menampilkan Kota belum tersedia; lokasi tidak ditebak.
+
+Pemeriksaan pembaruan: 13 tes workflow backend, 3 tes helper Chat, build/lint frontend, dan alur browser fixture desktop1440/HP390 (urutan, filter, reset kursor sinkronisasi, lokasi). Tidak ada pesan nyata dikirim.

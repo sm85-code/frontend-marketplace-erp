@@ -23,3 +23,14 @@ export function chatTimestamp(value: number | string | undefined): number {
   if (!Number.isFinite(n) || n <= 0) return 0
   return n > 1e15 ? n / 1e6 : n > 1e12 ? n : n * 1000
 }
+
+/** Read status does not determine whether a buyer still needs a reply. */
+export function chatNeedsReply(conversation: {
+  needs_reply?: boolean | null
+  latest_message_from_id?: string | number
+  to_id: string | number
+}): boolean | null {
+  if (typeof conversation.needs_reply === 'boolean') return conversation.needs_reply
+  if (!conversation.latest_message_from_id || !conversation.to_id) return null
+  return String(conversation.latest_message_from_id) === String(conversation.to_id)
+}

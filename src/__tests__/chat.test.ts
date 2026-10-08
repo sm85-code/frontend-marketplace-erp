@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chatTimestamp } from '@/lib/chat'
+import { chatNeedsReply, chatTimestamp } from '@/lib/chat'
 
 describe('chat timestamp order across shops', () => {
   it('compares seconds, milliseconds and nanoseconds on the same scale', () => {
@@ -14,4 +14,12 @@ describe('chat timestamp order across shops', () => {
     expect(chatTimestamp(undefined)).toBe(0)
     expect(chatTimestamp('invalid')).toBe(0)
   })
+})
+
+
+it('unreplied depends on sender identity rather than read status', () => {
+  expect(chatNeedsReply({ to_id: 77, latest_message_from_id: '77' })).toBe(true)
+  expect(chatNeedsReply({ to_id: 77, latest_message_from_id: 123 })).toBe(false)
+  expect(chatNeedsReply({ to_id: 77 })).toBeNull()
+  expect(chatNeedsReply({ to_id: 77, needs_reply: false, latest_message_from_id: 77 })).toBe(false)
 })
