@@ -21,3 +21,11 @@ Belum dibalas memfilter halaman yang dimuat berdasarkan pengirim pesan terakhir:
 Alamat dicocokkan dengan buyer_user_id meski username berubah, tetap dalam toko yang sama. Jika tidak ada alamat tujuan pesanan tersinkron, UI menampilkan Kota belum tersedia; lokasi tidak ditebak.
 
 Pemeriksaan pembaruan: 13 tes workflow backend, 3 tes helper Chat, build/lint frontend, dan alur browser fixture desktop1440/HP390 (urutan, filter, reset kursor sinkronisasi, lokasi). Tidak ada pesan nyata dikirim.
+
+## Konten nonteks dan peran penjual
+
+Percakapan daftar harus memiliki shop_id toko yang diizinkan. Percakapan belanja dari toko lain tidak ditampilkan; akses langsung (riwayat, konteks, balasan dan tandai dibaca) ditolak bila shop_id berbeda. Identitas toko yang tidak diberikan API menghasilkan pesan error, bukan dianggap otomatis milik toko ini. Balasan penjual dan pesan sistem di dalam percakapan pembeli tetap ditampilkan.
+
+Konten teks terstruktur/JSON, teks pada source_content, judul/deskripsi pesan otomatis, produk, nomor pesanan, gambar/stiker, video dan tautan web ditampilkan sebagai data. Produk yang sudah tersinkron tetap memakai kartu katalog; item_id yang belum tersinkron dapat dibuka di Shopee. URL selain HTTP/HTTPS dan URL dengan kredensial ditolak; HTML pesan tidak dieksekusi. Bila API tidak menyediakan konten yang dapat dibaca, UI menyebut keterbatasan tersebut beserta jenis pesan, tanpa mengarang isi.
+
+Verifikasi: regresi backend untuk percakapan penjual versus belanja dan identitas toko hilang; helper frontend untuk payload nonteks dan URL berbahaya; browser fixture desktop1440/HP390 untuk keterbacaan pesan otomatis/produk/gambar dan HTML tetap inert. Tidak ada pesan nyata dikirim. Izin API dan deployment produksi belum diverifikasi.
