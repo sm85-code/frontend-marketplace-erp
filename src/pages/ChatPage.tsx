@@ -341,7 +341,7 @@ export default function ChatPage() {
           {rows.map((c) => (
             <button
               key={`${c.shop.id}:${c.conversation_id}`}
-              className="mb-2 w-full rounded-lg border border-blue-200 bg-white p-3 text-left shadow-sm hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-blue-600 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
+              className="mb-2 w-full rounded-lg border border-primary/30 bg-card p-3 text-left shadow-sm hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => open(c, c.shop.id)}
             >
               <div className="font-medium">
@@ -350,7 +350,7 @@ export default function ChatPage() {
                   · {c.kota || 'Kota belum tersedia'}
                 </span>
                 {c.unread_count > 0 && (
-                  <span className="ml-2 inline-block rounded bg-blue-100 px-1.5 text-xs text-blue-900"> {c.unread_count} belum dibaca</span>
+                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground"> {c.unread_count} belum dibaca</span>
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
