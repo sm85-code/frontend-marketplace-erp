@@ -10,14 +10,14 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground shadow-soft hover:brightness-90',
         outline:
-          'border-blue-700 bg-blue-700 text-white shadow-sm hover:bg-blue-800 dark:border-blue-400 dark:bg-blue-600 dark:hover:bg-blue-500',
+          'border-primary bg-primary text-primary-foreground shadow-sm hover:brightness-90',
         secondary:
-          'border-slate-300 bg-slate-200 text-slate-950 shadow-sm hover:bg-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600',
+          'border-primary/30 bg-primary/20 text-foreground shadow-sm hover:bg-primary/30',
         ghost:
-          'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700',
+          'border-primary/25 bg-primary/10 text-foreground hover:bg-primary/20',
         destructive:
           'bg-destructive/10 text-[color-mix(in_oklab,var(--destructive)_70%,black)] hover:bg-destructive/20 dark:text-[color-mix(in_oklab,var(--destructive)_65%,white)]',
-        link: 'border-blue-200 bg-blue-50 text-blue-800 underline underline-offset-4 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-900',
+        link: 'border-primary/30 bg-primary/15 text-foreground underline underline-offset-4 hover:bg-primary/25',
       },
       size: {
         default: 'h-9 px-3',
