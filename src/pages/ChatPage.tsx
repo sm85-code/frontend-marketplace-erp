@@ -36,7 +36,11 @@ type Message = {
   message_type: string
   created_timestamp: number
 }
-type Inbox = { conversations: Conversation[]; page_result: { more?: boolean; next_cursor?: { next_message_time_nano?: string } } }
+type Inbox = {
+  role_unverified_count?: number
+  conversations: Conversation[]
+  page_result: { more?: boolean; next_cursor?: { next_message_time_nano?: string } }
+}
 type History = { conversation: Conversation; messages: Message[]; page_result: { next_offset?: string } }
 type Delivery = { status: 'terkirim' | 'gagal' | 'belum_pasti'; error?: string; message?: Message }
 function time(value: number | string) {
@@ -202,11 +206,15 @@ export default function ChatPage() {
     retry: false,
   })
   const syncChat = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ shopId }: { shopId: string }) => {
+      setShop(shopId)
+      if (shopId && threadShop !== shopId) setSelected(null)
       setCursor('')
       setOffset('')
       setOlder([])
-      await qc.invalidateQueries({ queryKey: ['chat'] })
+      await qc.invalidateQueries({
+        predicate: (query) => query.queryKey[0] === 'chat' && (!shopId || query.queryKey[2] === shopId),
+      })
     },
     onSuccess: () => setSyncedAt(new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })),
   })
@@ -239,8 +247,8 @@ export default function ChatPage() {
   return (
     <div className="space-y-4">
       <BarHalaman judul="Chat" deskripsi="Baca dan balas percakapan pembeli dari toko yang diizinkan.">
-        <Button variant="outline" disabled={syncChat.isPending} onClick={() => syncChat.mutate()}>
-          {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi Chat'}
+        <Button variant="outline" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
+          {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
         </Button>
       </BarHalaman>
       {syncedAt && (
@@ -273,6 +281,10 @@ export default function ChatPage() {
             </option>
           ))}
         </select>
+        <Button variant="outline" disabled={!shop || syncChat.isPending} onClick={() => syncChat.mutate({ shopId: shop })}>
+          Sinkronisasi toko ini
+        </Button>
+        {!shop && <span className="text-xs text-muted-foreground">Pilih toko untuk sinkronisasi per toko.</span>}
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -322,13 +334,21 @@ export default function ChatPage() {
             {r.shop.nama_toko}: {r.error}
           </p>
         ))}
+      {(inbox.data ?? [])
+        .filter((r) => (r.data?.role_unverified_count ?? 0) > 0)
+        .map((r) => (
+          <p key={r.shop.id} role="status" className="text-xs text-muted-foreground">
+            {r.shop.nama_toko}: {r.data?.role_unverified_count} percakapan disembunyikan karena belum terverifikasi sebagai chat pembeli ke
+            penjual.
+          </p>
+        ))}
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
         <section className={`min-w-0 rounded-xl border p-3 ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
           {inbox.isFetching && <p className="text-sm">Memuat percakapan…</p>}
           {rows.map((c) => (
             <button
               key={`${c.shop.id}:${c.conversation_id}`}
-              className="mb-2 w-full rounded-lg border p-3 text-left hover:bg-muted"
+              className="mb-2 w-full rounded-lg border border-blue-200 bg-white p-3 text-left shadow-sm hover:bg-blue-50 focus-visible:ring-2 focus-visible:ring-blue-600 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
               onClick={() => open(c, c.shop.id)}
             >
               <div className="font-medium">

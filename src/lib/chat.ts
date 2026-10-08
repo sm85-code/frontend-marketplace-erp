@@ -63,6 +63,8 @@ export function chatPresentation(value: unknown, type = '', shopId?: string): Ch
     sticker: 'Stiker',
     video: 'Video',
     system: 'Pesan sistem',
+    notification: 'Notifikasi Shopee',
+    'rich-text': 'Pesan terstruktur',
     auto_reply: 'Balasan otomatis',
     template: 'Pesan otomatis',
     file: 'Lampiran',
@@ -70,7 +72,23 @@ export function chatPresentation(value: unknown, type = '', shopId?: string): Ch
   }
   const result: ChatPresentation = { text: [], label: labels[type] || 'Pesan' }
   const records: Record<string, unknown>[] = []
-  const textKeys = new Set(['text', 'message', 'title', 'description', 'name', 'item_name', 'product_name', 'label', 'caption', 'body'])
+  const textKeys = new Set([
+    'text',
+    'message',
+    'title',
+    'description',
+    'name',
+    'item_name',
+    'product_name',
+    'label',
+    'caption',
+    'body',
+    'notification_for_sender',
+    'notification_for_receiver',
+    'fallback_text',
+    'plain_text',
+    'insert',
+  ])
   function read(data: unknown, depth = 0, key = '') {
     if (depth > 6 || records.length > 100) return
     if (typeof data === 'string') {

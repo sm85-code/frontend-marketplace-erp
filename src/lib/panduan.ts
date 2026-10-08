@@ -12,7 +12,7 @@ export const panduan: Panduan[] = [
     langkah: [
       'Percakapan diurutkan terbaru. Pilih toko; lokasi di samping username berasal dari alamat tujuan pesanan tersinkron.',
       'Buka percakapan, baca pesan lalu ketik balasan. Klik Kirim balasan sekali; tunggu konfirmasi terkirim.',
-      'Gunakan Sinkronisasi Chat untuk mengambil daftar terbaru dan memperbarui percakapan aktif. Pesan lebih lama membuka riwayat; Tandai sudah dibaca mencatat pesan telah dibaca.',
+      'Gunakan Sinkronisasi seluruh toko untuk daftar terbaru semua toko. Pilih satu toko lalu Sinkronisasi toko ini untuk memperbarui toko tersebut. Pesan lebih lama membuka riwayat; Tandai sudah dibaca mencatat pesan telah dibaca.',
       'Buka Lampirkan produk / pesanan, pilih kartu bergambar, lalu Kirim lampiran. Produk sesuai toko; pesanan sesuai pembeli. Teks dikirim terpisah.',
       'Dari detail pesanan, Hubungi Pembeli membuka balasan tanpa mengirim otomatis. Jika hasil kirim belum pasti, periksa riwayat dahulu.',
     ],
