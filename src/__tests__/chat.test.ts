@@ -54,3 +54,8 @@ describe('Shopee nontext content', () => {
     expect(result.text[0]).toContain('belum menyertakan konten')
   })
 })
+
+it('reads notification text and rich-text inserts without executing markup', () => {
+  expect(chatPresentation({ notification_for_receiver: 'Percakapan ditutup' }, 'notification').text).toEqual(['Percakapan ditutup'])
+  expect(chatPresentation({ ops: [{ insert: 'Produk tersedia' }, { insert: '\n' }] }, 'rich-text').text).toEqual(['Produk tersedia'])
+})
