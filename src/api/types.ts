@@ -828,4 +828,5 @@ export interface PromosiProdukInput {
   model_id?: string
   harga?: string
   batas_pembelian?: number
+  stok_promo?: number
 }
