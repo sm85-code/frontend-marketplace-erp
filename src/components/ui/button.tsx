@@ -17,7 +17,7 @@ const buttonVariants = cva(
           'border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700',
         destructive:
           'bg-destructive/10 text-[color-mix(in_oklab,var(--destructive)_70%,black)] hover:bg-destructive/20 dark:text-[color-mix(in_oklab,var(--destructive)_65%,white)]',
-        link: 'text-primary underline-offset-4 hover:underline',
+        link: 'border-blue-200 bg-blue-50 text-blue-800 underline underline-offset-4 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-200 dark:hover:bg-blue-900',
       },
       size: {
         default: 'h-9 px-3',
