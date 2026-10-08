@@ -218,7 +218,7 @@ export default function KatalogPage() {
         <div className="rounded-lg border p-8 text-center text-muted-foreground">
           {jumlahSemuaStatus > 0
             ? 'Tidak ada produk yang cocok dengan filter ini.'
-            : 'Katalog masih kosong. Buka menu Toko, lalu klik "Sinkronisasi Produk" pada toko Shopee.'}
+            : 'Katalog masih kosong. Klik Sinkronisasi pada halaman ini untuk mengambil produk toko yang diizinkan.'}
         </div>
       ) : tampilan === 'list' ? (
         <TabelData

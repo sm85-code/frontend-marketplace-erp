@@ -8,12 +8,12 @@ describe('filterNavForUser', () => {
 
   it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNavForUser({ role: 'admin' }).length).toBe(NAV.length)
-    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !['/iklan', '/settlement'].includes(to)))
+    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !['/iklan', '/settlement', '/toko', '/staff'].includes(to)))
   })
 
   it('staff only gets the shared pages, in workflow order', () => {
     const paths = filterNavForUser({ role: 'staff' }).map((n) => n.to)
-    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/toko', '/profile'])
+    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/profile'])
   })
 })
 

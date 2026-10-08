@@ -199,7 +199,7 @@ export default function AkunPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
+      <BarHalaman judul="Kelola Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
 
       <Card>
         <CardHeader>

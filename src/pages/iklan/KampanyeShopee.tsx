@@ -138,7 +138,7 @@ export default function KampanyeShopee() {
           </Button>
         </div>
 
-        {toko.length === 0 && <p className="rounded-lg border p-6 text-center text-muted-foreground">Belum ada toko Shopee yang terhubung. Hubungkan di menu Toko.</p>}
+        {toko.length === 0 && <p className="rounded-lg border p-6 text-center text-muted-foreground">Belum ada toko Shopee yang terhubung. Hubungkan di menu Kelola Toko.</p>}
         {isLoading && <Spinner column label="Memuat kampanye dari Shopee…" />}
         {error && (
           <div role="alert" className="space-y-2 rounded-lg border border-destructive/40 p-4 text-sm">

@@ -144,7 +144,7 @@ export default function StaffPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Staff">
+      <BarHalaman judul="Kelola Pengguna">
         <Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko
           </Button>
