@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { qk } from '@/api/keys'
 import { useState } from 'react'
-import { chatTimestamp, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
+import { chatNeedsReply, chatTimestamp, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import AttachmentPicker, { ChatCardView } from './chat/AttachmentPicker'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api, { fmtDateTime, getApiError } from '@/api/client'
@@ -19,6 +19,8 @@ type Conversation = {
   to_name: string
   to_id: number
   unread_count: number
+  needs_reply?: boolean | null
+  latest_message_from_id?: number | string
   latest_message_content: unknown
   last_message_timestamp: number
 }
@@ -39,8 +41,8 @@ function content(value: unknown): string {
   if (value && typeof value === 'object' && 'text' in value) return String(value.text ?? '')
   return 'Pesan nonteks — buka aplikasi Shopee untuk melihat konten lengkap.'
 }
-function time(value: number) {
-  if (!Number.isFinite(value) || !value) return '—'
+function time(value: number | string) {
+  if (!chatTimestamp(value)) return '—'
   const date = new Date(chatTimestamp(value))
   return Number.isFinite(date.getTime()) ? fmtDateTime(date.toISOString()) : '—'
 }
@@ -56,6 +58,8 @@ export default function ChatPage() {
   const [shopOverride, setShop] = useState('')
   const [threadShopOverride, setThreadShop] = useState('')
   const [unread, setUnread] = useState(false)
+  const [unreplied, setUnreplied] = useState(false)
+  const [syncedAt, setSyncedAt] = useState('')
   const [search, setSearch] = useState('')
   const [cursor, setCursor] = useState('')
   const [selectedOverride, setSelected] = useState<Conversation | null>(null)
@@ -199,8 +203,18 @@ export default function ChatPage() {
     },
     retry: false,
   })
+  const syncChat = useMutation({
+    mutationFn: async () => {
+      setCursor('')
+      setOffset('')
+      setOlder([])
+      await qc.invalidateQueries({ queryKey: ['chat'] })
+    },
+    onSuccess: () => setSyncedAt(new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })),
+  })
   const rows = (inbox.data ?? [])
     .flatMap((result) => (result.data?.conversations ?? []).map((c) => ({ ...c, shop: result.shop })))
+    .filter((c) => !unreplied || chatNeedsReply(c) === true)
     .filter((c) => !search || (c.to_name || '').toLowerCase().includes(search.toLowerCase()))
     .sort(
       (a, b) =>
@@ -227,17 +241,15 @@ export default function ChatPage() {
   return (
     <div className="space-y-4">
       <BarHalaman judul="Chat" deskripsi="Baca dan balas percakapan pembeli dari toko yang diizinkan.">
-        <Button
-          variant="outline"
-          onClick={() => {
-            setOffset('')
-            setOlder([])
-            qc.invalidateQueries({ queryKey: ['chat'] })
-          }}
-        >
-          Segarkan
+        <Button variant="outline" disabled={syncChat.isPending} onClick={() => syncChat.mutate()}>
+          {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi Chat'}
         </Button>
       </BarHalaman>
+      {syncedAt && (
+        <p role="status" className="text-xs text-muted-foreground">
+          Pemeriksaan data terbaru selesai {syncedAt} WIB. Kendala tiap toko ditampilkan di bawah.
+        </p>
+      )}
       <p className="rounded-xl border p-3 text-sm text-muted-foreground">
         Pilih percakapan, baca pesan, lalu ketik balasan. Kirim hanya atas tindakan Anda. Gunakan Lampirkan produk / pesanan untuk mengirim
         kartu dari toko percakapan. Gambar berasal dari katalog dan pesanan yang tersinkron. Bila hasil kirim belum pasti, periksa riwayat
@@ -274,6 +286,17 @@ export default function ChatPage() {
           />
           Belum dibaca
         </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={unreplied}
+            onChange={(e) => {
+              setUnreplied(e.target.checked)
+              setCursor('')
+            }}
+          />
+          Belum dibalas
+        </label>
         <Input
           aria-label="Cari pembeli"
           placeholder="Cari pembeli pada halaman ini"
@@ -283,8 +306,14 @@ export default function ChatPage() {
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        Percakapan diurutkan dari pesan terbaru. Kota/kabupaten memakai alamat tujuan pesanan terbaru yang tersinkron.
+        Percakapan diurutkan dari pesan terbaru. Kota/kabupaten memakai alamat tujuan pesanan yang tersinkron. Jika tidak tersedia, ditandai
+        di samping username.
       </p>
+      {unreplied && (
+        <p className="text-xs text-muted-foreground">
+          Belum dibalas: pesan terakhir berasal dari pembeli pada halaman yang dimuat. Gunakan Berikutnya untuk menelusuri riwayat.
+        </p>
+      )}
       {orderStart.isFetching && <p role="status">Menyiapkan percakapan pembeli…</p>}
       {orderStart.error && <QueryError error={orderStart.error} retry={orderStart.refetch} />}
       {!available.length && <p>Belum ada toko Shopee terhubung yang dapat Anda akses.</p>}
@@ -306,11 +335,9 @@ export default function ChatPage() {
             >
               <div className="font-medium">
                 {c.to_name || 'Pembeli'}
-                {c.kota && (
-                  <span className="ml-2 text-xs text-muted-foreground" title="Alamat tujuan pesanan terbaru">
-                    · {c.kota}
-                  </span>
-                )}{' '}
+                <span className="ml-2 text-xs text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
+                  · {c.kota || 'Kota belum tersedia'}
+                </span>
                 {c.unread_count > 0 && <span className="text-primary">({c.unread_count} belum dibaca)</span>}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -358,11 +385,9 @@ export default function ChatPage() {
                 </Button>
                 <h2 className="font-medium">
                   {selected.to_name}
-                  {city && (
-                    <span className="ml-2 text-sm text-muted-foreground" title="Alamat tujuan pesanan terbaru">
-                      · {city}
-                    </span>
-                  )}{' '}
+                  <span className="ml-2 text-sm text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
+                    · {city || 'Kota belum tersedia'}
+                  </span>
                   · {active?.nama_toko}
                 </h2>
               </div>
