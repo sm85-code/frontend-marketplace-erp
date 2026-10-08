@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useUrutLokal, type Urut } from '@/lib/urut'
-import TabelData, { type KolomTabel } from './TabelData'
+import TabelData, { type KolomTabel, type PilihanTabel } from './TabelData'
 
 /**
  * A table whose rows are all loaded already: sorting happens in the browser. Give a column a `nilai`
@@ -20,6 +20,7 @@ export default function TabelLokal<T>({
   namaDari: (item: T) => string
   /** First sort, e.g. { kunci: 'omzet', arah: 'desc' }. */
   urutAwal?: Urut | null
+  pilihan?: PilihanTabel<T>
   aksi?: (item: T) => ReactNode
   judulAksi?: string
   minWidth?: number

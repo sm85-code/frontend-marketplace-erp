@@ -7,7 +7,7 @@ const normalizedBackendUrl = String(BACKEND_URL).replace(/\/+$/, '').replace(/\/
 export const API = `${normalizedBackendUrl}/api/marketplace-erp`
 
 /** Axios client — HttpOnly cookie auth (marketplace_erp_token, withCredentials). */
-const api = axios.create({ baseURL: API, withCredentials: true })
+const api = axios.create({ baseURL: API, withCredentials: true, timeout: 60_000 })
 
 const PUBLIC_PATHS = ['/login']
 
@@ -43,15 +43,24 @@ export function getApiError(
 }
 
 export function fmtRp(n: string | number | null | undefined): string {
-  const v = typeof n === 'string' ? Number(n) : (n ?? 0)
-  if (Number.isNaN(v)) return 'Rp 0'
-  return 'Rp ' + Math.round(v).toLocaleString('id-ID')
+  return fmtMoney(n, 'IDR')
+}
+
+export function fmtMoney(n: string | number | null | undefined, currency?: string): string {
+  if (n == null || n === '') return '—'
+  const value = Number(n)
+  if (!Number.isFinite(value)) return '—'
+  const number = value.toLocaleString('id-ID', { maximumFractionDigits: 2 })
+  if (!currency) return number
+  if (currency === 'IDR') return 'Rp ' + number
+  return `${currency} ${number}`
 }
 
 export function fmtDate(s: string | null | undefined): string {
   if (!s) return '-'
   try {
     return new Date(s).toLocaleDateString('id-ID', {
+      timeZone: 'Asia/Jakarta',
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -63,13 +72,14 @@ export function fmtDate(s: string | null | undefined): string {
 
 export function fmtTime(s: string | null | undefined): string {
   if (!s) return '—'
-  return new Date(s).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':')
+  return new Date(s).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).replace('.', ':')
 }
 
 export function fmtDateTime(s: string | null | undefined): string {
   if (!s) return '-'
   try {
     return new Date(s).toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
       day: '2-digit',
       month: 'short',
       year: 'numeric',

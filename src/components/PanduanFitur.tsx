@@ -10,7 +10,7 @@ export default function PanduanFitur({ path }: { path: string }) {
         Petunjuk {guide.judul}
         <span className="ml-auto text-xs text-muted-foreground">Buka / tutup</span>
       </summary>
-      <div className="space-y-3 border-t px-4 py-3">
+      <div className="space-y-3 border-t px-4 py-3 text-justify leading-relaxed">
         <p>{guide.tujuan}</p>
         <ol className="list-decimal space-y-2 pl-5">
           {guide.langkah.map((step) => (

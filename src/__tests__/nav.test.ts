@@ -13,7 +13,7 @@ describe('filterNavForUser', () => {
 
   it('staff only gets the shared pages, in workflow order', () => {
     const paths = filterNavForUser({ role: 'staff' }).map((n) => n.to)
-    expect(paths).toEqual(['/dashboard', '/pesanan', '/toko', '/profile'])
+    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/toko', '/profile'])
   })
 })
 
@@ -25,7 +25,7 @@ describe('menu order follows the daily workflow', () => {
   it('groups the admin menu as agreed (Toko lives under Pengaturan, Iklan is admin-only)', () => {
     const peta = Object.fromEntries(kelompokNav(filterNavForUser({ role: 'admin' })).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
-      harian: ['/dashboard', '/pesanan'],
+      harian: ['/dashboard', '/pesanan', '/chat'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       keuangan: ['/settlement', '/iklan'],
       pengaturan: ['/toko', '/staff', '/profile'],

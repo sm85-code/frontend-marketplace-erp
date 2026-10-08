@@ -7,6 +7,17 @@ export interface Panduan {
 }
 export const panduan: Panduan[] = [
   {
+    path: '/chat', judul: 'Chat Pembeli',
+    tujuan: 'Baca dan balas pesan pembeli tanpa berpindah ke toko lain.',
+    langkah: [
+      'Pilih seluruh toko atau satu toko; filter Belum dibaca dan pencarian membantu menemukan percakapan.',
+      'Buka percakapan, baca pesan lalu ketik balasan. Klik Kirim balasan sekali; tunggu konfirmasi terkirim.',
+      'Gunakan Segarkan untuk pesan terbaru, Pesan lebih lama untuk riwayat, dan Tandai sudah dibaca setelah membaca.',
+      'Jika hasil kirim belum pasti, segarkan dan periksa riwayat terlebih dahulu. Pesan nonteks dapat dilihat di aplikasi Shopee.',
+    ],
+    dampak: 'Kirim balasan mengirim pesan nyata ke pembeli; Tandai sudah dibaca memperbarui status baca. Izin API yang ditolak ditampilkan sebagai error toko terkait.',
+  },
+  {
     path: '/pesanan/retur',
     judul: 'Retur & Refund',
     tujuan: 'Tangani pengembalian berdasarkan status, solusi dan tenggat dari marketplace.',
@@ -34,6 +45,7 @@ export const panduan: Panduan[] = [
     tujuan: 'Kelola pesanan lintas toko berdasarkan status dan prioritas pengiriman.',
     langkah: [
       'Pilih toko/status, sinkronkan bila perlu, lalu periksa tanggal dan resi.',
+      'Segarkan memperbarui tabel ERP. Gunakan Sinkronisasi untuk satu item/pilihan, satu toko, atau seluruh toko; antrean bisa dijeda dan dilanjutkan.',
       'Centang pesanan yang siap, pilih Proses dan tentukan metode pengiriman. Periksa hasil per pesanan; jangan mengulang pesanan yang sudah berhasil.',
       'Gunakan Cetak Resi untuk pengiriman terkonfirmasi. Retur & Refund mempunyai halaman penanganan tersendiri.',
     ],

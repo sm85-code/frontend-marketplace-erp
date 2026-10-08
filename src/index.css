@@ -674,8 +674,12 @@ h4,
 .erp-content .bar-halaman { margin-bottom: 1rem; align-items: flex-start; }
 .erp-content .bar-halaman h1, .erp-content .page-h1 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); line-height: 1.35; }
 .erp-content .bar-halaman p { margin-top: .25rem; max-width: 70ch; }
-.erp-content input, .erp-content select, .erp-content textarea { min-height: 2.5rem; }
+.erp-content input:not([type="checkbox"]):not([type="radio"]), .erp-content select, .erp-content textarea { min-height: 2.5rem; }
 @media (max-width: 639px) {
-  .erp-content button { min-height: 2.5rem; }
+  .erp-content button:not([data-slot="checkbox"]):not([role="checkbox"]) { min-height: 2.5rem; }
   .erp-content .bar-halaman { gap: .75rem; }
 }
+
+[data-slot="dialog-content"] p.whitespace-pre-wrap { text-align: justify; overflow-wrap: anywhere; line-height: 1.65; }
+.erp-content input[type="checkbox"], .erp-content input[type="radio"] { width: 1rem; height: 1rem; min-height: 1rem; flex-shrink: 0; }
+.erp-content .bar-halaman p, .erp-content p.whitespace-pre-wrap { text-align: justify; line-height: 1.6; }

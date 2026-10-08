@@ -1,0 +1,30 @@
+[
+  {
+    "width": 390,
+    "checkbox": "16x16",
+    "reprint": true,
+    "staleSelection": false,
+    "buyerMessage": true,
+    "targetedSync": true,
+    "dialog": {
+      "client": 364,
+      "scroll": 364,
+      "align": "justify"
+    },
+    "chatSendOnce": true
+  },
+  {
+    "width": 1440,
+    "checkbox": "16x16",
+    "reprint": true,
+    "staleSelection": false,
+    "buyerMessage": true,
+    "targetedSync": true,
+    "dialog": {
+      "client": 894,
+      "scroll": 894,
+      "align": "justify"
+    },
+    "chatSendOnce": true
+  }
+]

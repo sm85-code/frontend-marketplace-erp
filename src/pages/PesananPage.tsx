@@ -1,3 +1,4 @@
+import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -48,7 +49,6 @@ export default function PesananPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
-  const pilih = useTerpilih<Pesanan>()
   const [formBuka, setFormBuka] = useState(false)
   const [pengiriman, setPengiriman] = useState<{ pesanan: Pesanan[]; cetak: boolean } | null>(null)
 
@@ -69,6 +69,8 @@ export default function PesananPage() {
     placeholderData: (prev) => prev,
   })
 
+  const pilih = useTerpilih<Pesanan>(daftar?.items ?? [])
+
   // Opening or refreshing this page pulls fresh orders from Shopee in the background (the server
   // throttles each shop to once a minute); the page then keeps asking every minute while visible.
   const sinkron = useQuery({
@@ -87,15 +89,8 @@ export default function PesananPage() {
   }, [sinkronData, sinkron.dataUpdatedAt, qc])
 
   const segarkanMut = useMutation({
-    mutationFn: () => endpoints.sinkronPesananOtomatis(true),
-    onMutate: (): Progres => mulaiProgres('Menyegarkan pesanan dari semua toko Shopee'),
-    onSuccess: (data, _v, progres) => {
-      if (!data.aktif) progres.sebagian('Sinkron Shopee belum diaktifkan di server.')
-      else progres.selesai(`Disegarkan — ${data.jumlah_baru} baru, ${data.jumlah_diperbarui} diperbarui`)
-      qc.invalidateQueries({ queryKey: ['pesanan'] })
-      qc.invalidateQueries({ queryKey: ['pesanan-sinkron'] })
-    },
-    onError: (e, _v, progres) => progres?.gagal(getApiError(e)),
+    mutationFn: () => qc.invalidateQueries({ queryKey: ['pesanan'] }),
+    onError: (e) => toast.error(getApiError(e)),
   })
 
   const prosesMassalMut = useMutation({
@@ -197,9 +192,9 @@ export default function PesananPage() {
 
   // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
   const items = daftar?.items ?? []
-  const bisaDipilih = (p: Pesanan) => bisaDiproses(p) || bisaDicetak(p)
-  // "Pilih semua" skips labels that were already printed (reprinting is a deliberate, per-order choice).
-  const bisaDipilihSemua = items.filter((p) => bisaDipilih(p) && !sudahDicetak(p))
+  const bisaDipilih = (_p: Pesanan) => true
+  // Printed labels remain selectable; the batch action confirms reprinting.
+  const bisaDipilihSemua = items.filter((p) => bisaDipilih(p))
   const dipilih = pilih.daftar.filter(bisaDipilih)
   const idProses = dipilih.filter(bisaDiproses).map((p) => p.id)
   const dicetak = dipilih.filter(bisaDicetak)
@@ -252,6 +247,7 @@ export default function PesananPage() {
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
+        <Sinkronisasi jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
         <Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button>
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
           Segarkan

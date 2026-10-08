@@ -1,3 +1,4 @@
+import api from '@/api/client'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FotoItem } from './pesanan/ItemRingkas'
@@ -8,7 +9,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
-import { fmtDateTime, fmtRp, getApiError } from '@/api/client'
+import { fmtDateTime, fmtMoney, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import { useConfirm } from '@/components/ConfirmProvider'
 import Spinner from '@/components/Spinner'
@@ -116,7 +117,12 @@ export default function PesananDetailPage() {
   }
 
   const syncMut = useMutation({
-    mutationFn: (akunId: string) => endpoints.syncPesananAkun(akunId),
+    mutationFn: async (_akunId: string) => {
+      let job = (await api.post('/sinkronisasi', { jenis: 'pesanan', ids: [id] })).data
+      while (job.tersisa > 0) job = (await api.post(`/sinkronisasi/${job.id}/lanjut`)).data
+      if (job.gagal.length) throw new Error(job.gagal.map((g: { pesan: string }) => g.pesan).join('; '))
+      return job
+    },
     onSuccess: () => {
       toast.success('Status disinkronkan dari Shopee')
       qc.invalidateQueries({ queryKey: ['pesanan'] })
@@ -232,11 +238,11 @@ export default function PesananDetailPage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Total</div>
-            <div className="font-medium">{fmtRp(pesanan.total)}</div>
+            <div className="font-medium">{fmtMoney(pesanan.total, pesanan.currency)}</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Dibuat</div>
-            <div className="font-medium">{fmtDateTime(pesanan.created_at)}</div>
+            <div className="text-xs text-muted-foreground">{pesanan.dipesan_at ? 'Tanggal Pesan (WIB)' : 'Masuk ERP (WIB)'}</div>
+            <div className="font-medium">{fmtDateTime(pesanan.dipesan_at ?? pesanan.created_at)}</div>
           </div>
           {sudahDicetak(pesanan) && (
             <div>
@@ -265,6 +271,11 @@ export default function PesananDetailPage() {
               </div>
             </>
           )}
+          <div className="col-span-2">
+            <div className="text-xs text-muted-foreground">Catatan Pembeli untuk Penjual</div>
+            <p className="whitespace-pre-wrap break-words">{pesanan.message_to_seller || '—'}</p>
+          </div>
+          {pesanan.note && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words">{pesanan.note}</p></div>}
           {pesanan.catatan_sinkron && (
             <div className="col-span-2">
               <div className="text-xs text-muted-foreground">Catatan Sinkron Marketplace</div>
@@ -289,11 +300,11 @@ export default function PesananDetailPage() {
                   <div className="font-medium">{item.nama_produk}</div>
                   {item.model_name && <div className="text-xs text-muted-foreground">{item.model_name}</div>}
                   <div className="text-xs text-muted-foreground">
-                    {item.qty} × {fmtRp(item.harga_satuan)}
+                    {item.qty} × {fmtMoney(item.harga_satuan, pesanan.currency)}
                   </div>
                 </div>
               </div>
-              <div className="font-semibold">{fmtRp(item.subtotal)}</div>
+              <div className="font-semibold">{fmtMoney(item.subtotal, pesanan.currency)}</div>
             </div>
           ))}
         </CardContent>

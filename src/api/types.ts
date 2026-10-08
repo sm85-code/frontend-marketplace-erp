@@ -163,6 +163,8 @@ export interface Pesanan {
   days_to_ship?: number
   estimated_shipping_fee?: string
   actual_shipping_fee?: string
+  message_to_seller?: string
+  actual_shipping_fee_confirmed?: boolean
   note?: string
   cancel_by?: string
   cancel_reason?: string
@@ -203,14 +205,14 @@ export interface SettlementPesanan {
   order_sn: string
   dirilis_at: string | null
   jumlah_cair: string
-  penjualan: string
-  voucher_penjual: string
-  komisi: string
-  layanan: string
-  transaksi: string
-  ongkir: string
-  subsidi_ongkir: string
-  penyesuaian: string
+  penjualan: string | null
+  voucher_penjual: string | null
+  komisi: string | null
+  layanan: string | null
+  transaksi: string | null
+  ongkir: string | null
+  subsidi_ongkir: string | null
+  penyesuaian: string | null
 }
 
 export interface SettlementPesananHalaman {
@@ -488,6 +490,7 @@ export interface KatalogItem {
   item_dangerous?: number
   wholesales?: string
   video_info?: boolean
+  size_chart_id?: number | null
   size_chart?: string
   gtin_code?: string
 }

@@ -1,8 +1,9 @@
+import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -51,7 +52,8 @@ export default function KatalogPage() {
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
   const pilih = useTerpilih<KatalogItem>()
-  const [detailId, setDetailId] = useState<string | null>(null)
+  const [urlParams] = useSearchParams()
+  const [detailId, setDetailId] = useState<string | null>(() => urlParams.get('detail'))
   const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'grid' ? 'grid' : 'list'))
 
   // Variants are shown as sub-rows under each product (price, weight, size, pre-order per variant). `rinci` is the
@@ -134,6 +136,7 @@ export default function KatalogPage() {
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web.">
+        <Sinkronisasi jenis="katalog" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
         <Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>
         <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>
       </BarHalaman>
