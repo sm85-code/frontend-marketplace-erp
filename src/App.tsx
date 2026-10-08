@@ -75,7 +75,7 @@ export default function App() {
               />
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
-              <Route path="/toko" element={<Protected><LazyPage><AkunPage /></LazyPage></Protected>} />
+              <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route
                 path="/katalog"
                 element={<Protected><LazyPage><KatalogPage /></LazyPage></Protected>}
@@ -115,7 +115,7 @@ path="/iklan"
               />
               <Route
                 path="/staff"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><StaffPage /></LazyPage></Protected>}
+                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><StaffPage /></LazyPage></Protected>}
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />

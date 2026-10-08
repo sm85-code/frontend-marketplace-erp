@@ -64,7 +64,7 @@ export default function ShopeeCallbackPage() {
           {status === 'loading' && <CardDescription>Memproses otorisasi…</CardDescription>}
           {status === 'ok' && (
             <CardDescription>
-              Berhasil! {jumlahToko > 1 ? `${jumlahToko} toko terhubung. ` : ''}Mengalihkan ke halaman Toko…
+              Berhasil! {jumlahToko > 1 ? `${jumlahToko} toko terhubung. ` : ''}Mengalihkan ke halaman Kelola Toko…
             </CardDescription>
           )}
           {status === 'error' && <CardDescription className="text-destructive">{message}</CardDescription>}
@@ -73,7 +73,7 @@ export default function ShopeeCallbackPage() {
           {status === 'loading' && <Spinner column label={null} />}
           {status === 'error' && (
             <Button asChild variant="outline">
-              <Link to="/toko">Kembali ke Toko</Link>
+              <Link to="/toko">Kembali ke Kelola Toko</Link>
             </Button>
           )}
         </CardContent>

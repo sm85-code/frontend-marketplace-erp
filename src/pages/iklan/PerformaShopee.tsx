@@ -170,7 +170,7 @@ export default function PerformaShopee() {
             <p>Belum ada data iklan Shopee pada periode ini.</p>
             <p className="teks-kecil">
               {tokoShopee.length === 0
-                ? 'Hubungkan toko Shopee dulu di menu Toko.'
+                ? 'Hubungkan toko Shopee dulu di menu Kelola Toko.'
                 : 'Pilih jumlah hari lalu tekan “Sinkronisasi sekarang”. Toko tanpa Shopee Ads tidak akan punya data.'}
             </p>
           </div>

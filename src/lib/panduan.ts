@@ -157,7 +157,7 @@ export const panduan: Panduan[] = [
   },
   {
     path: '/toko',
-    judul: 'Toko Marketplace',
+    judul: 'Kelola Toko',
     tujuan: 'Daftarkan akun toko dan hubungkan akses API.',
     langkah: [
       'Pilih marketplace, isi identitas toko, kemudian Hubungkan akun yang sesuai.',
@@ -168,7 +168,7 @@ export const panduan: Panduan[] = [
   },
   {
     path: '/staff',
-    judul: 'Staff & Akses',
+    judul: 'Kelola Pengguna',
     tujuan: 'Atur pengguna dan batas toko yang dapat diakses.',
     langkah: [
       'Buat pengguna dengan peran yang sesuai tanggung jawab.',
@@ -216,7 +216,7 @@ export const panduan: Panduan[] = [
     tujuan: 'Selesaikan otorisasi toko yang sedang dihubungkan.',
     langkah: [
       'Tunggu hasil otorisasi.',
-      'Periksa status toko setelah kembali ke menu Toko.',
+      'Periksa status toko setelah kembali ke menu Kelola Toko.',
       'Jika gagal, baca pesan lalu mulai ulang Hubungkan dari toko yang sama.',
     ],
     dampak: 'Callback menyimpan koneksi API toko yang terverifikasi.',

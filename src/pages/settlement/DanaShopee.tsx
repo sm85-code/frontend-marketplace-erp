@@ -186,7 +186,7 @@ export default function DanaShopee() {
           <div className="space-y-2 rounded-lg border p-8 text-center text-muted-foreground">
             <p>Belum ada dana cair pada periode ini.</p>
             <p className="teks-kecil">
-              {tokoShopee.length === 0 ? 'Hubungkan toko Shopee dulu di menu Toko.' : 'Pilih jumlah hari lalu tekan “Sinkronisasi sekarang”.'}
+              {tokoShopee.length === 0 ? 'Hubungkan toko Shopee dulu di menu Kelola Toko.' : 'Pilih jumlah hari lalu tekan “Sinkronisasi sekarang”.'}
             </p>
           </div>
         ) : (
