@@ -223,6 +223,7 @@ export default function PesananDetailPage() {
         <Badge>{labelStatus(pesanan)}</Badge>
       </div>
 
+      {pesanan.platform === 'shopee' && pesanan.akun_id && <Button asChild variant="outline"><Link to={`/chat?pesanan=${encodeURIComponent(pesanan.id)}`}>Hubungi Pembeli</Link></Button>}
       <Card>
         <CardHeader>
           <CardTitle>Ringkasan</CardTitle>
