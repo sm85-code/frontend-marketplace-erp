@@ -39,3 +39,17 @@ Pemisahan chat belanja lebih lanjut memerlukan kontrak/payload produksi yang mem
 Kontrol toko dan sinkronisasi disusun dalam grid. Sinkronisasi tersedia untuk seluruh toko atau pilihan toko. Tombol riwayat per toko berada dalam daftar vertikal dengan nama toko dan Lebih lama, menggunakan warna sekunder agar tidak bersaing dengan tombol sinkronisasi utama. Tidak ada deretan peringatan percakapan tersembunyi. Tombol berwarna dan dukungan nonteks tetap dipertahankan.
 
 Regresi: pesan dengan kedua ID toko positif maupun field peran hilang tetap terbaca. Browser fixture390/1440 memeriksa sinkronisasi per toko/seluruh toko, paginasi vertikal, konten nonteks dan tidak ada overflow. Tidak ada tindakan marketplace nyata; deployment produksi belum terverifikasi.
+
+## Tandai sudah dibaca saat riwayat kosong
+
+Tombol baca tidak lagi tergantung pada messages.length. Permintaan memakai latest_message_id percakapan; backend mengambil ulang percakapan untuk memeriksa scope toko dan ID pesan. Jika ID cocok dengan ID terbaru authoritative, read_conversation dapat dipanggil walau get_message kosong. ID lain tetap harus ada dalam riwayat dan akan ditolak jika tidak cocok. Body kosong didukung dengan ID diturunkan dari percakapan server. ID yang tidak disediakan Shopee menghasilkan error yang dapat dibaca pengguna. Offset riwayat terminal "0" tidak menampilkan tombol Pesan lebih lama.
+
+Contoh produksi gudang_ps dari pengguna memiliki latest_message_content null dan messages kosong. Itu membuktikan konten tidak tersedia pada respons tersebut, bukan bukti bahwa semua riwayat kosong adalah chat belanja. Pembanding williesolid dari pengguna memiliki kedua ID toko positif pada pesan penjual/pembeli yang sah. Pemisahan otomatis tidak dapat diturunkan dari aturan ID nol, tipe rich_text, content null, atau riwayat kosong. Tidak ada filter tebakan baru.
+
+## Pemisahan Chat belanja yang tersimpan
+
+Buka percakapan yang Anda ketahui sebagai chat belanja, buka Ini chat Anda sebagai pembeli?, lalu Tandai sebagai chat belanja. Penandaan disimpan di tabel ERP mpe_percakapan_belanja dengan kunci toko/percakapan, sehingga tetap terpisah dari inbox setelah sinkronisasi, refresh, atau masuk dari perangkat lain. Chat penjual yang belum ditandai tetap ditampilkan; pemisahan ini eksplisit/manual, bukan klasifikasi otomatis berdasarkan payload ambigu.
+
+Chat belanja tersimpan menampilkan daftar menurut cakupan toko dan menyediakan Pulihkan ke inbox. Penandaan berlaku bagi pengguna toko yang sama. Backend memeriksa penugasan toko dan identitas percakapan Shopee sebelum penandaan; pemulihan lokal tidak memerlukan pesan masih tersedia di Shopee. Duplikasi penandaan aman dengan kunci unik dan lock akun. Perubahan committed sebelum respons agar refresh langsung membaca hasil yang tersimpan.
+
+Tabel baru dibuat oleh seeder metadata.create_all pada startup. Tidak ada chat/pesan Shopee yang dihapus atau otomatis ditandai dibaca; tindakan baca tetap melalui klik pengguna. Regresi mencakup penandaan berulang, hilang dari inbox setelah pengambilan ulang, pemulihan dan staf tanpa penugasan ditolak. Browser320/390/1440 memeriksa alur penuh penandaan–sinkronisasi–pemulihan.

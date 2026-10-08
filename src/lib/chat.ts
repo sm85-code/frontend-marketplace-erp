@@ -65,6 +65,7 @@ export function chatPresentation(value: unknown, type = '', shopId?: string): Ch
     system: 'Pesan sistem',
     notification: 'Notifikasi Shopee',
     'rich-text': 'Pesan terstruktur',
+    rich_text: 'Pesan terstruktur',
     auto_reply: 'Balasan otomatis',
     template: 'Pesan otomatis',
     file: 'Lampiran',

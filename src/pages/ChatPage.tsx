@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 type Conversation = {
   conversation_id: string
+  latest_message_id?: string
   kota?: string | null
   to_name: string
   to_id: number
@@ -109,6 +110,36 @@ export default function ChatPage() {
     refetchInterval: cursor ? false : 60_000,
     retry: false,
   })
+  const buyingChats = useQuery({
+    queryKey: ['chat', 'belanja', shop, targets.map((a) => a.id).join(',')],
+    queryFn: () =>
+      Promise.all(
+        targets.map(async (a) => {
+          try {
+            const rows = (await api.get<{ conversation_id: string; nama: string }[]>(`/akun/${a.id}/chat-belanja`)).data
+            return { shop: a, rows, error: '' }
+          } catch (e) {
+            return { shop: a, rows: [], error: getApiError(e) }
+          }
+        }),
+      ),
+    enabled: available.length > 0,
+    retry: false,
+  })
+  const classifyBuying = useMutation({
+    mutationFn: async ({ akunId, conversationId, belanja }: { akunId: string; conversationId: string; belanja: boolean }) =>
+      api.post(`/akun/${akunId}/chat/${encodeURIComponent(conversationId)}/belanja`, { belanja }),
+    onSuccess: (_, variables) => {
+      if (variables.belanja) {
+        setSelected(null)
+        setParams({})
+        setOlder([])
+        setAttachment(null)
+      }
+      qc.invalidateQueries({ queryKey: ['chat'] })
+    },
+    retry: false,
+  })
   const newConversation = !!orderId && selected?.conversation_id === ''
   const active = shops.find((a) => a.id === threadShop)
   const path = selected ? `/akun/${threadShop}/chat/${encodeURIComponent(selected.conversation_id)}/pesan` : ''
@@ -138,14 +169,15 @@ export default function ChatPage() {
   const city = context.data?.kota ?? selected?.kota
   const markRead = useMutation({
     mutationFn: async () => {
-      const latest = [...(history.data?.messages ?? [])].sort(
-        (a, b) => chatTimestamp(b.created_timestamp) - chatTimestamp(a.created_timestamp),
-      )[0]
-      if (!latest) throw new Error('Segarkan percakapan terlebih dahulu.')
-      await api.post(`/akun/${threadShop}/chat/${encodeURIComponent(selected!.conversation_id)}/dibaca`, { message_id: latest.message_id })
+      const latestId = history.data?.conversation.latest_message_id ?? selected?.latest_message_id
+      await api.post(
+        `/akun/${threadShop}/chat/${encodeURIComponent(selected!.conversation_id)}/dibaca`,
+        latestId ? { message_id: String(latestId) } : {},
+      )
     },
     onSuccess: () => {
       setReadError('')
+      setSelected((current) => (current ? { ...current, unread_count: 0 } : current))
       qc.invalidateQueries({ queryKey: ['chat', 'inbox'] })
     },
     onError: (e) => setReadError(getApiError(e)),
@@ -335,6 +367,46 @@ export default function ChatPage() {
             {r.shop.nama_toko}: {r.error}
           </p>
         ))}
+      <details className="rounded-xl border bg-card p-3 text-sm">
+        <summary className="cursor-pointer font-medium">Chat belanja tersimpan</summary>
+        <p className="my-2 text-muted-foreground">
+          Chat yang Anda tandai sebagai belanja dipisahkan dari inbox ERP, termasuk setelah sinkronisasi. Anda dapat memulihkannya di sini.
+        </p>
+        {buyingChats.isFetching && <p>Memuat daftar…</p>}
+        {(buyingChats.data ?? []).map((result) => (
+          <div key={result.shop.id}>
+            {result.error && (
+              <p role="alert" className="text-destructive">
+                {result.shop.nama_toko}: {result.error}
+              </p>
+            )}
+            {result.rows.map((row) => (
+              <div key={row.conversation_id} className="my-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2">
+                <span>
+                  {row.nama} · {result.shop.nama_toko}
+                </span>
+                <Button
+                  variant="secondary"
+                  disabled={classifyBuying.isPending}
+                  onClick={() =>
+                    classifyBuying.mutate({
+                      akunId: result.shop.id,
+                      conversationId: row.conversation_id,
+                      belanja: false,
+                    })
+                  }
+                >
+                  Pulihkan ke inbox
+                </Button>
+              </div>
+            ))}
+          </div>
+        ))}
+        {!buyingChats.isFetching && buyingChats.data?.every((result) => !result.rows.length && !result.error) && (
+          <p>Belum ada chat belanja yang ditandai.</p>
+        )}
+      </details>
+      {classifyBuying.error && <QueryError error={classifyBuying.error} retry={() => classifyBuying.reset()} />}
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
         <section className={`min-w-0 rounded-xl border p-3 ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
           {inbox.isFetching && <p className="text-sm">Memuat percakapan…</p>}
@@ -350,7 +422,10 @@ export default function ChatPage() {
                   · {c.kota || 'Kota belum tersedia'}
                 </span>
                 {c.unread_count > 0 && (
-                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground"> {c.unread_count} belum dibaca</span>
+                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground">
+                    {' '}
+                    {c.unread_count} belum dibaca
+                  </span>
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -419,9 +494,23 @@ export default function ChatPage() {
                   <ChatCardView card={orderStart.data.order} />
                 </div>
               )}
-              <Button variant="outline" disabled={markRead.isPending || !history.data?.messages.length} onClick={() => markRead.mutate()}>
+              <Button variant="outline" disabled={markRead.isPending || !selected?.conversation_id} onClick={() => markRead.mutate()}>
                 Tandai sudah dibaca
               </Button>
+              <details className="my-3 rounded-lg border p-3 text-sm">
+                <summary className="cursor-pointer">Ini chat Anda sebagai pembeli?</summary>
+                <p className="my-2 text-muted-foreground">
+                  Tandai sebagai chat belanja untuk memisahkannya dari inbox ERP. Penandaan berlaku untuk toko ini dan bisa dibatalkan di
+                  Chat belanja tersimpan.
+                </p>
+                <Button
+                  variant="secondary"
+                  disabled={classifyBuying.isPending || !selected?.conversation_id}
+                  onClick={() => classifyBuying.mutate({ akunId: threadShop, conversationId: selected!.conversation_id, belanja: true })}
+                >
+                  Tandai sebagai chat belanja
+                </Button>
+              </details>
               {readError && (
                 <p role="alert" className="text-sm text-destructive">
                   {readError}
@@ -429,7 +518,7 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <p>Memuat pesan…</p>}
-              {!!history.data?.page_result.next_offset && (
+              {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && (
                 <Button
                   variant="outline"
                   onClick={() => {

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 const selectClass =
-  'h-9 w-full rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+  'h-9 w-full rounded-lg border border-input bg-background text-foreground px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export default function AppearancePopover({
   triggerClassName,
@@ -27,34 +27,21 @@ export default function AppearancePopover({
   triggerClassName?: string
   align?: 'start' | 'center' | 'end'
 }) {
-  const {
-    font,
-    setFont,
-    colorTheme,
-    setColorTheme,
-    baseColor,
-    setBaseColor,
-    wallpaper,
-    setWallpaper,
-    mode,
-    setMode,
-    huruf,
-    setHuruf,
-  } = useTheme()
+  const { font, setFont, colorTheme, setColorTheme, baseColor, setBaseColor, wallpaper, setWallpaper, mode, setMode, huruf, setHuruf } =
+    useTheme()
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          data-testid="appearance-trigger"
-          variant="outline"
-          size="sm"
-          className={triggerClassName ?? 'gap-2'}
-        >
+        <Button data-testid="appearance-trigger" variant="outline" size="sm" className={triggerClassName ?? 'gap-2'}>
           <Palette className="size-4" /> Tampilan
         </Button>
       </PopoverTrigger>
-      <PopoverContent align={align} className="w-64 space-y-3" data-testid="appearance-popover">
+      <PopoverContent
+        align={align}
+        className="w-72 max-w-[calc(100vw-2rem)] max-h-[min(80dvh,36rem)] overflow-y-auto space-y-3 appearance-controls"
+        data-testid="appearance-popover"
+      >
         <div>
           <label className="label" htmlFor="theme-switcher">
             Tema
