@@ -1,3 +1,4 @@
+import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
@@ -32,6 +33,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
         ) : (
           <div className="teks-data space-y-4">
             <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>
+            <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
             <KelolaProdukShopee key={detail.id} detail={detail} />
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
@@ -47,10 +49,12 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
               </div>
             )}
             <p className="whitespace-pre-wrap">{detail.deskripsi || <em className="text-muted-foreground">Tanpa deskripsi</em>}</p>
+            <div className="flex flex-wrap gap-2 text-sm"><Badge variant="secondary">Preorder: {detail.is_pre_order == null ? '—' : detail.is_pre_order ? 'Ya' : 'Tidak'}</Badge>{detail.days_to_ship != null && <span>Waktu proses: {detail.days_to_ship} hari</span>}</div>
+            {detail.size_chart_id != null && <p className="text-sm">Template panduan ukuran: {detail.size_chart_id}</p>}
             {detail.varian.length > 0 && <TabelVarian detail={detail} />}
             <div className="text-muted-foreground">
               {detail.varian.length > 0 ? 'Berat dan ukuran produk (dipakai varian yang tidak mengaturnya sendiri): ' : 'Berat '}
-              {detail.berat_gram} g · {ukuranPaket(detail.panjang_cm, detail.lebar_cm, detail.tinggi_cm)}
+              {teksBerat(detail.berat_gram)} · {ukuranPaket(detail.panjang_cm, detail.lebar_cm, detail.tinggi_cm)}
             </div>
           </div>
         )}
@@ -78,7 +82,7 @@ function TabelVarian({ detail }: { detail: KatalogDetail }) {
       <div className="font-medium">Varian ({detail.varian.length})</div>
       {!lengkap && (
         <p role="note" className="rounded-md border border-dashed p-2 text-muted-foreground">
-          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Sinkronkan ulang Katalog toko ini (menu Toko, Sinkronisasi Produk).
+          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi item ini di atas untuk memperbarui produk tanpa menarik seluruh toko.
         </p>
       )}
       <div className="overflow-x-auto rounded-md border">

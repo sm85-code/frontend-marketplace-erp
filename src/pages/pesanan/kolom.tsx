@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { fmtDate, fmtDateTime, fmtRp, fmtTime } from '@/api/client'
+import { fmtDate, fmtDateTime, fmtMoney, fmtTime } from '@/api/client'
 import type { Pesanan } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
@@ -81,24 +81,25 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       judul: 'Varian',
       bawaan: false,
       kelas: 'min-w-[100px]',
-      sel: (p) => p.items.map((i) => i.model_name).filter(Boolean).join(", "),
+      sel: (p) => <div className="space-y-1.5">{p.items.map((i) => <div key={i.id} className="min-h-16">{i.model_name || '—'}</div>)}</div>,
     },
     { kunci: 'ship_by_date', judul: 'Kirim Sebelum', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
-    { kunci: 'sku', judul: 'SKU Produk', bawaan: false, sel: (p) => p.items.map((i) => i.item_sku).filter(Boolean).join(", ") },
-    { kunci: 'sku_model', judul: 'SKU Varian', bawaan: false, sel: (p) => p.items.map((i) => i.model_sku).filter(Boolean).join(", ") },
+    { kunci: 'sku', judul: 'SKU Produk', bawaan: false, sel: (p) => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.item_sku || '—'}</div>)}</div> },
+    { kunci: 'sku_model', judul: 'SKU Varian', bawaan: false, sel: (p) => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.model_sku || '—'}</div>)}</div> },
+    { kunci: 'jumlah', judul: 'Jumlah', bawaan: false, sel: p => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.qty}</div>)}</div> },
     { kunci: 'bayar', judul: 'Metode Bayar', bawaan: false, sel: (p) => p.payment_method || "" },
-    { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "" },
-    { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => p.actual_shipping_fee || p.estimated_shipping_fee || "" },
+    { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "Tidak" },
+    { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => <div>{p.actual_shipping_fee != null ? `${fmtMoney(p.actual_shipping_fee, p.currency)} (aktual${p.actual_shipping_fee_confirmed === false ? ' belum final' : ''})` : p.estimated_shipping_fee != null ? `${fmtMoney(p.estimated_shipping_fee, p.currency)} (estimasi)` : '—'}</div> },
     { kunci: 'penerima', judul: 'Nama Penerima', bawaan: false, sel: (p) => p.penerima || "" },
     { kunci: 'kota', judul: 'Kota Tujuan', bawaan: false, sel: (p) => p.kota || "" },
-    { kunci: 'catatan', judul: 'Catatan Pembeli', bawaan: false, sel: (p) => p.note || "" },
+    { kunci: 'catatan', judul: 'Catatan untuk Penjual', bawaan: false, sel: (p) => p.message_to_seller || "—" },
     { kunci: 'batal', judul: 'Alasan Batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
     {
       kunci: 'total',
       judul: 'Total Pesanan',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'total', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
-      sel: (p) => fmtRp(p.total),
+      sel: (p) => fmtMoney(p.total, p.currency),
     },
     {
       kunci: 'kurir',

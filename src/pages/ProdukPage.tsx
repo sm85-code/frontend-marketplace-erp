@@ -1,3 +1,5 @@
+import { useTerpilih } from '@/lib/terpilih'
+import Sinkronisasi from '@/components/Sinkronisasi'
 import ProdukKeluargaField from './ProdukKeluargaField'
 import { pemetaanProduk } from '@/lib/pemetaanProduk'
 import QueryError from '@/components/QueryError'
@@ -176,10 +178,13 @@ export default function ProdukPage() {
     if (ok) deleteMut.mutate(p.id)
   }
 
+  const pilih = useTerpilih<Produk>(data ?? [])
+
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Produk & Varian">
+        <Sinkronisasi jenis="produk" ids={pilih.daftar.map(p => p.id)} />
         <Button onClick={openCreate}>Tambah Produk</Button>
       </BarHalaman>
 
@@ -199,6 +204,7 @@ export default function ProdukPage() {
           ) : (
             <>
               <TabelLokal
+                pilihan={{ terpilih: pilih.ada, onUbah: pilih.ubah, semuaDipilih: (filtered ?? []).length > 0 && (filtered ?? []).every(p => pilih.ada(p.id)), adaYangBisaDipilih: !!filtered?.length, onUbahSemua: value => pilih.ubahBanyak(filtered ?? [], value) }}
                 label="Daftar SKU produk dan varian"
                 items={filtered}
                 kolom={kolomProduk(mapping)}
@@ -207,6 +213,7 @@ export default function ProdukPage() {
                 urutAwal={{ kunci: 'sku', arah: 'asc' }}
                 aksi={(p) => (
                   <div className="flex max-w-[24rem] flex-wrap justify-end gap-1.5">
+                    <Sinkronisasi jenis="produk" ids={[p.id]} satu />
                     <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
                       Sesuaikan Stok
                     </Button>

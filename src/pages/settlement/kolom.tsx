@@ -4,7 +4,7 @@ import type { KolomTabel } from '@/components/daftar'
 
 const uang = (v: string) => Number(v)
 /** Costs are shown with a minus sign so a column reads as "what was taken off". */
-const potong = (v: string) => (uang(v) === 0 ? fmtRp(0) : fmtRp(-Math.abs(uang(v))))
+const potong = (v: string | null) => v == null ? '—' : (uang(v) === 0 ? fmtRp(0) : fmtRp(-Math.abs(uang(v))))
 
 /**
  * Every column of the released-money list, declared once: the table, the column picker and the sort dropdown all
@@ -36,7 +36,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     { kunci: 'toko', judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (r) => r.nama_toko ?? '—' },
     {
       kunci: 'penjualan',
-      judul: 'Penjualan',
+      judul: 'Penjualan sebelum Diskon',
       rata: 'kanan',
       kelas: angka,
       urut: { kunci: 'penjualan', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
@@ -90,7 +90,7 @@ export function kolomRingkasanToko(): KolomTabel<BarisToko>[] {
   return [
     { kunci: 'toko', judul: 'Toko', tetap: true, kelas: 'font-medium', sel: (t) => t.nama_toko, nilai: (t) => t.nama_toko },
     { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', kelas: a, sel: (t) => t.pesanan, nilai: (t) => t.pesanan },
-    { kunci: 'penjualan', judul: 'Penjualan', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.penjualan), nilai: (t) => uang(t.penjualan) },
+    { kunci: 'penjualan', judul: 'Penjualan sebelum Diskon', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.penjualan), nilai: (t) => uang(t.penjualan) },
     { kunci: 'komisi', judul: 'Komisi', rata: 'kanan', kelas: a, sel: (t) => potong(t.komisi), nilai: (t) => uang(t.komisi) },
     { kunci: 'layanan', judul: 'Layanan', rata: 'kanan', kelas: a, sel: (t) => potong(t.layanan), nilai: (t) => uang(t.layanan) },
     { kunci: 'ongkir', judul: 'Ongkir', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.ongkir), nilai: (t) => uang(t.ongkir) },

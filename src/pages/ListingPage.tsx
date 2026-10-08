@@ -1,3 +1,5 @@
+import { useTerpilih } from '@/lib/terpilih'
+import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -108,10 +110,13 @@ export default function ListingPage() {
     if (ok) deleteMut.mutate(id)
   }
 
+  const pilih = useTerpilih<ProdukListing>(listing ?? [])
+
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Listing" deskripsi="Pemetaan SKU ERP ke produk dan varian marketplace. Harga dan ukuran marketplace berasal dari snapshot katalog; sinkronkan katalog untuk memperbaruinya.">
+        <Sinkronisasi jenis="listing" ids={pilih.daftar.map(p => p.id)} />
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
         </Button>
@@ -127,6 +132,7 @@ export default function ListingPage() {
           ) : (
             <>
               <TabelLokal
+                pilihan={{ terpilih: pilih.ada, onUbah: pilih.ubah, semuaDipilih: (listing ?? []).length > 0 && (listing ?? []).every(p => pilih.ada(p.id)), adaYangBisaDipilih: !!listing?.length, onUbahSemua: value => pilih.ubahBanyak(listing ?? [], value) }}
                 label="Mapping SKU ERP ke listing toko"
                 items={listing}
                 kolom={kolomListing({ produkMap, akunMap })}
@@ -135,6 +141,7 @@ export default function ListingPage() {
                 urutAwal={{ kunci: 'sku', arah: 'asc' }}
                 aksi={(l) => (
                   <div className="flex flex-nowrap justify-end gap-1.5">
+                    <Sinkronisasi jenis="listing" ids={[l.id]} satu />
                     <Button size="sm" variant="ghost" onClick={() => toggleMut.mutate({ id: l.id, aktif: !l.aktif })}>
                       {l.aktif ? 'Nonaktifkan' : 'Aktifkan'}
                     </Button>

@@ -17,6 +17,7 @@ const KatalogPage = lazy(() => import('@/pages/KatalogPage'))
 const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
 const ListingPage = lazy(() => import('@/pages/ListingPage'))
 const GudangPage = lazy(() => import('@/pages/GudangPage'))
+const ChatPage = lazy(() => import('@/pages/ChatPage'))
 const PesananPage = lazy(() => import('@/pages/PesananPage'))
 const ReturPage = lazy(() => import('@/pages/ReturPage'))
 const PublicationPage = lazy(() => import('@/pages/PublicationPage'))
@@ -91,6 +92,7 @@ export default function App() {
                 path="/gudang"
                 element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><GudangPage /></LazyPage></Protected>}
               />
+              <Route path="/chat" element={<Protected><LazyPage><ChatPage /></LazyPage></Protected>} />
               <Route path="/pesanan" element={<Protected><LazyPage><PesananPage /></LazyPage></Protected>} />
               <Route path="/pesanan/retur" element={<Protected><LazyPage><ReturPage /></LazyPage></Protected>} />
               <Route path="/katalog/publikasi" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PublicationPage /></LazyPage></Protected>} />

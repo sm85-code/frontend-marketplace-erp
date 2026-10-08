@@ -52,9 +52,9 @@ function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Sett
       nilai: (s) => new Date(s.periode_mulai),
     },
     { kunci: 'toko', judul: 'Toko', sel: toko, nilai: toko },
-    { kunci: 'gross', judul: 'Gross', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(s.gross_sales), nilai: (s) => Number(s.gross_sales) },
-    { kunci: 'fee', judul: 'Fee', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(potongan(s)), nilai: potongan },
-    { kunci: 'net', judul: 'Net', rata: 'kanan', kelas: 'whitespace-nowrap font-semibold', sel: (s) => fmtRp(s.net), nilai: (s) => Number(s.net) },
+    { kunci: 'gross', judul: 'Penjualan sebelum Diskon', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(s.gross_sales), nilai: (s) => Number(s.gross_sales) },
+    { kunci: 'fee', judul: 'Biaya/Potongan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (s) => fmtRp(potongan(s)), nilai: potongan },
+    { kunci: 'net', judul: 'Penerimaan Bersih', rata: 'kanan', kelas: 'whitespace-nowrap font-semibold', sel: (s) => fmtRp(s.net), nilai: (s) => Number(s.net) },
     { kunci: 'status', judul: 'Status', sel: (s) => <Badge variant={statusVariant(s.status)}>{s.status}</Badge>, nilai: (s) => s.status },
   ]
 }

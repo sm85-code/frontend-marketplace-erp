@@ -13,21 +13,19 @@ export function FotoItem({ item, ukuran = 48 }: { item: Pick<ItemPesanan, 'nama_
 }
 
 /** Items of one order, each with photo, name, variant and quantity: similar product names stay tellable apart. */
-export function ItemRingkas({ items, maks = 2 }: { items: ItemPesanan[]; maks?: number }) {
+export function ItemRingkas({ items, maks = items.length }: { items: ItemPesanan[]; maks?: number }) {
   if (!items.length) return <span>—</span>
   const sisa = items.length - maks
   return (
     <div className="space-y-1.5">
       {items.slice(0, maks).map((i) => (
-        <div key={i.id} className="flex items-start gap-2">
+        <div key={i.id} className="flex min-h-16 items-start gap-2">
           <FotoItem item={i} />
           <div className="min-w-0">
             <div className="line-clamp-2 text-sm leading-snug" title={i.nama_produk}>
               {i.nama_produk}
             </div>
-            <div className="teks-kecil text-muted-foreground">
-              {i.model_name ? `${i.model_name} · ` : ''}×{i.qty}
-            </div>
+            <div className="teks-kecil text-muted-foreground">Jumlah: {i.qty}</div>
           </div>
         </div>
       ))}

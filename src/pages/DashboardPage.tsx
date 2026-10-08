@@ -50,7 +50,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
   { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => t.nama_toko, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
-  { kunci: 'omzet', judul: 'Omzet', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
+  { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
   { kunci: 'perlu_diproses', judul: 'Perlu Diproses', rata: 'kanan', sel: (t) => <Angka n={t.perlu_diproses} tebal />, nilai: (t) => t.perlu_diproses },
   { kunci: 'menunggu_kurir', judul: 'Menunggu Kurir', rata: 'kanan', sel: (t) => <Angka n={t.menunggu_kurir} />, nilai: (t) => t.menunggu_kurir },
@@ -70,7 +70,7 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
   { kunci: 'nama', judul: 'Produk', kelas: 'min-w-[220px] max-w-[420px]', sel: (p) => p.nama_produk, nilai: (p) => p.nama_produk },
   { kunci: 'qty', judul: 'Terjual', rata: 'kanan', kelas: 'font-semibold', sel: (p) => p.qty_terjual.toLocaleString('id-ID'), nilai: (p) => p.qty_terjual },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (p) => p.pesanan.toLocaleString('id-ID'), nilai: (p) => p.pesanan },
-  { kunci: 'omzet', judul: 'Omzet', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.omzet), nilai: (p) => Number(p.omzet) },
+  { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.omzet), nilai: (p) => Number(p.omzet) },
   {
     kunci: 'toko',
     judul: 'Terjual di',
@@ -135,7 +135,7 @@ export default function DashboardPage() {
           )}
 
           <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
-            <Kartu label="Omzet" nilai={fmtRp(d.total_omzet)} catatan="tanpa belum bayar & batal" />
+            <Kartu label="Nilai Pesanan" nilai={fmtRp(d.total_omzet)} catatan="total pembeli termasuk ongkir/promo; bukan pendapatan bersih" />
             <Kartu label="Pesanan" nilai={d.total_pesanan.toLocaleString('id-ID')} />
             <Kartu label="Rata-rata per pesanan" nilai={fmtRp(d.rata_rata_pesanan)} />
             <Kartu label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} catatan="harus diatur pengirimannya" />
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                     kolom={[
                       { kunci: 'tanggal', judul: 'Tanggal', sel: (h) => fmtDate(h.tanggal), nilai: (h) => h.tanggal },
                       { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (h) => <Angka n={h.pesanan} />, nilai: (h) => h.pesanan },
-                      { kunci: 'omzet', judul: 'Omzet', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (h) => fmtRp(h.omzet), nilai: (h) => Number(h.omzet) },
+                      { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (h) => fmtRp(h.omzet), nilai: (h) => Number(h.omzet) },
                     ]}
                     idDari={(h) => h.tanggal}
                     namaDari={(h) => h.tanggal}
