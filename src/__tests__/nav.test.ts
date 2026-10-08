@@ -6,9 +6,9 @@ describe('filterNavForUser', () => {
     expect(filterNavForUser(null)).toEqual([])
   })
 
-  it('admin sees every nav item; owner sees all but Iklan', () => {
+  it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNavForUser({ role: 'admin' }).length).toBe(NAV.length)
-    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => to !== '/iklan'))
+    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !['/iklan', '/settlement'].includes(to)))
   })
 
   it('staff only gets the shared pages, in workflow order', () => {
@@ -36,8 +36,9 @@ describe('menu order follows the daily workflow', () => {
     for (const role of ['owner', 'staff'] as const) {
       const semua = kelompokNav(filterNavForUser({ role })).flatMap((g) => g.items.map((n) => n.to))
       expect(semua).not.toContain('/iklan')
+      expect(semua).not.toContain('/settlement')
     }
-    expect(kelompokNav(filterNavForUser({ role: 'owner' })).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/settlement'])
+    expect(kelompokNav(filterNavForUser({ role: 'owner' })).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toBeUndefined()
   })
 
   it('drops sections a role cannot see anything in', () => {
