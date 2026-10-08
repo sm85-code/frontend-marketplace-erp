@@ -1,3 +1,5 @@
+import { useAuth } from '@/lib/auth'
+import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -16,6 +18,8 @@ import { labelStatusVarian, labelVarian, namaTier, nilaiVarian, rentangHarga, te
 
 /** Dialog with everything about one catalogue product: all photos, full description, variants, size. */
 export default function DetailProduk({ id, onTutup }: { id: string | null; onTutup: () => void }) {
+  const { user } = useAuth()
+  const manage = isOwnerLevel(user?.role)
   const { data: detail, isLoading, error, refetch } = useQuery({
     queryKey: qk.katalogOne(id ?? ''),
     queryFn: () => endpoints.getKatalog(id as string),
@@ -32,9 +36,9 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
-            <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>
+            {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
-            <KelolaProdukShopee key={detail.id} detail={detail} />
+            {manage && <KelolaProdukShopee key={detail.id} detail={detail} />}
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
               <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>

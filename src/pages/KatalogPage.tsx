@@ -1,3 +1,5 @@
+import { useAuth } from '@/lib/auth'
+import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -48,6 +50,8 @@ const OPSI_TAMPILAN = [
 type Tampilan = (typeof OPSI_TAMPILAN)[number]['value']
 
 export default function KatalogPage() {
+  const { user } = useAuth()
+  const manage = isOwnerLevel(user?.role)
   const qc = useQueryClient()
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
@@ -135,10 +139,10 @@ export default function KatalogPage() {
   return (
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Katalog Shopee" deskripsi="Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web.">
+      <BarHalaman judul="Katalog Shopee" deskripsi={manage ? "Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web." : "Produk dari toko yang ditugaskan kepada Anda. Buka detail untuk melihat varian dan informasi produk."}>
         <Sinkronisasi jenis="katalog" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
-        <Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>
-        <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>
+        {manage && <Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>}
+        {manage && <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>}
       </BarHalaman>
 
       <BarFilter
@@ -252,11 +256,11 @@ export default function KatalogPage() {
         </div>
       )}
 
-      <BarPilihan jumlah={pilih.ukuran} satuan="produk" onBatal={pilih.kosongkan} sibuk={kirimMut.isPending}>
+      {manage && <BarPilihan jumlah={pilih.ukuran} satuan="produk" onBatal={pilih.kosongkan} sibuk={kirimMut.isPending}>
         <Button onClick={kirim} disabled={kirimMut.isPending}>
           {kirimMut.isPending ? 'Mengirim…' : 'Kirim ke toko web'}
         </Button>
-      </BarPilihan>
+      </BarPilihan>}
 
       <DetailProduk id={detailId} onTutup={() => setDetailId(null)} />
     </div>
