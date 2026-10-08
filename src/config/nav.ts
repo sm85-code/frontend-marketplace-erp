@@ -46,11 +46,11 @@ export const ALL_ROLES: Role[] = ['admin', 'owner', 'staff']
 
 /** The order of this list is the order in the sidebar and the drawer; the phone bottom bar uses `posisiBawah`. */
 export const NAV: NavItem[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES, grup: 'harian', bawah: 2, posisiBawah: 1 },
-  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES, grup: 'harian', bawah: 1, posisiBawah: 4 },
-  { to: '/chat', label: 'Chat', icon: MessageSquare, roles: ALL_ROLES, grup: 'harian' },
-  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 3, posisiBawah: 3 },
-  { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 4, posisiBawah: 2 },
+  { to: '/dashboard', label: 'Dashboard', icon: Home, roles: ALL_ROLES, grup: 'harian', bawah: 1, posisiBawah: 1 },
+  { to: '/pesanan', label: 'Pesanan', icon: Receipt, roles: ALL_ROLES, grup: 'harian', bawah: 4, posisiBawah: 4 },
+  { to: '/chat', label: 'Chat', icon: MessageSquare, roles: ALL_ROLES, grup: 'harian', bawah: 3, posisiBawah: 3 },
+  { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ALL_ROLES, grup: 'produk', bawah: 2, posisiBawah: 2 },
+  { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },

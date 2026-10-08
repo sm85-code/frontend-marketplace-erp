@@ -78,7 +78,7 @@ export default function App() {
               <Route path="/toko" element={<Protected><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route
                 path="/katalog"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><KatalogPage /></LazyPage></Protected>}
+                element={<Protected><LazyPage><KatalogPage /></LazyPage></Protected>}
               />
               <Route
                 path="/produk"

@@ -10,7 +10,6 @@ import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 import { TAHAP_LABELS } from '@/lib/pesanan'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
@@ -89,7 +88,7 @@ export default function DashboardPage() {
   const { data: d, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: qk.dashboard(dari, sampai),
     queryFn: () => endpoints.laporanDashboard(dari, sampai),
-    enabled: isOwnerLevel(user?.role),
+    enabled: !!user,
     placeholderData: (prev) => prev,
   })
 
@@ -101,9 +100,9 @@ export default function DashboardPage() {
     <div className="space-y-4">
       <BarHalaman
         judul="Dashboard"
-        deskripsi={`${PRESET_LABEL[preset]} · ${d?.jumlah_toko ?? 0} toko terhubung · berdasarkan tanggal pelanggan memesan`}
+        deskripsi={`${PRESET_LABEL[preset]} · ${d?.jumlah_toko ?? 0} toko terhubung${user?.role === 'staff' ? ' yang ditugaskan kepada Anda' : ''} · berdasarkan tanggal pelanggan memesan`}
       >
-        {isOwnerLevel(user?.role) && (
+        {user && (
           <div className="w-48">
             <FilterPilih
               id="dashboard-periode"
@@ -117,14 +116,7 @@ export default function DashboardPage() {
         {isFetching && !isLoading && <Spinner size={18} />}
       </BarHalaman>
 
-      {!isOwnerLevel(user?.role) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Selamat datang, {user?.nama}</CardTitle>
-            <CardDescription>Buka menu Pesanan untuk melihat toko yang ditugaskan ke Anda.</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : error ? <QueryError error={error} retry={refetch} /> : isLoading || !d ? (
+      {error ? <QueryError error={error} retry={refetch} /> : isLoading || !d ? (
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>

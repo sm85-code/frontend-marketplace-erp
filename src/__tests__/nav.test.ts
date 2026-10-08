@@ -13,7 +13,7 @@ describe('filterNavForUser', () => {
 
   it('staff only gets the shared pages, in workflow order', () => {
     const paths = filterNavForUser({ role: 'staff' }).map((n) => n.to)
-    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/toko', '/profile'])
+    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/toko', '/profile'])
   })
 })
 
@@ -43,7 +43,7 @@ describe('menu order follows the daily workflow', () => {
 
   it('drops sections a role cannot see anything in', () => {
     const grup = kelompokNav(filterNavForUser({ role: 'staff' })).map((g) => g.grup.id)
-    expect(grup).toEqual(['harian', 'pengaturan'])
+    expect(grup).toEqual(['harian', 'produk', 'pengaturan'])
   })
 
   it('every nav item belongs to a known section', () => {
@@ -53,15 +53,17 @@ describe('menu order follows the daily workflow', () => {
 })
 
 describe('phone bottom bar', () => {
-  it('owner: the four most important tabs, left to right as agreed', () => {
-    expect(itemBawah(filterNavForUser({ role: 'owner' })).map((n) => n.to)).toEqual(['/dashboard', '/produk', '/katalog', '/pesanan'])
+  it('every role has Dashboard, Katalog, Chat, Pesanan before Lainnya', () => {
+    for (const role of ['admin', 'owner', 'staff'] as const) {
+      expect(itemBawah(filterNavForUser({ role })).map((n) => n.to)).toEqual(['/dashboard', '/katalog', '/chat', '/pesanan'])
+    }
   })
 
   it('staff: dashboard, orders, shop and profile', () => {
-    expect(itemBawah(filterNavForUser({ role: 'staff' })).map((n) => n.to)).toEqual(['/dashboard', '/pesanan', '/toko', '/profile'])
+    expect(itemBawah(filterNavForUser({ role: 'staff' })).map((n) => n.to)).toEqual(['/dashboard', '/katalog', '/chat', '/pesanan'])
   })
 
   it('never shows more tabs than asked for', () => {
-    expect(itemBawah(filterNavForUser({ role: 'owner' }), 2).map((n) => n.to)).toEqual(['/dashboard', '/pesanan'])
+    expect(itemBawah(filterNavForUser({ role: 'owner' }), 2).map((n) => n.to)).toEqual(['/dashboard', '/katalog'])
   })
 })

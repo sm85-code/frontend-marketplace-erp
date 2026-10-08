@@ -1,3 +1,4 @@
+import { Checkbox } from '@/components/ui/checkbox'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -60,7 +61,7 @@ export default function StaffPage() {
   const [editUser, setEditUser] = useState<User | null>(null)
   const [editForm, setEditForm] = useState({ username: '', nama: '', role: 'staff' as Role })
   const [assignDialog, setAssignDialog] = useState(false)
-  const [assignForm, setAssignForm] = useState({ user_id: '', akun_id: '' })
+  const [assignForm, setAssignForm] = useState({ user_id: '', akun_ids: [] as string[] })
 
   const { data: users, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.users(), queryFn: endpoints.listUsers })
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
@@ -98,12 +99,12 @@ export default function StaffPage() {
   }
 
   const assignMut = useMutation({
-    mutationFn: endpoints.assignStaffAkun,
+    mutationFn: endpoints.assignStaffBanyak,
     onSuccess: () => {
-      toast.success('Staff ditugaskan ke toko')
+      toast.success('Penugasan staf ke toko tersimpan')
       qc.invalidateQueries({ queryKey: ['staff-akun'] })
       setAssignDialog(false)
-      setAssignForm({ user_id: '', akun_id: '' })
+      setAssignForm({ user_id: '', akun_ids: [] as string[] })
     },
     onError: (e) => toast.error(getApiError(e)),
   })
@@ -332,7 +333,7 @@ export default function StaffPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="staff-staff-9">Staff</Label>
-              <Select value={assignForm.user_id} onValueChange={(v) => setAssignForm((f) => ({ ...f, user_id: v }))}>
+              <Select disabled={assignMut.isPending} value={assignForm.user_id} onValueChange={(v) => setAssignForm((f) => ({ ...f, user_id: v, akun_ids: [] }))}>
                 <SelectTrigger id="staff-staff-9" className="w-full">
                   <SelectValue placeholder="Pilih staff" />
                 </SelectTrigger>
@@ -346,26 +347,26 @@ export default function StaffPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="staff-toko-10">Toko</Label>
-              <Select value={assignForm.akun_id} onValueChange={(v) => setAssignForm((f) => ({ ...f, akun_id: v }))}>
-                <SelectTrigger id="staff-toko-10" className="w-full">
-                  <SelectValue placeholder="Pilih toko" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(akunList ?? []).map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.nama_toko} — {PLATFORM_LABELS[a.platform]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Pilih toko (bisa lebih dari satu)</Label>
+              <p className="text-xs text-muted-foreground">Satu toko bisa ditugaskan ke beberapa staf. Penugasan yang sudah ada tetap berlaku; centang toko tambahan, lalu simpan sekali.</p>
+              <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border p-3">
+                {(akunList ?? []).map((a) => {
+                  const assigned = (staffAkun ?? []).some(r => r.user_id === assignForm.user_id && r.akun_id === a.id)
+                  return <label key={a.id} className="flex items-start gap-2 rounded-md p-2 hover:bg-muted">
+                    <Checkbox className="mt-0.5 shrink-0" aria-label={`Tugaskan ke ${a.nama_toko}`} checked={assigned || assignForm.akun_ids.includes(a.id)} disabled={!assignForm.user_id || assigned || assignMut.isPending}
+                      onCheckedChange={checked => setAssignForm(f => ({ ...f, akun_ids: checked === true ? [...f.akun_ids, a.id] : f.akun_ids.filter(id => id !== a.id) }))} />
+                    <span className="min-w-0 break-words text-sm">{a.nama_toko} — {PLATFORM_LABELS[a.platform]}{assigned && <span className="block text-xs text-muted-foreground">Sudah ditugaskan</span>}</span>
+                  </label>
+                })}
+              </div>
+              <p className="text-xs">{assignForm.akun_ids.length} toko tambahan dipilih</p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialog(false)}>
               Batal
             </Button>
-            <Button onClick={() => assignMut.mutate(assignForm)} disabled={!assignForm.user_id || !assignForm.akun_id}>
+            <Button onClick={() => assignMut.mutate(assignForm)} disabled={!assignForm.user_id || !assignForm.akun_ids.length || assignMut.isPending}>
               Tugaskan
             </Button>
           </DialogFooter>

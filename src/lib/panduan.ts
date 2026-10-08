@@ -172,10 +172,10 @@ export const panduan: Panduan[] = [
     tujuan: 'Atur pengguna dan batas toko yang dapat diakses.',
     langkah: [
       'Buat pengguna dengan peran yang sesuai tanggung jawab.',
-      'Tetapkan toko yang boleh diakses staff, lalu periksa kembali daftar penugasan.',
+      'Klik Tugaskan ke Toko, pilih staf, centang beberapa toko, lalu Tugaskan sekali. Satu toko boleh ditugaskan ke beberapa staf.',
       'Gunakan akun pribadi masing-masing untuk menelusuri tindakan pengguna.',
     ],
-    dampak: 'Perubahan akses langsung memengaruhi siapa yang dapat melihat dan menangani data toko.',
+    dampak: 'Penugasan membatasi dashboard, pesanan, chat dan katalog staf ke toko yang dipilih. Penugasan lama tetap berlaku; gunakan Hapus untuk mencabut satu penugasan.',
   },
   {
     path: '/profile',

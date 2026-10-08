@@ -338,6 +338,9 @@ export const listStaffAkun = (userId?: string) =>
 export const assignStaffAkun = (payload: { user_id: string; akun_id: string }) =>
   api.post<StaffAkun>('/staff-akun', payload).then((r) => r.data)
 
+export const assignStaffBanyak = (payload: { user_id: string; akun_ids: string[] }) =>
+  api.post<StaffAkun[]>('/staff-akun/banyak', payload).then((r) => r.data)
+
 export const removeStaffAkun = (id: string) => api.delete(`/staff-akun/${id}`)
 
 // --- Settlement --------------------------------------------------------------------

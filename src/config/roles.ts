@@ -8,7 +8,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 /** Pages only `owner` may reach — akun/produk/listing/gudang/staff
  * management and user administration (Iklan and Settlement are admin-only, see ROLES_ADMIN_ONLY). `staff` is scoped (per StaffAkunMarketplace)
- * to viewing/processing pesanan for its assigned toko only — see Layout/App routing. */
+ * to dashboard, pesanan, chat and catalogue reads for its assigned toko only — see Layout/App routing. */
 export const ROLES_OWNER_ONLY: Role[] = ['admin', 'owner']
 
 /** What only an admin may do: change other users' usernames, names and roles, and everything under Iklan and Settlement. */
