@@ -23,10 +23,12 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.625rem 0.75rem;
+  min-height: 2.75rem;
+  line-height: 1.5;
   border-radius: 0.7rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 0.875rem;
+  color: color-mix(in oklch, var(--foreground) 85%, transparent);
   font-weight: 500;
   text-decoration: none;
   transition: background 0.12s ease, color 0.12s ease;
@@ -377,4 +379,13 @@ tr[data-anak]:hover > .sel-tetap {
 /* Sonner's default success text (#008a2e on #ecfdf3) is 4.25:1, just under WCAG AA. */
 .toaster [data-sonner-toast][data-rich-colors='true'][data-type='success'] {
   --success-text: #006b24;
+}
+
+/* Native select menus need their own opaque colors, especially in dark mode. */
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+.appearance-controls select,
+.appearance-controls option {
+  background-color: var(--background);
+  color: var(--foreground);
 }

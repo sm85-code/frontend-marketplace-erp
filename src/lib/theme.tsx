@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 /** Appearance system ported from live frontend-siabumdes.
- * Defaults: Ripple wallpaper, Biru theme, Plus Jakarta Sans, light mode.
+ * Defaults: Ripple wallpaper, Kuning theme, Plus Jakarta Sans, light mode.
  */
 
 export const FONTS = [
@@ -103,11 +103,11 @@ const ThemeContext = createContext<ThemeContextValue>({
   theme: 'modern',
   font: 'jakarta',
   setFont: () => {},
-  colorTheme: 'blue',
+  colorTheme: 'yellow',
   setColorTheme: () => {},
   baseColor: 'zinc',
   setBaseColor: () => {},
-  wallpaper: 'none',
+  wallpaper: 'glow',
   setWallpaper: () => {},
   mode: 'light',
   setMode: () => {},
@@ -117,15 +117,9 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [font, setFont] = useState<FontId>(() => readStored(FONT_KEY, VALID_FONTS, 'jakarta'))
-  const [colorTheme, setColorTheme] = useState<ColorTheme>(() =>
-    readStored(THEME_KEY, VALID_THEMES, 'blue'),
-  )
-  const [baseColor, setBaseColor] = useState<BaseColor>(() =>
-    readStored(BASE_KEY, VALID_BASE_COLORS, 'zinc'),
-  )
-  const [wallpaper, setWallpaper] = useState<WallpaperId>(() =>
-    readStored(WALLPAPER_KEY, VALID_WALLPAPERS, 'none'),
-  )
+  const [colorTheme, setColorTheme] = useState<ColorTheme>(() => readStored(THEME_KEY, VALID_THEMES, 'yellow'))
+  const [baseColor, setBaseColor] = useState<BaseColor>(() => readStored(BASE_KEY, VALID_BASE_COLORS, 'zinc'))
+  const [wallpaper, setWallpaper] = useState<WallpaperId>(() => readStored(WALLPAPER_KEY, VALID_WALLPAPERS, 'glow'))
   const [mode, setMode] = useState<Mode>(() => readStored(MODE_KEY, VALID_MODES, 'light'))
   const [huruf, setHuruf] = useState<HurufId>(() => readStored(HURUF_KEY, VALID_HURUF, 'sedang'))
 

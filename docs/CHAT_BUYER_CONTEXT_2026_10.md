@@ -39,3 +39,9 @@ Pemisahan chat belanja lebih lanjut memerlukan kontrak/payload produksi yang mem
 Kontrol toko dan sinkronisasi disusun dalam grid. Sinkronisasi tersedia untuk seluruh toko atau pilihan toko. Tombol riwayat per toko berada dalam daftar vertikal dengan nama toko dan Lebih lama, menggunakan warna sekunder agar tidak bersaing dengan tombol sinkronisasi utama. Tidak ada deretan peringatan percakapan tersembunyi. Tombol berwarna dan dukungan nonteks tetap dipertahankan.
 
 Regresi: pesan dengan kedua ID toko positif maupun field peran hilang tetap terbaca. Browser fixture390/1440 memeriksa sinkronisasi per toko/seluruh toko, paginasi vertikal, konten nonteks dan tidak ada overflow. Tidak ada tindakan marketplace nyata; deployment produksi belum terverifikasi.
+
+## Tandai sudah dibaca saat riwayat kosong
+
+Tombol baca tidak lagi tergantung pada messages.length. Permintaan memakai latest_message_id percakapan; backend mengambil ulang percakapan untuk memeriksa scope toko dan ID pesan. Jika ID cocok dengan ID terbaru authoritative, read_conversation dapat dipanggil walau get_message kosong. ID lain tetap harus ada dalam riwayat dan akan ditolak jika tidak cocok. Body kosong didukung dengan ID diturunkan dari percakapan server. ID yang tidak disediakan Shopee menghasilkan error yang dapat dibaca pengguna. Offset riwayat terminal "0" tidak menampilkan tombol Pesan lebih lama.
+
+Contoh produksi gudang_ps dari pengguna memiliki latest_message_content null dan messages kosong. Itu membuktikan konten tidak tersedia pada respons tersebut, bukan bukti bahwa semua riwayat kosong adalah chat belanja. Pemisahan otomatis pembeli/penjual tetap menunggu pembanding dan kontrak peran yang terverifikasi; tidak ada filter tebakan baru.

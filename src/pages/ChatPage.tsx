@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 type Conversation = {
   conversation_id: string
+  latest_message_id?: string
   kota?: string | null
   to_name: string
   to_id: number
@@ -138,14 +139,15 @@ export default function ChatPage() {
   const city = context.data?.kota ?? selected?.kota
   const markRead = useMutation({
     mutationFn: async () => {
-      const latest = [...(history.data?.messages ?? [])].sort(
-        (a, b) => chatTimestamp(b.created_timestamp) - chatTimestamp(a.created_timestamp),
-      )[0]
-      if (!latest) throw new Error('Segarkan percakapan terlebih dahulu.')
-      await api.post(`/akun/${threadShop}/chat/${encodeURIComponent(selected!.conversation_id)}/dibaca`, { message_id: latest.message_id })
+      const latestId = history.data?.conversation.latest_message_id ?? selected?.latest_message_id
+      await api.post(
+        `/akun/${threadShop}/chat/${encodeURIComponent(selected!.conversation_id)}/dibaca`,
+        latestId ? { message_id: String(latestId) } : {},
+      )
     },
     onSuccess: () => {
       setReadError('')
+      setSelected((current) => (current ? { ...current, unread_count: 0 } : current))
       qc.invalidateQueries({ queryKey: ['chat', 'inbox'] })
     },
     onError: (e) => setReadError(getApiError(e)),
@@ -350,7 +352,10 @@ export default function ChatPage() {
                   · {c.kota || 'Kota belum tersedia'}
                 </span>
                 {c.unread_count > 0 && (
-                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground"> {c.unread_count} belum dibaca</span>
+                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground">
+                    {' '}
+                    {c.unread_count} belum dibaca
+                  </span>
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -419,7 +424,7 @@ export default function ChatPage() {
                   <ChatCardView card={orderStart.data.order} />
                 </div>
               )}
-              <Button variant="outline" disabled={markRead.isPending || !history.data?.messages.length} onClick={() => markRead.mutate()}>
+              <Button variant="outline" disabled={markRead.isPending || !selected?.conversation_id} onClick={() => markRead.mutate()}>
                 Tandai sudah dibaca
               </Button>
               {readError && (
@@ -429,7 +434,7 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <p>Memuat pesan…</p>}
-              {!!history.data?.page_result.next_offset && (
+              {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && (
                 <Button
                   variant="outline"
                   onClick={() => {
