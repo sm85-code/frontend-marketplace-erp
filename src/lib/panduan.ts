@@ -72,6 +72,7 @@ export const panduan: Panduan[] = [
     langkah: [
       'Pilih toko dan status promosi, lalu buka Detail atau Buat Promosi.',
       'Isi periode (mulai minimal satu jam ke depan). Pilih produk dan model yang tepat sebelum menambah/mengubah harga diskon.',
+      'Saat menambahkan produk/varian, stok khusus promosi boleh diisi atau dikosongkan untuk pengaturan bawaan Shopee. Stok promo tidak bisa diubah langsung lewat Ubah harga.',
       'Periksa hasil setiap barang. Akhiri promosi hanya setelah memeriksa dampaknya; hapus mengikuti syarat Shopee.',
     ],
     dampak: 'Perubahan dikirim ke Shopee. Harga diskon bukan harga asli produk dan tidak mengubah stok ERP.',
