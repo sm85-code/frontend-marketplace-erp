@@ -35,9 +35,9 @@ describe('shipping options', () => {
   })
   it('labels processed orders according to the actual method', () => {
     const p = { status: 'to_ship' as const, status_marketplace: 'PROCESSED' }
-    expect(labelStatus({ ...p, metode_pengiriman: 'dropoff' })).toBe('Menunggu Penyerahan ke Gerai')
-    expect(labelStatus({ ...p, metode_pengiriman: 'pickup' })).toBe('Menunggu Penjemputan Kurir')
-    expect(labelStatus(p)).toBe('Menunggu Penyerahan')
+    expect(labelStatus({ ...p, metode_pengiriman: 'dropoff' })).toBe('Drop Off · Menunggu Penyerahan ke Gerai')
+    expect(labelStatus({ ...p, metode_pengiriman: 'pickup' })).toBe('Pickup · Menunggu Penjemputan Kurir')
+    expect(labelStatus(p)).toBe('Menunggu Penyerahan · Metode belum diketahui')
   })
   it('offers a dedicated retry pickup action and status', () => {
     const p = { status: 'to_ship' as const, status_marketplace: 'RETRY_SHIP' }
