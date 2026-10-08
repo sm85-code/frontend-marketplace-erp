@@ -2,7 +2,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { qk } from '@/api/keys'
 import { useState } from 'react'
-import { chatNeedsReply, chatTimestamp, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
+import { chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
+import MessageContent from './chat/MessageContent'
 import AttachmentPicker, { ChatCardView } from './chat/AttachmentPicker'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api, { fmtDateTime, getApiError } from '@/api/client'
@@ -21,6 +22,7 @@ type Conversation = {
   unread_count: number
   needs_reply?: boolean | null
   latest_message_from_id?: number | string
+  latest_message_type?: string
   latest_message_content: unknown
   last_message_timestamp: number
 }
@@ -30,17 +32,13 @@ type Message = {
   conversation_id: string
   from_shop_id?: number
   content: unknown
+  source_content?: unknown
   message_type: string
   created_timestamp: number
 }
 type Inbox = { conversations: Conversation[]; page_result: { more?: boolean; next_cursor?: { next_message_time_nano?: string } } }
 type History = { conversation: Conversation; messages: Message[]; page_result: { next_offset?: string } }
 type Delivery = { status: 'terkirim' | 'gagal' | 'belum_pasti'; error?: string; message?: Message }
-function content(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (value && typeof value === 'object' && 'text' in value) return String(value.text ?? '')
-  return 'Pesan nonteks — buka aplikasi Shopee untuk melihat konten lengkap.'
-}
 function time(value: number | string) {
   if (!chatTimestamp(value)) return '—'
   const date = new Date(chatTimestamp(value))
@@ -343,7 +341,7 @@ export default function ChatPage() {
               <div className="text-xs text-muted-foreground">
                 {c.shop.nama_toko} · {time(c.last_message_timestamp)}
               </div>
-              <p className="line-clamp-2 break-words text-sm">{content(c.latest_message_content)}</p>
+              <p className="line-clamp-2 break-words text-sm">{chatPreview(c.latest_message_content, c.latest_message_type)}</p>
             </button>
           ))}
           {!inbox.isFetching && !rows.length && <p>Tidak ada percakapan pada cakupan ini.</p>}
@@ -435,7 +433,12 @@ export default function ChatPage() {
                       ) : m.context?.product ? (
                         <ChatCardView card={m.context.product} />
                       ) : (
-                        <p className="whitespace-pre-wrap break-words text-sm">{content(m.content)}</p>
+                        <MessageContent
+                          content={m.content}
+                          sourceContent={m.source_content}
+                          type={m.message_type}
+                          shopId={active?.id_toko_eksternal ?? undefined}
+                        />
                       )}
                     </>
                     <div className="mt-1 text-xs text-muted-foreground">{time(m.created_timestamp)}</div>

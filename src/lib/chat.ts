@@ -34,3 +34,105 @@ export function chatNeedsReply(conversation: {
   if (!conversation.latest_message_from_id || !conversation.to_id) return null
   return String(conversation.latest_message_from_id) === String(conversation.to_id)
 }
+
+export type ChatPresentation = {
+  text: string[]
+  label: string
+  image?: string
+  video?: string
+  link?: string
+}
+
+/** Provider content is data, never HTML. Only web URLs are rendered as links/media. */
+export function chatWebUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string') return
+  try {
+    const url = new URL(value)
+    if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password) return url.href
+  } catch {
+    /* Not a URL. */
+  }
+}
+
+export function chatPresentation(value: unknown, type = '', shopId?: string): ChatPresentation {
+  const labels: Record<string, string> = {
+    item: 'Produk',
+    product: 'Produk',
+    order: 'Pesanan',
+    image: 'Gambar',
+    sticker: 'Stiker',
+    video: 'Video',
+    system: 'Pesan sistem',
+    auto_reply: 'Balasan otomatis',
+    template: 'Pesan otomatis',
+    file: 'Lampiran',
+    offer: 'Penawaran',
+  }
+  const result: ChatPresentation = { text: [], label: labels[type] || 'Pesan' }
+  const records: Record<string, unknown>[] = []
+  const textKeys = new Set(['text', 'message', 'title', 'description', 'name', 'item_name', 'product_name', 'label', 'caption', 'body'])
+  function read(data: unknown, depth = 0, key = '') {
+    if (depth > 6 || records.length > 100) return
+    if (typeof data === 'string') {
+      if (!depth || textKeys.has(key) || key === 'content') {
+        const text = data.trim()
+        if (text && !result.text.includes(text)) result.text.push(text)
+      }
+    } else if (Array.isArray(data)) {
+      data.slice(0, 30).forEach((v) => read(v, depth + 1, key))
+    } else if (data && typeof data === 'object') {
+      const record = data as Record<string, unknown>
+      records.push(record)
+      Object.entries(record).forEach(([k, v]) => read(v, depth + 1, k))
+    }
+  }
+  // Some Chat payloads carry JSON inside a string.
+  if (typeof value === 'string' && /^[{[]/.test(value.trim())) {
+    try {
+      value = JSON.parse(value)
+    } catch {
+      /* Keep a normal text message. */
+    }
+  }
+  read(value)
+  function field(...keys: string[]) {
+    for (const record of records)
+      for (const key of keys) {
+        if (record[key] !== undefined && record[key] !== null) return record[key]
+      }
+  }
+  function url(...keys: string[]) {
+    for (const record of records)
+      for (const key of keys) {
+        const valid = chatWebUrl(record[key])
+        if (valid) return valid
+      }
+  }
+  const itemId = field('item_id')
+  const orderSn = field('order_sn')
+  if (itemId !== undefined) {
+    result.label = 'Produk'
+    if (!result.text.length) result.text.push('Produk #' + String(itemId))
+    const owner = field('shop_id') ?? shopId
+    if (/^\d+$/.test(String(owner)) && /^\d+$/.test(String(itemId))) {
+      result.link = 'https://shopee.co.id/product/' + String(owner) + '/' + String(itemId)
+    }
+  }
+  if (orderSn) {
+    result.label = 'Pesanan'
+    result.text.push('Pesanan #' + String(orderSn))
+  }
+  result.image = url('image_url', 'thumbnail', 'thumbnail_url', 'thumb_url')
+  if (['image', 'sticker'].includes(type)) result.image ??= url('url', 'image')
+  if (type === 'video') result.video = url('video_url', 'url')
+  result.link ??= url('item_url', 'product_url', 'link', 'url')
+  if (!result.text.length && !result.image && !result.video && !result.link) {
+    result.text.push('Shopee belum menyertakan konten yang dapat ditampilkan' + (type ? ' (' + type + ').' : '.'))
+  }
+  return result
+}
+
+export function chatPreview(value: unknown, type = ''): string {
+  const view = chatPresentation(value, type)
+  return view.text.join(' · ') || view.label
+}
