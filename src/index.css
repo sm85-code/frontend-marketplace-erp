@@ -683,3 +683,7 @@ h4,
 [data-slot="dialog-content"] p.whitespace-pre-wrap { text-align: justify; overflow-wrap: anywhere; line-height: 1.65; }
 .erp-content input[type="checkbox"], .erp-content input[type="radio"] { width: 1rem; height: 1rem; min-height: 1rem; flex-shrink: 0; }
 .erp-content .bar-halaman p, .erp-content p.whitespace-pre-wrap { text-align: justify; line-height: 1.6; }
+
+/* Tables keep numeric values and identifiers intact; descriptive cells wrap at words. */
+.erp-content table { overflow-wrap: normal; }
+.erp-content table td.text-right { white-space: nowrap; font-variant-numeric: tabular-nums; }

@@ -10,6 +10,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { rentangAwalRetur, validasiRentangRetur, waktuRetur } from '@/lib/retur'
 const types: Record<string, string> = {
+  WITHDRAWAL_CREATED: 'Penarikan dibuat',
+  WITHDRAWAL_COMPLETED: 'Penarikan selesai',
+  WITHDRAWAL_CANCELLED: 'Penarikan dibatalkan',
+  ESCROW_VERIFIED_ADD: 'Penghasilan pesanan',
   '101': 'Escrow masuk',
   '102': 'Escrow negatif',
   '201': 'Penarikan dibuat',
@@ -22,20 +26,22 @@ const types: Record<string, string> = {
 }
 const money = (v: string | null) => (v === null ? '—' : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 8 }))
 const columns: KolomTabel<WalletTransaction>[] = [
-  { kunci: 'time', judul: 'Waktu (WIB)', tetap: true, sel: (r) => waktuRetur(r.create_time) },
+  { kunci: 'time', judul: 'Waktu (WIB)', tetap: true, kelas: 'whitespace-nowrap', sel: (r) => waktuRetur(r.create_time) },
   {
     kunci: 'type',
     judul: 'Jenis / Status',
+    kelas: 'min-w-[180px]',
     sel: (r) => (
-      <div>
-        {types[r.transaction_type] || r.transaction_type}
-        <small className="block text-muted-foreground">{r.status}</small>
+      <div title={r.transaction_type}>
+        {types[r.transaction_type] || r.transaction_type.replaceAll('_', ' ')}
+        <small className="block text-muted-foreground">{r.status === 'COMPLETED' ? 'Selesai' : r.status}</small>
       </div>
     ),
   },
   {
     kunci: 'flow',
     judul: 'Arus dana',
+    kelas: 'whitespace-nowrap',
     sel: (r) => (r.money_flow === 'MONEY_IN' ? 'Masuk' : r.money_flow === 'MONEY_OUT' ? 'Keluar' : (r.money_flow ?? '—')),
   },
   { kunci: 'amount', judul: 'Nominal', rata: 'kanan', sel: (r) => money(r.amount) },
@@ -44,6 +50,7 @@ const columns: KolomTabel<WalletTransaction>[] = [
   {
     kunci: 'order',
     judul: 'Pesanan / Refund',
+    kelas: 'whitespace-nowrap',
     sel: (r) => (
       <div>
         {r.pesanan_id ? (
@@ -60,6 +67,7 @@ const columns: KolomTabel<WalletTransaction>[] = [
   {
     kunci: 'withdrawal',
     judul: 'Penarikan / Induk',
+    kelas: 'whitespace-nowrap tabular-nums',
     sel: (r) => (
       <div>
         {r.withdrawal_id || '—'}
@@ -153,7 +161,7 @@ export default function TransaksiDana() {
             minWidth={1150}
           />
           {!rows.data.items.length && <p className="text-sm text-muted-foreground">Tidak ada transaksi pada rentang ini.</p>}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               disabled={!previous.length || rows.isFetching}

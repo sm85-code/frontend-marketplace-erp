@@ -53,7 +53,7 @@ export const NAV: NavItem[] = [
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk', bawah: 4, posisiBawah: 2 },
   { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
-  { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_OWNER_ONLY, grup: 'keuangan' },
+  { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/toko', label: 'Toko', icon: Store, roles: ALL_ROLES, grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Staff', icon: Users, roles: ROLES_OWNER_ONLY, grup: 'pengaturan' },

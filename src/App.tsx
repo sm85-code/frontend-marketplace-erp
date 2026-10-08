@@ -103,7 +103,7 @@ export default function App() {
               />
               <Route
                 path="/settlement"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><SettlementPage /></LazyPage></Protected>}
+                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><SettlementPage /></LazyPage></Protected>}
               />
               <Route
 path="/iklan"
