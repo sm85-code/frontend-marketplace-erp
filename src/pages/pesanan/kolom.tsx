@@ -7,7 +7,7 @@ import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PLATFORM_LABELS } from '@/config/roles'
-import { bisaDicetak, labelStatus, sudahDicetak } from '@/lib/pesanan'
+import { bisaDicetak, bisaDiproses, labelProses, labelStatus, sudahDicetak } from '@/lib/pesanan'
 import { ItemRingkas } from './ItemRingkas'
 
 function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
@@ -143,21 +143,24 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
 export function AksiPesanan({
   p,
   onCetak,
+  onProses,
   cetakSibuk,
 }: {
   p: Pesanan
   /** Prints the label of this one order (the click opens the tab, so it must run inside the click handler). */
   onCetak: (p: Pesanan) => void
+  onProses: (p: Pesanan) => void
   cetakSibuk: boolean
 }) {
   return (
-    <div className="flex flex-nowrap items-center justify-end gap-2">
+    <div className="flex items-stretch justify-end gap-2">
+      {bisaDiproses(p) && <Button size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onProses(p)} disabled={cetakSibuk}>{labelProses(p)}</Button>}
       {bisaDicetak(p) && (
-        <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" className="h-9 px-3" onClick={() => onCetak(p)} disabled={cetakSibuk}>
+        <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onCetak(p)} disabled={cetakSibuk}>
           {sudahDicetak(p) ? 'Cetak ulang resi' : 'Cetak resi'}
         </Button>
       )}
-      <Button asChild size="sm" variant="outline" className="h-9 px-3">
+      <Button asChild size="sm" variant="outline" className="h-auto min-h-11 shrink-0 px-4">
         <Link to={`/pesanan/${p.id}`}>Detail</Link>
       </Button>
     </div>
