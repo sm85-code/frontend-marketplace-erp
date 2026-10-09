@@ -7,6 +7,7 @@ import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Role } from '@/api/types'
 
+const PerformaTokoPage = lazy(() => import('@/pages/PerformaTokoPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const GantiPasswordPage = lazy(() => import('@/pages/GantiPasswordPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
@@ -77,6 +78,7 @@ export default function App() {
                 element={<Protected><LazyPage><GantiPasswordPage /></LazyPage></Protected>}
               />
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
+              <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route

@@ -63,7 +63,7 @@ function kolomKampanye(): KolomTabel<KampanyeIklan>[] {
         return (
           <span className="block">
             <Badge variant={s.varian}>{s.label}</Badge>
-            <span className="teks-kecil block text-muted-foreground">{k.bidding === 'auto' ? 'GMV Max' : k.bidding === 'manual' ? 'Manual' : ''}</span>
+            <span className="teks-kecil block text-muted-foreground">{k.bidding === 'auto' ? 'Otomatis' : k.bidding === 'manual' ? 'Manual' : ''}</span>
           </span>
         )
       },

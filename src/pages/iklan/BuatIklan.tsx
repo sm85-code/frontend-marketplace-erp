@@ -56,7 +56,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
   async function kirim() {
     if (buat.isPending) return
     const ringkas = [
-      `Produk Shopee ${itemId}, ${mode === 'auto' ? 'GMV Max otomatis' : `manual dengan ${kata.length} kata kunci`}.`,
+      `Produk Shopee ${itemId}, ${mode === 'auto' ? 'penawaran otomatis' : `manual dengan ${kata.length} kata kunci`}.`,
       `Anggaran ${fmtRp(anggaran)} per hari, mulai hari ini tanpa tanggal akhir.`,
       'Iklan langsung aktif dan memakai saldo iklan toko.',
     ].join('\n')
@@ -85,7 +85,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">GMV Max (otomatis)</SelectItem>
+                <SelectItem value="auto">Penawaran otomatis</SelectItem>
                 <SelectItem value="manual">Manual (kata kunci)</SelectItem>
               </SelectContent>
             </Select>

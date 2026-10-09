@@ -549,3 +549,9 @@ export interface SalinMasterHasil { katalog_id: string; nama?: string; ok: boole
 export const salinKatalogMaster = (ids: string[]) => api.post<{ hasil: SalinMasterHasil[] }>('/katalog-shopee/salin-master', { ids }).then(r => r.data)
 
 export const getPengaturanStok = () => api.get<{ mode: 'per_toko' | 'gudang_erp'; gudang_aktif: boolean }>('/pengaturan-stok').then(r => r.data)
+
+export type ShopPerformance = { metrics: { metric_id: number; metric_name: string; current_period: number | null; last_period: number | null; unit: number; target: { comparator: string; value: number } | null }[]; diambil_at: string; request_id: string | null }
+export const getShopPerformance = (id: string) => api.get<ShopPerformance>(`/akun/${encodeURIComponent(id)}/performa-toko`).then(r => r.data)
+export type ProductStats = { sale: number | null; views: number | null; likes: number | null; rating_star: number | null; comment_count: number | null; diambil_at: string }
+export const getProductStats = (id: string) => api.get<ProductStats>(`/katalog-shopee/${encodeURIComponent(id)}/statistik`).then(r => r.data)
+export const ubahPromosi = (akun: string, id: string, data: { nama?: string; mulai_at?: number; selesai_at?: number }) => api.patch<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akun)}/promosi/${encodeURIComponent(id)}`, data).then(r => r.data)
