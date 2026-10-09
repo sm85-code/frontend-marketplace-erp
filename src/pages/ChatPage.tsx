@@ -407,8 +407,8 @@ export default function ChatPage() {
             >
               <Avatar key={c.to_avatar} url={c.to_avatar}/>
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2"><span className="truncate font-semibold">{c.to_name || 'Pembeli'}</span><time className="shrink-0 text-[11px] text-muted-foreground" title={time(c.last_message_timestamp)}>{shortTime(c.last_message_timestamp)}</time></div>
-                <div className="truncate text-xs text-muted-foreground">{c.shop.nama_toko}{c.kota ? ` · ${c.kota}` : ''}</div>
+                <div className="flex items-start justify-between gap-2"><span className="min-w-0 flex-1 break-words"><span className="font-semibold">{c.to_name || 'Pembeli'}</span>{c.kota && <span className="ml-1 text-xs text-muted-foreground" title="Alamat tujuan pesanan tersinkron">· {c.kota}</span>}</span><time className="shrink-0 text-[11px] text-muted-foreground" title={time(c.last_message_timestamp)}>{shortTime(c.last_message_timestamp)}</time></div>
+                <div className="truncate text-xs text-muted-foreground">{c.shop.nama_toko}</div>
                 <div className="mt-1 flex items-center justify-between gap-2"><p className="line-clamp-1 min-w-0 break-words text-sm text-muted-foreground">{chatPreview(c.latest_message_content, c.latest_message_type)}</p>
                   {c.unread_count > 0 && <span aria-label={`${c.unread_count} belum dibaca`} className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">{c.unread_count}</span>}
                 </div>
