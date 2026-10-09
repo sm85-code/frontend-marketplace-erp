@@ -2,6 +2,8 @@ export type ChatCard = {
   id: string
   nama: string
   foto: string | null
+  varian?: string
+  model_id?: string | null
   order_sn?: string
   status?: string
   total?: string
@@ -81,6 +83,9 @@ export function chatPresentation(value: unknown, type = '', shopId?: string, out
     'name',
     'item_name',
     'product_name',
+    'model_name',
+    'variation_name',
+    'variant_name',
     'label',
     'caption',
     'body',
@@ -145,7 +150,7 @@ export function chatPresentation(value: unknown, type = '', shopId?: string, out
     result.label = 'Pesanan'
     result.text.push('Pesanan #' + String(orderSn))
   }
-  result.image = url('image_url', 'thumbnail', 'thumbnail_url', 'thumb_url')
+  result.image = url('image_url', 'thumbnail', 'thumbnail_url', 'thumb_url', 'model_image_url', 'product_image_url', 'item_image_url')
   if (['image', 'sticker'].includes(type)) result.image ??= url('url', 'image')
   if (type === 'video') result.video = url('video_url', 'url')
   result.link ??= url('item_url', 'product_url', 'link', 'url')

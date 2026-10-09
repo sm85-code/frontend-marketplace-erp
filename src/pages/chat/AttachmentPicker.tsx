@@ -13,6 +13,7 @@ export function ChatCardView({ card }: { card: ChatCard }) {
       <FotoItem item={{ nama_produk: card.nama, foto: card.foto }} />
       <div className="min-w-0 text-sm">
         <div className="break-words font-medium">{card.order_sn ? `Pesanan #${card.order_sn}` : card.nama}</div>
+        {card.varian && <div className="mt-1 text-xs font-medium text-muted-foreground">Varian: {card.varian}</div>}
         {card.total !== undefined && <div>Total: {fmtMoney(card.total)}</div>}
         {card.harga !== undefined && <div>{card.harga === null ? 'Harga belum tersedia' : fmtMoney(card.harga)}</div>}
         {card.items?.map((item, i) => (
