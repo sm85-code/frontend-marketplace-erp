@@ -1,3 +1,4 @@
+import { Checkbox } from '@/components/ui/checkbox'
 import AksiLainnya from '@/components/AksiLainnya'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
 import UkuranHalaman from '@/components/UkuranHalaman'
@@ -23,7 +24,6 @@ import {
   FilterCari,
   FilterPilih,
   FilterSakelar,
-  Medan,
   Paginasi,
   PemilihKolom,
   TabelData,
@@ -155,11 +155,6 @@ export default function KatalogPage() {
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
         utama={<FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
       >
-      <div className="flex flex-wrap gap-2" aria-label="Preset kolom katalog">{[
-        ['Ringkas',['nama','foto','harga','stok','nilai_varian','status']],
-        ['Varian',['nama','varian','nilai_varian','sku','harga','stok','status']],
-        ['Pengiriman',['nama','nilai_varian','berat','package_length','package_width','package_height','preorder','kurir']],
-      ].map(([label,keys])=><Button key={label as string} variant="secondary" size="sm" onClick={()=>{kolom.preset(keys as string[]);setRinci(label !== 'Ringkas')}}>{label}</Button>)}</div>
         <FilterPilih
           id="katalog-toko"
           label="Toko"
@@ -177,6 +172,19 @@ export default function KatalogPage() {
           opsi={STATUS_SHOPEE.map((s) => ({ value: s.value, label: `${s.label} (${ringkasan?.status?.[s.value] ?? '…'})` }))}
         />
         <FilterPilih id="katalog-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
+        <div className="col-span-full"><FilterSakelar id="katalog-belum" label="Belum dikirim ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} /></div>
+        {f.berubah && (
+          <FilterAksi>
+            <Button variant="ghost" onClick={f.reset}>
+              Reset filter
+            </Button>
+          </FilterAksi>
+        )}
+      </BarFilter>
+
+      <details className="rounded-xl border bg-card">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Pengaturan tampilan</summary>
+        <div className="grid grid-cols-1 gap-3 border-t p-4 sm:grid-cols-2 lg:grid-cols-3">
         <PilihTampilan
           id="katalog-tampilan"
           nilai={tampilan}
@@ -188,41 +196,42 @@ export default function KatalogPage() {
         />
         {tampilan === 'list' && (<>
           <UkuranHalaman value={perHalaman} onChange={n=>{setPerHalaman(n);f.setHalaman(1)}} />
-        <Medan>
+        <div className="flex items-end">
             <PemilihKolom
               semua={semuaKolom}
               tampil={kolom.tampil}
               onUbah={kolom.ubah}
               onReset={kolom.reset}
             />
-          </Medan>
+          </div>
         </>)}
-        {tampilan === 'list' && (
-          <FilterSakelar
-            id="katalog-rinci-varian"
-            label="Rinci per varian"
-            nilai={rinci}
-            onUbah={(v) => {
-              setRinci(v)
+        {tampilan === 'list' && <label className="flex min-h-11 items-center gap-2 text-sm">
+          <Checkbox checked={rinci} onCheckedChange={(v) => {
+            setRinci(v === true)
+            setDibalik(new Set())
+            tulisSimpan(KUNCI_RINCI_VARIAN, v === true ? 'ya' : 'tidak')
+          }} />
+          Rinci per varian
+        </label>}
+          {tampilan === 'list' && <FilterPilih id="katalog-preset" label="Susunan kolom" nilai="" semua="Pilih susunan" opsi={[{value:'ringkas',label:'Ringkas'},{value:'varian',label:'Varian'},{value:'pengiriman',label:'Pengiriman'}]} tetapTerbuka onUbah={(v) => {
+            const presets: Record<string, string[]> = {
+              ringkas: ['nama','foto','harga','stok','nilai_varian','status'],
+              varian: ['nama','varian','nilai_varian','sku','harga','stok','status'],
+              pengiriman: ['nama','nilai_varian','berat','package_length','package_width','package_height','preorder','kurir'],
+            }
+            if (presets[v]) {
+              kolom.preset(presets[v])
+              setRinci(v !== 'ringkas')
               setDibalik(new Set())
-              tulisSimpan(KUNCI_RINCI_VARIAN, v ? 'ya' : 'tidak')
-            }}
-          />
-        )}
-        <FilterSakelar id="katalog-belum" label="Belum dikirim ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} />
-        <FilterAksi>
-          <Button variant="outline" onClick={() => pilih.ubahBanyak(items, !semuaHalamanDipilih)} disabled={!items.length}>
-            {semuaHalamanDipilih ? 'Batal pilih halaman ini' : 'Pilih halaman ini'}
-          </Button>
-        </FilterAksi>
-        {f.berubah && (
-          <FilterAksi>
-            <Button variant="ghost" onClick={f.reset}>
-              Reset filter
-            </Button>
-          </FilterAksi>
-        )}
-      </BarFilter>
+              tulisSimpan(KUNCI_RINCI_VARIAN, v === 'ringkas' ? 'tidak' : 'ya')
+            }
+          }} />}
+        </div>
+      </details>
+      {items.length > 0 && <label className="flex items-center gap-2 text-sm">
+        <Checkbox checked={semuaHalamanDipilih} onCheckedChange={(v) => pilih.ubahBanyak(items, v === true)} />
+        Pilih semua di halaman ini
+      </label>}
 
       {isLoading ? (
         <Spinner column label="Memuat katalog…" />
