@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  Bot,
   Boxes,
   Home,
   LayoutGrid,
@@ -54,6 +55,8 @@ export const NAV: NavItem[] = [
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
+  { to: '/asisten', label: 'Asisten AI', icon: Bot, roles: ROLES_ADMIN_ONLY, grup: 'harian' },
+  { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'harian' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, roles: ROLES_ADMIN_ONLY, grup: 'pengaturan' },

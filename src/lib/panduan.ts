@@ -6,6 +6,15 @@ export interface Panduan {
   dampak: string
 }
 export const panduan: Panduan[] = [
+  {path: '/asisten', judul: 'Asisten AI', tujuan: 'Tanyakan data ERP atau jalankan perintah khusus admin.',
+   langkah: ['Pilih toko, lalu gunakan mode Tanya untuk membaca data.', 'Gunakan Jalankan perintah untuk perubahan; sebutkan produk, tindakan dan nilainya.', 'Periksa jawaban dan catatan tindakan. Hasil belum pasti tidak dikirim ulang otomatis.'],
+   dampak: 'Mode perintah dapat mengubah produk, iklan dan promosi di Shopee. Penggunaan AI dikenai biaya token.'},
+  {
+    path: '/performa-toko', judul: 'Performa Toko',
+    tujuan: 'Periksa indikator kesehatan dan riwayat penalti toko dari Shopee.',
+    langkah: ['Pilih toko Shopee untuk membaca indikator terbaru.', 'Bandingkan periode saat ini dengan periode sebelumnya dan target yang tersedia.', 'Periksa riwayat poin penalti kuartal berjalan; gunakan halaman berikutnya untuk catatan lain.'],
+    dampak: 'Halaman khusus admin ini hanya membaca data. Data yang belum tersedia tidak dianggap nol.',
+  },
   {
     path: '/chat', judul: 'Chat Pembeli',
     tujuan: 'Baca dan balas pesan pembeli tanpa berpindah ke toko lain.',

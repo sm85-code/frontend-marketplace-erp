@@ -1,3 +1,4 @@
+import GmvMax from './iklan/GmvMax'
 import FormDialog from '@/components/FormDialog'
 import MoneyInput from '@/components/MoneyInput'
 import QueryError from '@/components/QueryError'
@@ -77,7 +78,7 @@ export default function IklanPage() {
   const [params, setParams] = useSearchParams()
   // Local state is the source of truth (reading it back from the URL raced when tabs were clicked quickly); the URL
   // only follows, so F5 and shared links keep the tab.
-  const [tab, setTab] = useState(() => (params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' ? 'kampanye' : 'performa'))
+  const [tab, setTab] = useState(() => (params.get('tab') === 'gmv' ? 'gmv' : params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' ? 'kampanye' : 'performa'))
 
   return (
     <div className="space-y-4">
@@ -91,9 +92,11 @@ export default function IklanPage() {
         <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
           <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
           <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>
+          <TabsTrigger value="gmv" className="px-3">Shop GMV Max</TabsTrigger>
           <TabsTrigger value="catatan" className="px-3">Catatan</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="gmv"><GmvMax /></TabsContent>
         <TabsContent value="performa" className="text-base">
           <PerformaShopee />
         </TabsContent>
