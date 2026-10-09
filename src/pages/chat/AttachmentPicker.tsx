@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Package, ReceiptText, Paperclip, Plus } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { fmtMoney } from '@/api/client'
 import type { ChatAttachment, ChatCard, ChatContext } from '@/lib/chat'
 import { FotoItem } from '../pesanan/ItemRingkas'
@@ -11,8 +13,10 @@ export function ChatCardView({ card }: { card: ChatCard }) {
       <FotoItem item={{ nama_produk: card.nama, foto: card.foto }} />
       <div className="min-w-0 text-sm">
         <div className="break-words font-medium">{card.order_sn ? `Pesanan #${card.order_sn}` : card.nama}</div>
+        {card.varian && <div className="mt-1 text-xs font-medium text-muted-foreground">Varian: {card.varian}</div>}
         {card.total !== undefined && <div>Total: {fmtMoney(card.total)}</div>}
-        {card.harga !== undefined && <div>{card.harga === null ? 'Harga belum tersedia' : fmtMoney(card.harga)}</div>}
+        {card.harga !== undefined && <div>{card.harga === null ? 'Harga belum tersedia' : fmtMoney(card.harga, card.currency)}</div>}
+        {card.harga_asli && <div className="text-xs text-muted-foreground line-through">{fmtMoney(card.harga_asli, card.currency)}</div>}
         {card.items?.map((item, i) => (
           <div key={i} className="mt-2 flex items-start gap-2">
             <FotoItem ukuran={32} item={{ nama_produk: item.nama, foto: item.foto }} />
@@ -46,20 +50,18 @@ export default function AttachmentPicker({
   choose: (value: ChatAttachment) => void
   disabled: boolean
 }) {
+  const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'item' | 'order'>('order')
   return (
-    <details className="my-3 rounded-lg border p-3">
-      <summary className="cursor-pointer font-medium">Lampirkan produk / pesanan</summary>
-      <p className="my-2 text-xs text-muted-foreground">
-        Produk berasal dari toko percakapan ini. Pesanan hanya milik pembeli terkait. Pilih kartu, periksa, lalu tekan Kirim lampiran. Teks
-        dikirim terpisah.
-      </p>
-      <div className="mb-3 flex gap-2">
-        <Button type="button" variant={tab === 'order' ? 'default' : 'outline'} onClick={() => setTab('order')}>
-          Pesanan pembeli
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 whitespace-normal rounded-xl px-2 py-2 text-xs" disabled={disabled} onClick={() => setOpen(true)}><Paperclip className="size-5"/>Produk / Pesanan</Button>
+      <DialogContent><DialogHeader><DialogTitle>Lampirkan produk atau pesanan</DialogTitle><DialogDescription>Pilih kartu dari toko percakapan, lalu periksa sebelum dikirim.</DialogDescription></DialogHeader>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" className="h-auto min-h-11 whitespace-normal px-2 text-xs sm:text-sm" variant={tab === 'order' ? 'default' : 'outline'} onClick={() => setTab('order')}>
+          <ReceiptText className="mr-2 size-4"/>Pesanan pembeli
         </Button>
-        <Button type="button" variant={tab === 'item' ? 'default' : 'outline'} onClick={() => setTab('item')}>
-          Produk toko
+        <Button type="button" className="h-auto min-h-11 whitespace-normal px-2 text-xs sm:text-sm" variant={tab === 'item' ? 'default' : 'outline'} onClick={() => setTab('item')}>
+          <Package className="mr-2 size-4"/>Produk toko
         </Button>
       </div>
       {tab === 'item' && (
@@ -84,10 +86,10 @@ export default function AttachmentPicker({
                 type="button"
                 aria-label={`Lampirkan ${tab === 'order' ? 'pesanan' : 'produk'} ${card.nama}`}
                 disabled={disabled}
-                className="rounded-lg border p-3 text-left hover:bg-muted disabled:opacity-50"
-                onClick={() => choose({ type: tab, card })}
+                className="flex items-center gap-3 rounded-xl border bg-card p-3 text-left hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                onClick={() => {choose({ type: tab, card });setOpen(false)}}
               >
-                <ChatCardView card={card} />
+                <div className="min-w-0 flex-1"><ChatCardView card={card} /></div><Plus className="size-4 shrink-0 text-primary"/>
               </button>
             ))}
           </div>
@@ -110,6 +112,7 @@ export default function AttachmentPicker({
           )}
         </>
       )}
-    </details>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -2,9 +2,13 @@ export type ChatCard = {
   id: string
   nama: string
   foto: string | null
+  varian?: string
+  model_id?: string | null
   order_sn?: string
   status?: string
   total?: string
+  currency?: string
+  harga_asli?: string | null
   harga?: string | null
   items?: { nama: string; varian: string; qty: number; foto: string | null }[]
 }
@@ -16,7 +20,7 @@ export type ChatContext = {
   produk_ada_lagi: boolean
   produk_offset: number
 }
-export type ChatAttachment = { type: 'item' | 'order'; card: ChatCard }
+export type ChatAttachment = { type: 'item' | 'order' | 'image'; card: ChatCard }
 /** Normalize the seconds/ms/ns timestamps returned by Chat before comparing shops. */
 export function chatTimestamp(value: number | string | undefined): number {
   const n = Number(value)
@@ -58,6 +62,7 @@ export function chatPresentation(value: unknown, type = '', shopId?: string, out
   const labels: Record<string, string> = {
     item: 'Produk',
     product: 'Produk',
+    variation_card: 'Varian produk',
     order: 'Pesanan',
     image: 'Gambar',
     sticker: 'Stiker',
@@ -81,6 +86,9 @@ export function chatPresentation(value: unknown, type = '', shopId?: string, out
     'name',
     'item_name',
     'product_name',
+    'model_name',
+    'variation_name',
+    'variant_name',
     'label',
     'caption',
     'body',
@@ -145,7 +153,7 @@ export function chatPresentation(value: unknown, type = '', shopId?: string, out
     result.label = 'Pesanan'
     result.text.push('Pesanan #' + String(orderSn))
   }
-  result.image = url('image_url', 'thumbnail', 'thumbnail_url', 'thumb_url')
+  result.image = url('image_url', 'thumbnail', 'thumbnail_url', 'thumb_url', 'model_image_url', 'product_image_url', 'item_image_url')
   if (['image', 'sticker'].includes(type)) result.image ??= url('url', 'image')
   if (type === 'video') result.video = url('video_url', 'url')
   result.link ??= url('item_url', 'product_url', 'link', 'url')
@@ -166,4 +174,47 @@ export function chatClosedNotice(content: unknown, type: string): boolean {
   if (!['notification', 'system'].includes(type)) return false
   const text = chatPresentation(content, type).text.join(' ').toLowerCase()
   return /(?:percakapan|chat)\s+(?:(?:telah|sudah|otomatis|secara otomatis)\s+)*(?:ditutup|diakhiri)|conversation\s+(?:(?:has been|is|was)\s+)?closed/.test(text)
+}
+
+/** Native Shopee Webchat V2 variant card. Prices are encoded in 1/100000
+ * currency units, as in the supplied display_price payload, not catalogue units. */
+export function chatVariationCard(value: unknown, type: string): ChatCard | null {
+  if (type !== 'variation_card') return null
+  if (typeof value === 'string') { try { value = JSON.parse(value) } catch { return null } }
+  if (!value || typeof value !== 'object') return null
+  const root = value as Record<string, unknown>
+  const item = root.item_card_v2 as Record<string, unknown> | undefined
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null
+  const models = Array.isArray(item.item_model_v2) ? item.item_model_v2 : []
+  const modelId = root.model_id
+  const matches = models.filter(m => m && typeof m === 'object' && String(m.model_id) === String(modelId))
+  const model = matches.length === 1 ? matches[0] as Record<string, unknown> : null
+  if (!model) return null
+  function name(v: unknown): string {
+    if (typeof v === 'string') return v.slice(0,1000)
+    return v && typeof v === 'object' && typeof (v as {text?:unknown}).text === 'string' ? (v as {text:string}).text.slice(0,1000) : ''
+  }
+  const display = model.display_price && typeof model.display_price === 'object' ? model.display_price as Record<string,unknown> : {}
+  const currency = typeof display.currency === 'string' ? display.currency : undefined
+  function price(v: unknown): string | null {
+    if (display.is_price_mask === true || !/^\d+$/.test(String(v ?? ''))) return null
+    const n = Number(v)
+    return Number.isSafeInteger(n) && n >= 0 ? String(n/100000) : null
+  }
+  const amount = price(display.discount_price) ?? price(display.origin_price)
+  const original = price(display.price_before_discount) ?? price(display.origin_price)
+  function image(v: unknown): string | null {
+    const url = chatWebUrl(v)
+    if (url) return url
+    // Only the known ID-region CDN and a native file identifier; never HTML/paths.
+    if (currency === 'IDR' && typeof v === 'string' && /^(?:id|sg)-[a-zA-Z0-9_-]{8,160}$/.test(v)) return 'https://cf.shopee.co.id/file/'+v
+    return null
+  }
+  return {
+    id: String(root.product_id ?? item.item_id ?? '')+':'+String(modelId),
+    nama: name(item.name) || 'Produk', varian: name(model.name) || 'Varian',
+    model_id: String(modelId), foto: image(model.image) ?? image(item.thumb_url),
+    harga: amount, currency,
+    harga_asli: original !== null && amount !== null && Number(original) > Number(amount) ? original : null,
+  }
 }
