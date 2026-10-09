@@ -22,9 +22,10 @@ export function ItemRingkas({ items, maks = items.length }: { items: ItemPesanan
         <div key={i.id} className="flex min-h-16 items-start gap-2">
           <FotoItem item={i} />
           <div className="min-w-0">
-            <div className="line-clamp-2 text-sm leading-snug" title={i.nama_produk}>
+            <div className="text-sm leading-snug" title={i.nama_produk}>
               {i.nama_produk}
             </div>
+            {i.model_name && <div className="text-sm font-medium">Varian: {i.model_name}</div>}
             <div className="teks-kecil text-muted-foreground">Jumlah: {i.qty}</div>
           </div>
         </div>

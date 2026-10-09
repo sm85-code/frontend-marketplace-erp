@@ -51,7 +51,7 @@ export const NAV: NavItem[] = [
   { to: '/chat', label: 'Chat', icon: MessageSquare, roles: ALL_ROLES, grup: 'harian', bawah: 3, posisiBawah: 3 },
   { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, roles: ALL_ROLES, grup: 'produk', bawah: 2, posisiBawah: 2 },
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk' },
-  { to: '/listing', label: 'Listing', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
+  { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },

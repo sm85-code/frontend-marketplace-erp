@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom'
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
+import { useTokoAktif } from '@/lib/tokoAktif'
+import Bantuan from '@/components/Bantuan'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -15,20 +19,19 @@ import { TAHAP_LABELS } from '@/lib/pesanan'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 
 const PRESET_DASHBOARD: PresetTanggal[] = ['7', '30', '90', 'bulan_ini']
-const HARI_DITAMPILKAN = 14
+
 
 const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
   <span className={n === 0 ? 'text-muted-foreground' : tebal ? 'font-semibold' : ''}>{n.toLocaleString('id-ID')}</span>
 )
 
-function Kartu({ label, nilai, catatan }: { label: string; nilai: string; catatan?: string }) {
+function Kartu({ label, nilai, catatan, href }: { label: string; nilai: string; catatan?: string; href?: string }) {
   return (
     <Card>
       <CardContent className="p-3 sm:p-6">
         <div className="teks-kecil text-muted-foreground">{label}</div>
-        <div className="text-base font-bold tabular-nums sm:text-2xl">{nilai}</div>
-        {/* the explanation is a luxury: on phones it only costs height */}
-        {catatan && <div className="teks-kecil mt-0.5 hidden text-muted-foreground sm:block">{catatan}</div>}
+        <div className="text-base font-bold tabular-nums sm:text-2xl">{href ? <Link className="underline underline-offset-4" to={href}>{nilai}</Link> : nilai}</div>
+        {catatan && <div className="teks-kecil mt-0.5 text-muted-foreground">{catatan}</div>}
       </CardContent>
     </Card>
   )
@@ -47,12 +50,12 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 }
 
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
-  { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => t.nama_toko, nilai: (t) => t.nama_toko },
+  { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => <Link className="underline" to={`/pesanan?toko=${encodeURIComponent(t.akun_id??'')}&tahap=semua`}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
   { kunci: 'perlu_diproses', judul: 'Perlu Diproses', rata: 'kanan', sel: (t) => <Angka n={t.perlu_diproses} tebal />, nilai: (t) => t.perlu_diproses },
-  { kunci: 'menunggu_kurir', judul: 'Menunggu Kurir', rata: 'kanan', sel: (t) => <Angka n={t.menunggu_kurir} />, nilai: (t) => t.menunggu_kurir },
+  { kunci: 'menunggu_kurir', judul: 'Menunggu Penyerahan', rata: 'kanan', sel: (t) => <Angka n={t.menunggu_kurir} />, nilai: (t) => t.menunggu_kurir },
   { kunci: 'dikirim', judul: 'Dikirim', rata: 'kanan', sel: (t) => <Angka n={t.dikirim} />, nilai: (t) => t.dikirim },
   { kunci: 'selesai', judul: 'Selesai', rata: 'kanan', sel: (t) => <Angka n={t.selesai} />, nilai: (t) => t.selesai },
   { kunci: 'dibatalkan', judul: 'Dibatalkan', rata: 'kanan', sel: (t) => <Angka n={t.dibatalkan} />, nilai: (t) => t.dibatalkan },
@@ -80,20 +83,22 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { data: semuaToko } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const [preset, setPreset] = useState<PresetTanggal>('30')
-  const [semuaHari, setSemuaHari] = useState(false)
+  const [toko,setToko]=useTokoAktif()
   // Whole local days, so the key (and the request) stays the same all day long instead of changing every render.
   const { dari = '', sampai = '' } = rentangTanggal(preset)
 
   const { data: d, isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: qk.dashboard(dari, sampai),
-    queryFn: () => endpoints.laporanDashboard(dari, sampai),
+    queryKey: [...qk.dashboard(dari, sampai),toko],
+    queryFn: () => endpoints.laporanDashboard(dari, sampai,toko||undefined),
     enabled: !!user,
     placeholderData: (prev) => prev,
   })
 
   const tahap = Object.fromEntries((d?.per_tahap ?? []).map((t) => [t.tahap, t])) as Record<string, { jumlah: number; nilai: string }>
   const hari = d?.per_hari ?? []
+  const orderUrl = (tahap = 'semua', akun = toko) => `/pesanan?${new URLSearchParams({tahap,toko:akun,tanggal:preset})}`
   const dataBaruSejak = d?.data_sejak && dari && new Date(d.data_sejak) > new Date(dari) ? d.data_sejak : null
 
   return (
@@ -113,6 +118,7 @@ export default function DashboardPage() {
             />
           </div>
         )}
+        <div className="w-48"><FilterPilih id="dashboard-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(semuaToko??[]).map(t=>({value:t.id,label:t.nama_toko}))}/></div>
         {isFetching && !isLoading && <Spinner size={18} />}
       </BarHalaman>
 
@@ -127,14 +133,15 @@ export default function DashboardPage() {
           )}
 
           <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
-            <Kartu label="Nilai Pesanan" nilai={fmtRp(d.total_omzet)} catatan="total pembeli termasuk ongkir/promo; bukan pendapatan bersih" />
-            <Kartu label="Pesanan" nilai={d.total_pesanan.toLocaleString('id-ID')} />
+            <Kartu label="Nilai Pesanan" nilai={fmtRp(d.total_omzet)} catatan="Termasuk ongkir/promo; bukan pendapatan bersih" />
+            <Kartu label="Pesanan" nilai={d.total_pesanan.toLocaleString('id-ID')} href={orderUrl()} />
             <Kartu label="Rata-rata per pesanan" nilai={fmtRp(d.rata_rata_pesanan)} />
-            <Kartu label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} catatan="harus diatur pengirimannya" />
-            <Kartu label="Menunggu Kurir" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} catatan="sudah diproses, belum diambil" />
+            <Kartu label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
+            <Kartu label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
           </div>
 
-          <Bagian judul="Ringkasan per Toko" deskripsi="Jumlah pesanan per tahap. Klik judul kolom untuk mengurutkan.">
+          <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild><Link to={orderUrl('perlu_diproses')}>Proses pesanan</Link></Button><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button></section>
+          <Bagian judul="Ringkasan per Toko">
             <TabelLokal
               label="Ringkasan pesanan per toko"
               items={d.per_toko}
@@ -147,8 +154,9 @@ export default function DashboardPage() {
             />
           </Bagian>
 
-          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 xl:grid-cols-2">
-            <Bagian judul="Pesanan per Status">
+          <Bagian judul="Aktivitas Pesanan">
+            {hari.length ? <div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={hari.map(h=>({...h,nilai:Number(h.omzet)}))}><XAxis dataKey="tanggal" tickFormatter={v=>fmtDate(v)} minTickGap={35}/><YAxis width={55} tickFormatter={v=>new Intl.NumberFormat('id-ID',{notation:'compact'}).format(v)}/><Tooltip formatter={v=>fmtRp(Number(v))} labelFormatter={v=>fmtDate(String(v))}/><Area dataKey="nilai" name="Nilai pesanan" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15}/></AreaChart></ResponsiveContainer></div> : <p>Belum ada aktivitas pada periode ini.</p>}
+            <Bantuan judul="Rincian status pesanan">            <Bagian judul="Pesanan per Status">
               <TabelLokal
                 label="Jumlah dan nilai pesanan per status"
                 items={d.per_tahap}
@@ -174,41 +182,15 @@ export default function DashboardPage() {
               />
             </Bagian>
 
-            <Bagian judul="Penjualan per Hari" deskripsi="Tanggal pelanggan memesan (WIB), tanpa belum bayar & batal.">
-              {hari.length === 0 ? (
-                <p className="py-6 text-center text-muted-foreground">Belum ada penjualan pada periode ini.</p>
-              ) : (
-                <>
-                  <TabelLokal
-                    label="Penjualan per hari"
-                    items={semuaHari ? hari : hari.slice(0, HARI_DITAMPILKAN)}
-                    kolom={[
-                      { kunci: 'tanggal', judul: 'Tanggal', sel: (h) => fmtDate(h.tanggal), nilai: (h) => h.tanggal },
-                      { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (h) => <Angka n={h.pesanan} />, nilai: (h) => h.pesanan },
-                      { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (h) => fmtRp(h.omzet), nilai: (h) => Number(h.omzet) },
-                    ]}
-                    idDari={(h) => h.tanggal}
-                    namaDari={(h) => h.tanggal}
-                    urutAwal={{ kunci: 'tanggal', arah: 'desc' }}
-                    minWidth={320}
-                  />
-                  {hari.length > HARI_DITAMPILKAN && (
-                    <Button variant="ghost" className="mt-2" onClick={() => setSemuaHari((v) => !v)}>
-                      {semuaHari ? 'Tampilkan lebih sedikit' : `Tampilkan semua (${hari.length} hari)`}
-                    </Button>
-                  )}
-                </>
-              )}
-            </Bagian>
-          </div>
-
-          <Bagian judul="Produk Terlaris" deskripsi="20 teratas menurut jumlah terjual, dengan toko tempat terjualnya.">
+</Bantuan>
+          </Bagian>
+          <Bagian judul="5 Produk Terlaris">
             {d.produk_terlaris.length === 0 ? (
               <p className="py-6 text-center text-muted-foreground">Belum ada penjualan pada periode ini.</p>
             ) : (
               <TabelLokal
-                label="20 produk terlaris"
-                items={d.produk_terlaris}
+                label="5 produk terlaris"
+                items={d.produk_terlaris.slice(0,5)}
                 kolom={KOLOM_PRODUK}
                 idDari={(p) => p.nama_produk}
                 namaDari={(p) => p.nama_produk}
@@ -218,13 +200,13 @@ export default function DashboardPage() {
             )}
           </Bagian>
 
-          <Bagian judul="Stok Kritis" deskripsi="Produk induk di ERP dengan stok tersedia ≤ 5. Stok toko Shopee tidak dihitung di sini.">
+          <Bagian judul="Stok Kritis ERP">
             {d.stok_kritis.length === 0 ? (
               <p className="text-muted-foreground">Tidak ada produk induk dengan stok kritis.</p>
             ) : (
               <TabelLokal
                 label="Produk dengan stok kritis"
-                items={d.stok_kritis}
+                items={d.stok_kritis.slice(0,5)}
                 kolom={[
                   { kunci: 'sku', judul: 'SKU', kelas: 'font-mono', sel: (p) => p.sku_induk, nilai: (p) => p.sku_induk },
                   { kunci: 'nama', judul: 'Produk', sel: (p) => p.nama, nilai: (p) => p.nama },

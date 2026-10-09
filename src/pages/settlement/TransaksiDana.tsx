@@ -1,3 +1,6 @@
+import { exportCsv } from '@/lib/exportData'
+import { useTokoAktif } from '@/lib/tokoAktif'
+import Bantuan from '@/components/Bantuan'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -78,7 +81,8 @@ const columns: KolomTabel<WalletTransaction>[] = [
   { kunci: 'description', judul: 'Keterangan', kelas: 'max-w-[320px] whitespace-normal', sel: (r) => r.description || r.reason || '—' },
 ]
 export default function TransaksiDana() {
-  const [draft, setDraft] = useState({ shop: '', ...rentangAwalRetur() })
+  const [activeShop]=useTokoAktif(true)
+  const [draft, setDraft] = useState({ shop: activeShop, ...rentangAwalRetur() })
   const [filter, setFilter] = useState<(typeof draft & { offset: number }) | null>(null)
   const [previous, setPrevious] = useState<number[]>([])
   const [error, setError] = useState('')
@@ -92,11 +96,11 @@ export default function TransaksiDana() {
   return (
     <section className="rounded-lg border bg-card p-4 space-y-3">
       <h2 className="font-semibold">Transaksi Saldo Penjual Shopee</h2>
-      <p className="text-sm text-muted-foreground">
+      <Bantuan><p className="text-sm text-muted-foreground">
         Mutasi saldo, biaya dan penarikan langsung dari Shopee. Nominal memakai mata uang toko; API transaksi tidak menyertakan kode mata
         uang. Mutasi saldo bukan total pendapatan pesanan. Penarikan dibuat/selesai bukan dua pendapatan berbeda. Tampilan ini tidak
         mengubah pencatatan settlement ERP.
-      </p>
+      </p></Bantuan>
       <form
         className="grid gap-3 sm:grid-cols-4"
         onSubmit={(e) => {
@@ -145,6 +149,7 @@ export default function TransaksiDana() {
         </p>
       )}
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
+      {rows.data&&<Button variant="outline" onClick={()=>exportCsv(`mutasi-saldo-${filter?.dari}.csv`,[['Waktu WIB','Jenis','Status','Nominal','Biaya','Saldo','Pesanan','Keterangan'],...rows.data!.items.map(r=>[waktuRetur(r.create_time),types[r.transaction_type]??r.transaction_type,r.status,r.amount,r.transaction_fee,r.current_balance,r.order_sn,r.description])])}>Export halaman ini (CSV)</Button>}
       {rows.error && <QueryError error={rows.error} retry={rows.refetch} />}
       {rows.isFetching && <p role="status">Memuat transaksi saldo…</p>}
       {rows.data && !rows.error && filter && (

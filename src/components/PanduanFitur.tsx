@@ -4,11 +4,11 @@ export default function PanduanFitur({ path }: { path: string }) {
   const guide = panduanUntuk(path)
   if (!guide) return null
   return (
-    <details key={path} className="mb-4 rounded-lg border bg-card text-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-medium focus-visible:outline-2 focus-visible:outline-ring">
+    <details key={path} className="mb-2 text-sm">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-1 py-1.5 font-medium focus-visible:outline-2 focus-visible:outline-ring">
         <BookOpen className="size-4 shrink-0" aria-hidden="true" />
         Petunjuk {guide.judul}
-        <span className="ml-auto text-xs text-muted-foreground">Buka / tutup</span>
+        <span className="ml-auto text-xs text-muted-foreground">Bantuan</span>
       </summary>
       <div className="space-y-3 border-t px-4 py-3 text-justify leading-relaxed">
         <p>{guide.tujuan}</p>

@@ -1,3 +1,4 @@
+import Bantuan from '@/components/Bantuan'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -26,7 +27,7 @@ import { keTanggal, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
 import { kali, kolomIklanHarian, kolomRingkasanIklan, persen } from './kolom'
 
-const PER_HALAMAN = 50
+const PER_HALAMAN = 10
 const AWAL = { toko: '', tanggal: '30', dari: '', sampai: '', urut: 'tanggal:desc' }
 const PRESET: PresetTanggal[] = ['semua', 'hari_ini', '7', '30', '90', 'bulan_ini', 'kustom']
 const HARI_SINKRON = [
@@ -107,10 +108,10 @@ export default function PerformaShopee() {
     <Card>
       <CardHeader>
         <CardTitle>Performa Iklan Shopee</CardTitle>
-        <p className="teks-data text-muted-foreground">
+        <Bantuan><p className="teks-data text-muted-foreground">
           Diambil dari Shopee Ads per toko dan per hari. Pesanan, GMV, dan ROAS dihitung dari klik iklan dalam 7 hari (angka terkini bisa
           berubah di hari-hari berikutnya).
-        </p>
+        </p></Bantuan>
       </CardHeader>
       <CardContent className="space-y-4">
         <BarFilter aktif={f.jumlahAktif}>

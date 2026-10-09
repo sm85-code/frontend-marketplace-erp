@@ -1,3 +1,4 @@
+import Bantuan from '@/components/Bantuan'
 import { useAuth } from '@/lib/auth'
 import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
@@ -10,7 +11,7 @@ import * as endpoints from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
 import { fmtRp } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -27,18 +28,15 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
   })
 
   return (
-    <Dialog open={!!id} onOpenChange={(o) => !o && onTutup()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>{detail?.nama ?? 'Memuat…'}</DialogTitle>
-        </DialogHeader>
+    <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{detail?.nama ?? 'Detail Produk'}</h1><Button variant="outline" onClick={onTutup}>Kembali ke Katalog</Button></div>
         {error ? <QueryError error={error} retry={refetch} /> : isLoading || !detail ? (
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
             {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
-            {manage && <KelolaProdukShopee key={detail.id} detail={detail} />}
+            {manage && <Bantuan judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
               <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>
@@ -62,8 +60,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+    </div>
   )
 }
 
@@ -84,6 +81,7 @@ function TabelVarian({ detail }: { detail: KatalogDetail }) {
   return (
     <div className="space-y-2">
       <div className="font-medium">Varian ({detail.varian.length})</div>
+      <p className="text-xs text-muted-foreground">Nilai bercetak miring mengikuti produk induk.</p>
       {!lengkap && (
         <p role="note" className="rounded-md border border-dashed p-2 text-muted-foreground">
           Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi item ini di atas untuk memperbarui produk tanpa menarik seluruh toko.

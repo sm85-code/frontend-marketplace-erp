@@ -303,7 +303,7 @@
    ------------------------------------------------------------------------------------------------ */
 :root {
   --skala-huruf: 1;
-  --teks-data: calc(0.8125rem * var(--skala-huruf)); /* 13px: table cells, card values */
+  --teks-data: calc(0.875rem * var(--skala-huruf)); /* 13px: table cells, card values */
   --teks-kecil: calc(0.75rem * var(--skala-huruf)); /* 12px: second lines, hints */
   --teks-judul: calc(0.6875rem * var(--skala-huruf)); /* 11px: column headings */
   --pad-sel-x: 0.625rem;
@@ -312,9 +312,9 @@
 
 @media (max-width: 47.99rem) {
   :root {
-    --teks-data: calc(0.75rem * var(--skala-huruf)); /* 12px */
-    --teks-kecil: calc(0.6875rem * var(--skala-huruf)); /* 11px */
-    --teks-judul: calc(0.625rem * var(--skala-huruf)); /* 10px */
+    --teks-data: calc(0.875rem * var(--skala-huruf)); /* 14px */
+    --teks-kecil: calc(0.75rem * var(--skala-huruf)); /* 12px */
+    --teks-judul: calc(0.75rem * var(--skala-huruf)); /* 12px */
     --pad-sel-x: 0.5rem;
     --pad-sel-y: 0.3rem;
   }

@@ -19,7 +19,7 @@ function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
  * the column picker and the sort dropdown. `urut.kunci` must be a sort key the API knows.
  */
 export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) => string }): KolomTabel<Pesanan>[] {
-  return [
+  const kolom: KolomTabel<Pesanan>[] = [
     {
       kunci: 'pesanan',
       judul: 'No. Pesanan',
@@ -38,6 +38,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     },
     {
       kunci: 'tanggal',
+      bawaan: false,
       judul: 'Tanggal Pesan',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'tanggal', arahAwal: 'desc', label: ['Terlama', 'Terbaru'] },
@@ -48,7 +49,8 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
         </>
       ),
     },
-    { kunci: 'toko', judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (p) => namaToko(p.akun_id) },
+    { kunci: 'toko',
+      bawaan: false, judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (p) => namaToko(p.akun_id) },
     {
       kunci: 'status',
       judul: 'Status',
@@ -73,14 +75,14 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     {
       kunci: 'produk',
       judul: 'Produk',
-      kelas: 'min-w-[200px] max-w-[280px]',
+      kelas: 'min-w-[260px] max-w-[360px]',
       sel: (p) => <ItemRingkas items={p.items} />,
     },
     {
       kunci: 'varian',
-      judul: 'Varian',
       bawaan: false,
-      kelas: 'min-w-[100px]',
+      judul: 'Varian',
+      kelas: 'min-w-[120px]',
       sel: (p) => <div className="space-y-1.5">{p.items.map((i) => <div key={i.id} className="min-h-16">{i.model_name || '—'}</div>)}</div>,
     },
     { kunci: 'ship_by_date', judul: 'Kirim Sebelum', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
@@ -97,6 +99,8 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     {
       kunci: 'total',
       judul: 'Total Pesanan',
+      rata: 'kanan',
+      bawaan: false,
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'total', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
       sel: (p) => fmtMoney(p.total, p.currency),
@@ -113,6 +117,8 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       ),
     },
   ]
+  const first=['pesanan','produk','status','ship_by_date']
+  return kolom.sort((a,b)=>(first.includes(a.kunci)?first.indexOf(a.kunci):99)-(first.includes(b.kunci)?first.indexOf(b.kunci):99))
 }
 
 /** What each row / card offers: print the label (only when it can be printed) and open the detail. */

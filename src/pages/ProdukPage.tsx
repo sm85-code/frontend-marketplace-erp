@@ -1,3 +1,6 @@
+import AksiLainnya from '@/components/AksiLainnya'
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import { useTerpilih } from '@/lib/terpilih'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import ProdukKeluargaField from './ProdukKeluargaField'
@@ -212,7 +215,7 @@ export default function ProdukPage() {
                 namaDari={(p) => p.nama}
                 urutAwal={{ kunci: 'sku', arah: 'asc' }}
                 aksi={(p) => (
-                  <div className="flex max-w-[24rem] flex-wrap justify-end gap-1.5">
+                  <AksiLainnya>
                     <Sinkronisasi jenis="produk" ids={[p.id]} satu />
                     <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
                       Sesuaikan Stok
@@ -229,7 +232,7 @@ export default function ProdukPage() {
                     <Button size="sm" variant="destructive" onClick={() => onDelete(p)}>
                       Hapus
                     </Button>
-                  </div>
+                  </AksiLainnya>
                 )}
                 minWidth={780}
               />
@@ -239,7 +242,7 @@ export default function ProdukPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
@@ -262,7 +265,7 @@ export default function ProdukPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="produk-harga-dasar-rp-4">Harga Dasar (Rp)</Label>
-              <Input id="produk-harga-dasar-rp-4"
+              <MoneyInput id="produk-harga-dasar-rp-4"
                 type="number"
                 value={form.harga_dasar}
                 onChange={(e) => setForm((f) => ({ ...f, harga_dasar: e.target.value }))}
@@ -278,8 +281,8 @@ export default function ProdukPage() {
                 ] as const
               ).map(([k, label]) => (
                 <div key={k} className="space-y-1.5">
-                  <Label htmlFor="produk-label-5">{label}</Label>
-                  <Input id="produk-label-5" type="number" min={0} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
+                  <Label htmlFor={`produk-${k}`}>{label}</Label>
+                  <Input id={`produk-${k}`} type="number" min={0} value={form[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
                 </div>
               ))}
             </div>
@@ -304,6 +307,7 @@ export default function ProdukPage() {
               </div>
             )}
           </div>
+          {(createMut.error||updateMut.error)&&<p role="alert" className="text-sm text-destructive">{getApiError(createMut.error||updateMut.error)}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
@@ -313,7 +317,7 @@ export default function ProdukPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
 
       <Dialog open={publishing !== null} onOpenChange={(open) => !open && setPublishing(null)}>
         <DialogContent>
@@ -327,7 +331,7 @@ export default function ProdukPage() {
             </p>
             <div className="space-y-1.5">
               <Label htmlFor="produk-harga-di-toko-rp-8">Harga di toko (Rp)</Label>
-              <Input id="produk-harga-di-toko-rp-8" type="number" value={pub.harga} onChange={(e) => setPub((v) => ({ ...v, harga: e.target.value }))} />
+              <MoneyInput id="produk-harga-di-toko-rp-8" type="number" value={pub.harga} onChange={(e) => setPub((v) => ({ ...v, harga: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="produk-stok-awal-di-toko-9">Stok awal di toko</Label>

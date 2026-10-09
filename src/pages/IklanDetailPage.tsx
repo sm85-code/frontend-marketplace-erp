@@ -1,3 +1,4 @@
+import MoneyInput from '@/components/MoneyInput'
 import QueryError from '@/components/QueryError'
 import { rentangTanggal } from '@/lib/rentang'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -185,7 +186,7 @@ export default function IklanDetailPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="iklandetail-biaya-rp-6">Biaya (Rp)</Label>
-              <Input id="iklandetail-biaya-rp-6" type="number" value={metrikForm.biaya} onChange={(e) => setMetrikForm((f) => ({ ...f, biaya: e.target.value }))} />
+              <MoneyInput id="iklandetail-biaya-rp-6" type="number" value={metrikForm.biaya} onChange={(e) => setMetrikForm((f) => ({ ...f, biaya: e.target.value }))} />
             </div>
           </div>
           <Button onClick={() => metrikMut.mutate()} disabled={metrikMut.isPending}>

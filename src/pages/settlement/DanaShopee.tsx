@@ -28,7 +28,7 @@ import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
 import { kolomRingkasanToko, kolomSettlementPesanan } from './kolom'
 
-const PER_HALAMAN = 50
+const PER_HALAMAN = 10
 /** A shop with a big backlog is pulled again by itself, up to this many times in one go. */
 const MAKS_PUTARAN = 8
 const AWAL = { toko: '', q: '', tanggal: '30', dari: '', sampai: '', urut: 'dirilis:desc' }

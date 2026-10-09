@@ -1,3 +1,6 @@
+import PilihProduk from '@/components/PilihProduk'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import FormDialog from '@/components/FormDialog'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -11,7 +14,7 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -36,10 +39,10 @@ function kolomLedger({
     { kunci: 'waktu', judul: 'Waktu', kelas: 'whitespace-nowrap', sel: (r) => fmtDateTime(r.created_at), nilai: (r) => new Date(r.created_at) },
     { kunci: 'produk', judul: 'Produk', kelas: 'font-mono', sel: sku, nilai: sku },
     { kunci: 'gudang', judul: 'Gudang', sel: gudang, nilai: gudang },
-    { kunci: 'alasan', judul: 'Alasan', sel: (r) => <Badge variant="outline">{r.reason}</Badge>, nilai: (r) => r.reason },
+    { kunci: 'alasan', judul: 'Alasan', sel: (r) => <Badge variant="outline">{({manual:'Penyesuaian',reserve:'Reservasi',release:'Pelepasan',ship:'Pengiriman',return:'Retur',sync_in:'Sinkronisasi',transfer_in:'Transfer masuk',transfer_out:'Transfer keluar'} as Record<string,string>)[r.reason]??r.reason}</Badge>, nilai: (r) => r.reason },
     {
       kunci: 'delta',
-      judul: 'Delta',
+      judul: 'Masuk / Keluar',
       rata: 'kanan',
       kelas: 'font-mono',
       sel: (r) => <span className={r.qty_delta < 0 ? 'text-destructive' : ''}>{`${r.qty_delta > 0 ? '+' : ''}${r.qty_delta}`}</span>,
@@ -51,6 +54,9 @@ function kolomLedger({
 
 export default function GudangPage() {
   const qc = useQueryClient()
+  const [ledgerPage,setLedgerPage] = useState(0)
+  const [ledgerDari,setLedgerDari] = useState('')
+  const [ledgerSampai,setLedgerSampai] = useState('')
   const [gudangDialog, setGudangDialog] = useState(false)
   const [gudangForm, setGudangForm] = useState({ kode: '', nama: '' })
   const [adjustDialog, setAdjustDialog] = useState(false)
@@ -62,8 +68,8 @@ export default function GudangPage() {
   const { data: gudangList, error: gudangError, refetch: retryGudang } = useQuery({ queryKey: qk.gudang(), queryFn: endpoints.listGudang })
   const { data: produkList, error: produkError, refetch: retryProduk } = useQuery({ queryKey: qk.produk(), queryFn: endpoints.listProduk })
   const { data: ledger, isLoading: ledgerLoading, error: ledgerError, refetch: retryLedger } = useQuery({
-    queryKey: qk.stokLedger(ledgerFilter || undefined),
-    queryFn: () => endpoints.listStokLedger(ledgerFilter || undefined),
+    queryKey: [...qk.stokLedger(ledgerFilter || undefined),ledgerPage,ledgerDari,ledgerSampai],
+    queryFn: () => endpoints.listStokLedger(ledgerFilter || undefined,11,ledgerPage*10,ledgerDari||undefined,ledgerSampai||undefined),
   })
 
   const produkMap = new Map((produkList ?? []).map((p) => [p.id, p]))
@@ -118,7 +124,8 @@ export default function GudangPage() {
       {produkError && <QueryError error={produkError} retry={retryProduk} />}
       {ledgerError && <QueryError error={ledgerError} retry={retryLedger} />}
 
-      <Card>
+      <Tabs defaultValue="stok"><TabsList className="section-tabs"><TabsTrigger value="stok">Stok Saat Ini</TabsTrigger><TabsTrigger value="riwayat">Riwayat Stok</TabsTrigger><TabsTrigger value="gudang">Gudang</TabsTrigger></TabsList>
+      <TabsContent value="gudang"><Card>
         <CardHeader>
           <CardTitle>Gudang</CardTitle>
         </CardHeader>
@@ -131,9 +138,9 @@ export default function GudangPage() {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </Card></TabsContent>
 
-      <Card>
+      <TabsContent value="stok"><Card>
         <CardHeader>
           <CardTitle>Stok Produk Saat Ini</CardTitle>
         </CardHeader>
@@ -148,11 +155,11 @@ export default function GudangPage() {
             minWidth={420}
           />
         </CardContent>
-      </Card>
+      </Card></TabsContent>
 
-      <Card>
+      <TabsContent value="riwayat"><Card>
         <CardHeader>
-          <CardTitle>Kartu Stok (Ledger)</CardTitle>
+          <CardTitle>Riwayat Stok</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="w-full sm:w-72">
@@ -160,31 +167,33 @@ export default function GudangPage() {
               id="gudang-filter-produk"
               label="Produk"
               nilai={ledgerFilter}
-              onUbah={setLedgerFilter}
+              onUbah={(v)=>{setLedgerFilter(v);setLedgerPage(0)}}
               semua="Semua produk"
               opsi={(produkList ?? []).map((p) => ({ value: p.id, label: p.nama }))}
             />
           </div>
+          <div className="flex flex-wrap gap-3"><div><Label htmlFor="ledger-dari">Tanggal awal</Label><Input id="ledger-dari" type="date" value={ledgerDari} onChange={e=>{setLedgerDari(e.target.value);setLedgerPage(0)}}/></div><div><Label htmlFor="ledger-sampai">Tanggal akhir</Label><Input id="ledger-sampai" type="date" value={ledgerSampai} onChange={e=>{setLedgerSampai(e.target.value);setLedgerPage(0)}}/></div></div>
           {ledgerError ? null : ledgerLoading ? (
             <Spinner column label="Memuat kartu stok…" />
           ) : (
             <>
               <TabelLokal
                 label="Riwayat pergerakan stok"
-                items={ledger}
+                items={ledger?.slice(0,10)}
                 kolom={kolomLedger({ produkMap, gudangMap })}
                 idDari={(r) => r.id}
                 namaDari={(r) => r.reason}
                 urutAwal={{ kunci: 'waktu', arah: 'desc' }}
                 minWidth={640}
               />
+              <div className="flex items-center gap-3"><Button variant="outline" disabled={!ledgerPage||ledgerLoading} onClick={()=>setLedgerPage(p=>p-1)}>Sebelumnya</Button><span>Halaman {ledgerPage+1}</span><Button variant="outline" disabled={(ledger?.length??0)<=10||ledgerLoading} onClick={()=>setLedgerPage(p=>p+1)}>Berikutnya</Button></div>
               {(ledger ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada pergerakan stok.</p>}
             </>
           )}
         </CardContent>
-      </Card>
+      </Card></TabsContent></Tabs>
 
-      <Dialog open={gudangDialog} onOpenChange={setGudangDialog}>
+      <FormDialog open={gudangDialog} values={gudangForm} busy={createGudangMut.isPending} onOpenChange={setGudangDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah Gudang</DialogTitle>
@@ -208,9 +217,9 @@ export default function GudangPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog open={adjustDialog} onOpenChange={setAdjustDialog}>
+      <FormDialog open={adjustDialog} values={adjustForm} busy={adjustMut.isPending} onOpenChange={setAdjustDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Sesuaikan Stok</DialogTitle>
@@ -218,18 +227,7 @@ export default function GudangPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="gudang-produk-3">Produk</Label>
-              <Select value={adjustForm.produk_id} onValueChange={(v) => setAdjustForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger id="gudang-produk-3" className="w-full">
-                  <SelectValue placeholder="Pilih produk" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(produkList ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nama} (stok: {p.stok})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PilihProduk id="gudang-produk-3" value={adjustForm.produk_id} onChange={v=>setAdjustForm(f=>({...f,produk_id:v}))} items={produkList??[]}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="gudang-perubahan-masuk-keluar-4">Perubahan (+ masuk, - keluar)</Label>
@@ -263,6 +261,8 @@ export default function GudangPage() {
               <Textarea id="gudang-catatan-6" value={adjustForm.catatan} onChange={(e) => setAdjustForm((f) => ({ ...f, catatan: e.target.value }))} />
             </div>
           </div>
+          {adjustForm.produk_id&&<p className="text-sm">Stok sebelum: {produkList?.find(p=>p.id===adjustForm.produk_id)?.stok??'—'} · Sesudah: {(produkList?.find(p=>p.id===adjustForm.produk_id)?.stok??0)+Number(adjustForm.qty_delta||0)}</p>}
+          {adjustMut.error&&<p role="alert" className="text-sm text-destructive">{getApiError(adjustMut.error)}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdjustDialog(false)}>
               Batal
@@ -282,9 +282,9 @@ export default function GudangPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog open={transferDialog} onOpenChange={setTransferDialog}>
+      <FormDialog open={transferDialog} values={transferForm} busy={transferMut.isPending} onOpenChange={setTransferDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Transfer Stok Antar Gudang</DialogTitle>
@@ -292,18 +292,7 @@ export default function GudangPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="gudang-produk-7">Produk</Label>
-              <Select value={transferForm.produk_id} onValueChange={(v) => setTransferForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger id="gudang-produk-7" className="w-full">
-                  <SelectValue placeholder="Pilih produk" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(produkList ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nama}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PilihProduk id="gudang-produk-8" value={transferForm.produk_id} onChange={v=>setTransferForm(f=>({...f,produk_id:v}))} items={produkList??[]}/>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -371,7 +360,7 @@ export default function GudangPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

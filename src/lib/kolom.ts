@@ -39,5 +39,6 @@ export function useKolomTersimpan(kunciSimpan: string, semua: DefinisiKolom[]) {
       if (next.length) simpan(next)
     },
     reset: () => simpan(kolomBawaan(semua)),
+    preset: (keys: string[]) => simpan(semua.map(k=>k.kunci).filter(k=>keys.includes(k))),
   }
 }

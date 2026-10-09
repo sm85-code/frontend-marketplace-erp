@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import MoneyInput from '@/components/MoneyInput'
+import Bantuan from '@/components/Bantuan'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
@@ -50,7 +52,11 @@ export default function PublicationPage() {
   const { user } = useAuth()
   const key = `erp.publication.pending.${user?.id ?? 'anonymous'}`
   const [search] = useSearchParams()
-  const [saved] = useState(() => pending(key))
+  const draftKey = `erp.publication.draft.${user?.id ?? 'anonymous'}`
+  const [saved] = useState(() => pending(key) ?? pending(draftKey))
+  const [step,setStep]=useState(0)
+  const [draftAt,setDraftAt]=useState('')
+  const [fieldErrors,setFieldErrors]=useState<Record<string,string>>({})
   const [shop, setShop] = useState(saved?.shop ?? '')
   const [source, setSource] = useState(search.get('source') ?? '')
   const [item, setItem] = useState(search.get('item') ?? '')
@@ -101,6 +107,7 @@ export default function PublicationPage() {
   function applyResult(r: api.PublicationResult) {
     setResult(r)
     if (r.ok || r.status === 'belum_dikirim') sessionStorage.removeItem(key)
+    if(r.ok) sessionStorage.removeItem(draftKey)
     if (r.status === 'belum_dikirim') { setOperation(''); setForm(f => ({ ...f, operation_id: '' })) }
     if (r.ok) void qc.invalidateQueries({ queryKey: ['katalog'] })
   }
@@ -121,6 +128,30 @@ export default function PublicationPage() {
   })
   const busy = publish.isPending || check.isPending || upload.isPending || chartUpload.isPending || copy.isPending
   const locked = busy || !!operation
+  useEffect(() => {
+    if (operation || result?.ok) return
+    const timer=setTimeout(()=>{ try { sessionStorage.setItem(draftKey,JSON.stringify({shop,payload:{...form,operation_id:''}}));setDraftAt(new Date().toLocaleTimeString('id-ID')) } catch { setDraftAt('') } },600)
+    return ()=>clearTimeout(timer)
+  },[draftKey,shop,form,operation,result?.ok])
+  function validateStep(index: number) {
+    const errors: Record<string,string>={}
+    if(index===0&&!shop) errors['publish-shop']='Pilih toko tujuan'
+    if(index===1) {
+      if(!form.nama.trim()) errors['publish-name']='Nama produk wajib diisi'
+      if(!form.deskripsi.trim()) errors['publish-description']='Deskripsi wajib diisi'
+      if(!form.category_id) errors['publish-category']='Pilih kategori terakhir'
+      if(!form.image_ids.length) errors['publish-photo']='Unggah minimal satu foto'
+    }
+    if(index===3) {
+      if(!(Number(form.price)>0)) errors['publish-price']='Harga harus lebih dari nol'
+      if(!(Number(form.weight)>0)) errors['publish-weight']='Berat paket harus lebih dari nol'
+      if(!(form.logistic_info.length||meta.data?.channels.some(c=>c.force_enable))) errors['publish-logistics']='Pilih jasa kirim'
+    }
+    setFieldErrors(errors)
+    if(Object.keys(errors).length) { setError(Object.values(errors)[0]);setTimeout(()=>document.getElementById(Object.keys(errors)[0])?.focus(),0);return false }
+    setError('');return true
+  }
+  function next() { if(validateStep(step)) setStep(s=>Math.min(4,s+1)) }
   function patch(p: Partial<api.Publication>) {
     setForm((f) => ({ ...f, ...p }))
   }
@@ -142,6 +173,7 @@ export default function PublicationPage() {
   }
   async function submit() {
     if (locked || !shop) return
+    for(const i of [0,1,3]) if(!validateStep(i)) {setStep(i);return}
     if (!meta.data || meta.error || meta.isFetching) {
       setError('Muat metadata toko dan kategori sampai lengkap.')
       return
@@ -197,7 +229,7 @@ export default function PublicationPage() {
       kunci: 'price',
       judul: 'Harga',
       sel: (m) => (
-        <Input
+        <MoneyInput
           aria-label={`Harga ${modelLabel(form.tiers, m.tier_index)}`}
           type="number"
           min="0.01"
@@ -315,13 +347,15 @@ export default function PublicationPage() {
           <Link to="/katalog">Kembali ke Katalog</Link>
         </Button>
       </BarHalaman>
-      <p className="rounded-lg border bg-card p-4 text-sm">
+      <Bantuan><p className="rounded-lg border bg-card p-4 text-sm">
         Isi data atau ambil produk sumber. Periksa kategori dan jasa kirim toko tujuan. Stok salinan dimulai dari 0; isi stok yang
         benar-benar tersedia. Harga menggunakan harga asli, bukan harga diskon. Angka harga mengikuti mata uang toko tujuan.
-      </p>
+      </p></Bantuan>
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
+      <nav aria-label="Langkah publikasi" className="flex flex-wrap gap-2">{['Sumber & Toko','Informasi Produk','Varian','Harga & Pengiriman','Tinjau'].map((label,i)=><Button key={label} size="sm" variant={step===i?'default':'outline'} aria-current={step===i?'step':undefined} disabled={busy} onClick={()=>setStep(i)}>{i+1}. {label}</Button>)}</nav>
+      {draftAt&&!operation&&!result?.ok&&<p className="text-xs text-muted-foreground">Draft tersimpan di perangkat ini · {draftAt}</p>}
       <fieldset disabled={locked} className="min-w-0 space-y-4">
-        <section className="rounded-lg border bg-card p-4 space-y-3">
+        <section hidden={step!==0} className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">1. Toko dan sumber</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -400,7 +434,7 @@ export default function PublicationPage() {
             </p>
           )}
         </section>
-        <section className="rounded-lg border bg-card p-4 space-y-3">
+        <section hidden={step!==1} className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">2. Informasi produk</h2>
           <div>
             <Label htmlFor="publish-name">Nama produk (tanpa pilihan varian)</Label>
@@ -528,8 +562,8 @@ export default function PublicationPage() {
             )}
           </div>
         </section>
-        <section className="rounded-lg border bg-card p-4 space-y-3">
-          <h2 className="font-semibold">3. Harga, stok dan pengiriman</h2>
+        <section hidden={step!==3} className="rounded-lg border bg-card p-4 space-y-3">
+          <h2 className="font-semibold">4. Harga, stok dan pengiriman</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {(['price', 'stock', 'weight'] as const).map((k, i) => (
               <div key={k}>
@@ -693,8 +727,8 @@ export default function PublicationPage() {
               )
             })}
         </section>
-        <section className="rounded-lg border bg-card p-4 space-y-3">
-          <h2 className="font-semibold">4. Variasi produk</h2>
+        <section hidden={step!==2} className="rounded-lg border bg-card p-4 space-y-3">
+          <h2 className="font-semibold">3. Variasi produk</h2>
           <p className="text-sm text-muted-foreground">
             Maksimal 2 jenis variasi dan 50 kombinasi. Contoh: Warna → Merah, Biru. Mengubah pilihan membentuk ulang tabel, jadi atur
             pilihan sebelum mengisi SKU/harga. Kosongkan fisik/DTS varian untuk mengikuti induk.
@@ -763,7 +797,11 @@ export default function PublicationPage() {
           <input type="checkbox" checked={form.aktif} onChange={(e) => patch({ aktif: e.target.checked })} />
           Aktifkan setelah semua varian terkonfirmasi (default: disembunyikan)
         </label>
+        <section hidden={step!==4} className="rounded-lg border bg-card p-4 space-y-3"><h2 className="font-semibold">5. Tinjau sebelum membuat produk</h2><dl className="grid gap-3 sm:grid-cols-2">{[
+          ['Toko',shops.data?.find(s=>s.id===shop)?.nama_toko??'Belum dipilih'],['Produk',form.nama||'Belum diisi'],['Harga',form.price||'Belum diisi'],['Stok',String(form.stock)],['Varian',String(form.models.length)],['Foto',String(form.image_ids.length)],['Berat paket',`${form.weight||'—'} kg`],['Status awal',form.aktif?'Aktif setelah konfirmasi':'Disembunyikan'],
+        ].map(([label,value])=><div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="font-medium">{value}</dd></div>)}</dl></section>
       </fieldset>
+      {Object.keys(fieldErrors).length>0&&<ul role="alert" className="space-y-1 text-sm text-destructive">{Object.entries(fieldErrors).map(([id,message])=><li key={id}><button type="button" className="underline" onClick={()=>document.getElementById(id)?.focus()}>{message}</button></li>)}</ul>}
       {error && (
         <p role="alert" className="text-destructive">
           {error}
@@ -780,9 +818,11 @@ export default function PublicationPage() {
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button disabled={locked || !shop || meta.isFetching || !!meta.error} onClick={submit}>
+        {step>0&&<Button variant="outline" disabled={busy} onClick={()=>setStep(s=>s-1)}>Sebelumnya</Button>}
+        {step<4&&<Button disabled={locked} onClick={next}>Lanjut</Button>}
+        {step===4&&<Button disabled={locked || !shop || meta.isFetching || !!meta.error} onClick={submit}>
           {publish.isPending ? 'Memproses publikasi…' : 'Periksa dan Buat Produk'}
-        </Button>
+        </Button>}
         {operation && (
           <Button variant="outline" disabled={busy} onClick={() => check.mutate()}>
             Periksa Hasil Operasi

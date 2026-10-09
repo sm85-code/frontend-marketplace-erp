@@ -1,3 +1,5 @@
+import AksiLainnya from '@/components/AksiLainnya'
+import FormDialog from '@/components/FormDialog'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -13,7 +15,7 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -218,7 +220,7 @@ export default function AkunPage() {
               namaDari={(a) => a.nama_toko}
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
               aksi={(akun) => (
-                <div className="flex flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap">
+                <AksiLainnya>
                   {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                     <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
                       Hubungkan Shopee
@@ -247,7 +249,7 @@ export default function AkunPage() {
                       </Button>
                     </>
                   )}
-                </div>
+                </AksiLainnya>
               )}
               minWidth={980}
             />
@@ -259,7 +261,7 @@ export default function AkunPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Toko' : 'Tambah Toko'}</DialogTitle>
@@ -311,7 +313,7 @@ export default function AkunPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

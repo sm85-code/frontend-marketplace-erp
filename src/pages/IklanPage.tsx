@@ -1,3 +1,5 @@
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -12,7 +14,7 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -140,7 +142,7 @@ export default function IklanPage() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah catatan kampanye</DialogTitle>
@@ -184,7 +186,7 @@ export default function IklanPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="iklan-budget-harian-rp-4">Budget Harian (Rp)</Label>
-                <Input id="iklan-budget-harian-rp-4" type="number" value={form.budget_harian} onChange={(e) => setForm((f) => ({ ...f, budget_harian: e.target.value }))} />
+                <MoneyInput id="iklan-budget-harian-rp-4" type="number" value={form.budget_harian} onChange={(e) => setForm((f) => ({ ...f, budget_harian: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="iklan-tanggal-mulai-5">Tanggal Mulai</Label>
@@ -201,7 +203,7 @@ export default function IklanPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { angkaDari, anggaranTeks, statusKampanye, totalKampanye } from '@/lib/iklanKampanye'
 import BuatIklan from './BuatIklan'
 import { TumpukanFoto } from './FotoProduk'
-import KelolaKampanye from './KelolaKampanye'
+import { useNavigate } from 'react-router-dom'
+import { useTokoAktif } from '@/lib/tokoAktif'
 import SaranAi from './SaranAi'
 import { kali } from './kolom'
 
@@ -96,11 +97,12 @@ function kolomKampanye(): KolomTabel<KampanyeIklan>[] {
 export default function KampanyeShopee() {
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const toko = (akunList ?? []).filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
-  const [dipilih, setDipilih] = useState('')
+  const [dipilih, setDipilih] = useTokoAktif(true)
   const akunId = dipilih || toko[0]?.id || ''
   const [hari, setHari] = useState('7')
   const [status, setStatus] = useState('hidup')
-  const [kelola, setKelola] = useState<KampanyeIklan | null>(null)
+  const navigate=useNavigate()
+  function setKelola(k: KampanyeIklan) { navigate(`/iklan/toko/${encodeURIComponent(akunId)}/kampanye/${encodeURIComponent(k.campaign_id)}?hari=${hari}`) }
   const [buka, setBuka] = useState(false)
 
   const { data, isLoading, isFetching, error, refetch } = useQuery({
@@ -112,7 +114,6 @@ export default function KampanyeShopee() {
   })
   const total = totalKampanye(data)
   const tampil = (data?.kampanye ?? []).filter((k) => cocokStatus(status, k.status))
-  const aktif = kelola ? (data?.kampanye.find((k) => k.campaign_id === kelola.campaign_id) ?? kelola) : null
 
   return (
     <Card>
@@ -201,7 +202,6 @@ export default function KampanyeShopee() {
           </>
         )}
       </CardContent>
-      {aktif && <KelolaKampanye akunId={akunId} kampanye={aktif} hari={data?.hari ?? Number(hari)} biayaShopee={data?.biaya_shopee_persen ?? null} onTutup={() => setKelola(null)} />}
       {buka && <BuatIklan akunId={akunId} onTutup={() => setBuka(false)} />}
     </Card>
   )

@@ -213,8 +213,8 @@ export const listGudang = () => api.get<Gudang[]>('/gudang').then((r) => r.data)
 export const createGudang = (payload: { kode: string; nama: string }) =>
   api.post<Gudang>('/gudang', payload).then((r) => r.data)
 
-export const listStokLedger = (produkId?: string, limit = 100) =>
-  api.get<StokLedger[]>('/stok/ledger', { params: { produk_id: produkId, limit } }).then((r) => r.data)
+export const listStokLedger = (produkId?: string, limit = 100, offset = 0, dari?: string, sampai?: string) =>
+  api.get<StokLedger[]>('/stok/ledger', { params: { produk_id: produkId, limit, offset, dari, sampai } }).then((r) => r.data)
 
 export const adjustStok = (payload: { produk_id: string; qty_delta: number; expected_stock?: number; catatan?: string; gudang_id?: string }) =>
   api.post<Produk>('/stok/adjust', payload).then((r) => r.data)
@@ -249,8 +249,8 @@ export const daftarPesanan = (params: FilterPesanan & { urut?: string; halaman?:
 export const ringkasanPesanan = (params: Pick<FilterPesanan, 'akun_id' | 'tahap' | 'q' | 'dari' | 'sampai'>) =>
   api.get<RingkasanPesanan>('/pesanan/ringkasan', { params }).then((r) => r.data)
 
-export const laporanDashboard = (dari: string, sampai: string) =>
-  api.get<Dashboard>('/laporan/dashboard', { params: { dari, sampai } }).then((r) => r.data)
+export const laporanDashboard = (dari: string, sampai: string, akun_id?: string) =>
+  api.get<Dashboard>('/laporan/dashboard', { params: { dari, sampai, akun_id } }).then((r) => r.data)
 
 export const getPesanan = (id: string) => api.get<Pesanan>(`/pesanan/${id}`).then((r) => r.data)
 

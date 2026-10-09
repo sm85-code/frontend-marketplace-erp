@@ -1,3 +1,5 @@
+import Bantuan from '@/components/Bantuan'
+import { useTokoAktif } from '@/lib/tokoAktif'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -27,11 +29,13 @@ const columns: KolomTabel<ReturMarketplace>[] = [
   { kunci: 'refund', judul: 'Nominal Refund', rata: 'kanan', sel: (r) => nominalRetur(r.nominal_refund, r.mata_uang) },
   { kunci: 'alasan', judul: 'Alasan Pembeli', kelas: 'min-w-[180px] max-w-[280px] break-words', sel: (r) => r.alasan_pembeli || r.alasan || '—' },
   { kunci: 'dibuat', judul: 'Diajukan', sel: (r) => waktuRetur(r.dibuat_at) },
-  { kunci: 'tenggat', judul: 'Tenggat Penjual', sel: (r) => waktuRetur(r.tenggat_penjual_at ?? r.tenggat_at) },
+  { kunci: 'tenggat', judul: 'Tenggat Penjual', sel: (r) => { const t=r.tenggat_penjual_at??r.tenggat_at; const near=t&&t*1000-Date.now()<86400000&&!['CLOSED','CANCELLED','ACCEPTED'].includes(r.status); return <span className={near?'font-semibold text-destructive':''}>{waktuRetur(t)}{near&&<small className="block">{t*1000<Date.now()?'Tenggat terlewat':'Segera tangani'}</small>}</span> } },
 ]
 
 export default function ReturPage() {
-  const [draft, setDraft] = useState(() => ({ akunId: '', ...rentangAwalRetur() }))
+  const [activeShop, setActiveShop] = useTokoAktif(true)
+  const [search, setSearch] = useState('')
+  const [draft, setDraft] = useState(() => ({ akunId: activeShop, ...rentangAwalRetur() }))
   const [filter, setFilter] = useState<Filter | null>(null)
   const [selected, setSelected] = useState<{ akunId: string; nomor: string } | null>(null)
   const [validation, setValidation] = useState<string | null>(null)
@@ -55,13 +59,13 @@ export default function ReturPage() {
       <Button asChild variant="outline"><Link to="/pesanan">Kembali ke Pesanan</Link></Button>
       <Button variant="outline" disabled={!filter || list.isFetching} onClick={() => { void list.refetch() }}>Segarkan</Button>
     </BarHalaman>
-    <div className="rounded-lg border bg-card p-4 text-sm space-y-2">
+    <Bantuan judul="Cara menangani retur">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>
       <p className="text-muted-foreground">Rentang maksimal 15 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti foto dan pengajuan sengketa tersedia di Detail; persyaratan mengikuti Shopee.</p>
-    </div>
+    </Bantuan>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     <form className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); apply() }}>
-      <div className="space-y-1"><Label htmlFor="retur-toko">Toko Shopee</Label><Select value={draft.akunId} onValueChange={(akunId) => setDraft({ ...draft, akunId })}>
+      <div className="space-y-1"><Label htmlFor="retur-toko">Toko Shopee</Label><Select value={draft.akunId} onValueChange={(akunId) => { setActiveShop(akunId); setDraft({ ...draft, akunId }) }}>
         <SelectTrigger id="retur-toko" className="w-full"><SelectValue placeholder="Pilih toko" /></SelectTrigger>
         <SelectContent>{(shops.data ?? []).filter((s) => s.platform === 'shopee').map((s) => <SelectItem key={s.id} value={s.id}>{s.nama_toko}</SelectItem>)}</SelectContent>
       </Select></div>
@@ -75,7 +79,8 @@ export default function ReturPage() {
     {!filter && <p className="text-sm text-muted-foreground">Pilih toko dan klik Tampilkan untuk memuat data retur.</p>}
     {list.data && !list.error && filter && <>
       <p className="text-sm text-muted-foreground">{shops.data?.find((s) => s.id === filter.akunId)?.nama_toko} · Pengajuan {filter.dari} sampai {filter.sampai} WIB · Halaman {filter.halaman}</p>
-      <TabelData label="Retur dan refund Shopee" items={list.data.items} kolom={columns} idDari={(r) => r.nomor_retur} namaDari={(r) => r.nomor_retur}
+      <Input aria-label="Cari retur pada halaman ini" placeholder="Cari nomor pesanan atau retur pada halaman ini…" value={search} onChange={e => setSearch(e.target.value)} />
+      <TabelData label="Retur dan refund Shopee" items={list.data.items.filter(r => `${r.nomor_retur} ${r.nomor_pesanan}`.toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={(r) => r.nomor_retur} namaDari={(r) => r.nomor_retur}
         aksi={(r) => <Button variant="outline" size="sm" onClick={() => setSelected({ akunId: r.akun_id, nomor: r.nomor_retur })}>Detail</Button>} />
       {list.data.items.length === 0 && <p className="text-sm text-muted-foreground">Tidak ada retur pada halaman dan rentang pengajuan ini.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">

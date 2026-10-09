@@ -1,3 +1,4 @@
+import MoneyInput from '@/components/MoneyInput'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/api/endpoints'
@@ -51,7 +52,7 @@ export default function BarangPromosiForm({ akun, id, blocked, onPending }: { ak
       <div><Label htmlFor="promo-produk">Produk Shopee</Label><Select value={katalog} onValueChange={(v) => { setKatalog(v); setModel(''); mutation.reset() }} disabled={pending}><SelectTrigger id="promo-produk" className="w-full"><SelectValue placeholder="Pilih produk" /></SelectTrigger><SelectContent>{products.data?.items.map((p) => <SelectItem key={p.id} value={p.id}>{p.nama} · {p.sku || p.item_id}</SelectItem>)}</SelectContent></Select></div>
       {!!chosen.data?.varian.length && <div><Label htmlFor="promo-model">Varian</Label><Select value={model} onValueChange={setModel} disabled={pending}><SelectTrigger id="promo-model" className="w-full"><SelectValue placeholder="Pilih varian" /></SelectTrigger><SelectContent>{chosen.data.varian.filter((v) => v.model_id).map((v) => <SelectItem key={v.model_id} value={v.model_id!}>{v.nama} · {v.sku || v.model_id}</SelectItem>)}</SelectContent></Select></div>}
       {operasi !== 'hapus' && <>
-        <div><Label htmlFor="promo-harga">Harga promo (mata uang toko)</Label><Input id="promo-harga" type="number" min="0.0001" step="any" required value={harga} onChange={(e) => setHarga(e.target.value)} disabled={pending} /></div>
+        <div><Label htmlFor="promo-harga">Harga promo (mata uang toko)</Label><MoneyInput id="promo-harga" type="number" min="0.0001" step="any" required value={harga} onChange={(e) => setHarga(e.target.value)} disabled={pending} /></div>
         <div><Label htmlFor="promo-batas">Batas pembelian (0 = tanpa batas)</Label><Input id="promo-batas" type="number" min="0" step="1" required value={batas} onChange={(e) => setBatas(e.target.value)} disabled={pending} /></div>
       </>}
       {operasi === 'tambah' && <div>
