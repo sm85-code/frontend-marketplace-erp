@@ -5,7 +5,7 @@ import { Fragment } from 'react'
 function Inline({ text }: { text: string }) {
   return <>{text.split(/(\*\*[^*\n]+\*\*)/g).map((part, i) =>
     part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i}>{part.slice(2, -2)}</strong>
+      ? <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
       : <Fragment key={i}>{part}</Fragment>)}</>
 }
 export default function AssistantAnswer({ text }: { text: string }) {
@@ -27,10 +27,10 @@ export default function AssistantAnswer({ text }: { text: string }) {
       const Tag = ordered ? 'ol' : 'ul'
       blocks.push(<Tag key={i} className={`space-y-1 pl-5 ${ordered ? 'list-decimal' : 'list-disc'}`}>{items.map((t, j) => <li key={j}><Inline text={t}/></li>)}</Tag>)
     } else if (heading) {
-      blocks.push(<p key={i} className="font-semibold"><Inline text={heading[1]}/></p>)
+      blocks.push(<p key={i} className="border-l-2 border-primary/50 pl-3 font-semibold text-foreground"><Inline text={heading[1]}/></p>)
     } else {
       blocks.push(<p key={i}><Inline text={line}/></p>)
     }
   }
-  return <div className="space-y-3 break-words text-sm leading-relaxed [overflow-wrap:anywhere]">{blocks}</div>
+  return <div className="assistant-answer space-y-4 break-words text-left text-sm leading-7 [overflow-wrap:anywhere]">{blocks}</div>
 }
