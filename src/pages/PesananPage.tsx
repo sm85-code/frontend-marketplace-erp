@@ -333,8 +333,8 @@ export default function PesananPage() {
                 {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${p.id_eksternal}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
                 <div className="min-w-0 flex-1 break-words">{semuaKolom.find((k) => k.kunci === 'pesanan')?.sel(p)}</div>
               </div>
-              <dl className="grid grid-cols-2 gap-3 border-t pt-3">
-                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['produk', 'catatan', 'kurir'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
+              <dl className="grid grid-cols-1 gap-4 border-t pt-3">
+                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className={`min-w-0 break-words `}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
               </dl>
               <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} /></div>
             </li>)}
