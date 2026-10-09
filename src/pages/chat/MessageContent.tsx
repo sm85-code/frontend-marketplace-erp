@@ -5,16 +5,18 @@ export default function MessageContent({
   type,
   shopId,
   sourceContent,
+  outgoing,
 }: {
+  outgoing?: boolean
   content: unknown
   type: string
   shopId?: string
   sourceContent?: unknown
 }) {
-  const view = chatPresentation(sourceContent ? { content, source_content: sourceContent } : content, type, shopId)
+  const view = chatPresentation(sourceContent ? { content, source_content: sourceContent } : content, type, shopId, outgoing)
   return (
     <div className="min-w-0 space-y-2 break-words text-sm">
-      {type !== 'text' && <p className="text-xs text-muted-foreground">{view.label}</p>}
+      {!['text', 'notification', 'system'].includes(type) && <p className="text-xs text-muted-foreground">{view.label}</p>}
       {view.text.map((text, i) => (
         <p className="whitespace-pre-wrap [overflow-wrap:anywhere]" key={i}>
           {text}
