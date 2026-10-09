@@ -165,7 +165,7 @@ export default function StaffPage() {
             <TabelLokal
               label="Daftar pengguna"
               items={users}
-              kolom={kolomPengguna}
+              kolom={[...kolomPengguna, { kunci: 'toko', judul: 'Toko ditugaskan', kelas: 'min-w-[180px] max-w-[320px] break-words', sel: u => u.role === 'staff' ? (staffAkun ?? []).filter(r => r.user_id === u.id).map(r => akunMap.get(r.akun_id)?.nama_toko ?? 'Toko tidak tersedia').join(', ') || 'Belum ditugaskan' : 'Sesuai kewenangan role' }]}
               idDari={(u) => u.id}
               namaDari={(u) => u.nama}
               urutAwal={{ kunci: 'nama', arah: 'asc' }}

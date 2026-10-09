@@ -24,7 +24,7 @@ export default function ShopeeCallbackPage() {
     const mainAccountId = params.get('main_account_id')
     if (!akunId || !nonce || !code || Boolean(shopId) === Boolean(mainAccountId)) {
       setStatus('error')
-      setMessage('Parameter OAuth tidak lengkap.')
+      setMessage('Tautan penghubungan tidak lengkap atau sudah tidak berlaku. Kembali ke Kelola Toko dan ulangi Hubungkan Shopee.')
       return
     }
     const key = `${akunId}:${nonce}:${code}:${shopId ?? mainAccountId}`
