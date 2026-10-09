@@ -1,11 +1,13 @@
 import { ChevronDown, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PRESET_LABEL, type PresetTanggal } from '@/lib/rentang'
 import Medan from './Medan'
+
+const TutupFilter = createContext<(() => void) | null>(null)
 
 /**
  * Filters of a list page. Put the controls below inside; the grid, the equal control height and the phone
@@ -14,20 +16,26 @@ import Medan from './Medan'
 export function BarFilter({ utama, aktif = 0, children }: { utama?: ReactNode; aktif?: number; children: ReactNode }) {
   const [buka, setBuka] = useState(false)
   const panelId = useId()
+  const trigger = useRef<HTMLButtonElement>(null)
+  const tutup = () => {
+    if (!window.matchMedia('(max-width: 767px)').matches) return
+    setBuka(false)
+    requestAnimationFrame(() => trigger.current?.focus())
+  }
   return (
     <div className="bar-filter">
       {utama}
       {/* Phones: the search stays visible and the other filters fold behind one button (data comes first).
           md and up: everything is shown in the same grid (display: contents). */}
       <div className="md:hidden" style={{ gridColumn: '1 / -1' }}>
-        <Button variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls={panelId}>
+        <Button ref={trigger} variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls={panelId}>
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filter &amp; urutan{aktif > 0 ? ` (${aktif} aktif)` : ''}
           <ChevronDown className={`ml-auto size-4 transition-transform ${buka ? 'rotate-180' : ''}`} aria-hidden="true" />
         </Button>
       </div>
       <div id={panelId} className={buka ? 'contents' : 'hidden md:contents'}>
-        {children}
+        <TutupFilter.Provider value={tutup}>{children}</TutupFilter.Provider>
       </div>
     </div>
   )
@@ -90,6 +98,7 @@ export function FilterPilih({
   onUbah,
   opsi,
   semua,
+  tetapTerbuka = false,
 }: {
   id: string
   label: string
@@ -97,10 +106,13 @@ export function FilterPilih({
   onUbah: (v: string) => void
   opsi: OpsiFilter[]
   semua?: string
+  /** Custom date entry needs both date inputs before collapsing. */
+  tetapTerbuka?: boolean
 }) {
+  const tutup = useContext(TutupFilter)
   return (
     <Medan label={label} untuk={id}>
-      <Select value={nilai === '' && semua ? SEMUA : nilai} onValueChange={(v) => onUbah(v === SEMUA ? '' : v)}>
+      <Select value={nilai === '' && semua ? SEMUA : nilai} onValueChange={(v) => { onUbah(v === SEMUA ? '' : v); if (!tetapTerbuka && v !== 'kustom') tutup?.() }}>
         <SelectTrigger id={id}>
           <SelectValue />
         </SelectTrigger>
@@ -137,6 +149,7 @@ export function FilterTanggal({
   nilai: NilaiTanggal
   onUbah: (patch: Partial<NilaiTanggal>) => void
 }) {
+  const tutup = useContext(TutupFilter)
   const daftar = presets ?? (Object.keys(PRESET_LABEL) as PresetTanggal[])
   return (
     <>
@@ -153,7 +166,7 @@ export function FilterTanggal({
             <Input id={`${id}-dari`} type="date" value={nilai.dari} onChange={(e) => onUbah({ dari: e.target.value })} />
           </Medan>
           <Medan label="Sampai" untuk={`${id}-sampai`}>
-            <Input id={`${id}-sampai`} type="date" value={nilai.sampai} onChange={(e) => onUbah({ sampai: e.target.value })} />
+            <Input id={`${id}-sampai`} type="date" value={nilai.sampai} onChange={(e) => { onUbah({ sampai: e.target.value }); if (nilai.dari && e.target.value >= nilai.dari) tutup?.() }} />
           </Medan>
         </>
       )}
@@ -163,10 +176,11 @@ export function FilterTanggal({
 
 /** A yes/no filter, lined up with the inputs next to it. */
 export function FilterSakelar({ id, label, nilai, onUbah }: { id: string; label: string; nilai: boolean; onUbah: (v: boolean) => void }) {
+  const tutup = useContext(TutupFilter)
   return (
     <Medan>
       <label htmlFor={id} className="kontrol cursor-pointer text-sm">
-        <Checkbox id={id} checked={nilai} onCheckedChange={(v) => onUbah(v === true)} />
+        <Checkbox id={id} checked={nilai} onCheckedChange={(v) => { onUbah(v === true); tutup?.() }} />
         {label}
       </label>
     </Medan>

@@ -1,4 +1,5 @@
 import { tahapDariTautan } from '@/lib/tautanPesanan'
+import AksiLainnya from '@/components/AksiLainnya'
 import UkuranHalaman from '@/components/UkuranHalaman'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
@@ -255,7 +256,7 @@ export default function PesananPage() {
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
           Segarkan
         </Button>
-        <Button onClick={() => setFormBuka(true)}>Pesanan Manual</Button>
+        <AksiLainnya><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button></AksiLainnya>
       </BarHalaman>
 
       <BarFilter
