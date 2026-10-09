@@ -7,6 +7,12 @@ export interface Panduan {
 }
 export const panduan: Panduan[] = [
   {
+    path: '/performa-toko', judul: 'Performa Toko',
+    tujuan: 'Periksa indikator kesehatan dan riwayat penalti toko dari Shopee.',
+    langkah: ['Pilih toko Shopee untuk membaca indikator terbaru.', 'Bandingkan periode saat ini dengan periode sebelumnya dan target yang tersedia.', 'Periksa riwayat poin penalti kuartal berjalan; gunakan halaman berikutnya untuk catatan lain.'],
+    dampak: 'Halaman khusus admin ini hanya membaca data. Data yang belum tersedia tidak dianggap nol.',
+  },
+  {
     path: '/chat', judul: 'Chat Pembeli',
     tujuan: 'Baca dan balas pesan pembeli tanpa berpindah ke toko lain.',
     langkah: [

@@ -1,3 +1,4 @@
+import PenaltiToko from './PenaltiToko'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as api from '@/api/endpoints'
@@ -22,6 +23,7 @@ export default function PerformaTokoPage() {
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     {result.error && <QueryError error={result.error} retry={result.refetch} />}
     {result.isFetching && <Spinner column label="Mengambil performa Shopee…" />}
+    {!!akun && <PenaltiToko key={akun} akun={akun} />}
     {result.data && <><p className="text-sm text-muted-foreground">Indikator resmi Shopee · {new Date(result.data.diambil_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</p><div className="overflow-x-auto rounded-xl border bg-card"><Table><TableHeader><TableRow><TableHead className="min-w-56">Indikator</TableHead><TableHead>Periode saat ini</TableHead><TableHead>Periode sebelumnya</TableHead><TableHead>Target Shopee</TableHead></TableRow></TableHeader><TableBody>{result.data.metrics.map(m => <TableRow key={m.metric_id}><TableCell>{labels[m.metric_name] ?? m.metric_name.replaceAll('_', ' ')}</TableCell><TableCell className="whitespace-nowrap">{metricValue(m.current_period, m.unit)}</TableCell><TableCell className="whitespace-nowrap">{metricValue(m.last_period, m.unit)}</TableCell><TableCell className="whitespace-nowrap">{m.target ? `${m.target.comparator} ${metricValue(m.target.value, m.unit)}` : '—'}</TableCell></TableRow>)}</TableBody></Table></div>{!result.data.metrics.length && <p>Belum ada indikator yang dikembalikan Shopee.</p>}<details className="text-sm"><summary>Keterangan data</summary><p className="mt-2 text-muted-foreground">Periode dan target mengikuti Shopee. Tanda — berarti nilai belum tersedia, bukan nol. Halaman ini tidak membuat skor kualitas produk.</p></details></>}
   </div>
 }
