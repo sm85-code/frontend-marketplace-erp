@@ -149,6 +149,7 @@ export const createProduk = (payload: {
   nama: string
   deskripsi?: string
   harga_dasar: string
+  stok_referensi?: number | null
   stok?: number
   foto_url?: string | null
   berat_gram?: number
@@ -162,6 +163,7 @@ export const createProduk = (payload: {
 export const updateProduk = (
   id: string,
   payload: Partial<{
+    stok_referensi: number | null
     keluarga_id: string | null
     opsi_varian: { tier: string; opsi: string }[]
     nama: string
@@ -545,3 +547,5 @@ export const kelolaBarangPromosi = (akunId: string, id: string, data: import('./
 
 export interface SalinMasterHasil { katalog_id: string; nama?: string; ok: boolean; sku_dibuat?: number; error?: string; produk?: { id: string; sku: string; baru: boolean }[] }
 export const salinKatalogMaster = (ids: string[]) => api.post<{ hasil: SalinMasterHasil[] }>('/katalog-shopee/salin-master', { ids }).then(r => r.data)
+
+export const getPengaturanStok = () => api.get<{ mode: 'per_toko' | 'gudang_erp'; gudang_aktif: boolean }>('/pengaturan-stok').then(r => r.data)

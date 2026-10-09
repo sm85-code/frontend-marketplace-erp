@@ -41,7 +41,7 @@ export default function SalinMasterProduk({
       !(await confirm({
         title: `Salin ${ids.length} produk ke master ERP?`,
         description:
-          'Nama, foto, deskripsi, harga dan varian/pengiriman disalin. Stok master baru = 0; isi sesuai stok fisik. SKU yang sudah ada digunakan tanpa menimpa data atau stoknya. SKU kosong/berulang dibuat otomatis. Tidak mengubah Shopee atau mengaktifkan pemetaan toko.',
+          'Nama, foto, deskripsi, harga dan varian/pengiriman disalin. Stok katalog disalin sebagai angka referensi master, tanpa masuk ke Gudang. SKU yang sudah ada digunakan tanpa menimpa data atau stoknya. SKU kosong/berulang dibuat otomatis. Tidak mengubah Shopee atau mengaktifkan pemetaan toko.',
       }))
     )
       return

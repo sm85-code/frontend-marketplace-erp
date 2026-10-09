@@ -1,3 +1,4 @@
+import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
 import FormDialog from '@/components/FormDialog'
 import QueryError from '@/components/QueryError'
@@ -39,6 +40,7 @@ const kolomToko: KolomTabel<AkunMarketplace>[] = [
 ]
 
 export default function AkunPage() {
+  const { warehouseEnabled } = useStockSettings()
   const { user } = useAuth()
   const qc = useQueryClient()
   const confirm = useConfirm()
@@ -234,9 +236,9 @@ export default function AkunPage() {
                       <Button size="sm" variant="outline" onClick={() => syncPesananMut.mutate(akun.id)}>
                         Sinkronisasi Pesanan
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
+                      {warehouseEnabled && <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
                         Kirim Stok &amp; Harga
-                      </Button>
+                      </Button>}
                     </>
                   )}
                   {isOwnerLevel(user?.role) && (

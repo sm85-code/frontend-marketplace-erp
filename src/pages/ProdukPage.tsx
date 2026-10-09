@@ -1,3 +1,4 @@
+import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
 import FormDialog from '@/components/FormDialog'
 import MoneyInput from '@/components/MoneyInput'
@@ -48,7 +49,7 @@ const kolomProduk = (mapping: ReturnType<typeof pemetaanProduk>): KolomTabel<Pro
   { kunci: 'tier', judul: 'Jenis Varian', sel: (p) => <div>{(p.keluarga_id ? p.opsi_varian : mapping.get(p.id)?.opsi)?.map((o, i) => <div key={i}>{o.tier}</div>) ?? '—'}</div> },
   { kunci: 'opsi', judul: 'Pilihan Varian', sel: (p) => <div>{!p.keluarga_id && mapping.get(p.id)?.berbeda ? 'Berbeda antar listing · lihat Listing' : (p.keluarga_id ? p.opsi_varian : mapping.get(p.id)?.opsi)?.map((o, i) => <div key={i}>{o.opsi}</div>) ?? '—'}</div> },
   { kunci: 'harga', judul: 'Harga Dasar', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.harga_dasar), nilai: (p) => Number(p.harga_dasar) },
-  { kunci: 'stok', judul: 'Stok', rata: 'kanan', sel: (p) => p.stok, nilai: (p) => p.stok },
+  { kunci: 'stok', judul: 'Stok referensi', rata: 'kanan', sel: (p) => p.stok_referensi ?? '—', nilai: (p) => p.stok_referensi },
   { kunci: 'berat', judul: 'Berat', kelas: 'whitespace-nowrap', sel: (p) => teksBerat(p.berat_gram), nilai: (p) => p.berat_gram ?? 0 },
   { kunci: 'dimensi', judul: 'Dimensi', kelas: 'whitespace-nowrap', sel: (p) => ukuranPaket(p.panjang_cm, p.lebar_cm, p.tinggi_cm) },
   { kunci: 'preorder', judul: 'Preorder', sel: (p) => p.preorder == null ? '—' : p.preorder ? `Ya · ${p.hari_proses ?? '—'} hari` : 'Tidak', nilai: (p) => p.preorder },
@@ -56,6 +57,7 @@ const kolomProduk = (mapping: ReturnType<typeof pemetaanProduk>): KolomTabel<Pro
 ]
 
 export default function ProdukPage() {
+  const { warehouseEnabled } = useStockSettings()
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [q, setQ] = useState('')
@@ -125,7 +127,7 @@ export default function ProdukPage() {
     setEditing(p)
     setForm({
       keluarga_id: p.keluarga_id ?? '', opsi_varian: p.opsi_varian ?? [],
-      sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: '',
+      sku_induk: p.sku_induk, nama: p.nama, deskripsi: p.deskripsi, harga_dasar: p.harga_dasar, stok: p.stok_referensi == null ? '' : String(p.stok_referensi),
       berat_gram: String(p.berat_gram ?? 0),
       panjang_cm: String(Number(p.panjang_cm ?? 0)),
       lebar_cm: String(Number(p.lebar_cm ?? 0)),
@@ -138,7 +140,7 @@ export default function ProdukPage() {
 
   function openPublish(p: Produk) {
     setPublishing(p)
-    setPub(publishDefaults(p))
+    setPub(publishDefaults({ ...p, stok: 0 }))
   }
 
   function onPublish() {
@@ -153,7 +155,7 @@ export default function ProdukPage() {
     if (editing) {
       updateMut.mutate({
         id: editing.id,
-        payload: { keluarga_id: form.keluarga_id || null, opsi_varian: form.opsi_varian, nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar, ...fisik(form) },
+        payload: { stok_referensi: form.stok === '' ? null : Number(form.stok), keluarga_id: form.keluarga_id || null, opsi_varian: form.opsi_varian, nama: form.nama, deskripsi: form.deskripsi, harga_dasar: form.harga_dasar, ...fisik(form) },
       })
     } else {
       createMut.mutate({
@@ -162,7 +164,8 @@ export default function ProdukPage() {
         nama: form.nama,
         deskripsi: form.deskripsi,
         harga_dasar: form.harga_dasar,
-        stok: Number(form.stok || 0),
+        stok: 0,
+        stok_referensi: form.stok === '' ? null : Number(form.stok),
         ...fisik(form),
       })
     }
@@ -217,9 +220,9 @@ export default function ProdukPage() {
                 aksi={(p) => (
                   <AksiLainnya>
                     <Sinkronisasi jenis="produk" ids={[p.id]} satu />
-                    <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
-                      Sesuaikan Stok
-                    </Button>
+                    {warehouseEnabled && <Button size="sm" variant="ghost" onClick={() => setStokProduk(p)}>
+                      Sesuaikan Stok Gudang
+                    </Button>}
                     <Button size="sm" variant="ghost" onClick={() => onToggleAktif(p)}>
                       {p.aktif ? 'Nonaktifkan' : 'Aktifkan'}
                     </Button>
@@ -300,12 +303,11 @@ export default function ProdukPage() {
                 <p className="text-xs text-muted-foreground">Bukan pre-order: ready stock, diproses 2 hari.</p>
               )}
             </div>
-            {!editing && (
-              <div className="space-y-1.5">
-                <Label htmlFor="produk-stok-awal-7">Stok Awal</Label>
-                <Input id="produk-stok-awal-7" type="number" value={form.stok} onChange={(e) => setForm((f) => ({ ...f, stok: e.target.value }))} />
+            <div className="space-y-1.5">
+                <Label htmlFor="produk-stok-awal-7">Stok referensi</Label>
+                <Input id="produk-stok-awal-7" type="number" min={0} step={1} value={form.stok} onChange={(e) => setForm((f) => ({ ...f, stok: e.target.value }))} />
+                <p className="text-xs text-muted-foreground">Angka referensi saja; tidak mengubah stok marketplace, Gudang, atau Toko Web.</p>
               </div>
-            )}
           </div>
           {(createMut.error||updateMut.error)&&<p role="alert" className="text-sm text-destructive">{getApiError(createMut.error||updateMut.error)}</p>}
           <DialogFooter>
