@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chatNeedsReply, chatTimestamp, chatPresentation, chatPreview, chatWebUrl } from '@/lib/chat'
+import { chatClosedNotice, chatNeedsReply, chatTimestamp, chatPresentation, chatPreview, chatWebUrl } from '@/lib/chat'
 
 describe('chat timestamp order across shops', () => {
   it('compares seconds, milliseconds and nanoseconds on the same scale', () => {
@@ -58,4 +58,18 @@ describe('Shopee nontext content', () => {
 it('reads notification text and rich-text inserts without executing markup', () => {
   expect(chatPresentation({ notification_for_receiver: 'Percakapan ditutup' }, 'notification').text).toEqual(['Percakapan ditutup'])
   expect(chatPresentation({ ops: [{ insert: 'Produk tersedia' }, { insert: '\n' }] }, 'rich-text').text).toEqual(['Produk tersedia'])
+})
+
+ it('selects notification text for the seller perspective and keeps missing previews concise', () => {
+  const notice = { notification_for_sender: 'Anda bergabung', notification_for_receiver: 'Penjual membantu Anda' }
+  expect(chatPresentation(notice, 'notification', '1', true).text).toEqual(['Anda bergabung'])
+  expect(chatPresentation(notice, 'notification', '1', false).text).toEqual(['Penjual membantu Anda'])
+  expect(chatPreview(null, 'notification')).toBe('Notifikasi Shopee · konten tidak tersedia')
+ })
+
+it('hides conversation closure notices without hiding normal messages', () => {
+ expect(chatClosedNotice({notification_for_sender:'Percakapan telah ditutup'}, 'notification')).toBe(true)
+ expect(chatClosedNotice({text:'Chat telah otomatis diakhiri.'}, 'system')).toBe(true)
+ expect(chatClosedNotice({text:'Percakapan ditutup'}, 'text')).toBe(false)
+ expect(chatClosedNotice({notification_for_sender:'Admin telah bergabung'}, 'notification')).toBe(false)
 })

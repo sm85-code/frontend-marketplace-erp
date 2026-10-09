@@ -3,7 +3,9 @@ import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
 import { useState } from 'react'
-import { chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
+import { ArrowLeft, RefreshCw, Send, UserRound } from 'lucide-react'
+import { chatWebUrl } from '@/lib/chat'
+import { chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
 import AttachmentPicker, { ChatCardView } from './chat/AttachmentPicker'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -19,6 +21,7 @@ type Conversation = {
   conversation_id: string
   latest_message_id?: string
   kota?: string | null
+  to_avatar?: string
   to_name: string
   to_id: number
   unread_count: number
@@ -44,6 +47,22 @@ type Inbox = {
 }
 type History = { conversation: Conversation; messages: Message[]; page_result: { next_offset?: string } }
 type Delivery = { status: 'terkirim' | 'gagal' | 'belum_pasti'; error?: string; message?: Message }
+function Avatar({ url }: { url?: string }) {
+  const [failed, setFailed] = useState(false)
+  const safe = chatWebUrl(url)
+  return <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-muted-foreground">
+    {safe && !failed ? <img src={safe} alt="" className="size-full object-cover" referrerPolicy="no-referrer" onError={() => setFailed(true)}/> : <UserRound className="size-5"/>}
+  </span>
+}
+function shortTime(value: number | string) {
+  const timestamp = chatTimestamp(value)
+  if (!timestamp) return '—'
+  const date = new Date(timestamp)
+  const today = new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Jakarta'})
+  return date.toLocaleDateString('en-CA', {timeZone:'Asia/Jakarta'}) === today
+    ? date.toLocaleTimeString('id-ID', {timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit'})
+    : date.toLocaleDateString('id-ID', {timeZone:'Asia/Jakarta',day:'2-digit',month:'short'})
+}
 function time(value: number | string) {
   if (!chatTimestamp(value)) return '—'
   const date = new Date(chatTimestamp(value))
@@ -269,25 +288,20 @@ export default function ChatPage() {
     setParams({})
   }
   return (
-    <div className="space-y-4">
-      <BarHalaman judul="Chat" deskripsi="Baca dan balas percakapan pembeli dari toko yang diizinkan.">
+    <div className="space-y-3">
+      <div className={selected ? "hidden md:block" : ""}><BarHalaman judul="Chat">
         {shop && (
           <Button variant="secondary" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
             {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
           </Button>
         )}
-      </BarHalaman>
+      </BarHalaman></div>
       {syncedAt && (
         <p role="status" className="text-xs text-muted-foreground">
           Pemeriksaan data terbaru selesai {syncedAt} WIB. Kendala tiap toko ditampilkan di bawah.
         </p>
       )}
-      <Bantuan><p className="rounded-xl border p-3 text-sm text-muted-foreground">
-        Pilih percakapan, baca pesan, lalu ketik balasan. Kirim hanya atas tindakan Anda. Gunakan Lampirkan produk / pesanan untuk mengirim
-        kartu dari toko percakapan. Gambar berasal dari katalog dan pesanan yang tersinkron. Bila hasil kirim belum pasti, periksa riwayat
-        terlebih dahulu.
-      </p></Bantuan>
-      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
+      <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 ${selected ? "hidden md:grid" : ""}`}>
         <select
           aria-label="Toko Chat"
           className="w-full min-w-0 rounded-md border p-2"
@@ -307,11 +321,11 @@ export default function ChatPage() {
             </option>
           ))}
         </select>
-        <Button variant="outline" className="w-full" disabled={syncChat.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
-          {shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}
+        <Button variant="secondary" className="gap-2" disabled={syncChat.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
+          <RefreshCw className={`size-4 ${syncChat.isPending ? 'animate-spin' : ''}`}/><span className="hidden sm:inline">{shop ? 'Sinkronisasi toko' : 'Sinkronisasi semua'}</span><span className="sr-only sm:hidden">{shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}</span>
         </Button>
 
-        <label className="flex items-center gap-2">
+        <div className="col-span-2 flex flex-wrap gap-x-4 gap-y-2 text-sm"><label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={unread}
@@ -333,10 +347,10 @@ export default function ChatPage() {
           />
           Belum dibalas
         </label>
-        <Input
+        </div><Input
           aria-label="Cari pembeli"
           placeholder="Cari pembeli dalam data termuat"
-          className="max-w-xs"
+          className="col-span-2 w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -344,10 +358,7 @@ export default function ChatPage() {
       {(search||unreplied)&&<div className="flex flex-wrap items-center gap-2"><Button variant="outline" disabled={searchHistory.isPending} onClick={()=>searchHistory.mutate()}>{searchHistory.isPending?'Menelusuri…':'Cari dalam riwayat toko'}</Button><small className="text-muted-foreground">Maks. 10 halaman per toko setiap penelusuran.</small></div>}
       {historySearch?.scope===searchScope&&historySearch.more&&<p role="status" className="text-xs">Hasil belum mencakup semua riwayat. Pilih toko dan buka percakapan lebih lama untuk melanjutkan.</p>}
       {historySearch?.scope===searchScope&&historySearch.errors.map(error=><p key={error} role="alert" className="text-sm text-destructive">{error}</p>)}
-      <Bantuan><p className="text-xs text-muted-foreground">
-        Percakapan diurutkan dari pesan terbaru. Kota/kabupaten memakai alamat tujuan pesanan yang tersinkron. Jika tidak tersedia, ditandai
-        di samping username.
-      </p></Bantuan>
+      <div className={selected ? 'hidden md:block' : ''}><Bantuan judul="Bantuan chat"><p>Pilih percakapan untuk membalas atau melampirkan produk/pesanan dari toko tersebut. Daftar diurutkan dari pesan terbaru. Kota pembeli berasal dari pesanan tersinkron; konten yang tidak disertakan Shopee tetap ditandai.</p></Bantuan></div>
       {unreplied && (
         <p className="text-xs text-muted-foreground">
           Belum dibalas: pesan terakhir berasal dari pembeli pada halaman yang dimuat. Gunakan Berikutnya untuk menelusuri riwayat.
@@ -364,34 +375,27 @@ export default function ChatPage() {
           </p>
         ))}
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
-        <section className={`min-w-0 rounded-xl border p-3 ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
+        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
           {inbox.isFetching && <p className="text-sm">Memuat percakapan…</p>}
           {rows.map((c) => (
             <button
               key={`${c.shop.id}:${c.conversation_id}`}
-              className="mb-2 w-full rounded-lg border border-primary/30 bg-card p-3 text-left shadow-sm hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring"
+              aria-current={selected?.conversation_id === c.conversation_id && threadShop === c.shop.id ? 'true' : undefined}
+              className="flex w-full items-start gap-3 border-b p-3 text-left last:border-b-0 hover:bg-muted/60 aria-[current=true]:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               onClick={() => open(c, c.shop.id)}
             >
-              <div className="font-medium">
-                {c.to_name || 'Pembeli'}
-                <span className="ml-2 text-xs text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
-                  · {c.kota || 'Kota belum tersedia'}
-                </span>
-                {c.unread_count > 0 && (
-                  <span className="ml-2 inline-block rounded bg-primary/20 px-1.5 text-xs text-foreground">
-                    {' '}
-                    {c.unread_count} belum dibaca
-                  </span>
-                )}
+              <Avatar key={c.to_avatar} url={c.to_avatar}/>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2"><span className="truncate font-semibold">{c.to_name || 'Pembeli'}</span><time className="shrink-0 text-[11px] text-muted-foreground" title={time(c.last_message_timestamp)}>{shortTime(c.last_message_timestamp)}</time></div>
+                <div className="truncate text-xs text-muted-foreground">{c.shop.nama_toko}{c.kota ? ` · ${c.kota}` : ''}</div>
+                <div className="mt-1 flex items-center justify-between gap-2"><p className="line-clamp-1 min-w-0 break-words text-sm text-muted-foreground">{chatPreview(c.latest_message_content, c.latest_message_type)}</p>
+                  {c.unread_count > 0 && <span aria-label={`${c.unread_count} belum dibaca`} className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">{c.unread_count}</span>}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {c.shop.nama_toko} · {time(c.last_message_timestamp)}
-              </div>
-              <p className="line-clamp-2 break-words text-sm">{chatPreview(c.latest_message_content, c.latest_message_type)}</p>
             </button>
           ))}
           {!inbox.isFetching && !rows.length && <p>Tidak ada percakapan pada cakupan ini.</p>}
-          <div className="mt-3 grid gap-2" aria-label="Riwayat per toko">
+          <div className="grid gap-2 p-3" aria-label="Riwayat per toko">
             {(inbox.data ?? [])
               .filter((r) => r.data?.page_result.more)
               .map((r) => (
@@ -415,7 +419,7 @@ export default function ChatPage() {
             </Button>
           )}
         </section>
-        <section className={`min-w-0 rounded-xl border p-3 ${!selected ? 'hidden md:block' : ''}`} aria-label="Percakapan">
+        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card p-3 ${!selected ? 'hidden md:block' : ''}`} aria-label="Percakapan">
           {!selected ? (
             <p>Pilih percakapan untuk membaca dan membalas.</p>
           ) : (
@@ -429,14 +433,14 @@ export default function ChatPage() {
                     setAttachment(null)
                   }}
                 >
-                  Kembali
+                  <ArrowLeft className="size-4"/><span className="sr-only">Kembali</span>
                 </Button>
-                <h2 className="font-medium">
+                <Avatar key={selected.to_avatar} url={selected.to_avatar}/><h2 className="min-w-0 flex-1 font-medium">
                   {selected.to_name}
                   <span className="ml-2 text-sm text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
-                    · {city || 'Kota belum tersedia'}
+                    {city ? `· ${city}` : ''}
                   </span>
-                  · {active?.nama_toko}
+                  <span className="block text-xs text-muted-foreground">{active?.nama_toko}</span>
                 </h2>
               </div>
               {newConversation && (
@@ -471,11 +475,11 @@ export default function ChatPage() {
                   Pesan lebih lama
                 </Button>
               )}
-              <div className="my-3 max-h-[55dvh] space-y-3 overflow-y-auto" aria-live="polite">
-                {messages.map((m) => (
+              <div className="my-3 min-h-[32dvh] max-h-[55dvh] space-y-3 overflow-y-auto rounded-xl bg-muted/40 p-3" aria-live="polite">
+                {messages.filter(m => !chatClosedNotice(m.content, m.message_type)).map((m) => (
                   <div
                     key={m.message_id}
-                    className={`max-w-[90%] rounded-xl p-3 ${String(m.from_shop_id) === active?.id_toko_eksternal ? 'ml-auto bg-muted' : 'border'}`}
+                    className={['notification', 'system'].includes(m.message_type) ? 'mx-auto max-w-[90%] rounded-lg bg-background/80 px-3 py-2 text-center text-muted-foreground' : `w-fit max-w-[90%] rounded-2xl p-3 shadow-sm ${String(m.from_shop_id) === active?.id_toko_eksternal ? 'ml-auto rounded-tr-sm bg-primary/15' : 'rounded-tl-sm border bg-card'}`}
                   >
                     <>
                       {m.context?.order ? (
@@ -484,6 +488,7 @@ export default function ChatPage() {
                         <ChatCardView card={m.context.product} />
                       ) : (
                         <MessageContent
+                          outgoing={String(m.from_shop_id) === active?.id_toko_eksternal}
                           content={m.content}
                           sourceContent={m.source_content}
                           type={m.message_type}
@@ -491,7 +496,7 @@ export default function ChatPage() {
                         />
                       )}
                     </>
-                    <div className="mt-1 text-xs text-muted-foreground">{time(m.created_timestamp)}</div>
+                    <div className="mt-1 text-right text-[11px] text-muted-foreground">{shortTime(m.created_timestamp)}</div>
                     {m.context?.order_id && (
                       <Link className="text-sm underline" to={`/pesanan/${encodeURIComponent(m.context.order_id)}`}>
                         Buka pesanan terkait
@@ -544,7 +549,9 @@ export default function ChatPage() {
                   </Button>
                 </div>
               )}
-              <div className="sticky bottom-20 z-10 rounded-lg border bg-card p-3 lg:bottom-2"><Textarea
+              <div className="mt-3 flex items-end gap-2 border-t bg-card pt-3"><Textarea
+                className="min-h-11 flex-1 resize-none"
+                rows={2}
                 aria-label="Balasan Chat"
                 placeholder="Tulis balasan…"
                 maxLength={1000}
@@ -553,7 +560,8 @@ export default function ChatPage() {
                 disabled={send.isPending || !!pending || !!attachment}
               />
               <Button
-                className="mt-2"
+                className="shrink-0"
+                aria-label={attachment ? "Kirim lampiran" : "Kirim balasan"}
                 onClick={() =>
                   send.mutate({
                     key: storageKey,
@@ -571,7 +579,7 @@ export default function ChatPage() {
                   (newConversation && !orderStart.data)
                 }
               >
-                {send.isPending ? 'Mengirim…' : attachment ? 'Kirim lampiran' : 'Kirim balasan'}
+                {send.isPending ? 'Mengirim…' : <><Send className="size-4"/><span className="hidden sm:inline">Kirim</span></>}
               </Button></div>
             </>
           )}

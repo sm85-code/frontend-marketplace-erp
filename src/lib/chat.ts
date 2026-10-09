@@ -54,7 +54,7 @@ export function chatWebUrl(value: unknown): string | undefined {
   }
 }
 
-export function chatPresentation(value: unknown, type = '', shopId?: string): ChatPresentation {
+export function chatPresentation(value: unknown, type = '', shopId?: string, outgoing?: boolean): ChatPresentation {
   const labels: Record<string, string> = {
     item: 'Produk',
     product: 'Produk',
@@ -102,7 +102,11 @@ export function chatPresentation(value: unknown, type = '', shopId?: string): Ch
     } else if (data && typeof data === 'object') {
       const record = data as Record<string, unknown>
       records.push(record)
-      Object.entries(record).forEach(([k, v]) => read(v, depth + 1, k))
+      Object.entries(record).forEach(([k, v]) => {
+        if (k === 'notification_for_sender' && outgoing === false) return
+        if (k === 'notification_for_receiver' && outgoing === true) return
+        read(v, depth + 1, k)
+      })
     }
   }
   // Some Chat payloads carry JSON inside a string.
@@ -153,5 +157,13 @@ export function chatPresentation(value: unknown, type = '', shopId?: string): Ch
 
 export function chatPreview(value: unknown, type = ''): string {
   const view = chatPresentation(value, type)
+  if (view.text[0]?.startsWith('Shopee belum menyertakan konten')) return `${view.label} · konten tidak tersedia`
   return view.text.join(' · ') || view.label
+}
+
+/** Suppress only explicit lifecycle notices, never buyer/seller message text. */
+export function chatClosedNotice(content: unknown, type: string): boolean {
+  if (!['notification', 'system'].includes(type)) return false
+  const text = chatPresentation(content, type).text.join(' ').toLowerCase()
+  return /(?:percakapan|chat)\s+(?:(?:telah|sudah|otomatis|secara otomatis)\s+)*(?:ditutup|diakhiri)|conversation\s+(?:(?:has been|is|was)\s+)?closed/.test(text)
 }
