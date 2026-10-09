@@ -32,5 +32,5 @@ export default function AssistantAnswer({ text }: { text: string }) {
       blocks.push(<p key={i}><Inline text={line}/></p>)
     }
   }
-  return <div className="assistant-answer space-y-4 break-words text-left text-sm leading-7 [overflow-wrap:anywhere]">{blocks}</div>
+  return <div className="assistant-answer space-y-4 break-words text-justify text-sm leading-7 [overflow-wrap:anywhere]">{blocks}</div>
 }

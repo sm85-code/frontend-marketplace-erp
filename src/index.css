@@ -701,7 +701,9 @@ h4,
 .section-tabs [data-slot="tabs-trigger"][data-state="active"] { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 1px 3px var(--border); }
 .section-tabs [data-slot="tabs-trigger"][data-state="inactive"] { background: var(--muted); color: var(--foreground); }
 
-/* Chat prose must not stretch word spacing on narrow screens. */
+/* Keep the user prompt readable; assistant paragraphs follow the requested justification. */
 .erp-content .assistant-turn p.whitespace-pre-wrap { text-align: left; }
 .assistant-answer li { padding-left: .125rem; }
 .assistant-answer strong { font-weight: 700; }
+
+.assistant-answer p, .assistant-answer li { text-align: justify; text-justify: inter-word; }
