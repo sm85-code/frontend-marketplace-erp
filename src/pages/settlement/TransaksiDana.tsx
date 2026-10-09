@@ -113,8 +113,8 @@ export default function TransaksiDana() {
           }
         }}
       >
-        <div>
-          <Label htmlFor="wallet-shop">Toko</Label>
+        <div className="grid gap-2">
+          <Label className="leading-5" htmlFor="wallet-shop">Toko</Label>
           <select
             id="wallet-shop"
             className="w-full rounded-md border bg-background p-2 text-sm"
@@ -131,12 +131,12 @@ export default function TransaksiDana() {
               ))}
           </select>
         </div>
-        <div>
-          <Label htmlFor="wallet-from">Tanggal awal (WIB)</Label>
+        <div className="grid gap-2">
+          <Label className="leading-5" htmlFor="wallet-from">Tanggal awal (WIB)</Label>
           <Input id="wallet-from" type="date" value={draft.dari} onChange={(e) => setDraft({ ...draft, dari: e.target.value })} />
         </div>
-        <div>
-          <Label htmlFor="wallet-to">Tanggal akhir (WIB)</Label>
+        <div className="grid gap-2">
+          <Label className="leading-5" htmlFor="wallet-to">Tanggal akhir (WIB)</Label>
           <Input id="wallet-to" type="date" value={draft.sampai} onChange={(e) => setDraft({ ...draft, sampai: e.target.value })} />
         </div>
         <Button className="self-end" disabled={rows.isFetching}>
