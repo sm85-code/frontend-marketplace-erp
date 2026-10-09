@@ -58,7 +58,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       urut: { kunci: 'status', label: ['Belum bayar dulu', 'Dibatalkan dulu'] },
       sel: (p) => (
         <>
-          <Badge variant={varianStatus(p.status)} className="whitespace-nowrap">
+          <Badge variant={varianStatus(p.status)} className="max-w-full whitespace-normal break-words leading-snug">
             {labelStatus(p)}
           </Badge>
           {p.status_marketplace === 'IN_CANCEL' && (
@@ -85,7 +85,13 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       kelas: 'min-w-[120px]',
       sel: (p) => <div className="space-y-1.5">{p.items.map((i) => <div key={i.id} className="min-h-16">{i.model_name || '—'}</div>)}</div>,
     },
-    { kunci: 'ship_by_date', judul: 'Kirim Sebelum', kelas: 'whitespace-nowrap', sel: (p) => p.ship_by_date ? fmtDate(new Date(Number(p.ship_by_date) * 1000).toISOString()) : "" },
+    { kunci: 'ship_by_date', judul: 'Kirim Sebelum', kelas: 'whitespace-nowrap', sel: (p) => {
+      const timestamp = Number(p.ship_by_date)
+      const date = new Date(timestamp * 1000)
+      if (!timestamp || !Number.isFinite(date.getTime())) return '—'
+      const iso = date.toISOString()
+      return <div><div>{fmtDate(iso)}</div><div className="text-xs text-muted-foreground">{fmtTime(iso)} WIB</div></div>
+    } },
     { kunci: 'sku', judul: 'SKU Produk', bawaan: false, sel: (p) => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.item_sku || '—'}</div>)}</div> },
     { kunci: 'sku_model', judul: 'SKU Varian', bawaan: false, sel: (p) => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.model_sku || '—'}</div>)}</div> },
     { kunci: 'jumlah', judul: 'Jumlah', bawaan: false, sel: p => <div className="space-y-1.5">{p.items.map(i => <div key={i.id} className="min-h-16">{i.qty}</div>)}</div> },
