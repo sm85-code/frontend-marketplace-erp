@@ -1,3 +1,4 @@
+import { tahapDariTautan } from '@/lib/tautanPesanan'
 import UkuranHalaman from '@/components/UkuranHalaman'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
@@ -58,7 +59,7 @@ export default function PesananPage() {
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
 
   const { dari, sampai } = rentangTanggal(f.nilai.tanggal as PresetTanggal, { dari: f.nilai.dari, sampai: f.nilai.sampai })
-  const kriteria = { q: f.nilai.q || undefined, dari, sampai, akun_id: f.nilai.toko || undefined, tahap: f.nilai.tahap || undefined }
+  const kriteria = { q: f.nilai.q || undefined, dari, sampai, akun_id: f.nilai.toko || undefined, tahap: tahapDariTautan(f.nilai.tahap) || undefined }
   const { data: ringkasan } = useQuery({
     queryKey: qk.pesananRingkasan(kriteria),
     queryFn: () => endpoints.ringkasanPesanan(kriteria),
@@ -264,7 +265,7 @@ export default function PesananPage() {
         <FilterPilih
           id="pesanan-status"
           label="Status"
-          nilai={f.nilai.tahap}
+          nilai={tahapDariTautan(f.nilai.tahap)}
           onUbah={(tahap) => f.ubah({ tahap })}
           semua={`Semua status (${ringkasan?.tahap.semua ?? '…'})`}
           opsi={TAHAP_ORDER.map((t) => ({ value: t, label: `${TAHAP_LABELS[t]} (${ringkasan?.tahap[t] ?? '…'})` }))}

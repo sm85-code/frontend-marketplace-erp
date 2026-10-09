@@ -1,3 +1,4 @@
+import { tautanPesanan } from '@/lib/tautanPesanan'
 import { Link } from 'react-router-dom'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
 import { useTokoAktif } from '@/lib/tokoAktif'
@@ -8,7 +9,7 @@ import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
 import { fmtDate, fmtDateTime, fmtRp } from '@/api/client'
 import { qk } from '@/api/keys'
-import type { Dashboard, DashboardProduk, DashboardToko } from '@/api/types'
+import type { Dashboard, DashboardProduk, DashboardToko, TahapPesanan } from '@/api/types'
 import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ function Kartu({ label, nilai, catatan, href }: { label: string; nilai: string; 
     <Card>
       <CardContent className="p-3 sm:p-6">
         <div className="teks-kecil text-muted-foreground">{label}</div>
-        <div className="text-base font-bold tabular-nums sm:text-2xl">{href ? <Link className="underline underline-offset-4" to={href}>{nilai}</Link> : nilai}</div>
+        <div className="text-base font-bold tabular-nums sm:text-2xl">{href ? <Link className="text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={href}>{nilai}</Link> : nilai}</div>
         {catatan && <div className="teks-kecil mt-0.5 text-muted-foreground">{catatan}</div>}
       </CardContent>
     </Card>
@@ -50,7 +51,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 }
 
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
-  { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => <Link className="underline" to={`/pesanan?toko=${encodeURIComponent(t.akun_id??'')}&tahap=semua`}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
+  { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
@@ -98,7 +99,7 @@ export default function DashboardPage() {
 
   const tahap = Object.fromEntries((d?.per_tahap ?? []).map((t) => [t.tahap, t])) as Record<string, { jumlah: number; nilai: string }>
   const hari = d?.per_hari ?? []
-  const orderUrl = (tahap = 'semua', akun = toko) => `/pesanan?${new URLSearchParams({tahap,toko:akun,tanggal:preset})}`
+  const orderUrl = (tahap: TahapPesanan | '' = '', akun = toko) => tautanPesanan(akun, tahap, preset)
   const dataBaruSejak = d?.data_sejak && dari && new Date(d.data_sejak) > new Date(dari) ? d.data_sejak : null
 
   return (
