@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chatClosedNotice, chatNeedsReply, chatTimestamp, chatPresentation, chatPreview, chatWebUrl } from '@/lib/chat'
+import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPresentation, chatPreview, chatWebUrl } from '@/lib/chat'
 
 describe('chat timestamp order across shops', () => {
   it('compares seconds, milliseconds and nanoseconds on the same scale', () => {
@@ -72,4 +72,13 @@ it('hides conversation closure notices without hiding normal messages', () => {
  expect(chatClosedNotice({text:'Chat telah otomatis diakhiri.'}, 'system')).toBe(true)
  expect(chatClosedNotice({text:'Percakapan ditutup'}, 'text')).toBe(false)
  expect(chatClosedNotice({notification_for_sender:'Admin telah bergabung'}, 'notification')).toBe(false)
+})
+
+it('renders the supplied native variation-card format with photo and scaled buyer price', () => {
+ const value = {product_id: 11,model_id:22,item_card_v2:{item_id:11,name:{text:'Rak Partisi'},thumb_url:'sg-11134201-parent',item_model_v2:[{model_id:22,name:{text:'Polos'},image:'sg-11134201-photo',display_price:{discount_price:'40891500000',origin_price:'45435000000',price_before_discount:'45435000000',currency:'IDR',is_price_mask:false}}]}}
+ expect(chatVariationCard(value,'variation_card')).toMatchObject({nama:'Rak Partisi',varian:'Polos',harga:'408915',harga_asli:'454350',foto:'https://cf.shopee.co.id/file/sg-11134201-photo',currency:'IDR'})
+ expect(chatVariationCard({...value,model_id:999},'variation_card')).toBeNull()
+ value.item_card_v2.item_model_v2[0].display_price.is_price_mask=true
+ expect(chatVariationCard(value,'variation_card')?.harga).toBeNull()
+ expect(chatVariationCard(value,'text')).toBeNull()
 })

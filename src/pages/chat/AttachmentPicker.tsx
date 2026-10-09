@@ -15,7 +15,8 @@ export function ChatCardView({ card }: { card: ChatCard }) {
         <div className="break-words font-medium">{card.order_sn ? `Pesanan #${card.order_sn}` : card.nama}</div>
         {card.varian && <div className="mt-1 text-xs font-medium text-muted-foreground">Varian: {card.varian}</div>}
         {card.total !== undefined && <div>Total: {fmtMoney(card.total)}</div>}
-        {card.harga !== undefined && <div>{card.harga === null ? 'Harga belum tersedia' : fmtMoney(card.harga)}</div>}
+        {card.harga !== undefined && <div>{card.harga === null ? 'Harga belum tersedia' : fmtMoney(card.harga, card.currency)}</div>}
+        {card.harga_asli && <div className="text-xs text-muted-foreground line-through">{fmtMoney(card.harga_asli, card.currency)}</div>}
         {card.items?.map((item, i) => (
           <div key={i} className="mt-2 flex items-start gap-2">
             <FotoItem ukuran={32} item={{ nama_produk: item.nama, foto: item.foto }} />

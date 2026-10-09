@@ -5,7 +5,7 @@ import { qk } from '@/api/keys'
 import { useRef, useState } from 'react'
 import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
-import { chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
+import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
 import AttachmentPicker, { ChatCardView } from './chat/AttachmentPicker'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -505,7 +505,9 @@ export default function ChatPage() {
                   >
                     <>
                       {m.message_type === 'text' && (m.context?.order || m.context?.product) && <div className="mb-2"><MessageContent content={m.content} type="text"/></div>}
-                      {m.context?.order ? (
+                      {chatVariationCard(m.content, m.message_type) ? (
+                        <ChatCardView card={chatVariationCard(m.content, m.message_type)!}/>
+                      ) : m.context?.order ? (
                         <ChatCardView card={m.context.order} />
                       ) : m.context?.product ? (
                         <ChatCardView card={m.context.product} />
