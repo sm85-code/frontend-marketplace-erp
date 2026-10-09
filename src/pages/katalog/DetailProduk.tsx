@@ -1,3 +1,4 @@
+import SalinMasterProduk from '@/components/SalinMasterProduk'
 import Bantuan from '@/components/Bantuan'
 import { useAuth } from '@/lib/auth'
 import { isOwnerLevel } from '@/config/roles'
@@ -35,6 +36,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
         ) : (
           <div className="teks-data space-y-4">
             {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
+            {manage && <SalinMasterProduk ids={[detail.id]} />}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
             {manage && <Bantuan judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
             <div className="flex flex-wrap items-center gap-2">
