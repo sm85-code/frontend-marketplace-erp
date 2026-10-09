@@ -1,3 +1,4 @@
+import SalinMasterProduk from '@/components/SalinMasterProduk'
 import UkuranHalaman from '@/components/UkuranHalaman'
 import { useAuth } from '@/lib/auth'
 import { isOwnerLevel } from '@/config/roles'
@@ -209,7 +210,7 @@ export default function KatalogPage() {
         )}
         <FilterSakelar id="katalog-belum" label="Belum dikirim ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} />
         <FilterAksi>
-          <Button variant="outline" onClick={() => pilih.ubahBanyak(items.filter((i) => !i.dikirim_toko_id || semuaHalamanDipilih), !semuaHalamanDipilih)} disabled={!items.length}>
+          <Button variant="outline" onClick={() => pilih.ubahBanyak(items, !semuaHalamanDipilih)} disabled={!items.length}>
             {semuaHalamanDipilih ? 'Batal pilih halaman ini' : 'Pilih halaman ini'}
           </Button>
         </FilterAksi>
@@ -267,6 +268,7 @@ export default function KatalogPage() {
       )}
 
       {manage && <BarPilihan jumlah={pilih.ukuran} satuan="produk" onBatal={pilih.kosongkan} sibuk={kirimMut.isPending}>
+        <SalinMasterProduk ids={pilih.daftar.map(p => p.id)} disabled={kirimMut.isPending} />
         <Button onClick={kirim} disabled={kirimMut.isPending}>
           {kirimMut.isPending ? 'Mengirim…' : 'Kirim ke toko web'}
         </Button>

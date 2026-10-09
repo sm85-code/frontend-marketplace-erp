@@ -542,3 +542,6 @@ export const akhiriPromosi = (akunId: string, id: string, hapus = false) =>
   api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/promosi/${id}/akhiri`, null, { params: { hapus } }).then((r) => r.data)
 export const kelolaBarangPromosi = (akunId: string, id: string, data: import('./types').PromosiProdukInput) =>
   api.post<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akunId)}/promosi/${id}/barang`, data).then((r) => r.data)
+
+export interface SalinMasterHasil { katalog_id: string; nama?: string; ok: boolean; sku_dibuat?: number; error?: string; produk?: { id: string; sku: string; baru: boolean }[] }
+export const salinKatalogMaster = (ids: string[]) => api.post<{ hasil: SalinMasterHasil[] }>('/katalog-shopee/salin-master', { ids }).then(r => r.data)
