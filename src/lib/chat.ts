@@ -16,7 +16,7 @@ export type ChatContext = {
   produk_ada_lagi: boolean
   produk_offset: number
 }
-export type ChatAttachment = { type: 'item' | 'order'; card: ChatCard }
+export type ChatAttachment = { type: 'item' | 'order' | 'image'; card: ChatCard }
 /** Normalize the seconds/ms/ns timestamps returned by Chat before comparing shops. */
 export function chatTimestamp(value: number | string | undefined): number {
   const n = Number(value)

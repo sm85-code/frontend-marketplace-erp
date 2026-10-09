@@ -2,8 +2,8 @@ import { useTokoAktif } from '@/lib/tokoAktif'
 import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
-import { useState } from 'react'
-import { ArrowLeft, RefreshCw, Send, UserRound } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
 import { chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
@@ -73,6 +73,9 @@ export default function ChatPage() {
   const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
   const orderId = params.get('pesanan') ?? ''
+  const galleryInput = useRef<HTMLInputElement>(null)
+  const cameraInput = useRef<HTMLInputElement>(null)
+  const [photoError, setPhotoError] = useState('')
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null)
   const [productSearch, setProductSearch] = useState('')
   const [productOffset, setProductOffset] = useState(0)
@@ -248,6 +251,21 @@ export default function ChatPage() {
     },
     retry: false,
   })
+  const upload = useMutation({
+    retry: false,
+    mutationFn: async ({ file, akunId }: {file: File; akunId: string}) => {
+      if (!['image/jpeg','image/png'].includes(file.type)) throw new Error('Gunakan foto JPG/JPEG/PNG. Ubah format HEIC terlebih dahulu.')
+      if (file.size > 10 * 1024 * 1024) throw new Error('Foto maksimal 10 MB.')
+      const body = new FormData(); body.append('file',file)
+      return (await api.post<{id:string;url:string}>(`/akun/${akunId}/chat/foto`, body, {timeout:45000})).data
+    },
+    onSuccess: result => {setPhotoError('');setAttachment({type:'image',card:{id:result.id,nama:'Foto yang akan dikirim',foto:result.url}})},
+    onError: e => setPhotoError(e instanceof Error && !('response' in e) ? e.message : getApiError(e)),
+  })
+  function selectPhoto(file?: File) {
+    if (!file || !threadShop || upload.isPending || send.isPending || pending || attachment) return
+    setPhotoError('');upload.mutate({file,akunId:threadShop})
+  }
   const syncChat = useMutation({
     mutationFn: async ({ shopId }: { shopId: string }) => {
       setShop(shopId)
@@ -274,6 +292,7 @@ export default function ChatPage() {
     (a, b) => chatTimestamp(a.created_timestamp) - chatTimestamp(b.created_timestamp),
   )
   function open(c: Conversation, akunId: string) {
+    setPhotoError('')
     setThreadShop(akunId)
     setSelected(c)
     setOffset('')
@@ -291,7 +310,7 @@ export default function ChatPage() {
     <div className="space-y-3">
       <div className={selected ? "hidden md:block" : ""}><BarHalaman judul="Chat">
         {shop && (
-          <Button variant="secondary" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
+          <Button variant="secondary" disabled={syncChat.isPending || upload.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
             {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
           </Button>
         )}
@@ -304,6 +323,7 @@ export default function ChatPage() {
       <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 ${selected ? "hidden md:grid" : ""}`}>
         <select
           aria-label="Toko Chat"
+          disabled={upload.isPending}
           className="w-full min-w-0 rounded-md border p-2"
           value={shop}
           onChange={(e) => {
@@ -321,7 +341,7 @@ export default function ChatPage() {
             </option>
           ))}
         </select>
-        <Button variant="secondary" className="gap-2" disabled={syncChat.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
+        <Button variant="secondary" className="gap-2" disabled={syncChat.isPending || upload.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
           <RefreshCw className={`size-4 ${syncChat.isPending ? 'animate-spin' : ''}`}/><span className="hidden sm:inline">{shop ? 'Sinkronisasi toko' : 'Sinkronisasi semua'}</span><span className="sr-only sm:hidden">{shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}</span>
         </Button>
 
@@ -382,6 +402,7 @@ export default function ChatPage() {
               key={`${c.shop.id}:${c.conversation_id}`}
               aria-current={selected?.conversation_id === c.conversation_id && threadShop === c.shop.id ? 'true' : undefined}
               className="flex w-full items-start gap-3 border-b p-3 text-left last:border-b-0 hover:bg-muted/60 aria-[current=true]:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              disabled={upload.isPending}
               onClick={() => open(c, c.shop.id)}
             >
               <Avatar key={c.to_avatar} url={c.to_avatar}/>
@@ -427,6 +448,7 @@ export default function ChatPage() {
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
+                  disabled={upload.isPending}
                   onClick={() => {
                     setSelected(null)
                     setParams({})
@@ -511,6 +533,11 @@ export default function ChatPage() {
                 ))}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
+              <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3">
+              <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
+              <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
+              <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 rounded-xl px-2 py-2 text-xs" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-5"/>Galeri</Button>
+              <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 rounded-xl px-2 py-2 text-xs" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-5"/>Kamera</Button>
               <AttachmentPicker
                 data={context.data}
                 search={productSearch}
@@ -518,14 +545,17 @@ export default function ChatPage() {
                 offset={productOffset}
                 setOffset={setProductOffset}
                 choose={setAttachment}
-                disabled={send.isPending || !!pending || !!attachment}
+                disabled={send.isPending || upload.isPending || !!pending || !!attachment}
               />
+              </div>
+              {upload.isPending && <p role="status" className="mt-2 text-sm">Mengunggah foto… Pesan belum dikirim.</p>}
+              {photoError && <p role="alert" className="mt-2 text-sm text-destructive">{photoError}</p>}
               {attachment && (
                 <div className="my-3 rounded-lg border p-3">
                   <p className="mb-2 text-xs font-medium">Lampiran yang akan dikirim</p>
-                  <ChatCardView card={attachment.card} />
+                  {attachment.type === 'image' ? <img src={attachment.card.foto ?? ''} alt="Pratinjau foto yang akan dikirim" className="max-h-64 max-w-full rounded-xl object-contain" referrerPolicy="no-referrer"/> : <ChatCardView card={attachment.card}/> }
                   <Button variant="outline" className="mt-2" disabled={send.isPending || !!pending} onClick={() => setAttachment(null)}>
-                    Hapus lampiran
+                    <X className="mr-2 size-4"/>Hapus lampiran
                   </Button>
                 </div>
               )}
@@ -574,6 +604,7 @@ export default function ChatPage() {
                 disabled={
                   (!attachment && !text.trim()) ||
                   send.isPending ||
+                  upload.isPending ||
                   !!pending ||
                   (!newConversation && (!history.data || !!history.error)) ||
                   (newConversation && !orderStart.data)
