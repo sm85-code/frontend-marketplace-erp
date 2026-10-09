@@ -1,3 +1,5 @@
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { fmtDate, fmtDateTime, fmtMoney, fmtTime } from '@/api/client'
 import type { Pesanan } from '@/api/types'
@@ -28,7 +30,17 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       urut: { kunci: 'nomor' },
       sel: (p) => (
         <>
-          <div className="font-mono font-medium">{p.id_eksternal}</div>
+          <div className="flex items-center gap-1">
+            <span className="min-w-0 break-all font-mono font-medium">{p.id_eksternal}</span>
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${p.id_eksternal}`} title="Salin kode pesanan" disabled={!p.id_eksternal} onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(p.id_eksternal || '')
+                toast.success('Kode pesanan disalin')
+              } catch {
+                toast.error('Gagal menyalin kode pesanan. Coba lagi.')
+              }
+            }}><Copy className="h-4 w-4" /></Button>
+          </div>
           <div className="teks-kecil truncate text-muted-foreground">
             {PLATFORM_LABELS[p.platform]}
             {p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}
@@ -100,7 +112,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => <div>{p.actual_shipping_fee != null ? `${fmtMoney(p.actual_shipping_fee, p.currency)} (aktual${p.actual_shipping_fee_confirmed === false ? ' belum final' : ''})` : p.estimated_shipping_fee != null ? `${fmtMoney(p.estimated_shipping_fee, p.currency)} (estimasi)` : '—'}</div> },
     { kunci: 'penerima', judul: 'Nama Penerima', bawaan: false, sel: (p) => p.penerima || "" },
     { kunci: 'kota', judul: 'Kota Tujuan', bawaan: false, sel: (p) => p.kota || "" },
-    { kunci: 'catatan', judul: 'Catatan untuk Penjual', bawaan: false, sel: (p) => p.message_to_seller || "—" },
+    { kunci: 'catatan', judul: 'Catatan untuk Penjual', bawaan: false, sel: (p) => <p className="whitespace-pre-wrap break-words">{p.message_to_seller || "—"}</p> },
     { kunci: 'batal', judul: 'Alasan Batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },
     {
       kunci: 'total',

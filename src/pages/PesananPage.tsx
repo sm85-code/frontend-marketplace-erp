@@ -263,7 +263,12 @@ export default function PesananPage() {
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
           Refresh
         </Button>
-        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button></AksiLainnya>
+        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button>      <div className="md:hidden" role="group" aria-label="Tampilan pesanan di HP">
+        <div className="inline-flex rounded-lg border bg-card p-1">
+          {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
+        </div>
+      </div>
+</AksiLainnya>
       </BarHalaman>
 
       <BarFilter
@@ -306,11 +311,6 @@ export default function PesananPage() {
         )}
       </BarFilter>
 
-      <div className="flex justify-end md:hidden" role="group" aria-label="Tampilan pesanan di HP">
-        <div className="inline-flex rounded-lg border bg-card p-1">
-          {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
-        </div>
-      </div>
 
       {isLoading ? (
         <Spinner column label="Memuat pesanan…" />
@@ -334,7 +334,7 @@ export default function PesananPage() {
                 <div className="min-w-0 flex-1 break-words">{semuaKolom.find((k) => k.kunci === 'pesanan')?.sel(p)}</div>
               </div>
               <dl className="grid grid-cols-1 gap-4 border-t pt-3">
-                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className={`min-w-0 break-words `}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
+                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && (k.kunci === 'catatan' || kolom.tampil.includes(k.kunci))).map((k) => <div key={k.kunci} className={`min-w-0 break-words `}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
               </dl>
               <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} /></div>
             </li>)}
