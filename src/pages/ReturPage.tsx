@@ -57,7 +57,7 @@ export default function ReturPage() {
   return <div className="space-y-4 pb-24">
     <BarHalaman judul="Retur & Refund" deskripsi="Permintaan retur/refund dari Shopee; status terpisah dari pesanan.">
       <Button asChild variant="outline"><Link to="/pesanan">Kembali ke Pesanan</Link></Button>
-      <Button variant="outline" disabled={!filter || list.isFetching} onClick={() => { void list.refetch() }}>Segarkan</Button>
+      <Button variant="outline" disabled={!filter || list.isFetching} onClick={() => { void list.refetch() }}>Refresh</Button>
     </BarHalaman>
     <Bantuan judul="Cara menangani retur">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>
@@ -137,9 +137,9 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
       </dl>
       <TabelData label="Barang dalam retur" items={r.items} kolom={items} idDari={(i) => `${i.item_id}:${i.model_id}:${r.items.indexOf(i)}`} namaDari={(i) => i.nama} />
       <p className="text-muted-foreground">Nominal refund item hanya ditampilkan jika diberikan Shopee; harga item bukan pengganti refund. Pastikan barang benar-benar diterima dan diperiksa sebelum mencatat penambahan stok ERP.</p>
-      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || disputeBusy || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || disputeBusy || detail.isFetching} onClick={() => { void detail.refetch() }}>Segarkan Detail</Button></div>
+      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || disputeBusy || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || disputeBusy || detail.isFetching} onClick={() => { void detail.refetch() }}>Refresh Detail</Button></div>
       <SengketaForm shop={selected.akunId} sn={selected.nomor} disabled={approve.isPending || confirmed} onBusy={setDisputeBusy} onComplete={() => setConfirmed(true)} />
-      {approve.error && <p role="alert" className="break-words text-destructive">{getApiError(approve.error)} Segarkan detail sebelum mencoba ulang.</p>}
+      {approve.error && <p role="alert" className="break-words text-destructive">{getApiError(approve.error)} Refresh detail sebelum mencoba ulang.</p>}
       {approve.data && <p role="status" className="break-words">Persetujuan dikonfirmasi Shopee. {approve.data.warnings.join(' ')} {approve.data.request_id && `Request ID: ${approve.data.request_id}`}</p>}
     </div>}
   </DialogContent></Dialog>

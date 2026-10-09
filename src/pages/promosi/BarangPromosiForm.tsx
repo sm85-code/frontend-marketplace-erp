@@ -64,7 +64,7 @@ export default function BarangPromosiForm({ akun, id, blocked, onPending }: { ak
     </form>
     {chosen.error && <QueryError error={chosen.error} retry={chosen.refetch} />}
     {products.data && <div className="flex flex-wrap items-center justify-between gap-2"><Button variant="ghost" size="sm" disabled={page <= 1 || products.isFetching || pending} onClick={() => setPage(page - 1)}>Produk sebelumnya</Button><span className="text-xs">Halaman katalog {page}</span><Button variant="ghost" size="sm" disabled={page * 40 >= products.data.total || products.isFetching || pending} onClick={() => setPage(page + 1)}>Produk berikutnya</Button></div>}
-    {mutation.error && <p role="alert" className="break-words text-destructive">{getApiError(mutation.error)} Segarkan detail sebelum mencoba ulang.</p>}
+    {mutation.error && <p role="alert" className="break-words text-destructive">{getApiError(mutation.error)} Refresh detail sebelum mencoba ulang.</p>}
     {mutation.data && <div role={mutation.data.ok ? 'status' : 'alert'} className="break-words">
       <p>{mutation.data.ok ? 'Perubahan dikonfirmasi Shopee.' : 'Shopee menolak sebagian atau seluruh perubahan.'} {mutation.data.request_id && `Request ID: ${mutation.data.request_id}`}</p>
       {mutation.data.gagal.map((f, i) => <p key={i}>{f.fail_error} {f.fail_message} · Item {f.item_id} · Model {f.model_id}</p>)}

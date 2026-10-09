@@ -18,7 +18,7 @@ export default function PerformaTokoPage() {
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => api.listAkun() })
   const result = useQuery({ queryKey: ['performa-toko', akun], queryFn: () => api.getShopPerformance(akun), enabled: !!akun, retry: false })
   return <div className="space-y-4 pb-24">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-semibold">Performa Toko</h1><Button variant="outline" disabled={!akun || result.isFetching} onClick={() => void result.refetch()}>Segarkan</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-semibold">Performa Toko</h1><Button variant="outline" disabled={!akun || result.isFetching} onClick={() => void result.refetch()}>Refresh</Button></div>
     <div className="space-y-2"><label htmlFor="performa-toko">Toko Shopee</label><select id="performa-toko" className="w-full rounded-lg border bg-background p-3 sm:max-w-md" value={akun} onChange={e => setAkun(e.target.value)}><option value="">Pilih toko</option>{shops.data?.filter(s => s.platform === 'shopee').map(s => <option key={s.id} value={s.id}>{s.nama_toko}</option>)}</select></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     {result.error && <QueryError error={result.error} retry={result.refetch} />}

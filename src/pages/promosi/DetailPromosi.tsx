@@ -51,11 +51,11 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
         <UbahPromosiForm akun={akun} promosi={p} blocked={end.isPending || barangPending || finished} onPending={setEditPending} />
         <Button variant="destructive" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(false)}>Akhiri Promosi</Button>
         <Button variant="outline" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(true)}>Hapus Promosi</Button>
-        <Button variant="outline" disabled={detail.isFetching || end.isPending || barangPending || editPending} onClick={() => { void detail.refetch() }}>Segarkan Detail</Button>
+        <Button variant="outline" disabled={detail.isFetching || end.isPending || barangPending || editPending} onClick={() => { void detail.refetch() }}>Refresh Detail</Button>
       </div>
       <p className="text-muted-foreground">Hapus dipakai untuk promosi yang belum dimulai. Shopee memeriksa kelayakan tindakan; bila ditolak, pesan dan request ID ditampilkan.</p>
     </div>}
-    {end.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(end.error)} Segarkan sebelum mencoba ulang.</p>}
+    {end.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(end.error)} Refresh sebelum mencoba ulang.</p>}
     {end.data && <p role="status" className="text-sm">Perubahan dikonfirmasi Shopee. {end.data.warnings.join(' ')}</p>}
   </div>
 }

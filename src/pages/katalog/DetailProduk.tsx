@@ -42,7 +42,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
             {manage && <SalinMasterProduk ids={[detail.id]} />}
             {user?.role === 'admin' && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
-            {manage && <Bantuan judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
+            {manage && <Bantuan rincian judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
               <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>

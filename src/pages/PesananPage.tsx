@@ -252,11 +252,10 @@ export default function PesananPage() {
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
         <Sinkronisasi jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
-        <Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button>
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
-          Segarkan
+          Refresh
         </Button>
-        <AksiLainnya><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button></AksiLainnya>
+        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button></AksiLainnya>
       </BarHalaman>
 
       <BarFilter
