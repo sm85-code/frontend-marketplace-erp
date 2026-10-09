@@ -358,8 +358,8 @@ export default function PublicationPage() {
         <section hidden={step!==0} className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">1. Toko dan sumber</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="publish-shop">Toko tujuan</Label>
+            <div className="grid gap-2">
+              <Label className="leading-5" htmlFor="publish-shop">Toko tujuan</Label>
               <select
                 id="publish-shop"
                 className={fieldClass}
@@ -380,8 +380,8 @@ export default function PublicationPage() {
                   ))}
               </select>
             </div>
-            <div>
-              <Label htmlFor="source-shop">Toko sumber (opsional)</Label>
+            <div className="grid gap-2">
+              <Label className="leading-5" htmlFor="source-shop">Toko sumber (opsional)</Label>
               <select
                 id="source-shop"
                 className={fieldClass}
@@ -404,8 +404,8 @@ export default function PublicationPage() {
           </div>
           {source && (
             <div className="flex flex-wrap items-end gap-2">
-              <div className="flex-1">
-                <Label htmlFor="source-product">Produk sumber</Label>
+              <div className="grid flex-1 gap-2">
+                <Label className="leading-5" htmlFor="source-product">Produk sumber</Label>
                 <select id="source-product" className={fieldClass} value={item} onChange={(e) => setItem(e.target.value)}>
                   <option value="">Pilih produk</option>
                   {products.data?.items.map((p) => (
@@ -436,20 +436,20 @@ export default function PublicationPage() {
         </section>
         <section hidden={step!==1} className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">2. Informasi produk</h2>
-          <div>
-            <Label htmlFor="publish-name">Nama produk (tanpa pilihan varian)</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-name">Nama produk (tanpa pilihan varian)</Label>
             <Input id="publish-name" value={form.nama} onChange={(e) => patch({ nama: e.target.value })} />
           </div>
-          <div>
-            <Label htmlFor="publish-sku">SKU induk</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-sku">SKU induk</Label>
             <Input id="publish-sku" value={form.sku} onChange={(e) => patch({ sku: e.target.value })} />
           </div>
-          <div>
-            <Label htmlFor="publish-description">Deskripsi</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-description">Deskripsi</Label>
             <Textarea id="publish-description" rows={5} value={form.deskripsi} onChange={(e) => patch({ deskripsi: e.target.value })} />
           </div>
-          <div>
-            <Label htmlFor="publish-category">Kategori toko tujuan</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-category">Kategori toko tujuan</Label>
             <select
               id="publish-category"
               className={fieldClass}
@@ -478,8 +478,8 @@ export default function PublicationPage() {
               change={(values) => patch({ attribute_list: reachableAttributes(meta.data!.attributes, values) })}
             />
           )}
-          <div>
-            <Label htmlFor="publish-brand">Merek</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-brand">Merek</Label>
             <select
               id="publish-brand"
               className={fieldClass}
@@ -514,8 +514,8 @@ export default function PublicationPage() {
             </div>
             {brands.error && <QueryError error={brands.error} retry={brands.refetch} />}
           </div>
-          <div>
-            <Label htmlFor="publish-condition">Kondisi</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-condition">Kondisi</Label>
             <select
               id="publish-condition"
               className={fieldClass}
@@ -526,8 +526,8 @@ export default function PublicationPage() {
               <option value="USED">Bekas</option>
             </select>
           </div>
-          <div>
-            <Label htmlFor="publish-photo">Foto JPG/PNG (maks. 10 MB/foto, 9 foto)</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-photo">Foto JPG/PNG (maks. 10 MB/foto, 9 foto)</Label>
             <Input
               id="publish-photo"
               type="file"
@@ -566,8 +566,8 @@ export default function PublicationPage() {
           <h2 className="font-semibold">4. Harga, stok dan pengiriman</h2>
           <div className="grid gap-3 sm:grid-cols-3">
             {(['price', 'stock', 'weight'] as const).map((k, i) => (
-              <div key={k}>
-                <Label htmlFor={`publish-${k}`}>{['Harga asli (mata uang toko)', 'Stok toko tujuan', 'Berat paket (kg)'][i]}</Label>
+              <div key={k} className="grid gap-2">
+                <Label className="leading-5" htmlFor={`publish-${k}`}>{['Harga asli (mata uang toko)', 'Stok toko tujuan', 'Berat paket (kg)'][i]}</Label>
                 <Input
                   id={`publish-${k}`}
                   type="number"
@@ -579,8 +579,8 @@ export default function PublicationPage() {
               </div>
             ))}
             {(['package_length', 'package_width', 'package_height'] as const).map((k, i) => (
-              <div key={k}>
-                <Label htmlFor={`publish-${k}`}>{['Panjang', 'Lebar', 'Tinggi'][i]} paket (cm)</Label>
+              <div key={k} className="grid gap-2">
+                <Label className="leading-5" htmlFor={`publish-${k}`}>{['Panjang', 'Lebar', 'Tinggi'][i]} paket (cm)</Label>
                 <Input
                   id={`publish-${k}`}
                   type="number"
@@ -599,8 +599,8 @@ export default function PublicationPage() {
             />
             Produk preorder
           </label>
-          <div>
-            <Label htmlFor="publish-dts">Hari sampai dikirim (DTS)</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-dts">Hari sampai dikirim (DTS)</Label>
             <Input
               id="publish-dts"
               type="number"
@@ -614,12 +614,12 @@ export default function PublicationPage() {
                 : 'Batas DTS dimuat sesuai kategori.'}
             </p>
           </div>
-          <div>
-            <Label htmlFor="publish-gtin">GTIN induk (00 hanya jika kategori memperbolehkan)</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-gtin">GTIN induk (00 hanya jika kategori memperbolehkan)</Label>
             <Input id="publish-gtin" value={form.gtin_code ?? ''} onChange={(e) => patch({ gtin_code: e.target.value || undefined })} />
           </div>
-          <div>
-            <Label htmlFor="publish-location">ID gudang Shopee (opsional, hanya jika toko memakai multi-gudang)</Label>
+          <div className="grid gap-2">
+            <Label className="leading-5" htmlFor="publish-location">ID gudang Shopee (opsional, hanya jika toko memakai multi-gudang)</Label>
             <Input
               id="publish-location"
               value={form.location_id ?? ''}
@@ -627,7 +627,7 @@ export default function PublicationPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="publish-chart">Foto panduan ukuran (jika diwajibkan kategori)</Label>
+            <Label className="leading-5" htmlFor="publish-chart">Foto panduan ukuran (jika diwajibkan kategori)</Label>
             <Input
               id="publish-chart"
               type="file"
@@ -642,7 +642,7 @@ export default function PublicationPage() {
             <p className="text-xs text-muted-foreground">
               {form.size_chart ? 'Foto panduan ukuran terpasang.' : 'Belum ada foto panduan ukuran.'}
             </p>
-            <Label htmlFor="publish-chart-template">Atau ID template ukuran Shopee</Label>
+            <Label className="leading-5" htmlFor="publish-chart-template">Atau ID template ukuran Shopee</Label>
             <Input
               id="publish-chart-template"
               type="number"
@@ -735,16 +735,16 @@ export default function PublicationPage() {
           </p>
           {form.tiers.map((t, i) => (
             <div className="grid gap-2 sm:grid-cols-2" key={i}>
-              <div>
-                <Label htmlFor={`tier-${i}`}>Jenis variasi {i + 1}</Label>
+              <div className="grid gap-2">
+                <Label className="leading-5" htmlFor={`tier-${i}`}>Jenis variasi {i + 1}</Label>
                 <Input
                   id={`tier-${i}`}
                   value={t.name}
                   onChange={(e) => patch({ tiers: form.tiers.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)) })}
                 />
               </div>
-              <div>
-                <Label htmlFor={`options-${i}`}>Pilihan (pisahkan dengan koma)</Label>
+              <div className="grid gap-2">
+                <Label className="leading-5" htmlFor={`options-${i}`}>Pilihan (pisahkan dengan koma)</Label>
                 <Input
                   id={`options-${i}`}
                   defaultValue={t.options.map((o) => o.option).join(', ')}
