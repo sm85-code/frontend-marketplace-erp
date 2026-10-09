@@ -8,7 +8,7 @@ export default function WallpaperLayer() {
   const { wallpaper } = useTheme()
   if (wallpaper === 'none') return null
   return (
-    <div className="wallpaper-layer" aria-hidden="true">
+    <div className="wallpaper-layer opacity-25" aria-hidden="true">
       {wallpaper === 'dots' && <DotPattern />}
       {wallpaper === 'glow' && <Ripple />}
       {wallpaper === 'aurora' && <AuroraBackground />}

@@ -1,3 +1,5 @@
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -6,7 +8,7 @@ import { getApiError } from '@/api/client'
 import type { AkunMarketplace } from '@/api/types'
 import { Medan } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/lib/auth'
@@ -61,7 +63,7 @@ export default function FormPesananManual({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <FormDialog open={open} values={{form,items}} busy={simpan.isPending} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Pesanan Manual</DialogTitle>
@@ -122,7 +124,7 @@ export default function FormPesananManual({
                 {!it.produk_id && <p className="text-xs text-muted-foreground">Item ini tidak mengurangi stok ERP.</p>}
                 <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
                 <Input aria-label={`Nama produk item ${i + 1}`} placeholder="Nama produk" value={it.nama_produk} onChange={(e) => ubahItem(i, { nama_produk: e.target.value })} />
-                <Input aria-label={`Harga item ${i + 1}`} type="number" placeholder="Harga" value={it.harga_satuan} onChange={(e) => ubahItem(i, { harga_satuan: e.target.value })} />
+                <MoneyInput aria-label={`Harga item ${i + 1}`} type="number" placeholder="Harga" value={it.harga_satuan} onChange={(e) => ubahItem(i, { harga_satuan: e.target.value })} />
                 <Input aria-label={`Jumlah item ${i + 1}`} type="number" placeholder="Qty" value={it.qty} onChange={(e) => ubahItem(i, { qty: e.target.value })} />
                 </div>
               </div>
@@ -141,6 +143,6 @@ export default function FormPesananManual({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </FormDialog>
   )
 }

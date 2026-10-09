@@ -6,7 +6,7 @@ import type { PromosiBarang } from '@/api/types'
 import { TabelData, type KolomTabel } from '@/components/daftar'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
 import { Button } from '@/components/ui/button'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { hargaPromosi, labelPromosi } from '@/lib/promosi'
@@ -37,8 +37,8 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
     if (await confirm({ title: hapus ? 'Hapus promosi dari Shopee?' : 'Akhiri promosi di Shopee?', description: `${detail.data?.nama}. Diskon produk terkait akan dihentikan. Stok ERP tidak berubah.`, destructive: true })) end.mutate(hapus)
   }
   const p = detail.data
-  return <Dialog open onOpenChange={(v) => !v && !end.isPending && !barangPending && close()}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
-    <DialogHeader><DialogTitle>{p?.nama ?? `Promosi #${id}`}</DialogTitle></DialogHeader>
+  return <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
+    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{p?.nama ?? `Promosi #${id}`}</h1><Button variant="outline" disabled={end.isPending||barangPending} onClick={close}>Kembali ke Promosi</Button></div>
     {detail.error ? <QueryError error={detail.error} retry={detail.refetch} /> : !p ? <Spinner column label="Memuat detail…" /> : <div className="space-y-4 text-sm">
       <p>{labelPromosi(p.status)} · {waktuRetur(p.mulai_at)} — {waktuRetur(p.selesai_at)}</p>
       <p className="text-muted-foreground">Harga dalam mata uang toko Shopee. Pilih produk/varian tepat sebelum mengubah diskon. Gunakan pencarian jika produk belum terlihat.</p>
@@ -54,5 +54,5 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
     </div>}
     {end.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(end.error)} Segarkan sebelum mencoba ulang.</p>}
     {end.data && <p role="status" className="text-sm">Perubahan dikonfirmasi Shopee. {end.data.warnings.join(' ')}</p>}
-  </DialogContent></Dialog>
+  </div>
 }

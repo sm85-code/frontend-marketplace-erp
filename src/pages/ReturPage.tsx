@@ -27,7 +27,7 @@ const columns: KolomTabel<ReturMarketplace>[] = [
   { kunci: 'refund', judul: 'Nominal Refund', rata: 'kanan', sel: (r) => nominalRetur(r.nominal_refund, r.mata_uang) },
   { kunci: 'alasan', judul: 'Alasan Pembeli', kelas: 'min-w-[180px] max-w-[280px] break-words', sel: (r) => r.alasan_pembeli || r.alasan || '—' },
   { kunci: 'dibuat', judul: 'Diajukan', sel: (r) => waktuRetur(r.dibuat_at) },
-  { kunci: 'tenggat', judul: 'Tenggat Penjual', sel: (r) => waktuRetur(r.tenggat_penjual_at ?? r.tenggat_at) },
+  { kunci: 'tenggat', judul: 'Tenggat Penjual', sel: (r) => { const t=r.tenggat_penjual_at??r.tenggat_at; const near=t&&t*1000-Date.now()<86400000&&!['CLOSED','CANCELLED','ACCEPTED'].includes(r.status); return <span className={near?'font-semibold text-destructive':''}>{waktuRetur(t)}{near&&<small className="block">{t*1000<Date.now()?'Tenggat terlewat':'Segera tangani'}</small>}</span> } },
 ]
 
 export default function ReturPage() {

@@ -78,7 +78,7 @@ export function kolomKatalog(
         ),
     },
     {
-      kunci: 'toko',
+      kunci: 'toko', bawaan: false,
       judul: 'Toko',
       kelas: 'min-w-[120px] font-medium',
       urut: { kunci: 'toko' },
@@ -109,10 +109,11 @@ export function kolomKatalog(
       ),
       selAnak: (v: KatalogVarian) => <span className="teks-data pl-3 font-normal text-muted-foreground">↳ SKU {v.sku || v.model_id || '—'}</span>,
     },
-    { kunci: 'sku', judul: 'SKU', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
+    { kunci: 'sku', bawaan: false, judul: 'SKU', kelas: 'whitespace-nowrap font-mono', urut: { kunci: 'sku' }, sel: (p) => p.sku || <Kosong />, selAnak: (v: KatalogVarian) => v.sku || <Kosong /> },
     {
       kunci: 'harga',
       judul: 'Harga',
+      rata: 'kanan',
       kelas: 'whitespace-nowrap font-semibold',
       urut: { kunci: 'harga', label: ['Termurah', 'Termahal'] },
       sel: (p) => rentangHarga(p.harga_min, p.harga_max),
@@ -129,13 +130,14 @@ export function kolomKatalog(
     {
       kunci: 'stok',
       judul: 'Stok',
+      rata: 'kanan',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'stok', arahAwal: 'desc', label: ['Tersedikit', 'Terbanyak'] },
       sel: (p) => p.stok_shopee ?? <Kosong />,
       selAnak: (v: KatalogVarian) => v.stok ?? <Kosong />,
     },
     {
-      kunci: 'varian',
+      kunci: 'varian', bawaan: false,
       judul: 'Jenis Varian',
       kelas: 'whitespace-nowrap',
       sel: (p) => p.sumbu || '',
@@ -149,7 +151,7 @@ export function kolomKatalog(
       selAnak: (v: KatalogVarian) => (v.opsi?.length ? <Tumpuk baris={v.opsi.map((o) => o.opsi)} /> : v.nama),
     },
     {
-      kunci: 'berat',
+      kunci: 'berat', bawaan: false,
       judul: 'Berat',
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'berat', label: ['Teringan', 'Terberat'] },
@@ -160,9 +162,9 @@ export function kolomKatalog(
         return b.nilai ? (b.ikutProduk ? <Ikut>{teksBerat(b.nilai)}</Ikut> : teksBerat(b.nilai)) : <Kosong />
       },
     },
-    { kunci: 'package_length', judul: 'Panjang Paket', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'panjang') },
-    { kunci: 'package_width', judul: 'Lebar Paket', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'lebar') },
-    { kunci: 'package_height', judul: 'Tinggi Paket', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'tinggi') },
+    { kunci: 'package_length', bawaan: false, judul: 'Panjang Paket', kelas: 'whitespace-nowrap', sel: (p) => p.panjang_cm ? `${p.panjang_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'panjang') },
+    { kunci: 'package_width', bawaan: false, judul: 'Lebar Paket', kelas: 'whitespace-nowrap', sel: (p) => p.lebar_cm ? `${p.lebar_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'lebar') },
+    { kunci: 'package_height', bawaan: false, judul: 'Tinggi Paket', kelas: 'whitespace-nowrap', sel: (p) => p.tinggi_cm ? `${p.tinggi_cm} cm` : "", selAnak: (v: KatalogVarian, p: KatalogItem) => ukuran(p, v, 'tinggi') },
     {
       kunci: 'deskripsi',
       judul: 'Deskripsi',

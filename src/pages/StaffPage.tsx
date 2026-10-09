@@ -1,3 +1,5 @@
+import Bantuan from '@/components/Bantuan'
+import FormDialog from '@/components/FormDialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -12,7 +14,7 @@ import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -51,6 +53,7 @@ function kolomPenugasan({
 }
 
 export default function StaffPage() {
+  const [shopSearch,setShopSearch]=useState('')
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [userDialog, setUserDialog] = useState(false)
@@ -213,7 +216,7 @@ export default function StaffPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={userDialog} onOpenChange={setUserDialog}>
+      <FormDialog open={userDialog} values={userForm} busy={createUserMut.isPending} onOpenChange={setUserDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah Akun</DialogTitle>
@@ -268,9 +271,9 @@ export default function StaffPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog open={editUser !== null} onOpenChange={(open) => !open && setEditUser(null)}>
+<FormDialog open={editUser !== null} values={editForm} busy={updateUserMut.isPending} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ubah Akun</DialogTitle>
@@ -323,9 +326,9 @@ export default function StaffPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
 
-      <Dialog open={assignDialog} onOpenChange={setAssignDialog}>
+      <FormDialog open={assignDialog} values={assignForm} busy={assignMut.isPending} onOpenChange={setAssignDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tugaskan Staff ke Toko</DialogTitle>
@@ -348,9 +351,10 @@ export default function StaffPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Pilih toko (bisa lebih dari satu)</Label>
-              <p className="text-xs text-muted-foreground">Satu toko bisa ditugaskan ke beberapa staf. Penugasan yang sudah ada tetap berlaku; centang toko tambahan, lalu simpan sekali.</p>
+<Bantuan judul="Cara penugasan toko">Satu toko bisa ditugaskan ke beberapa staf. Penugasan lama tetap berlaku; pilih toko tambahan lalu simpan.</Bantuan>
+              <Input aria-label="Cari toko penugasan" placeholder="Cari toko…" value={shopSearch} onChange={e=>setShopSearch(e.target.value)}/>
               <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border p-3">
-                {(akunList ?? []).map((a) => {
+                {(akunList ?? []).filter(a=>a.nama_toko.toLowerCase().includes(shopSearch.toLowerCase())).map((a) => {
                   const assigned = (staffAkun ?? []).some(r => r.user_id === assignForm.user_id && r.akun_id === a.id)
                   return <label key={a.id} className="flex items-start gap-2 rounded-md p-2 hover:bg-muted">
                     <Checkbox className="mt-0.5 shrink-0" aria-label={`Tugaskan ke ${a.nama_toko}`} checked={assigned || assignForm.akun_ids.includes(a.id)} disabled={!assignForm.user_id || assigned || assignMut.isPending}
@@ -371,7 +375,7 @@ export default function StaffPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

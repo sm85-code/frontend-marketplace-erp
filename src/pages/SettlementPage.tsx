@@ -1,3 +1,7 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import SaldoToko from './settlement/SaldoToko'
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -11,7 +15,7 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -112,8 +116,12 @@ export default function SettlementPage() {
         </Button>
       </BarHalaman>
 
-      <DanaShopee />
-      <TransaksiDana />
+      <Tabs defaultValue="dana">
+        <TabsList className="section-tabs"><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
+        <TabsContent value="dana"><DanaShopee /></TabsContent>
+        <TabsContent value="saldo"><SaldoToko /></TabsContent>
+        <TabsContent value="mutasi"><TransaksiDana /></TabsContent>
+        <TabsContent value="manual">
 
       <Card>
         <CardHeader>
@@ -145,8 +153,10 @@ export default function SettlementPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Catat Settlement</DialogTitle>
@@ -180,27 +190,27 @@ export default function SettlementPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-gross-sales-4">Gross Sales</Label>
-                <Input id="settlement-gross-sales-4" type="number" value={form.gross_sales} onChange={(e) => setForm((f) => ({ ...f, gross_sales: e.target.value }))} />
+                <MoneyInput id="settlement-gross-sales-4" type="number" value={form.gross_sales} onChange={(e) => setForm((f) => ({ ...f, gross_sales: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-fee-platform-5">Fee Platform</Label>
-                <Input id="settlement-fee-platform-5" type="number" value={form.fee_platform} onChange={(e) => setForm((f) => ({ ...f, fee_platform: e.target.value }))} />
+                <MoneyInput id="settlement-fee-platform-5" type="number" value={form.fee_platform} onChange={(e) => setForm((f) => ({ ...f, fee_platform: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-fee-payment-6">Fee Payment</Label>
-                <Input id="settlement-fee-payment-6" type="number" value={form.fee_payment} onChange={(e) => setForm((f) => ({ ...f, fee_payment: e.target.value }))} />
+                <MoneyInput id="settlement-fee-payment-6" type="number" value={form.fee_payment} onChange={(e) => setForm((f) => ({ ...f, fee_payment: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-subsidi-ongkir-7">Subsidi Ongkir</Label>
-                <Input id="settlement-subsidi-ongkir-7" type="number" value={form.ongkir_subsidi} onChange={(e) => setForm((f) => ({ ...f, ongkir_subsidi: e.target.value }))} />
+                <MoneyInput id="settlement-subsidi-ongkir-7" type="number" value={form.ongkir_subsidi} onChange={(e) => setForm((f) => ({ ...f, ongkir_subsidi: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-penalti-8">Penalti</Label>
-                <Input id="settlement-penalti-8" type="number" value={form.penalti} onChange={(e) => setForm((f) => ({ ...f, penalti: e.target.value }))} />
+                <MoneyInput id="settlement-penalti-8" type="number" value={form.penalti} onChange={(e) => setForm((f) => ({ ...f, penalti: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="settlement-net-dana-masuk-9">Net (dana masuk)</Label>
-                <Input id="settlement-net-dana-masuk-9" type="number" value={form.net} onChange={(e) => setForm((f) => ({ ...f, net: e.target.value }))} />
+                <MoneyInput id="settlement-net-dana-masuk-9" type="number" value={form.net} onChange={(e) => setForm((f) => ({ ...f, net: e.target.value }))} />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -217,7 +227,7 @@ export default function SettlementPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import UkuranHalaman from '@/components/UkuranHalaman'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -38,7 +39,7 @@ import { prosesBatchPengiriman } from '@/lib/pengiriman'
 import type { PengaturanPengiriman } from '@/api/types'
 import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
 
-const PER_HALAMAN = 50
+const DEFAULT_PER_HALAMAN = 25
 const AWAL = { tahap: 'perlu_diproses', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
 const PILIHAN_RESI = [
   { value: 'belum', label: 'Belum dicetak' },
@@ -47,6 +48,7 @@ const PILIHAN_RESI = [
 
 export default function PesananPage() {
   const qc = useQueryClient()
+  const [perHalaman,setPerHalaman]=useState(DEFAULT_PER_HALAMAN)
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
   const [formBuka, setFormBuka] = useState(false)
@@ -62,7 +64,7 @@ export default function PesananPage() {
     queryFn: () => endpoints.ringkasanPesanan(kriteria),
     placeholderData: (prev) => prev,
   })
-  const paramDaftar = { ...kriteria, resi: f.nilai.resi || undefined, urut: f.nilai.urut, halaman: f.halaman, per_halaman: PER_HALAMAN }
+  const paramDaftar = { ...kriteria, resi: f.nilai.resi || undefined, urut: f.nilai.urut, halaman: f.halaman, per_halaman: perHalaman }
   const { data: daftar, isLoading, isFetching, error: queryError, refetch: retryQuery } = useQuery({
     queryKey: qk.pesananDaftar(paramDaftar),
     queryFn: () => endpoints.daftarPesanan(paramDaftar),
@@ -188,7 +190,7 @@ export default function PesananPage() {
   }
 
   const semuaKolom = kolomPesanan({ namaToko: (id) => (id ? (akunMap.get(id)?.nama_toko ?? '—') : '—') })
-  const kolom = useKolomTersimpan('pesanan.kolom', semuaKolom)
+  const kolom = useKolomTersimpan('pesanan.kolom.v2', semuaKolom)
 
   // Selectable: orders that still need processing, or are processed and waiting for the courier (label).
   const items = daftar?.items ?? []
@@ -282,6 +284,7 @@ export default function PesananPage() {
         />
         <FilterPilih id="pesanan-resi" label="Resi" nilai={f.nilai.resi} onUbah={(resi) => f.ubah({ resi })} semua="Semua" opsi={PILIHAN_RESI} />
         <FilterPilih id="pesanan-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
+        <UkuranHalaman value={perHalaman} onChange={n=>{setPerHalaman(n);f.setHalaman(1)}} />
         <Medan>
           <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
         </Medan>
@@ -323,21 +326,21 @@ export default function PesananPage() {
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
           aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} />}
-          minWidth={900}
+          minWidth={820}
         />
       )}
 
       {daftar && daftar.total > 0 && (
         <div className="space-y-2">
           <p className="teks-data text-center text-muted-foreground" aria-live="polite">
-            {(f.halaman - 1) * PER_HALAMAN + 1}–{Math.min(f.halaman * PER_HALAMAN, daftar.total)} dari {daftar.total} pesanan
+            {(f.halaman - 1) * perHalaman + 1}–{Math.min(f.halaman * perHalaman, daftar.total)} dari {daftar.total} pesanan
             {isFetching && !isLoading ? ' · memuat…' : ''}
           </p>
           <Paginasi halaman={f.halaman} totalHalaman={totalHalaman} onUbah={f.setHalaman} nama="Halaman pesanan" />
         </div>
       )}
 
-      <BarPilihan jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
+      <BarPilihan terlihat={items.filter(p=>pilih.ada(p.id)).length} ringkasan={dipilih.map(p=><div key={p.id}>{p.id_eksternal} · {p.nama_pembeli}</div>)} jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
         {idProses.length > 0 && (
           <>
             <Button onClick={prosesLaluCetak} disabled={sedangBekerja}>

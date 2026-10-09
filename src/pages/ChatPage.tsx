@@ -1,5 +1,6 @@
+import { useTokoAktif } from '@/lib/tokoAktif'
+import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useAuth } from '@/lib/auth'
 import { qk } from '@/api/keys'
 import { useState } from 'react'
 import { chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
@@ -56,8 +57,7 @@ export default function ChatPage() {
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null)
   const [productSearch, setProductSearch] = useState('')
   const [productOffset, setProductOffset] = useState(0)
-  const { user } = useAuth()
-  const [shopOverride, setShop] = useState('')
+  const [shopOverride, setShop] = useTokoAktif()
   const [threadShopOverride, setThreadShop] = useState('')
   const [unread, setUnread] = useState(false)
   const [unreplied, setUnreplied] = useState(false)
@@ -109,6 +109,29 @@ export default function ChatPage() {
     enabled: available.length > 0,
     refetchInterval: cursor ? false : 60_000,
     retry: false,
+  })
+  const [historySearch,setHistorySearch]=useState<{scope:string;rows:(Conversation&{shop:typeof available[number]})[];more:boolean;errors:string[]}|null>(null)
+  const searchScope=`${shop}:${unread}`
+  const searchHistory=useMutation({
+    retry:false,
+    mutationFn:async()=>{
+      const collected:(Conversation&{shop:typeof available[number]})[]=[];const errors:string[]=[];let more=false
+      for(const target of targets) {
+        let next=''
+        try {
+          for(let page=0;page<10;page++) {
+            const result=(await api.get<Inbox>(`/akun/${target.id}/chat`,{params:{unread,cursor:next||undefined}})).data
+            collected.push(...result.conversations.map(c=>({...c,shop:target})))
+            const cursorNext=result.page_result.next_cursor?.next_message_time_nano??''
+            if(!result.page_result.more) break
+            if(!cursorNext||cursorNext===next) {more=true;break}
+            next=cursorNext;if(page===9)more=true
+          }
+        } catch(e) {errors.push(`${target.nama_toko}: ${getApiError(e)}`)}
+      }
+      return {scope:searchScope,rows:collected,more,errors}
+    },
+    onSuccess:setHistorySearch,
   })
   const newConversation = !!orderId && selected?.conversation_id === ''
   const active = shops.find((a) => a.id === threadShop)
@@ -219,8 +242,8 @@ export default function ChatPage() {
     },
     onSuccess: () => setSyncedAt(new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })),
   })
-  const rows = (inbox.data ?? [])
-    .flatMap((result) => (result.data?.conversations ?? []).map((c) => ({ ...c, shop: result.shop })))
+  const currentRows=(inbox.data??[]).flatMap(result=>(result.data?.conversations??[]).map(c=>({...c,shop:result.shop})))
+  const rows = [...new Map([...(historySearch?.scope===searchScope?historySearch.rows:[]),...currentRows].map(c=>[`${c.shop.id}:${c.conversation_id}`,c])).values()]
     .filter((c) => !unreplied || chatNeedsReply(c) === true)
     .filter((c) => !search || (c.to_name || '').toLowerCase().includes(search.toLowerCase()))
     .sort(
@@ -259,11 +282,11 @@ export default function ChatPage() {
           Pemeriksaan data terbaru selesai {syncedAt} WIB. Kendala tiap toko ditampilkan di bawah.
         </p>
       )}
-      <p className="rounded-xl border p-3 text-sm text-muted-foreground">
+      <Bantuan><p className="rounded-xl border p-3 text-sm text-muted-foreground">
         Pilih percakapan, baca pesan, lalu ketik balasan. Kirim hanya atas tindakan Anda. Gunakan Lampirkan produk / pesanan untuk mengirim
         kartu dari toko percakapan. Gambar berasal dari katalog dan pesanan yang tersinkron. Bila hasil kirim belum pasti, periksa riwayat
         terlebih dahulu.
-      </p>
+      </p></Bantuan>
       <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
         <select
           aria-label="Toko Chat"
@@ -284,7 +307,7 @@ export default function ChatPage() {
             </option>
           ))}
         </select>
-        <Button variant="outline" className="w-full" disabled={syncChat.isPending} onClick={() => syncChat.mutate({ shopId: shop })}>
+        <Button variant="outline" className="w-full" disabled={syncChat.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
           {shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}
         </Button>
 
@@ -312,16 +335,19 @@ export default function ChatPage() {
         </label>
         <Input
           aria-label="Cari pembeli"
-          placeholder="Cari pembeli pada halaman ini"
+          placeholder="Cari pembeli dalam data termuat"
           className="max-w-xs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-      <p className="text-xs text-muted-foreground">
+      {(search||unreplied)&&<div className="flex flex-wrap items-center gap-2"><Button variant="outline" disabled={searchHistory.isPending} onClick={()=>searchHistory.mutate()}>{searchHistory.isPending?'Menelusuri…':'Cari dalam riwayat toko'}</Button><small className="text-muted-foreground">Maks. 10 halaman per toko setiap penelusuran.</small></div>}
+      {historySearch?.scope===searchScope&&historySearch.more&&<p role="status" className="text-xs">Hasil belum mencakup semua riwayat. Pilih toko dan buka percakapan lebih lama untuk melanjutkan.</p>}
+      {historySearch?.scope===searchScope&&historySearch.errors.map(error=><p key={error} role="alert" className="text-sm text-destructive">{error}</p>)}
+      <Bantuan><p className="text-xs text-muted-foreground">
         Percakapan diurutkan dari pesan terbaru. Kota/kabupaten memakai alamat tujuan pesanan yang tersinkron. Jika tidak tersedia, ditandai
         di samping username.
-      </p>
+      </p></Bantuan>
       {unreplied && (
         <p className="text-xs text-muted-foreground">
           Belum dibalas: pesan terakhir berasal dari pembeli pada halaman yang dimuat. Gunakan Berikutnya untuk menelusuri riwayat.
@@ -471,8 +497,8 @@ export default function ChatPage() {
                         Buka pesanan terkait
                       </Link>
                     )}
-                    {m.context?.katalog_id && user?.role !== 'staff' && (
-                      <Link className="text-sm underline" to={`/katalog?detail=${encodeURIComponent(m.context.katalog_id)}`}>
+                    {m.context?.katalog_id && (
+                      <Link className="text-sm underline" to={`/katalog/${encodeURIComponent(m.context.katalog_id)}`}>
                         Buka produk terkait
                       </Link>
                     )}
@@ -518,7 +544,7 @@ export default function ChatPage() {
                   </Button>
                 </div>
               )}
-              <Textarea
+              <div className="sticky bottom-20 z-10 rounded-lg border bg-card p-3 lg:bottom-2"><Textarea
                 aria-label="Balasan Chat"
                 placeholder="Tulis balasan…"
                 maxLength={1000}
@@ -546,7 +572,7 @@ export default function ChatPage() {
                 }
               >
                 {send.isPending ? 'Mengirim…' : attachment ? 'Kirim lampiran' : 'Kirim balasan'}
-              </Button>
+              </Button></div>
             </>
           )}
         </section>

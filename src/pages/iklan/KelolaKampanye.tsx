@@ -1,3 +1,4 @@
+import MoneyInput from '@/components/MoneyInput'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -7,7 +8,7 @@ import type { AksiKampanye, KampanyeIklan, PerubahanKataKunci } from '@/api/type
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import ModalProduk from './ModalProduk'
@@ -63,16 +64,16 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !sibuk && onTutup()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2">
+    <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
+        <Button variant="outline" disabled={sibuk} onClick={onTutup}>Kembali ke Kampanye</Button>
+        <header>
+          <h1 className="flex flex-wrap items-center gap-2">
             {k.nama} <Badge variant={status.varian}>{status.label}</Badge>
-          </DialogTitle>
-          <DialogDescription>
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {jenisKampanye(k)} · anggaran {anggaranTeks(k.anggaran, fmtRp)}/hari · {k.item_id.length} produk · performa {hari} hari
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </header>
 
         {k.kinerja && (
           <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
@@ -154,7 +155,7 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
             <div className="flex flex-wrap items-end gap-2">
               <div className="space-y-1.5">
                 <Label htmlFor="kampanye-anggaran">Rp per hari</Label>
-                <Input id="kampanye-anggaran" type="number" inputMode="numeric" min={0} className="w-40" value={anggaran} onChange={(e) => setAnggaran(e.target.value)} />
+                <MoneyInput id="kampanye-anggaran" type="number" inputMode="numeric" min={0} className="w-40" value={anggaran} onChange={(e) => setAnggaran(e.target.value)} />
               </div>
               <Button
                 disabled={sibuk || !(Number(anggaran) > 0)}
@@ -222,7 +223,7 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="kampanye-bid-baru">Bid (Rp)</Label>
-                <Input id="kampanye-bid-baru" type="number" inputMode="numeric" className="w-24" value={bidBaru} onChange={(e) => setBidBaru(e.target.value)} />
+                <MoneyInput id="kampanye-bid-baru" type="number" inputMode="numeric" className="w-24" value={bidBaru} onChange={(e) => setBidBaru(e.target.value)} />
               </div>
               <Button
                 disabled={sibuk || !kataBaru.trim() || !(Number(bidBaru) > 0)}
@@ -233,7 +234,6 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
             </div>
           </section>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
   )
 }

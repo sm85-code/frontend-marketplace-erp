@@ -1,11 +1,12 @@
+import UkuranHalaman from '@/components/UkuranHalaman'
 import { useAuth } from '@/lib/auth'
 import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutGrid, List } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useCallback, useMemo, useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -34,11 +35,11 @@ import { bagiBatch, labelVarian, ringkasKirim, STATUS_AWAL_KATALOG, STATUS_SHOPE
 import { bacaSimpan, tulisSimpan } from '@/lib/simpan'
 import { useTerpilih } from '@/lib/terpilih'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
-import DetailProduk from './katalog/DetailProduk'
+
 import KartuProduk from './katalog/KartuProduk'
 import { kolomKatalog } from './katalog/kolom'
 
-const PER_HALAMAN = 10
+const DEFAULT_PER_HALAMAN = 10
 // Opens on active products (what is for sale on Shopee); the status filter widens it.
 const AWAL = { toko: '', q: '', status: STATUS_AWAL_KATALOG as string, belumDikirim: false, urut: 'toko:asc' }
 const KUNCI_TAMPILAN = 'katalog.tampilan'
@@ -53,16 +54,19 @@ export default function KatalogPage() {
   const { user } = useAuth()
   const manage = isOwnerLevel(user?.role)
   const qc = useQueryClient()
+  const [perHalaman,setPerHalaman]=useState(DEFAULT_PER_HALAMAN)
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
   const pilih = useTerpilih<KatalogItem>()
   const [urlParams] = useSearchParams()
-  const [detailId, setDetailId] = useState<string | null>(() => urlParams.get('detail'))
+  const navigate = useNavigate()
+  useEffect(() => { const id=urlParams.get('detail'); if(id) navigate(`/katalog/${encodeURIComponent(id)}`,{replace:true}) }, [urlParams,navigate])
+  function setDetailId(id: string | null) { if(id) navigate(`/katalog/${encodeURIComponent(id)}`) }
   const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'grid' ? 'grid' : 'list'))
 
   // Variants are shown as sub-rows under each product (price, weight, size, pre-order per variant). `rinci` is the
   // default for every product; a click on a product flips just that one.
-  const [rinci, setRinci] = useState(() => bacaSimpan(KUNCI_RINCI_VARIAN) !== 'tidak')
+  const [rinci, setRinci] = useState(() => bacaSimpan(KUNCI_RINCI_VARIAN) === 'ya')
   const [dibalik, setDibalik] = useState<ReadonlySet<string>>(new Set())
   const varianTerbuka = useCallback((id: string) => rinci !== dibalik.has(id), [rinci, dibalik])
   const balikVarian = useCallback(
@@ -75,7 +79,7 @@ export default function KatalogPage() {
     [],
   )
   const semuaKolom = useMemo(() => kolomKatalog(setDetailId, varianTerbuka, balikVarian), [varianTerbuka, balikVarian])
-  const kolom = useKolomTersimpan('katalog.kolom', semuaKolom)
+  const kolom = useKolomTersimpan('katalog.kolom.v2', semuaKolom)
   const kolomTampil = semuaKolom.filter((k) => kolom.tampil.includes(k.kunci))
 
   // Shop counts follow the chosen status and status counts follow the chosen shop, so every option shows what it would list.
@@ -93,7 +97,7 @@ export default function KatalogPage() {
     belum_dikirim: f.nilai.belumDikirim,
     urut: f.nilai.urut,
     halaman: f.halaman,
-    per_halaman: PER_HALAMAN,
+    per_halaman: perHalaman,
   }
   const { data, isLoading, isFetching, error: queryError, refetch: retryQuery } = useQuery({
     queryKey: qk.katalog(params),
@@ -145,6 +149,11 @@ export default function KatalogPage() {
         {manage && <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>}
       </BarHalaman>
 
+      <div className="flex flex-wrap gap-2" aria-label="Preset kolom katalog">{[
+        ['Ringkas',['nama','foto','harga','stok','nilai_varian','status']],
+        ['Varian',['nama','varian','nilai_varian','sku','harga','stok','status']],
+        ['Pengiriman',['nama','nilai_varian','berat','package_length','package_width','package_height','preorder','kurir']],
+      ].map(([label,keys])=><Button key={label as string} variant="secondary" size="sm" onClick={()=>{kolom.preset(keys as string[]);setRinci(label !== 'Ringkas')}}>{label}</Button>)}</div>
       <BarFilter
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
         utama={<FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
@@ -175,8 +184,9 @@ export default function KatalogPage() {
             tulisSimpan(KUNCI_TAMPILAN, t)
           }}
         />
-        {tampilan === 'list' && (
-          <Medan>
+        {tampilan === 'list' && (<>
+          <UkuranHalaman value={perHalaman} onChange={n=>{setPerHalaman(n);f.setHalaman(1)}} />
+        <Medan>
             <PemilihKolom
               semua={semuaKolom}
               tampil={kolom.tampil}
@@ -184,7 +194,7 @@ export default function KatalogPage() {
               onReset={kolom.reset}
             />
           </Medan>
-        )}
+        </>)}
         {tampilan === 'list' && (
           <FilterSakelar
             id="katalog-rinci-varian"
@@ -249,7 +259,7 @@ export default function KatalogPage() {
       {data && data.total > 0 && (
         <div className="space-y-2">
           <p className="teks-data text-center text-muted-foreground" aria-live="polite">
-            {(f.halaman - 1) * PER_HALAMAN + 1}–{Math.min(f.halaman * PER_HALAMAN, data.total)} dari {data.total} produk
+            {(f.halaman - 1) * perHalaman + 1}–{Math.min(f.halaman * perHalaman, data.total)} dari {data.total} produk
             {isFetching && !isLoading ? ' · memuat…' : ''}
           </p>
           <Paginasi halaman={f.halaman} totalHalaman={totalHalaman} onUbah={f.setHalaman} nama="Halaman katalog" />
@@ -261,8 +271,6 @@ export default function KatalogPage() {
           {kirimMut.isPending ? 'Mengirim…' : 'Kirim ke toko web'}
         </Button>
       </BarPilihan>}
-
-      <DetailProduk id={detailId} onTutup={() => setDetailId(null)} />
     </div>
   )
 }

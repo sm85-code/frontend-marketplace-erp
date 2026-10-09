@@ -1,3 +1,9 @@
+import PilihProduk from '@/components/PilihProduk'
+import { useTokoAktif } from '@/lib/tokoAktif'
+import { FilterPilih } from '@/components/daftar'
+import AksiLainnya from '@/components/AksiLainnya'
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import { useTerpilih } from '@/lib/terpilih'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
@@ -14,7 +20,7 @@ import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -55,6 +61,9 @@ function kolomListing({
 
 export default function ListingPage() {
   const qc = useQueryClient()
+  const [q,setQ]=useState('')
+  const [toko,setToko]=useTokoAktif()
+  const [statusFilter,setStatusFilter]=useState('')
   const confirm = useConfirm()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState({ produk_id: '', akun_id: '', id_eksternal: '', harga_jual: '', stok_listing: '' })
@@ -115,16 +124,17 @@ export default function ListingPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Listing" deskripsi="Pemetaan SKU ERP ke produk dan varian marketplace. Harga dan ukuran marketplace berasal dari snapshot katalog; sinkronkan katalog untuk memperbaruinya.">
+      <BarHalaman judul="Pemetaan Produk Toko" deskripsi="Pemetaan SKU ERP ke produk dan varian marketplace. Harga dan ukuran marketplace berasal dari snapshot katalog; sinkronkan katalog untuk memperbaruinya.">
         <Sinkronisasi jenis="listing" ids={pilih.daftar.map(p => p.id)} />
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
         </Button>
       </BarHalaman>
 
+      <div className="bar-filter"><Input aria-label="Cari pemetaan" placeholder="Cari nama, SKU, ID produk…" value={q} onChange={e=>setQ(e.target.value)}/><FilterPilih id="mapping-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(akunList??[]).map(a=>({value:a.id,label:a.nama_toko}))}/><FilterPilih id="mapping-status" label="Status" nilai={statusFilter} onUbah={setStatusFilter} semua="Semua status" opsi={[{value:'aktif',label:'Aktif'},{value:'nonaktif',label:'Nonaktif'}]}/></div>
       <Card>
         <CardHeader>
-          <CardTitle>Mapping SKU ERP ↔ Listing Toko</CardTitle>
+          <CardTitle>Pemetaan Produk Toko</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -133,14 +143,14 @@ export default function ListingPage() {
             <>
               <TabelLokal
                 pilihan={{ terpilih: pilih.ada, onUbah: pilih.ubah, semuaDipilih: (listing ?? []).length > 0 && (listing ?? []).every(p => pilih.ada(p.id)), adaYangBisaDipilih: !!listing?.length, onUbahSemua: value => pilih.ubahBanyak(listing ?? [], value) }}
-                label="Mapping SKU ERP ke listing toko"
-                items={listing}
+                label="Pemetaan produk ERP ke toko"
+                items={listing?.filter(l=>(!toko||l.akun_id===toko)&&(!statusFilter||l.aktif===(statusFilter==='aktif'))&&(`${produkMap.get(l.produk_id)?.nama??''} ${produkMap.get(l.produk_id)?.sku_induk??''} ${l.detail_marketplace?.nama_produk??''} ${l.id_eksternal}`).toLowerCase().includes(q.toLowerCase()))}
                 kolom={kolomListing({ produkMap, akunMap })}
                 idDari={(l) => l.id}
                 namaDari={(l) => l.id_eksternal}
                 urutAwal={{ kunci: 'sku', arah: 'asc' }}
                 aksi={(l) => (
-                  <div className="flex flex-nowrap justify-end gap-1.5">
+                  <AksiLainnya>
                     <Sinkronisasi jenis="listing" ids={[l.id]} satu />
                     <Button size="sm" variant="ghost" onClick={() => toggleMut.mutate({ id: l.id, aktif: !l.aktif })}>
                       {l.aktif ? 'Nonaktifkan' : 'Aktifkan'}
@@ -148,7 +158,7 @@ export default function ListingPage() {
                     <Button size="sm" variant="destructive" onClick={() => onDelete(l.id)}>
                       Hapus
                     </Button>
-                  </div>
+                  </AksiLainnya>
                 )}
                 minWidth={760}
               />
@@ -158,7 +168,7 @@ export default function ListingPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah Listing</DialogTitle>
@@ -166,18 +176,7 @@ export default function ListingPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="listing-produk-sku-induk-1">Produk (SKU Induk)</Label>
-              <Select value={form.produk_id} onValueChange={(v) => setForm((f) => ({ ...f, produk_id: v }))}>
-                <SelectTrigger id="listing-produk-sku-induk-1" className="w-full">
-                  <SelectValue placeholder="Pilih produk" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(produkList ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nama} ({p.sku_induk})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PilihProduk id="listing-produk-1" value={form.produk_id} onChange={v=>setForm(f=>({...f,produk_id:v}))} items={produkList??[]}/>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="listing-toko-2">Toko</Label>
@@ -200,7 +199,7 @@ export default function ListingPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="listing-harga-jual-override-opsi-4">Harga Jual Override (opsional)</Label>
-              <Input id="listing-harga-jual-override-opsi-4" type="number" value={form.harga_jual} onChange={(e) => setForm((f) => ({ ...f, harga_jual: e.target.value }))} />
+              <MoneyInput id="listing-harga-jual-override-opsi-4" type="number" value={form.harga_jual} onChange={(e) => setForm((f) => ({ ...f, harga_jual: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="listing-stok-override-opsional-5">Stok Override (opsional)</Label>
@@ -211,6 +210,7 @@ export default function ListingPage() {
               />
             </div>
           </div>
+          {createMut.error&&<p role="alert" className="text-sm text-destructive">{getApiError(createMut.error)}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Batal
@@ -220,7 +220,7 @@ export default function ListingPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   )
 }

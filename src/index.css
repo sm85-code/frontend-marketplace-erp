@@ -682,8 +682,21 @@ h4,
 
 [data-slot="dialog-content"] p.whitespace-pre-wrap { text-align: justify; overflow-wrap: anywhere; line-height: 1.65; }
 .erp-content input[type="checkbox"], .erp-content input[type="radio"] { width: 1rem; height: 1rem; min-height: 1rem; flex-shrink: 0; }
-.erp-content .bar-halaman p, .erp-content p.whitespace-pre-wrap { text-align: justify; line-height: 1.6; }
+.erp-content .bar-halaman p { text-align: left; line-height: 1.5; }
+.erp-content p.whitespace-pre-wrap { text-align: justify; line-height: 1.6; }
 
 /* Tables keep numeric values and identifiers intact; descriptive cells wrap at words. */
 .erp-content table { overflow-wrap: normal; }
 .erp-content table td.text-right { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Controls remain usable inside portaled dialogs and on touch screens. */
+@media (max-width: 1023px) {
+  [data-slot="button"], [data-slot="select-trigger"], [data-slot="input"] { min-height: 44px; }
+  [data-slot="dialog-close"] { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+}
+[data-slot="table-header"] { position: sticky; top: 0; z-index: 2; background: var(--card); }
+[data-slot="dialog-footer"] { gap: .5rem; }
+.section-tabs { height: auto; max-width: 100%; flex-wrap: wrap; gap: .25rem; padding: .25rem; }
+.section-tabs [data-slot="tabs-trigger"] { min-height: 44px; flex: 1 0 auto; }
+.section-tabs [data-slot="tabs-trigger"][data-state="active"] { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 1px 3px var(--border); }
+.section-tabs [data-slot="tabs-trigger"][data-state="inactive"] { background: var(--muted); color: var(--foreground); }

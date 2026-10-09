@@ -1,3 +1,6 @@
+import PilihanProdukToko from '@/components/PilihanProdukToko'
+import FormDialog from '@/components/FormDialog'
+import MoneyInput from '@/components/MoneyInput'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -5,7 +8,7 @@ import * as endpoints from '@/api/endpoints'
 import { fmtRp, getApiError } from '@/api/client'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -63,12 +66,13 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
   const s = saran.data
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !buat.isPending && onTutup()}>
+    <FormDialog open values={{itemId,mode,anggaran,roas,kata}} busy={buat.isPending} onOpenChange={(o) => !o && onTutup()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Buat iklan produk</DialogTitle>
           <DialogDescription>Satu produk per iklan. Hasilnya muncul di daftar kampanye setelah Shopee memprosesnya.</DialogDescription>
         </DialogHeader>
+        <PilihanProdukToko akunId={akunId} onPilih={setItemId}/>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="iklan-baru-item">ID produk Shopee</Label>
@@ -88,7 +92,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="iklan-baru-anggaran">Anggaran per hari (Rp)</Label>
-            <Input id="iklan-baru-anggaran" type="number" inputMode="numeric" min={0} value={anggaran} onChange={(e) => setAnggaran(e.target.value)} />
+            <MoneyInput id="iklan-baru-anggaran" type="number" inputMode="numeric" min={0} value={anggaran} onChange={(e) => setAnggaran(e.target.value)} />
           </div>
           {mode === 'auto' && (
             <div className="space-y-1.5">
@@ -201,6 +205,6 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+    </FormDialog>
   )
 }

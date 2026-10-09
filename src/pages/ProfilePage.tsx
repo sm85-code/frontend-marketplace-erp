@@ -42,7 +42,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-md">
       <Card>
         <CardHeader>
-          <h1 className="font-heading text-base leading-none font-semibold tracking-tight">Profil Saya</h1>
+          <h1 className="page-h1 font-heading text-xl font-semibold">Profil Saya</h1>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

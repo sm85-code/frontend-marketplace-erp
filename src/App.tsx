@@ -13,6 +13,8 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const AkunPage = lazy(() => import('@/pages/AkunPage'))
 const ShopeeCallbackPage = lazy(() => import('@/pages/ShopeeCallbackPage'))
+const KatalogDetailPage = lazy(() => import('@/pages/KatalogDetailPage'))
+const PromosiDetailPage = lazy(() => import('@/pages/PromosiDetailPage'))
 const KatalogPage = lazy(() => import('@/pages/KatalogPage'))
 const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
 const ListingPage = lazy(() => import('@/pages/ListingPage'))
@@ -25,6 +27,7 @@ const PromosiPage = lazy(() => import('@/pages/PromosiPage'))
 const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
 const IklanPage = lazy(() => import('@/pages/IklanPage'))
+const KampanyeDetailPage = lazy(() => import('@/pages/KampanyeDetailPage'))
 const IklanDetailPage = lazy(() => import('@/pages/IklanDetailPage'))
 const StaffPage = lazy(() => import('@/pages/StaffPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
@@ -80,6 +83,8 @@ export default function App() {
                 path="/katalog"
                 element={<Protected><LazyPage><KatalogPage /></LazyPage></Protected>}
               />
+              <Route path="/katalog/:id" element={<Protected><LazyPage><KatalogDetailPage /></LazyPage></Protected>} />
+              <Route path="/katalog/promosi/:akun/:id" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PromosiDetailPage /></LazyPage></Protected>} />
               <Route
                 path="/produk"
                 element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ProdukPage /></LazyPage></Protected>}
@@ -109,6 +114,7 @@ export default function App() {
 path="/iklan"
                 element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
               />
+              <Route path="/iklan/toko/:akun/kampanye/:id" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><KampanyeDetailPage /></LazyPage></Protected>} />
               <Route
                 path="/iklan/:id"
                 element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanDetailPage /></LazyPage></Protected>}

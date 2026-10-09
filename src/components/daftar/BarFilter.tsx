@@ -1,5 +1,5 @@
 import { ChevronDown, SlidersHorizontal } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -13,19 +13,20 @@ import Medan from './Medan'
  */
 export function BarFilter({ utama, aktif = 0, children }: { utama?: ReactNode; aktif?: number; children: ReactNode }) {
   const [buka, setBuka] = useState(false)
+  const panelId = useId()
   return (
     <div className="bar-filter">
       {utama}
       {/* Phones: the search stays visible and the other filters fold behind one button (data comes first).
           md and up: everything is shown in the same grid (display: contents). */}
       <div className="md:hidden" style={{ gridColumn: '1 / -1' }}>
-        <Button variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls="filter-lainnya">
+        <Button variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls={panelId}>
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filter &amp; urutan{aktif > 0 ? ` (${aktif} aktif)` : ''}
           <ChevronDown className={`ml-auto size-4 transition-transform ${buka ? 'rotate-180' : ''}`} aria-hidden="true" />
         </Button>
       </div>
-      <div id="filter-lainnya" className={buka ? 'contents' : 'hidden md:contents'}>
+      <div id={panelId} className={buka ? 'contents' : 'hidden md:contents'}>
         {children}
       </div>
     </div>

@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import Paginasi from './Paginasi'
 import { useUrutLokal, type Urut } from '@/lib/urut'
 import TabelData, { type KolomTabel, type PilihanTabel } from './TabelData'
 
@@ -26,8 +27,49 @@ export default function TabelLokal<T>({
   minWidth?: number
   footer?: ReactNode
 }) {
-  const nilaiDari = (item: T, kunci: string) => kolom.find((k) => k.kunci === kunci)?.nilai?.(item)
+  const [page, setPage] = useState(1)
+  const nilaiDari = (item: T, kunci: string) =>
+    kolom.find((k) => k.kunci === kunci)?.nilai?.(item)
   const { hasil, urut, ubah } = useUrutLokal(items, nilaiDari, urutAwal)
-  const dapatDiurut = kolom.map((k) => (k.nilai ? { ...k, urut: k.urut ?? { kunci: k.kunci } } : k))
-  return <TabelData {...rest} items={hasil} kolom={dapatDiurut} urut={urut} onUrut={ubah} />
+  const dapatDiurut = kolom.map((k) =>
+    k.nilai ? { ...k, urut: k.urut ?? { kunci: k.kunci } } : k,
+  )
+  const identity = hasil.map(rest.idDari).join('|')
+  useEffect(() => setPage(1), [identity])
+  const pages = Math.max(1, Math.ceil(hasil.length / 10))
+  const current = Math.min(page, pages)
+  const visible = hasil.slice((current - 1) * 10, current * 10)
+  const eligible = visible.filter(
+    (item) => !rest.pilihan?.bisaDipilih || rest.pilihan.bisaDipilih(item),
+  )
+  const selection = rest.pilihan
+    ? {
+        ...rest.pilihan,
+        semuaDipilih:
+          eligible.length > 0 &&
+          eligible.every((item) => rest.pilihan!.terpilih(rest.idDari(item))),
+        adaYangBisaDipilih: eligible.length > 0,
+        onUbahSemua: (selected: boolean) =>
+          eligible.forEach((item) => rest.pilihan!.onUbah(item, selected)),
+      }
+    : undefined
+  return (
+    <div className="space-y-3">
+      <TabelData
+        {...rest}
+        pilihan={selection}
+        items={visible}
+        kolom={dapatDiurut}
+        urut={urut}
+        onUrut={ubah}
+      />
+      {pages > 1 && (
+        <p className="text-xs text-center text-muted-foreground">
+          {(current - 1) * 10 + 1}–{Math.min(current * 10, hasil.length)} dari{' '}
+          {hasil.length}
+        </p>
+      )}
+      <Paginasi halaman={current} totalHalaman={pages} onUbah={setPage} />
+    </div>
+  )
 }

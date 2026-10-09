@@ -14,6 +14,7 @@ export default function LoginPage() {
   const location = useLocation()
   const [identitas, setIdentitas] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword,setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -69,13 +70,14 @@ export default function LoginPage() {
               <Input
                 id="password"
                 className="h-11 text-base"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+            <Button type="button" variant="ghost" size="sm" aria-pressed={showPassword} onClick={()=>setShowPassword(v=>!v)}>{showPassword?'Sembunyikan password':'Tampilkan password'}</Button>
             {error && (
               <p
                 className="rounded-lg border px-3 py-2 text-sm"
