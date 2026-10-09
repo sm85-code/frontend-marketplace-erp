@@ -1,3 +1,4 @@
+import { Checkbox } from '@/components/ui/checkbox'
 import { tahapDariTautan } from '@/lib/tautanPesanan'
 import AksiLainnya from '@/components/AksiLainnya'
 import UkuranHalaman from '@/components/UkuranHalaman'
@@ -191,6 +192,13 @@ export default function PesananPage() {
     cetakMut.mutate({ ids: [p.id], tipe: 'THERMAL_AIR_WAYBILL', tab: window.open('', '_blank') })
   }
 
+  const [modeHp, setModeHp] = useState<'kartu' | 'tabel'>(() => {
+    try { return localStorage.getItem('erp.pesanan.mode-hp') === 'tabel' ? 'tabel' : 'kartu' } catch { return 'kartu' }
+  })
+  const ubahModeHp = (mode: 'kartu' | 'tabel') => {
+    setModeHp(mode)
+    try { localStorage.setItem('erp.pesanan.mode-hp', mode) } catch { /* private mode */ }
+  }
   const semuaKolom = kolomPesanan({ namaToko: (id) => (id ? (akunMap.get(id)?.nama_toko ?? '—') : '—') })
   const kolom = useKolomTersimpan('pesanan.kolom.v2', semuaKolom)
 
@@ -298,6 +306,12 @@ export default function PesananPage() {
         )}
       </BarFilter>
 
+      <div className="flex justify-end md:hidden" role="group" aria-label="Tampilan pesanan di HP">
+        <div className="inline-flex rounded-lg border bg-card p-1">
+          {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
+        </div>
+      </div>
+
       {isLoading ? (
         <Spinner column label="Memuat pesanan…" />
       ) : items.length === 0 ? (
@@ -310,6 +324,23 @@ export default function PesananPage() {
           )}
         </div>
       ) : (
+        <>
+        {modeHp === 'kartu' && <div className="space-y-3 md:hidden">
+          <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Pilih semua di halaman ini" disabled={!bisaDipilihSemua.length} checked={bisaDipilihSemua.length > 0 && bisaDipilihSemua.every((p) => pilih.ada(p.id))} onCheckedChange={(v) => pilih.ubahBanyak(bisaDipilihSemua, v === true)} />Pilih semua di halaman ini</label>
+          <ul className="space-y-3" aria-label="Kartu pesanan">
+            {items.map((p) => <li key={p.id} className="space-y-3 rounded-xl border bg-card p-4">
+              <div className="flex items-start gap-3">
+                {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${p.id_eksternal}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
+                <div className="min-w-0 flex-1 break-words">{semuaKolom.find((k) => k.kunci === 'pesanan')?.sel(p)}</div>
+              </div>
+              <dl className="grid grid-cols-2 gap-3 border-t pt-3">
+                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['produk', 'catatan', 'kurir'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
+              </dl>
+              <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} /></div>
+            </li>)}
+          </ul>
+        </div>}
+        <div className={modeHp === 'kartu' ? 'hidden md:block' : ''}>
         <TabelData
           label="Daftar pesanan"
           items={items}
@@ -329,6 +360,8 @@ export default function PesananPage() {
           aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} cetakSibuk={sedangBekerja} />}
           minWidth={820}
         />
+        </div>
+        </>
       )}
 
       {daftar && daftar.total > 0 && (
