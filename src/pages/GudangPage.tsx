@@ -1,3 +1,4 @@
+import { useStockSettings } from '@/lib/stock-settings'
 import PilihProduk from '@/components/PilihProduk'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import FormDialog from '@/components/FormDialog'
@@ -53,6 +54,7 @@ function kolomLedger({
 }
 
 export default function GudangPage() {
+  const { warehouseEnabled } = useStockSettings()
   const qc = useQueryClient()
   const [ledgerPage,setLedgerPage] = useState(0)
   const [ledgerDari,setLedgerDari] = useState('')
@@ -112,14 +114,15 @@ export default function GudangPage() {
   return (
     <div className="space-y-4">
       <BarHalaman judul="Gudang &amp; Stok">
-        <Button variant="outline" onClick={() => setGudangDialog(true)}>
+        <Button variant="outline" disabled={!warehouseEnabled} onClick={() => setGudangDialog(true)}>
             Tambah Gudang
           </Button>
-          <Button variant="outline" onClick={() => setTransferDialog(true)} disabled={(gudangList?.length ?? 0) < 2}>
+          <Button variant="outline" onClick={() => setTransferDialog(true)} disabled={!warehouseEnabled || (gudangList?.length ?? 0) < 2}>
             Transfer Antar Gudang
           </Button>
-          <Button onClick={() => setAdjustDialog(true)}>Sesuaikan Stok</Button>
+          <Button disabled={!warehouseEnabled} onClick={() => setAdjustDialog(true)}>Sesuaikan Stok</Button>
       </BarHalaman>
+      {!warehouseEnabled && <Card><CardHeader><CardTitle>Stok dikelola per toko</CardTitle></CardHeader><CardContent>Gudang ERP belum digunakan. Stok master hanya angka referensi; stok marketplace dan Toko Web berdiri sendiri. Riwayat Gudang tetap tersedia. Pengelolaan stok terpusat menunggu keputusan Anda.</CardContent></Card>}
       {gudangError && <QueryError error={gudangError} retry={retryGudang} />}
       {produkError && <QueryError error={produkError} retry={retryProduk} />}
       {ledgerError && <QueryError error={ledgerError} retry={retryLedger} />}

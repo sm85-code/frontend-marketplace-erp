@@ -42,6 +42,7 @@ export interface Produk {
   nama: string
   deskripsi: string
   harga_dasar: string
+  stok_referensi?: number | null
   stok: number
   foto_url: string | null
   aktif: boolean
