@@ -60,7 +60,7 @@ export default function PromosiPage() {
   return <div className="space-y-4 pb-24">
     <BarHalaman judul="Promosi Diskon" deskripsi="Kelola promosi harga produk dan varian Shopee.">
       <Button asChild variant="outline"><Link to="/katalog">Kembali ke Katalog</Link></Button>
-      <Button variant="outline" disabled={!akun || list.isFetching} onClick={() => { void list.refetch() }}>Segarkan</Button>
+      <Button variant="outline" disabled={!akun || list.isFetching} onClick={() => { void list.refetch() }}>Refresh</Button>
       <Button disabled={!akun || create.isPending} onClick={() => { create.reset(); setCreating(true); setNama(''); setJadwal(jadwalAwalPromosi()) }}>Buat Promosi</Button>
     </BarHalaman>
     <Bantuan><p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">Pilih toko, buat jadwal promosi, lalu buka Detail untuk menambahkan produk atau varian dan harga diskonnya. Harga mengikuti mata uang toko Shopee. Mengakhiri promosi menghentikan diskon; stok dan harga dasar ERP tidak diubah.</p></Bantuan>
@@ -77,7 +77,7 @@ export default function PromosiPage() {
       <p className="text-xs text-muted-foreground">Mulai minimal 1 jam lagi; durasi minimal 1 jam dan kurang dari 180 hari.</p>
       <div className="flex gap-2"><Button type="submit" disabled={create.isPending || !nama.trim()}>Buat di Shopee</Button><Button type="button" variant="outline" disabled={create.isPending} onClick={() => setCreating(false)}>Batal</Button></div>
     </form></DialogContent></FormDialog>
-    {create.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(create.error)} Segarkan sebelum mencoba ulang.</p>}
+    {create.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(create.error)} Refresh sebelum mencoba ulang.</p>}
     {create.data?.warnings.map((w) => <p key={w} role="status" className="text-sm">{w}</p>)}
     {list.error && <QueryError error={list.error} retry={list.refetch} />}
     {list.isFetching && <Spinner column label="Memuat promosi…" />}

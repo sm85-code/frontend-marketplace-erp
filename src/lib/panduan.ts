@@ -34,7 +34,7 @@ export const panduan: Panduan[] = [
     langkah: [
       'Pilih toko dan tanggal pengajuan (maksimal 15 hari WIB), lalu Tampilkan. Buka Detail untuk membaca alasan dan barang.',
       'Setujui Retur / Refund jika menerima solusi. Jika tidak sesuai, buka Ajukan Sengketa, pilih alasan yang tersedia dan unggah foto tiap bagian wajib.',
-      'Segarkan detail setelah keputusan. Periksa barang fisik sebelum mencatat stok masuk; proses video/negosiasi lanjutan melalui Seller Centre.',
+      'Refresh detail setelah keputusan. Periksa barang fisik sebelum mencatat stok masuk; proses video/negosiasi lanjutan melalui Seller Centre.',
     ],
     dampak: 'Persetujuan dan sengketa dikirim ke Shopee. Stok dan settlement ERP tidak otomatis berubah.',
   },
@@ -55,7 +55,7 @@ export const panduan: Panduan[] = [
     tujuan: 'Kelola pesanan lintas toko berdasarkan status dan prioritas pengiriman.',
     langkah: [
       'Pilih toko/status, sinkronkan bila perlu, lalu periksa tanggal dan resi.',
-      'Segarkan memperbarui tabel ERP. Gunakan Sinkronisasi untuk satu item/pilihan, satu toko, atau seluruh toko; antrean bisa dijeda dan dilanjutkan.',
+      'Refresh memperbarui tabel ERP. Gunakan Sinkronisasi untuk satu item/pilihan, satu toko, atau seluruh toko; antrean bisa dijeda dan dilanjutkan.',
       'Centang pesanan yang siap, pilih Proses dan tentukan metode pengiriman. Periksa hasil per pesanan; jangan mengulang pesanan yang sudah berhasil.',
       'Gunakan Cetak Resi untuk pengiriman terkonfirmasi. Retur & Refund mempunyai halaman penanganan tersendiri.',
     ],

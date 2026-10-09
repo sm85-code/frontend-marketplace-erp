@@ -194,7 +194,7 @@ export default function TransaksiDana() {
                 void rows.refetch()
               }}
             >
-              Segarkan
+              Refresh
             </Button>
           </div>
         </>

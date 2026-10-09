@@ -246,7 +246,7 @@ export default function ChatPage() {
       setDelivery(
         rejected
           ? { status: 'gagal', error: getApiError(e) }
-          : { status: 'belum_pasti', error: `${getApiError(e)} Segarkan riwayat sebelum melanjutkan.` },
+          : { status: 'belum_pasti', error: `${getApiError(e)} Refresh riwayat sebelum melanjutkan.` },
       )
     },
     retry: false,

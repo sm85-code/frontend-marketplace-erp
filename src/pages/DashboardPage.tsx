@@ -157,7 +157,7 @@ export default function DashboardPage() {
 
           <Bagian judul="Aktivitas Pesanan">
             {hari.length ? <div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={hari.map(h=>({...h,nilai:Number(h.omzet)}))}><XAxis dataKey="tanggal" tickFormatter={v=>fmtDate(v)} minTickGap={35}/><YAxis width={55} tickFormatter={v=>new Intl.NumberFormat('id-ID',{notation:'compact'}).format(v)}/><Tooltip formatter={v=>fmtRp(Number(v))} labelFormatter={v=>fmtDate(String(v))}/><Area dataKey="nilai" name="Nilai pesanan" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.15}/></AreaChart></ResponsiveContainer></div> : <p>Belum ada aktivitas pada periode ini.</p>}
-            <Bantuan judul="Rincian status pesanan">            <Bagian judul="Pesanan per Status">
+            <Bantuan rincian judul="Rincian status pesanan">            <Bagian judul="Pesanan per Status">
               <TabelLokal
                 label="Jumlah dan nilai pesanan per status"
                 items={d.per_tahap}

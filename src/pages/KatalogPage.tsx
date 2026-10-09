@@ -1,3 +1,4 @@
+import AksiLainnya from '@/components/AksiLainnya'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
 import UkuranHalaman from '@/components/UkuranHalaman'
 import { useAuth } from '@/lib/auth'
@@ -144,21 +145,21 @@ export default function KatalogPage() {
   return (
     <div className="space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Katalog Shopee" deskripsi={manage ? "Produk dari semua toko, apa adanya. Pilih yang sesuai, lalu kirim ke toko web." : "Produk dari toko yang ditugaskan kepada Anda. Buka detail untuk melihat varian dan informasi produk."}>
+      <BarHalaman judul="Katalog Shopee">
         <Sinkronisasi jenis="katalog" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
-        {manage && <Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>}
-        {manage && <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button>}
+        {manage && <AksiLainnya><Button asChild variant="outline"><Link to="/katalog/publikasi">Buat / Salin Produk</Link></Button>
+        <Button asChild variant="outline"><Link to="/katalog/promosi">Promosi Diskon</Link></Button></AksiLainnya>}
       </BarHalaman>
 
+      <BarFilter
+        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
+        utama={<FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
+      >
       <div className="flex flex-wrap gap-2" aria-label="Preset kolom katalog">{[
         ['Ringkas',['nama','foto','harga','stok','nilai_varian','status']],
         ['Varian',['nama','varian','nilai_varian','sku','harga','stok','status']],
         ['Pengiriman',['nama','nilai_varian','berat','package_length','package_width','package_height','preorder','kurir']],
       ].map(([label,keys])=><Button key={label as string} variant="secondary" size="sm" onClick={()=>{kolom.preset(keys as string[]);setRinci(label !== 'Ringkas')}}>{label}</Button>)}</div>
-      <BarFilter
-        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
-        utama={<FilterCari id="katalog-cari" placeholder="Nama atau SKU" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
-      >
         <FilterPilih
           id="katalog-toko"
           label="Toko"
