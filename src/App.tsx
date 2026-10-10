@@ -1,3 +1,4 @@
+import WorkspaceOverlays from '@/components/WorkspaceOverlays'
 import { SinkronisasiSession } from '@/components/SinkronisasiProvider'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -8,6 +9,7 @@ import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Role } from '@/api/types'
 
+const ShopSettingsPage = lazy(() => import('@/pages/ShopSettingsPage'))
 const AssistantPage = lazy(() => import('@/pages/AssistantPage'))
 const PerformaTokoPage = lazy(() => import('@/pages/PerformaTokoPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
@@ -81,6 +83,7 @@ export default function App() {
               />
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
               <Route path="/asisten" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AssistantPage /></LazyPage></Protected>} />
+              <Route path="/pengaturan-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
               <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
@@ -131,6 +134,7 @@ path="/iklan"
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />
             </Routes>
+            <WorkspaceOverlays/>
           </SinkronisasiSession></AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>

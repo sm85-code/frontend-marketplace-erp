@@ -23,7 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS, isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
-import ShopSettings from './ShopSettings'
+import { Link } from 'react-router-dom'
+import { shopConnections } from '@/api/commerce'
+import { fmtDateTime } from '@/api/client'
 
 const PLATFORMS: Platform[] = ['shopee', 'tiktokshop', 'lazada', 'blibli']
 
@@ -46,11 +48,16 @@ export default function AkunPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [settingsShop, setSettingsShop] = useState<AkunMarketplace | null>(null)
   const [editing, setEditing] = useState<AkunMarketplace | null>(null)
   const [form, setForm] = useState({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
 
   const { data: akunList, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
+
+  const connections = useQuery({queryKey:['shop-connections'],queryFn:shopConnections,refetchInterval:60000,retry:false})
+  const columns: KolomTabel<AkunMarketplace>[] = [...kolomToko.filter(c=>c.kunci!=='status'),
+    {kunci:'koneksi',judul:'Koneksi',sel:a=>{const c=connections.data?.find(c=>c.id===a.id);return <div className="space-y-1"><Badge variant={c?.perlu_otorisasi_ulang?'destructive':statusVariant(a.status)}>{!c?'…':c.perlu_otorisasi_ulang?'Perlu otorisasi ulang':a.status==='nonaktif'?'Nonaktif':c.otorisasi_tersedia?'Terhubung':a.platform!=='shopee'?'Belum tersedia':'Belum terhubung'}</Badge></div>}},
+    {kunci:'sinkron',judul:'Sinkronisasi pesanan terakhir',sel:a=>{const c=connections.data?.find(c=>c.id===a.id);return c?.sinkron_pesanan_at?fmtDateTime(c.sinkron_pesanan_at)+' WIB':'—'}},
+  ]
 
   const createMut = useMutation({
     mutationFn: endpoints.createAkun,
@@ -202,8 +209,43 @@ export default function AkunPage() {
     deleteMut.mutate({ id: akun.id, bersamaPesanan })
   }
 
+  const actions = (akun:AkunMarketplace) => (
+    <AksiLainnya>
+      {akun.platform === 'shopee' && akun.id_toko_eksternal && user?.role === 'admin' && <Button size="sm" variant="outline" asChild><Link to={`/pengaturan-toko?toko=${encodeURIComponent(akun.id)}`}>Pengaturan Toko</Link></Button>}
+      {akun.platform === 'shopee' && isOwnerLevel(user?.role) && (
+        <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
+          {akun.id_toko_eksternal ? 'Otorisasi ulang' : 'Hubungkan Shopee'}
+        </Button>
+      )}
+      {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
+        <>
+          <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
+            Sinkronisasi Produk
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => syncPesananMut.mutate(akun.id)}>
+            Sinkronisasi Pesanan
+          </Button>
+          {warehouseEnabled && <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
+            Kirim Stok &amp; Harga
+          </Button>}
+        </>
+      )}
+      {isOwnerLevel(user?.role) && (
+        <>
+          <Button size="sm" variant="outline" onClick={() => openEdit(akun)}>
+            Edit
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => onDelete(akun)}>
+            Hapus
+          </Button>
+        </>
+      )}
+    </AksiLainnya>
+  )
+
   return (
     <div className="space-y-4">
+      {connections.error && <QueryError error={connections.error} retry={connections.refetch}/>}
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Kelola Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
 
@@ -216,48 +258,17 @@ export default function AkunPage() {
             <Spinner column label="Memuat toko…" />
           ) : (
             <>
-            <TabelLokal
+            <div className="hidden lg:block"><TabelLokal
               label="Daftar toko marketplace"
               items={akunList}
-              kolom={kolomToko}
+              kolom={columns}
               idDari={(a) => a.id}
               namaDari={(a) => a.nama_toko}
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
-              aksi={(akun) => (
-                <AksiLainnya>
-                  {akun.platform === 'shopee' && akun.id_toko_eksternal && user?.role === 'admin' && <Button size="sm" variant="outline" onClick={() => setSettingsShop(akun)}>Pengaturan Shopee</Button>}
-                  {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
-                    <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
-                      Hubungkan Shopee
-                    </Button>
-                  )}
-                  {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
-                    <>
-                      <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
-                        Sinkronisasi Produk
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => syncPesananMut.mutate(akun.id)}>
-                        Sinkronisasi Pesanan
-                      </Button>
-                      {warehouseEnabled && <Button size="sm" variant="outline" onClick={() => pushMut.mutate(akun)}>
-                        Kirim Stok &amp; Harga
-                      </Button>}
-                    </>
-                  )}
-                  {isOwnerLevel(user?.role) && (
-                    <>
-                      <Button size="sm" variant="outline" onClick={() => openEdit(akun)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => onDelete(akun)}>
-                        Hapus
-                      </Button>
-                    </>
-                  )}
-                </AksiLainnya>
-              )}
+              aksi={actions}
               minWidth={980}
-            />
+            /></div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{akunList?.map(akun=><article key={akun.id} className="min-w-0 space-y-3 rounded-xl border p-4"><h2 className="break-words font-semibold">{akun.nama_toko}</h2><p className="text-xs text-muted-foreground">{PLATFORM_LABELS[akun.platform]} · {akun.id_toko_eksternal??'Belum terhubung'}</p>{columns.find(c=>c.kunci==='koneksi')?.sel(akun)}<div className="text-sm"><p className="text-xs text-muted-foreground">Sinkronisasi pesanan terakhir</p><p className="mt-1">{columns.find(c=>c.kunci==='sinkron')?.sel(akun)}</p></div><div className="flex justify-end border-t pt-3">{actions(akun)}</div></article>)}</div>
             {(akunList ?? []).length === 0 && (
               <p className="py-8 text-center text-muted-foreground">Belum ada toko. Tambahkan toko pertama Anda.</p>
             )}
@@ -266,7 +277,6 @@ export default function AkunPage() {
         </CardContent>
       </Card>
 
-      {settingsShop && <ShopSettings key={settingsShop.id} id={settingsShop.id} name={settingsShop.nama_toko} close={() => setSettingsShop(null)} />}
       <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>

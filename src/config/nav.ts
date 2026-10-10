@@ -30,13 +30,14 @@ export interface NavItem {
   posisiBawah?: number
 }
 
-export type GrupNav = 'harian' | 'produk' | 'keuangan' | 'pengaturan'
+export type GrupNav = 'harian' | 'produk' | 'keuangan' | 'info-toko' | 'pengaturan'
 
 /** Sidebar sections in the order of the daily workflow: work the orders, manage products, money, then setup. */
 export const GRUP_NAV: { id: GrupNav; label: string }[] = [
   { id: 'harian', label: 'Harian' },
   { id: 'produk', label: 'Produk' },
   { id: 'keuangan', label: 'Keuangan & Iklan' },
+  { id: 'info-toko', label: 'Info Toko' },
   { id: 'pengaturan', label: 'Pengaturan' },
 ]
 
@@ -55,7 +56,8 @@ export const NAV: NavItem[] = [
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/settlement', label: 'Settlement', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
-  { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'harian' },
+  { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
+  { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/asisten', label: 'Asisten AI', icon: Bot, roles: ROLES_ADMIN_ONLY, grup: 'pengaturan' },

@@ -15,8 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 const field = 'w-full rounded-lg border bg-background p-2'
 
 export default function ShopSettings({ id, name, close }: { id: string; name: string; close: () => void }) {
+  return <Dialog open onOpenChange={v => { if (!v) close() }}><DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Pengaturan Toko · {name}</DialogTitle></DialogHeader><ShopSettingsContent id={id}/></DialogContent></Dialog>
+}
+
+export function ShopSettingsContent({id}: {id:string}) {
   const [tab, setTab] = useState('profil')
-  return <Dialog open onOpenChange={v => { if (!v) close() }}><DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Pengaturan Shopee · {name}</DialogTitle></DialogHeader><Tabs value={tab} onValueChange={setTab}><TabsList className="section-tabs"><TabsTrigger value="profil">Profil</TabsTrigger><TabsTrigger value="libur">Libur</TabsTrigger><TabsTrigger value="jasa-kirim">Jasa Kirim</TabsTrigger><TabsTrigger value="alamat">Alamat</TabsTrigger></TabsList><TabsContent value="profil"><Profile id={id} /></TabsContent><TabsContent value="libur"><Holiday id={id} /></TabsContent><TabsContent value="jasa-kirim"><Channels id={id} /></TabsContent><TabsContent value="alamat"><Addresses id={id} /></TabsContent></Tabs></DialogContent></Dialog>
+  return <Tabs value={tab} onValueChange={setTab}><TabsList className="section-tabs w-full"><TabsTrigger value="profil">Profil</TabsTrigger><TabsTrigger value="jasa-kirim">Pengiriman</TabsTrigger><TabsTrigger value="alamat">Alamat</TabsTrigger><TabsTrigger value="libur">Mode Libur</TabsTrigger></TabsList><TabsContent value="profil"><Profile id={id}/></TabsContent><TabsContent value="jasa-kirim"><Channels id={id}/></TabsContent><TabsContent value="alamat"><Addresses id={id}/></TabsContent><TabsContent value="libur"><Holiday id={id}/></TabsContent></Tabs>
 }
 
 function useSave(id: string, section: string) {
