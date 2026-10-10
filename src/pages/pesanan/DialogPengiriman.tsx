@@ -58,7 +58,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
   function reload() { setHasil({}); setPengaturan({}); setPutaran((n) => n + 1) }
   return <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
     <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-      <DialogHeader><DialogTitle>{ulang === targets.length ? 'Jadwalkan Ulang Pickup' : `Atur pengiriman ${targets.length} pesanan Shopee`}</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{ulang === targets.length ? 'Jadwalkan Ulang Pickup' : `Proses ${targets.length} pesanan Shopee`}</DialogTitle></DialogHeader>
       {ulang > 0 && <p className="text-sm">{ulang} pesanan membutuhkan penjadwalan ulang pickup. Pilih alamat dan jadwal terbaru dari Shopee.</p>}
       <fieldset className="space-y-2">
         <legend className="mb-2 text-sm font-medium">Metode pengiriman</legend>
@@ -130,7 +130,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
         <Button variant="ghost" onClick={reload} disabled={loading > 0}>Muat ulang opsi</Button>
         <Button variant="outline" onClick={onClose}>Batal</Button>
         <Button disabled={!canSubmit} onClick={() => onConfirm(selected.map((p) => p.id), Object.fromEntries(selected.map((p) => [p.id, pengaturan[p.id]])))}>
-          {cetak ? 'Konfirmasi & cetak resi' : ulang === targets.length ? 'Konfirmasi jadwal ulang pickup' : 'Konfirmasi pengiriman'}
+          {cetak ? 'Proses & cetak resi' : ulang === targets.length ? 'Jadwalkan ulang pickup' : 'Proses Pesanan'}
         </Button>
       </DialogFooter>
     </DialogContent>
