@@ -1,3 +1,4 @@
+import NotificationsBell from '@/components/NotificationsBell'
 import { LogOut, X } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
@@ -43,10 +44,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         className="fixed inset-x-3 top-3 z-40 flex h-14 items-center rounded-2xl px-4 lg:hidden"
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
           <span className="font-heading truncate text-sm font-semibold">Ampel Kuning ERP</span>
         </div>
+        <NotificationsBell/>
       </div>
 
       <aside
@@ -138,6 +140,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {open && <div className="fixed inset-0 z-40 bg-black/20 lg:hidden" onClick={() => setOpen(false)} />}
       <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-0 lg:pb-0">
+        <div className="hidden h-14 items-center justify-end px-6 lg:flex"><NotificationsBell/></div>
         <div className="fade-in mx-auto max-w-[1400px] p-3 sm:p-5 lg:p-6 erp-content">
           {children}
         </div>

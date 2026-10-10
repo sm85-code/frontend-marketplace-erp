@@ -40,3 +40,6 @@ export const addVariant = (id: string, model: { tier_index: number[]; sku: strin
 export const initVariants = (id: string, body: { tiers: { name: string; options: { option: string }[] }[]; models: { tier_index: number[]; sku: string; price: number; stock: number }[] }) => api.post<MutasiMarketplace>(`${product(id)}/inisialisasi-varian`, body).then(r => r.data)
 export interface HourlyAd { hour: number; impression?: number; clicks?: number; expense?: number | null; broad_gmv?: number | null; broad_order?: number; broad_roas?: number | null; broad_roi?: number | null }
 export const hourlyAds = (id: string, tanggal: string, campaign_id?: string) => api.get<{ items: HourlyAd[] }>(`${shop(id)}/iklan/performa-jam`, { params: { tanggal, campaign_id: campaign_id || undefined } }).then(r => r.data)
+
+export interface ShopConnection {id:string;status:string;otorisasi_tersedia:boolean;perlu_otorisasi_ulang:boolean;sinkron_pesanan_at:string|null;sinkron_penuh_at:string|null}
+export const shopConnections=()=>api.get<ShopConnection[]>('/koneksi-toko').then(r=>r.data)

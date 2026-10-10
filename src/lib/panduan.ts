@@ -10,6 +10,12 @@ export const panduan: Panduan[] = [
    langkah: ['Pilih toko, lalu gunakan mode Tanya untuk membaca data.', 'Gunakan Jalankan perintah untuk perubahan; sebutkan produk, tindakan dan nilainya.', 'Periksa jawaban dan catatan tindakan. Hasil belum pasti tidak dikirim ulang otomatis.'],
    dampak: 'Mode perintah dapat mengubah produk, iklan dan promosi di Shopee. Penggunaan AI dikenai biaya token.'},
   {
+    path: '/pengaturan-toko', judul: 'Pengaturan Toko',
+    tujuan: 'Kelola profil dan pengaturan operasional toko Shopee.',
+    dampak: 'Perubahan hanya untuk toko terpilih dan dikirim setelah konfirmasi admin.',
+    langkah: ['Pilih toko Shopee.', 'Buka tab Profil, Pengiriman, Alamat atau Mode Libur.', 'Simpan dan konfirmasikan perubahan untuk toko yang dipilih.'],
+  },
+  {
     path: '/performa-toko', judul: 'Performa Toko',
     tujuan: 'Periksa indikator kesehatan dan riwayat penalti toko dari Shopee.',
     langkah: ['Pilih toko Shopee untuk membaca indikator terbaru.', 'Bandingkan periode saat ini dengan periode sebelumnya dan target yang tersedia.', 'Periksa riwayat poin penalti kuartal berjalan; gunakan halaman berikutnya untuk catatan lain.'],

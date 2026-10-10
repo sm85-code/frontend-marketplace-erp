@@ -1,6 +1,6 @@
 import PenaltiToko from './PenaltiToko'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useTokoAktif } from '@/lib/tokoAktif'
 import * as api from '@/api/endpoints'
 import { Button } from '@/components/ui/button'
 import QueryError from '@/components/QueryError'
@@ -14,7 +14,7 @@ function metricValue(value: number | null | undefined, unit: number): string {
   return value.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + (suffix[unit] ?? '')
 }
 export default function PerformaTokoPage() {
-  const [akun, setAkun] = useState('')
+  const [akun, setAkun] = useTokoAktif(true)
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => api.listAkun() })
   const result = useQuery({ queryKey: ['performa-toko', akun], queryFn: () => api.getShopPerformance(akun), enabled: !!akun, retry: false })
   return <div className="space-y-4 pb-24">

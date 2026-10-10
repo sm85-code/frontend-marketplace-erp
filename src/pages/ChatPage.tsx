@@ -75,6 +75,9 @@ export default function ChatPage() {
   const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
   const orderId = params.get('pesanan') ?? ''
+  const linkedId=params.get('percakapan')??''
+  const linkedShop=params.get('toko')??''
+  const linkedChat=useQuery({queryKey:['chat','messages',linkedShop,linkedId,''],queryFn:async()=>(await api.get<History>(`/akun/${encodeURIComponent(linkedShop)}/chat/${encodeURIComponent(linkedId)}/pesan`)).data,enabled:!!linkedId&&!!linkedShop,retry:false})
   const galleryInput = useRef<HTMLInputElement>(null)
   const cameraInput = useRef<HTMLInputElement>(null)
   const [photoError, setPhotoError] = useState('')
@@ -108,9 +111,9 @@ export default function ChatPage() {
     retry: false,
   })
   // The order route supplies the initial selection without resetting a user's draft on query refresh.
-  const shop = shopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
-  const threadShop = threadShopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
-  const selected = selectedOverride ?? (orderId ? (orderStart.data?.conversation ?? null) : null)
+  const shop = (linkedId?linkedShop:'') || shopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
+  const threadShop = (linkedId?linkedShop:'') || threadShopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
+  const selected = linkedId?(linkedChat.data?.conversation??null):selectedOverride ?? (orderId ? (orderStart.data?.conversation ?? null) : null)
   const available = shops.filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
   const targets = shop ? available.filter((a) => a.id === shop) : available
   const inbox = useQuery({
@@ -389,6 +392,8 @@ export default function ChatPage() {
         </p>
       )}
       {orderStart.isFetching && <Spinner column label="Menyiapkan percakapan pembeli…" />}
+      {linkedChat.isFetching && <Spinner column/>}
+      {linkedChat.error && <QueryError error={linkedChat.error} retry={linkedChat.refetch}/>}
       {orderStart.error && <QueryError error={orderStart.error} retry={orderStart.refetch} />}
       {!available.length && <p>Belum ada toko Shopee terhubung yang dapat Anda akses.</p>}
       {(inbox.data ?? [])
