@@ -22,6 +22,8 @@ export const setAddress = (id: string, address_id: number, address_type: Address
 export interface IncomeRow { order_sn?: string; description?: string; status?: string; currency?: string; estimated_escrow_amount?: number | null; released_amount?: number | null; estimated_payout_time?: number; actual_payout_time?: number; creation_date?: number; payment_method?: string }
 export interface IncomePage { items: IncomeRow[]; next_cursor: string; ada_lagi: boolean | null; pagination_known?: boolean; warnings?: string[] }
 export const income = (id: string, params: { dari: string; sampai: string; income_status: 1 | 2; cursor: string }) => api.get<IncomePage>(`${shop(id)}/pendapatan-shopee`, { params }).then(r => r.data)
+export interface IncomeOverview { pending_amount: number | string | null; released_amount: number | string | null }
+export const incomeOverview = (id: string) => api.get<IncomeOverview>(`${shop(id)}/ringkasan-pendapatan-shopee`).then(r => r.data)
 export interface Tracking { order_sn: string; logistics_status?: string; tracking_info: { update_time: number; description: string; logistics_status?: string }[] }
 export const tracking = (id: string, package_number?: string) => api.get<Tracking>(`${order(id)}/pelacakan`, { params: { package_number: package_number || undefined } }).then(r => r.data)
 export const setNote = (id: string, note: string) => api.patch<MutasiMarketplace>(`${order(id)}/catatan-shopee`, { note }).then(r => r.data)
