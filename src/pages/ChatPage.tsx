@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -384,7 +385,7 @@ export default function ChatPage() {
           Belum dibalas: pesan terakhir berasal dari pembeli pada halaman yang dimuat. Gunakan Berikutnya untuk menelusuri riwayat.
         </p>
       )}
-      {orderStart.isFetching && <p role="status">Menyiapkan percakapan pembeli…</p>}
+      {orderStart.isFetching && <Spinner column label="Menyiapkan percakapan pembeli…" />}
       {orderStart.error && <QueryError error={orderStart.error} retry={orderStart.refetch} />}
       {!available.length && <p>Belum ada toko Shopee terhubung yang dapat Anda akses.</p>}
       {(inbox.data ?? [])
@@ -396,7 +397,7 @@ export default function ChatPage() {
         ))}
       <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
         <section className={`min-w-0 overflow-hidden rounded-xl border bg-card ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
-          {inbox.isFetching && <p className="text-sm">Memuat percakapan…</p>}
+          {inbox.isFetching && <Spinner column label="Memuat percakapan…" />}
           {rows.map((c) => (
             <button
               key={`${c.shop.id}:${c.conversation_id}`}
@@ -485,7 +486,7 @@ export default function ChatPage() {
                 </p>
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
-              {history.isFetching && <p>Memuat pesan…</p>}
+              {history.isFetching && <Spinner column label="Memuat pesan…" />}
               {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && (
                 <Button
                   variant="outline"

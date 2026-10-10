@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/api/workflows'
@@ -86,7 +87,7 @@ export default function SengketaForm({
             atau negosiasi lanjutan, gunakan Seller Centre. Hak dan status pengajuan tetap ditentukan Shopee.
           </p>
           {reasons.error && <QueryError error={reasons.error} retry={reasons.refetch} />}
-          {reasons.isFetching && <p role="status">Memuat persyaratan sengketa…</p>}
+          {reasons.isFetching && <Spinner column label="Memuat persyaratan sengketa…" />}
           <form
             onSubmit={(e) => {
               e.preventDefault()

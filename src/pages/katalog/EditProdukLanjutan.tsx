@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -18,7 +19,7 @@ const inputClass = 'w-full rounded-lg border bg-background p-2'
 export default function EditProdukLanjutan({ detail }: { detail: KatalogDetail }) {
   const [open, setOpen] = useState(false)
   const q = useQuery({ queryKey: ['pengaturan-produk', detail.id], queryFn: () => api.settings(detail.id), enabled: open, retry: false })
-  return <div className="space-y-2"><Button variant="outline" onClick={()=>{void q.refetch();setOpen(true)}}>Edit Informasi / Varian</Button>{open && q.error && <QueryError error={q.error} retry={q.refetch}/>}{open && q.isFetching && <p>Memuat pengaturan terbaru…</p>}{open && q.data && <Editor detail={detail} initial={q.data} close={()=>setOpen(false)} />}</div>
+  return <div className="space-y-2"><Button variant="outline" onClick={()=>{void q.refetch();setOpen(true)}}>Edit Informasi / Varian</Button>{open && q.error && <QueryError error={q.error} retry={q.refetch}/>}{open && q.isFetching && <Spinner column label="Memuat pengaturan terbaru…" />}{open && q.data && <Editor detail={detail} initial={q.data} close={()=>setOpen(false)} />}</div>
 }
 function Editor({ detail, initial, close }: { detail: KatalogDetail; initial: api.ItemSettings; close: ()=>void }) {
   const confirm = useConfirm(), qc = useQueryClient()
