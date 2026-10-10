@@ -170,6 +170,8 @@ export interface Pesanan {
   cancel_by?: string
   cancel_reason?: string
   penerima?: string
+  alamat_penerima?: string
+  telepon_penerima?: string
   kota?: string
   ship_by_date?: number
   created_at: string
