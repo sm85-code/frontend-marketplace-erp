@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input'
 
 export function ChatCardView({ card }: { card: ChatCard }) {
   return (
-    <div className="flex min-w-0 items-start gap-2">
+    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-border/70 bg-muted/70 p-3">
       <FotoItem item={{ nama_produk: card.nama, foto: card.foto }} />
-      <div className="min-w-0 text-sm">
+      <div className="min-w-0 flex-1 text-sm">
         <div className="break-words font-medium">{card.order_sn ? `Pesanan #${card.order_sn}` : card.nama}</div>
         {card.varian && <div className="mt-1 text-xs font-medium text-muted-foreground">Varian: {card.varian}</div>}
         {card.total !== undefined && <div>Total: {fmtMoney(card.total)}</div>}

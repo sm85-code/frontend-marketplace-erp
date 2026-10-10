@@ -4,7 +4,7 @@ import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
 import { useRef, useState } from 'react'
-import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
 import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
@@ -529,8 +529,8 @@ export default function ChatPage() {
                       </Link>
                     )}
                     {m.context?.katalog_id && (
-                      <Link className="text-sm underline" to={`/katalog/${encodeURIComponent(m.context.katalog_id)}`}>
-                        Buka produk terkait
+                      <Link className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg border bg-muted/70 text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring" to={`/katalog/${encodeURIComponent(m.context.katalog_id)}`} target="_blank" rel="noopener noreferrer" aria-label="Buka produk terkait di tab baru" title="Buka produk di tab baru">
+                        <ArrowUpRight className="size-4" aria-hidden="true" />
                       </Link>
                     )}
                   </div>
