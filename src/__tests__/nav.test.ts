@@ -25,10 +25,10 @@ describe('menu order follows the daily workflow', () => {
   it('groups the admin menu as agreed (Toko lives under Pengaturan, Iklan is admin-only)', () => {
     const peta = Object.fromEntries(kelompokNav(filterNavForUser({ role: 'admin' })).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
-      harian: ['/dashboard', '/pesanan', '/chat', '/asisten', '/performa-toko'],
+      harian: ['/dashboard', '/pesanan', '/chat', '/performa-toko'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       keuangan: ['/settlement', '/iklan'],
-      pengaturan: ['/toko', '/staff', '/profile'],
+      pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
     })
   })
 
