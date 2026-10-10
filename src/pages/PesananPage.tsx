@@ -93,11 +93,6 @@ export default function PesananPage() {
     }
   }, [sinkronData, sinkron.dataUpdatedAt, qc])
 
-  const segarkanMut = useMutation({
-    mutationFn: () => qc.invalidateQueries({ queryKey: ['pesanan'] }),
-    onError: (e) => toast.error(getApiError(e)),
-  })
-
   const prosesMassalMut = useMutation({
     mutationFn: async ({ ids, pengaturan }: { ids: string[]; pengaturan: Record<string, PengaturanPengiriman> }) => {
       const res = await prosesBatchPengiriman(ids, pengaturan, endpoints.prosesMassalPesanan)
@@ -260,9 +255,7 @@ export default function PesananPage() {
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
         <Sinkronisasi jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
-        <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
-          Refresh
-        </Button>
+
         <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button>      <div className="order-mobile-view md:hidden" role="group" aria-label="Tampilan pesanan di HP">
         <div className="inline-flex rounded-lg border bg-card p-1">
           {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
