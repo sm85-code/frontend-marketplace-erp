@@ -35,13 +35,40 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(false)
   const mounted = useRef(true)
   const running = useRef(false)
+  const recovery = useRef(false)
+  const attempts = useRef(0)
+  const resume = useRef<() => void>(() => {})
+  const [recovering, setRecovering] = useState(false)
+  useEffect(() => {
+    const wake = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine && recovery.current && !cancelled.current) {
+        attempts.current = 0
+        resume.current()
+      }
+    }
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine && recovery.current && !cancelled.current && attempts.current < 5) resume.current()
+    }, 5000)
+    document.addEventListener('visibilitychange', wake)
+    window.addEventListener('online', wake)
+    window.addEventListener('focus', wake)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', wake)
+      window.removeEventListener('online', wake)
+      window.removeEventListener('focus', wake)
+    }
+  }, [])
   useEffect(() => { mounted.current = true; return () => { cancelled.current = true; mounted.current = false } }, [])
   const [error, setError] = useState('')
   const [job, setJob] = useState<Job | null>(null)
   const key = `erp.sync.${jenis}`
   const { data: shops = [] } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
-  async function run(retry = false) {
+  async function run(retry = false, automatic = false) {
     if (running.current) return
+    if (automatic && (!recovery.current || cancelled.current)) return
+    if (automatic) attempts.current += 1
+    else attempts.current = 0
     running.current = true
     cancelled.current = false
     setPaused(false)
@@ -49,17 +76,19 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
     try {
       let current = job
       const saved = localStorage.getItem(key)
-      if (!current && saved) {
-        try { current = (await api.get<Job>(`/sinkronisasi/${encodeURIComponent(saved)}`)).data }
+      const existingId = current?.id ?? saved
+      if (existingId) {
+        try { current = (await api.get<Job>(`/sinkronisasi/${encodeURIComponent(existingId)}`)).data }
         catch (e) {
-          if ((e as { response?: { status?: number } }).response?.status === 404) localStorage.removeItem(key)
+          if (!automatic && (e as { response?: { status?: number } }).response?.status === 404) { localStorage.removeItem(key); current = null }
           else throw e
         }
       }
-      if ((retry || current?.status === 'sebagian') && current) current = (await api.post<Job>(`/sinkronisasi/${current.id}/ulangi-gagal`)).data
-      if (!current || (current.status === 'selesai' && !retry)) {
+      if (!automatic && (retry || current?.status === 'sebagian') && current) current = (await api.post<Job>(`/sinkronisasi/${current.id}/ulangi-gagal`)).data
+      if (!current && !automatic) {
         current = (await api.post<Job>('/sinkronisasi', { jenis, ids: scope === 'pilihan' ? ids : [], akun_id: scope === 'toko' ? shop : undefined })).data
       }
+      if (!current) return
       if (!mounted.current) return
       localStorage.setItem(key, current.id)
       setJob(current)
@@ -67,12 +96,21 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
         current = (await api.post<Job>(`/sinkronisasi/${current.id}/lanjut`, undefined, { timeout: 60_000 })).data
         if (!mounted.current) return
         setJob(current)
+        attempts.current = 0
       }
+      recovery.current = false; setRecovering(false)
       if (current.tersisa === 0 && !current.gagal.length) localStorage.removeItem(key)
       for (const queryKey of [['pesanan'], ['katalog'], ['produk'], ['listing']]) await qc.invalidateQueries({ queryKey })
-    } catch (e) { setError(getApiError(e)) }
+    } catch (e) {
+      if (!mounted.current) return
+      const failure = e as { code?: string; response?: { status?: number } }
+      recovery.current = !cancelled.current && !!localStorage.getItem(key) && (failure.code === 'ERR_NETWORK' || failure.code === 'ECONNABORTED' || failure.code === 'ETIMEDOUT' || [502, 503, 504].includes(failure.response?.status ?? 0))
+      setRecovering(recovery.current)
+      setError(getApiError(e))
+    }
     finally { running.current = false; if (mounted.current) setBusy(false) }
   }
+  resume.current = () => { void run(false, true) }
   function show(next: Request) {
     if (!busy && !job?.tersisa) {
       setRequest(next)
@@ -89,7 +127,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
     {request && !open && (job || busy || error) && <div className="fixed right-3 bottom-24 z-40 w-[min(320px,calc(100vw-1.5rem))] rounded-xl border bg-card p-3 shadow-lg lg:right-6 lg:bottom-6" aria-label="Progres sinkronisasi">
       <button className="flex w-full items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => setOpen(true)} aria-label="Buka progres sinkronisasi">
         {busy && <Spinner size={22} label={null} />}
-        <span className="min-w-0 flex-1 text-sm"><span className="block font-semibold">Sinkronisasi {jenis}</span><span role="status" className="text-xs text-muted-foreground">{error ? 'Perlu dilanjutkan' : busy ? `${job?.selesai ?? 0} selesai · ${job?.tersisa ?? 0} tersisa` : paused ? 'Dijeda' : job?.gagal.length ? 'Selesai dengan kegagalan' : 'Selesai'}</span></span>
+        <span className="min-w-0 flex-1 text-sm"><span className="block font-semibold">Sinkronisasi {jenis}</span><span role="status" className="text-xs text-muted-foreground">{recovering && error ? 'Menunggu koneksi · lanjut otomatis' : error ? 'Perlu dilanjutkan' : busy ? `${job?.selesai ?? 0} selesai · ${job?.tersisa ?? 0} tersisa` : paused ? 'Dijeda' : job?.gagal.length ? 'Selesai dengan kegagalan' : 'Selesai'}</span></span>
         <Maximize2 className="size-4 shrink-0" />
       </button>
       {total > 0 && <progress aria-label="Kemajuan sinkronisasi" className="mt-2 h-2 w-full accent-primary" value={percent} max={100} />}
@@ -107,7 +145,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
       {job && total > 0 && <progress aria-label="Kemajuan sinkronisasi" className="h-2 w-full accent-primary" value={percent} max={100} />}
       {job && <div role="status">{job.selesai} langkah selesai · {job.tersisa} tersisa · {job.gagal.length} gagal{job.status === 'sebagian' && <p>Selesai sebagian; periksa item yang gagal.</p>}{job.status === 'selesai' && <p>Sinkronisasi selesai.</p>}</div>}
       {!!job?.gagal.length && <ul className="max-h-40 overflow-auto text-sm text-destructive">{job.gagal.map((g, i) => <li key={i}>{shops.find(a => a.id === g.unit.akun_id)?.nama_toko ?? 'Toko'} {g.unit.external ?? ''}: {g.pesan}</li>)}</ul>}
-      {error && <p role="alert" className="text-sm text-destructive">{error} Antrean tersimpan; lanjutkan tanpa mengulang yang selesai.</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{recovering ? 'Koneksi terputus. Antrean tersimpan; sinkronisasi akan dilanjutkan otomatis saat kembali ke ERP atau koneksi pulih.' : `${error} Antrean tersimpan; lanjutkan tanpa mengulang yang selesai.`}</p>}
       <Button disabled={busy || (scope === 'toko' && !shop)} onClick={() => run()}>{busy ? 'Menyinkronkan…' : job?.status === 'sebagian' ? 'Ulangi yang gagal' : job?.tersisa || localStorage.getItem(key) ? 'Lanjutkan sinkronisasi' : 'Mulai sinkronisasi'}</Button>
       {busy && <Button variant="outline" onClick={() => { cancelled.current = true; setPaused(true) }}>Jeda sinkronisasi</Button>}
     </DialogContent></Dialog>
