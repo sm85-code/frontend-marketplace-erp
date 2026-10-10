@@ -263,7 +263,7 @@ export default function PesananPage() {
         <Button variant="outline" onClick={() => segarkanMut.mutate()} disabled={segarkanMut.isPending}>
           Refresh
         </Button>
-        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button>      <div className="md:hidden" role="group" aria-label="Tampilan pesanan di HP">
+        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button>      <div className="order-mobile-view md:hidden" role="group" aria-label="Tampilan pesanan di HP">
         <div className="inline-flex rounded-lg border bg-card p-1">
           {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
         </div>
@@ -325,7 +325,7 @@ export default function PesananPage() {
         </div>
       ) : (
         <>
-        {modeHp === 'kartu' && <div className="space-y-3 md:hidden">
+        {modeHp === 'kartu' && <div className="order-mobile-view space-y-3 md:hidden">
           <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Pilih semua di halaman ini" disabled={!bisaDipilihSemua.length} checked={bisaDipilihSemua.length > 0 && bisaDipilihSemua.every((p) => pilih.ada(p.id))} onCheckedChange={(v) => pilih.ubahBanyak(bisaDipilihSemua, v === true)} />Pilih semua di halaman ini</label>
           <ul className="space-y-3" aria-label="Kartu pesanan">
             {items.map((p) => <li key={p.id} className="space-y-3 rounded-xl border bg-card p-4">
@@ -340,7 +340,7 @@ export default function PesananPage() {
             </li>)}
           </ul>
         </div>}
-        <div className={modeHp === 'kartu' ? 'hidden md:block' : ''}>
+        <div className={modeHp === 'kartu' ? 'order-desktop-table hidden md:block' : ''}>
         <TabelData
           label="Daftar pesanan"
           items={items}
@@ -358,7 +358,7 @@ export default function PesananPage() {
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
           aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: true })} cetakSibuk={sedangBekerja} />}
-          minWidth={820}
+          minWidth={1200}
         />
         </div>
         </>

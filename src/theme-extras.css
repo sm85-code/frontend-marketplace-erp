@@ -389,3 +389,9 @@ tr[data-anak]:hover > .sel-tetap {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+/* Touch phones retain the compact order view when rotated, even above md. */
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .order-mobile-view { display: block; }
+  .order-desktop-table { display: none; }
+}

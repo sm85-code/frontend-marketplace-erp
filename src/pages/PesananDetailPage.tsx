@@ -1,3 +1,4 @@
+import { Copy } from 'lucide-react'
 import api from '@/api/client'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -268,7 +269,10 @@ export default function PesananDetailPage() {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">No. Resi</div>
-                <div className="font-medium">{pesanan.nomor_resi}</div>
+                <div className="flex items-center gap-1"><span className="min-w-0 break-all font-medium">{pesanan.nomor_resi || '—'}</span>{pesanan.nomor_resi && <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Salin nomor resi ${pesanan.nomor_resi}`} onClick={async () => {
+                  try { await navigator.clipboard.writeText(pesanan.nomor_resi!); toast.success('Nomor resi disalin') }
+                  catch { toast.error('Gagal menyalin nomor resi. Coba lagi.') }
+                }}><Copy className="h-4 w-4" /></Button>}</div>
               </div>
             </>
           )}
