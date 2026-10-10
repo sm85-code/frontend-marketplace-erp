@@ -9,6 +9,7 @@ import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
+import ShopeeProductTools from './ShopeeProductTools'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
@@ -41,6 +42,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
             {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
             {manage && <SalinMasterProduk ids={[detail.id]} />}
             {user?.role === 'admin' && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
+            {user?.role === 'admin' && <ShopeeProductTools detail={detail} close={onTutup} />}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
             {manage && <Bantuan rincian judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
             <div className="flex flex-wrap items-center gap-2">

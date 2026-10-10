@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS } from '@/config/roles'
 import TransaksiDana from './settlement/TransaksiDana'
 import DanaShopee from './settlement/DanaShopee'
+import PendapatanShopee from './settlement/PendapatanShopee'
 
 const emptyForm = {
   akun_id: '',
@@ -117,8 +118,9 @@ export default function SettlementPage() {
       </BarHalaman>
 
       <Tabs defaultValue="dana">
-        <TabsList className="section-tabs"><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
+        <TabsList className="section-tabs"><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="pendapatan">Pendapatan</TabsTrigger><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
         <TabsContent value="dana"><DanaShopee /></TabsContent>
+        <TabsContent value="pendapatan"><PendapatanShopee /></TabsContent>
         <TabsContent value="saldo"><SaldoToko /></TabsContent>
         <TabsContent value="mutasi"><TransaksiDana /></TabsContent>
         <TabsContent value="manual">

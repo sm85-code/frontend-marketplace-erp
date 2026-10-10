@@ -1,4 +1,5 @@
 import Bantuan from '@/components/Bantuan'
+import PerformaJam from './PerformaJam'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -114,6 +115,7 @@ export default function PerformaShopee() {
         </p></Bantuan>
       </CardHeader>
       <CardContent className="space-y-4">
+        <PerformaJam />
         <BarFilter aktif={f.jumlahAktif}>
           <FilterPilih
             id="iklan-toko-filter"
