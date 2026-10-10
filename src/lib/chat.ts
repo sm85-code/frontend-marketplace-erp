@@ -13,6 +13,7 @@ export type ChatCard = {
   items?: { nama: string; varian: string; qty: number; foto: string | null }[]
 }
 export type ChatContext = {
+  punya_pesanan?: boolean
   kota: string | null
   kota_sumber: string | null
   pesanan: ChatCard[]
