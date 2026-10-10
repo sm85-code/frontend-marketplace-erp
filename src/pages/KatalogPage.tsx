@@ -184,7 +184,7 @@ export default function KatalogPage() {
 
       <details className="rounded-xl border bg-card">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Pengaturan tampilan</summary>
-        <div className="grid grid-cols-1 gap-3 border-t p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-end gap-4 border-t p-4 sm:grid-cols-2 xl:grid-cols-3">
         <PilihTampilan
           id="katalog-tampilan"
           nilai={tampilan}
@@ -196,7 +196,7 @@ export default function KatalogPage() {
         />
         {tampilan === 'list' && (<>
           <UkuranHalaman value={perHalaman} onChange={n=>{setPerHalaman(n);f.setHalaman(1)}} />
-        <div className="flex items-end">
+        <div className="flex min-h-11 items-end [&>button]:w-full">
             <PemilihKolom
               semua={semuaKolom}
               tampil={kolom.tampil}

@@ -26,9 +26,9 @@ const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
 function Kartu({ label, nilai, catatan, href }: { label: string; nilai: string; catatan?: string; href?: string }) {
   return (
     <Card>
-      <CardContent className="p-3 sm:p-6">
-        <div className="teks-kecil text-muted-foreground">{label}</div>
-        <div className="text-base font-bold tabular-nums sm:text-2xl">{href ? <Link className="text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={href}>{nilai}</Link> : nilai}</div>
+      <CardContent className="flex h-full flex-col justify-between gap-2 p-3 md:p-4 xl:p-5">
+        <div className="teks-kecil text-muted-foreground md:min-h-10 xl:min-h-0">{label}</div>
+        <div className="text-xl font-bold tabular-nums md:text-3xl">{href ? <Link className="text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={href}>{nilai}</Link> : nilai}</div>
         {catatan && <div className="teks-kecil mt-0.5 text-muted-foreground">{catatan}</div>}
       </CardContent>
     </Card>
@@ -48,7 +48,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 }
 
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
-  { kunci: 'nama_toko', judul: 'Toko', kelas: 'font-medium', sel: (t) => <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
+  { kunci: 'nama_toko', judul: 'Toko', kelas: 'min-w-[180px] max-w-[260px] break-words font-medium', sel: (t) => <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
@@ -67,7 +67,7 @@ const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
 ]
 
 const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
-  { kunci: 'nama', judul: 'Produk', kelas: 'min-w-[220px] max-w-[420px]', sel: (p) => p.nama_produk, nilai: (p) => p.nama_produk },
+  { kunci: 'nama', judul: 'Produk', kelas: 'min-w-[260px] max-w-[480px] break-words', sel: (p) => p.nama_produk, nilai: (p) => p.nama_produk },
   { kunci: 'qty', judul: 'Terjual', rata: 'kanan', kelas: 'font-semibold', sel: (p) => p.qty_terjual.toLocaleString('id-ID'), nilai: (p) => p.qty_terjual },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (p) => p.pesanan.toLocaleString('id-ID'), nilai: (p) => p.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.omzet), nilai: (p) => Number(p.omzet) },
@@ -99,30 +99,25 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <BarHalaman
-        judul="Dashboard"
-
-      >
-        {user && (
-          <div className="w-48">
-            <FilterPilih
-              id="dashboard-periode"
-              label="Periode"
-              nilai={preset}
-              onUbah={(v) => setPreset(v as PresetTanggal)}
-              opsi={PRESET_DASHBOARD.map((k) => ({ value: k, label: PRESET_LABEL[k] }))}
-            />
-          </div>
-        )}
-        <div className="w-48"><FilterPilih id="dashboard-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(semuaToko??[]).map(t=>({value:t.id,label:t.nama_toko}))}/></div>
-        {isFetching && !isLoading && <Spinner size={18} />}
+      <BarHalaman judul="Dashboard">
+        <div className="grid w-full grid-cols-2 items-end gap-3 md:w-auto md:grid-cols-[180px_minmax(220px,280px)_auto]">
+          {user && <FilterPilih
+            id="dashboard-periode"
+            label="Periode"
+            nilai={preset}
+            onUbah={(v) => setPreset(v as PresetTanggal)}
+            opsi={PRESET_DASHBOARD.map((k) => ({ value: k, label: PRESET_LABEL[k] }))}
+          />}
+          <FilterPilih id="dashboard-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(semuaToko ?? []).map(t => ({ value: t.id, label: t.nama_toko }))} />
+          {isFetching && !isLoading && <Spinner size={18} label={null} className="self-center" />}
+        </div>
       </BarHalaman>
 
       {error ? <QueryError error={error} retry={refetch} /> : isLoading || !d ? (
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 xl:grid-cols-5">
             <Kartu label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
             <Kartu label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
             <Kartu label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
@@ -139,7 +134,7 @@ export default function DashboardPage() {
               idDari={(t) => t.akun_id ?? 'none'}
               namaDari={(t) => t.nama_toko}
               urutAwal={{ kunci: 'omzet', arah: 'desc' }}
-              minWidth={820}
+              minWidth={1050}
               footer={<TotalToko d={d} />}
             />
           </Bagian>
