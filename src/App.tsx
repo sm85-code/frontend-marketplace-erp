@@ -1,3 +1,4 @@
+import { SinkronisasiSession } from '@/components/SinkronisasiProvider'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -67,7 +68,7 @@ export default function App() {
     <div className="App">
       <ErrorBoundary context="app">
         <BrowserRouter>
-          <AuthProvider>
+          <AuthProvider><SinkronisasiSession>
             <Routes>
               <Route path="/login" element={<LazyPage><LoginPage /></LazyPage>} />
               <Route
@@ -130,7 +131,7 @@ path="/iklan"
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />
             </Routes>
-          </AuthProvider>
+          </SinkronisasiSession></AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>
     </div>
