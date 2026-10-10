@@ -290,7 +290,7 @@ export default function PesananDetailPage() {
           )}
           <div className="col-span-2">
             <div className="text-xs text-muted-foreground">Catatan Pembeli untuk Penjual</div>
-            <p className="whitespace-pre-wrap break-words font-semibold">{pesanan.message_to_seller || '—'}</p>
+            <p className="mt-1 rounded-lg bg-muted px-3 py-2 whitespace-pre-wrap break-words font-semibold">{pesanan.message_to_seller || '—'}</p>
           </div>
           {pesanan.note && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words font-semibold">{pesanan.note}</p></div>}
           {pesanan.catatan_sinkron && (
@@ -310,8 +310,8 @@ export default function PesananDetailPage() {
         </CardHeader>
         <CardContent className="divide-y">
           {pesanan.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-              <div className="flex min-w-0 items-center gap-3">
+            <div key={item.id} className="grid grid-cols-1 items-start gap-2 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="flex min-w-0 items-start gap-3">
                 <FotoItem item={item} ukuran={64} />
                 <div className="min-w-0">
                   <div className="font-medium">{item.nama_produk}</div>
@@ -321,7 +321,7 @@ export default function PesananDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="font-semibold">{fmtMoney(item.subtotal, pesanan.currency)}</div>
+              <div className="whitespace-nowrap text-right font-semibold">{fmtMoney(item.subtotal, pesanan.currency)}</div>
             </div>
           ))}
         </CardContent>
