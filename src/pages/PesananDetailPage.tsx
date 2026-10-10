@@ -1,5 +1,6 @@
 import { Copy } from 'lucide-react'
 import api from '@/api/client'
+import ShopeeOrderTools from './pesanan/ShopeeOrderTools'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FotoItem } from './pesanan/ItemRingkas'
@@ -292,7 +293,7 @@ export default function PesananDetailPage() {
             <div className="text-xs text-muted-foreground">Catatan Pembeli untuk Penjual</div>
             <p className="mt-1 rounded-lg bg-muted px-3 py-2 whitespace-pre-wrap break-words font-semibold">{pesanan.message_to_seller || '—'}</p>
           </div>
-          {pesanan.note && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words font-semibold">{pesanan.note}</p></div>}
+          {pesanan.note && !(pesanan.platform === 'shopee' && ikutMarketplace(pesanan)) && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words font-semibold">{pesanan.note}</p></div>}
           {pesanan.catatan_sinkron && (
             <div className="col-span-2">
               <div className="text-xs text-muted-foreground">Catatan Sinkron Marketplace</div>
@@ -304,6 +305,7 @@ export default function PesananDetailPage() {
         </CardContent>
       </Card>
 
+      {pesanan.platform === 'shopee' && ikutMarketplace(pesanan) && <ShopeeOrderTools order={pesanan} />}
       <Card>
         <CardHeader>
           <CardTitle>Item</CardTitle>

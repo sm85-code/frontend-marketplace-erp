@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { PLATFORM_LABELS, isOwnerLevel } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
+import ShopSettings from './ShopSettings'
 
 const PLATFORMS: Platform[] = ['shopee', 'tiktokshop', 'lazada', 'blibli']
 
@@ -45,6 +46,7 @@ export default function AkunPage() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [settingsShop, setSettingsShop] = useState<AkunMarketplace | null>(null)
   const [editing, setEditing] = useState<AkunMarketplace | null>(null)
   const [form, setForm] = useState({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
 
@@ -223,6 +225,7 @@ export default function AkunPage() {
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
               aksi={(akun) => (
                 <AksiLainnya>
+                  {akun.platform === 'shopee' && akun.id_toko_eksternal && user?.role === 'admin' && <Button size="sm" variant="outline" onClick={() => setSettingsShop(akun)}>Pengaturan Shopee</Button>}
                   {akun.platform === 'shopee' && !akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
                     <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
                       Hubungkan Shopee
@@ -263,6 +266,7 @@ export default function AkunPage() {
         </CardContent>
       </Card>
 
+      {settingsShop && <ShopSettings key={settingsShop.id} id={settingsShop.id} name={settingsShop.nama_toko} close={() => setSettingsShop(null)} />}
       <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
