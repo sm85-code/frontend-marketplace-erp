@@ -111,6 +111,8 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     { kunci: 'cod', judul: 'COD', bawaan: false, sel: (p) => p.cod ? "Ya" : "Tidak" },
     { kunci: 'ongkir', judul: 'Ongkir', bawaan: false, sel: (p) => <div>{p.actual_shipping_fee != null ? `${fmtMoney(p.actual_shipping_fee, p.currency)} (aktual${p.actual_shipping_fee_confirmed === false ? ' belum final' : ''})` : p.estimated_shipping_fee != null ? `${fmtMoney(p.estimated_shipping_fee, p.currency)} (estimasi)` : '—'}</div> },
     { kunci: 'penerima', judul: 'Nama Penerima', bawaan: false, sel: (p) => p.penerima || "" },
+    { kunci: 'telepon_penerima', judul: 'No. HP Penerima', bawaan: false, sel: (p) => <span className="break-all">{p.telepon_penerima || '—'}</span> },
+    { kunci: 'alamat_penerima', judul: 'Alamat Penerima', bawaan: false, kelas: 'min-w-[220px] max-w-[360px]', sel: (p) => <p className="whitespace-pre-wrap break-words">{p.alamat_penerima || '—'}</p> },
     { kunci: 'kota', judul: 'Kota Tujuan', bawaan: false, sel: (p) => p.kota || "" },
     { kunci: 'catatan', judul: 'Catatan untuk Penjual', bawaan: false, sel: (p) => <p className="whitespace-pre-wrap break-words font-semibold">{p.message_to_seller || "—"}</p> },
     { kunci: 'batal', judul: 'Alasan Batal', bawaan: false, sel: (p) => [p.cancel_by, p.cancel_reason].filter(Boolean).join(" · ") },

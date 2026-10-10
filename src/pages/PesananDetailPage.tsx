@@ -238,6 +238,18 @@ export default function PesananDetailPage() {
             <div className="text-xs text-muted-foreground">Pembeli</div>
             <div className="font-medium">{pesanan.nama_pembeli || '—'}</div>
           </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">Nama Penerima</div>
+            <div className="break-words font-medium">{pesanan.penerima || '—'}</div>
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs text-muted-foreground">No. HP Penerima</div>
+            <div className="break-all font-medium">{pesanan.telepon_penerima || '—'}</div>
+          </div>
+          <div className="col-span-2 min-w-0">
+            <div className="text-xs text-muted-foreground">Alamat Penerima</div>
+            <div className="whitespace-pre-wrap break-words font-medium">{pesanan.alamat_penerima || pesanan.kota || '—'}</div>
+          </div>
           <div>
             <div className="text-xs text-muted-foreground">Total</div>
             <div className="font-medium">{fmtMoney(pesanan.total, pesanan.currency)}</div>
