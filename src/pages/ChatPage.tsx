@@ -22,6 +22,7 @@ type Conversation = {
   conversation_id: string
   latest_message_id?: string
   kota?: string | null
+  punya_pesanan?: boolean
   to_avatar?: string
   to_name: string
   to_id: number
@@ -183,6 +184,8 @@ export default function ChatPage() {
     retry: false,
   })
   const city = context.data?.kota ?? selected?.kota
+  const hasOrder = context.data?.punya_pesanan ?? selected?.punya_pesanan
+  const buyerLocation = city || (hasOrder === false ? 'Calon pembeli' : hasOrder === true ? 'Kota belum tersedia' : '')
   const markRead = useMutation({
     mutationFn: async () => {
       const latestId = history.data?.conversation.latest_message_id ?? selected?.latest_message_id
@@ -408,7 +411,7 @@ export default function ChatPage() {
             >
               <Avatar key={c.to_avatar} url={c.to_avatar}/>
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2"><span className="min-w-0 flex-1 break-words"><span className="font-semibold">{c.to_name || 'Pembeli'}</span>{c.kota && <span className="ml-1 text-xs text-muted-foreground" title="Alamat tujuan pesanan tersinkron">· {c.kota}</span>}</span><time className="shrink-0 text-[11px] text-muted-foreground" title={time(c.last_message_timestamp)}>{shortTime(c.last_message_timestamp)}</time></div>
+                <div className="flex items-start justify-between gap-2"><span className="min-w-0 flex-1 break-words"><span className="font-semibold">{c.to_name || 'Pembeli'}</span>{(c.kota || c.punya_pesanan !== undefined) && <span className="ml-1 text-xs text-muted-foreground">· {c.kota || (c.punya_pesanan ? 'Kota belum tersedia' : 'Calon pembeli')}</span>}</span><time className="shrink-0 text-[11px] text-muted-foreground" title={time(c.last_message_timestamp)}>{shortTime(c.last_message_timestamp)}</time></div>
                 <div className="truncate text-xs text-muted-foreground">{c.shop.nama_toko}</div>
                 <div className="mt-1 flex items-center justify-between gap-2"><p className="line-clamp-1 min-w-0 break-words text-sm text-muted-foreground">{chatPreview(c.latest_message_content, c.latest_message_type)}</p>
                   {c.unread_count > 0 && <span aria-label={`${c.unread_count} belum dibaca`} className="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">{c.unread_count}</span>}
@@ -461,7 +464,7 @@ export default function ChatPage() {
                 <Avatar key={selected.to_avatar} url={selected.to_avatar}/><h2 className="min-w-0 flex-1 font-medium">
                   {selected.to_name}
                   <span className="ml-2 text-sm text-muted-foreground" title="Alamat tujuan pesanan tersinkron">
-                    {city ? `· ${city}` : ''}
+                    {buyerLocation ? `· ${buyerLocation}` : ''}
                   </span>
                   <span className="block text-xs text-muted-foreground">{active?.nama_toko}</span>
                 </h2>
