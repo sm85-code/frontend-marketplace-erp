@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { useState } from 'react'
 import { Package, ReceiptText, Paperclip, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -76,7 +77,7 @@ export default function AttachmentPicker({
         />
       )}
       {!data ? (
-        <p className="text-sm">Memuat pilihan lampiran…</p>
+        <Spinner column label="Memuat pilihan lampiran…" />
       ) : (
         <>
           <div className="mt-3 grid max-h-80 gap-2 overflow-y-auto">

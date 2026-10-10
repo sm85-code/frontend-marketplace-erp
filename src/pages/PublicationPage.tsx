@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import MoneyInput from '@/components/MoneyInput'
 import Bantuan from '@/components/Bantuan'
 import { useEffect, useState } from 'react'
@@ -470,7 +471,7 @@ export default function PublicationPage() {
             </select>
           </div>
           {meta.error && <QueryError error={meta.error} retry={meta.refetch} />}
-          {meta.isFetching && <p role="status">Memuat kategori, atribut dan batas toko…</p>}
+          {meta.isFetching && <Spinner column label="Memuat kategori, atribut dan batas toko…" />}
           {meta.data && (
             <Attributes
               nodes={meta.data.attributes}

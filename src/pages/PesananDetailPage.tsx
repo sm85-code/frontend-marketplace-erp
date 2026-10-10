@@ -274,9 +274,9 @@ export default function PesananDetailPage() {
           )}
           <div className="col-span-2">
             <div className="text-xs text-muted-foreground">Catatan Pembeli untuk Penjual</div>
-            <p className="whitespace-pre-wrap break-words">{pesanan.message_to_seller || '—'}</p>
+            <p className="whitespace-pre-wrap break-words font-semibold">{pesanan.message_to_seller || '—'}</p>
           </div>
-          {pesanan.note && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words">{pesanan.note}</p></div>}
+          {pesanan.note && <div className="col-span-2"><div className="text-xs text-muted-foreground">Catatan Internal Penjual</div><p className="whitespace-pre-wrap break-words font-semibold">{pesanan.note}</p></div>}
           {pesanan.catatan_sinkron && (
             <div className="col-span-2">
               <div className="text-xs text-muted-foreground">Catatan Sinkron Marketplace</div>

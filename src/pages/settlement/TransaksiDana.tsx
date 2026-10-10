@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import Bantuan from '@/components/Bantuan'
@@ -151,7 +152,7 @@ export default function TransaksiDana() {
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
       {rows.data&&<Button variant="outline" onClick={()=>exportCsv(`mutasi-saldo-${filter?.dari}.csv`,[['Waktu WIB','Jenis','Status','Nominal','Biaya','Saldo','Pesanan','Keterangan'],...rows.data!.items.map(r=>[waktuRetur(r.create_time),types[r.transaction_type]??r.transaction_type,r.status,r.amount,r.transaction_fee,r.current_balance,r.order_sn,r.description])])}>Export halaman ini (CSV)</Button>}
       {rows.error && <QueryError error={rows.error} retry={rows.refetch} />}
-      {rows.isFetching && <p role="status">Memuat transaksi saldo…</p>}
+      {rows.isFetching && <Spinner column label="Memuat transaksi saldo…" />}
       {rows.data && !rows.error && filter && (
         <>
           <p className="text-sm">

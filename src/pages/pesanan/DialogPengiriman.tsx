@@ -1,3 +1,4 @@
+import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
 import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -70,7 +71,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
           </label>
         })}
       </fieldset>
-      {loading > 0 && <p role="status" className="text-sm">Memuat opsi dari Shopee… {targets.length - loading}/{targets.length}</p>}
+      {loading > 0 && <Spinner column label={`Memuat opsi dari Shopee… ${targets.length - loading}/${targets.length}`} />}
       {targets.map((p) => {
         const result = hasil[p.id]
         const o = result?.data?.opsi.find((o) => o.metode === metode)

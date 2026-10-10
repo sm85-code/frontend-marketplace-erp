@@ -41,7 +41,7 @@ export default function Spinner({
           }}
         />
       </span>
-      {label ? <span className="spinner-label">{label}</span> : <span className="sr-only">Memuat...</span>}
+      {label ? <span className={column ? 'sr-only' : 'spinner-label'}>{label}</span> : <span className="sr-only">Memuat...</span>}
     </span>
   )
 }
