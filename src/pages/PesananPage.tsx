@@ -336,7 +336,7 @@ export default function PesananPage() {
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
                 {semuaKolom.filter((k) => k.kunci !== 'pesanan' && (k.kunci === 'catatan' ? Boolean(p.message_to_seller?.trim()) : k.kunci === 'kota' ? Boolean(p.kota) || kolom.tampil.includes(k.kunci) : kolom.tampil.includes(k.kunci))).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['produk', 'catatan'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
               </dl>
-              <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: true })} cetakSibuk={sedangBekerja} /></div>
+              <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: false })} cetakSibuk={sedangBekerja} /></div>
             </li>)}
           </ul>
         </div>}
@@ -357,7 +357,7 @@ export default function PesananPage() {
             adaYangBisaDipilih: bisaDipilihSemua.length > 0,
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
-          aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: true })} cetakSibuk={sedangBekerja} />}
+          aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: false })} cetakSibuk={sedangBekerja} />}
           minWidth={1200}
         />
         </div>
