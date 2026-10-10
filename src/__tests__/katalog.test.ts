@@ -16,9 +16,9 @@ describe('katalog helpers', () => {
   it('summarises a send', () => {
     const h = (hasil: 'dibuat' | 'diperbarui' | 'dilewati') => ({ id: 'x', nama: 'n', nama_toko: 't', hasil })
     expect(ringkasKirim([h('dibuat'), h('dibuat'), h('dilewati')])).toBe(
-      'Terkirim ke toko web: 2 produk baru, 1 dilewati (sudah ada di toko web)',
+      'Tersalin ke toko web: 2 produk baru, 1 dilewati (sudah ada di toko web)',
     )
-    expect(ringkasKirim([])).toBe('Tidak ada produk yang dikirim')
+    expect(ringkasKirim([])).toBe('Tidak ada produk yang disalin')
   })
 
   it('formats package size', () => {
