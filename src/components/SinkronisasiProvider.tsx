@@ -127,7 +127,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
     {request && !open && (job || busy || error) && <div className="fixed right-3 bottom-24 z-40 w-[min(320px,calc(100vw-1.5rem))] rounded-xl border bg-card p-3 shadow-lg lg:right-6 lg:bottom-6" aria-label="Progres sinkronisasi">
       <button className="flex w-full items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => setOpen(true)} aria-label="Buka progres sinkronisasi">
         {busy && <Spinner size={22} label={null} />}
-        <span className="min-w-0 flex-1 text-sm"><span className="block font-semibold">Sinkronisasi {jenis}</span><span role="status" className="text-xs text-muted-foreground">{error ? 'Perlu dilanjutkan' : busy ? `${job?.selesai ?? 0} selesai · ${job?.tersisa ?? 0} tersisa` : paused ? 'Dijeda' : job?.gagal.length ? 'Selesai dengan kegagalan' : 'Selesai'}</span></span>
+        <span className="min-w-0 flex-1 text-sm"><span className="block font-semibold">Sinkronisasi {jenis}</span><span role="status" className="text-xs text-muted-foreground">{recovering && error ? 'Menunggu koneksi · lanjut otomatis' : error ? 'Perlu dilanjutkan' : busy ? `${job?.selesai ?? 0} selesai · ${job?.tersisa ?? 0} tersisa` : paused ? 'Dijeda' : job?.gagal.length ? 'Selesai dengan kegagalan' : 'Selesai'}</span></span>
         <Maximize2 className="size-4 shrink-0" />
       </button>
       {total > 0 && <progress aria-label="Kemajuan sinkronisasi" className="mt-2 h-2 w-full accent-primary" value={percent} max={100} />}
