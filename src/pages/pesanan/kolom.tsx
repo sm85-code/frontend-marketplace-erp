@@ -130,7 +130,13 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       sel: (p) => (
         <>
           <div>{p.kurir || '—'}</div>
-          <div className="teks-kecil font-mono text-muted-foreground">{p.nomor_resi || ''}</div>
+          <div className="flex items-center gap-1">
+            <span className="min-w-0 break-all font-mono text-xs text-muted-foreground">{p.nomor_resi || ''}</span>
+            {p.nomor_resi && <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Salin nomor resi ${p.nomor_resi}`} title="Salin nomor resi" onClick={async () => {
+              try { await navigator.clipboard.writeText(p.nomor_resi!); toast.success('Nomor resi disalin') }
+              catch { toast.error('Gagal menyalin nomor resi. Coba lagi.') }
+            }}><Copy className="h-4 w-4" /></Button>}
+          </div>
         </>
       ),
     },
