@@ -15,7 +15,7 @@ export function bagiBatch<T>(items: T[], ukuran = 20): T[][] {
   return out
 }
 
-/** One-line toast for the outcome of "Kirim ke toko web". */
+/** One-line toast for the outcome of "Salin ke Toko Web". */
 export function ringkasKirim(hasil: KirimKatalogHasil[]): string {
   const dibuat = hasil.filter((h) => h.hasil === 'dibuat').length
   const diperbarui = hasil.filter((h) => h.hasil === 'diperbarui').length
@@ -25,7 +25,7 @@ export function ringkasKirim(hasil: KirimKatalogHasil[]): string {
     diperbarui && `${diperbarui} diperbarui`,
     dilewati && `${dilewati} dilewati (sudah ada di toko web)`,
   ].filter(Boolean)
-  return bagian.length ? `Terkirim ke toko web: ${bagian.join(', ')}` : 'Tidak ada produk yang dikirim'
+  return bagian.length ? `Tersalin ke toko web: ${bagian.join(', ')}` : 'Tidak ada produk yang disalin'
 }
 
 /**

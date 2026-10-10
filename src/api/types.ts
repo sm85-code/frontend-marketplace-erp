@@ -599,6 +599,7 @@ export interface DashboardProduk {
 }
 
 export interface Dashboard {
+  permintaan_pembatalan?: number
   dari: string
   sampai: string
   data_sejak: string | null

@@ -1,9 +1,10 @@
-export type PresetTanggal = 'semua' | 'hari_ini' | '7' | '30' | '90' | 'bulan_ini' | 'kustom'
+export type PresetTanggal = 'semua' | 'hari_ini' | '7' | '15' | '30' | '90' | 'bulan_ini' | 'kustom'
 
 export const PRESET_LABEL: Record<PresetTanggal, string> = {
   semua: 'Semua tanggal',
   hari_ini: 'Hari ini',
   '7': '7 hari terakhir',
+  '15': '15 hari terakhir',
   '30': '30 hari terakhir',
   '90': '90 hari terakhir',
   bulan_ini: 'Bulan ini',
@@ -43,6 +44,7 @@ export function rentangTanggal(
     case 'hari_ini':
       return { dari: hariIni.toISOString(), sampai: akhirHari(sekarang).toISOString() }
     case '7':
+    case '15':
     case '30':
     case '90': {
       const awal = new Date(hariIni)

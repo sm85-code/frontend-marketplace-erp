@@ -128,7 +128,7 @@ export default function KatalogPage() {
 
   async function kirim() {
     const ok = await confirm({
-      title: `Kirim ${pilih.ukuran} produk ke toko web?`,
+      title: `Salin ${pilih.ukuran} produk ke toko web?`,
       description:
         'Produk disalin ke ampelkuning.com sebagai DRAFT (belum tayang) dengan stok 0, lengkap dengan foto dan varian. ' +
         'Atur stok, harga, lalu aktifkan lewat dashboard admin. Tidak ada yang diubah di Shopee, ' +
@@ -172,7 +172,7 @@ export default function KatalogPage() {
           opsi={STATUS_SHOPEE.map((s) => ({ value: s.value, label: `${s.label} (${ringkasan?.status?.[s.value] ?? '…'})` }))}
         />
         <FilterPilih id="katalog-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
-        <div className="col-span-full"><FilterSakelar id="katalog-belum" label="Belum dikirim ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} /></div>
+        <div className="col-span-full"><FilterSakelar id="katalog-belum" label="Belum disalin ke toko web" nilai={f.nilai.belumDikirim} onUbah={(belumDikirim) => f.ubah({ belumDikirim })} /></div>
         {f.berubah && (
           <FilterAksi>
             <Button variant="ghost" onClick={f.reset}>
@@ -280,7 +280,7 @@ export default function KatalogPage() {
       {manage && <BarPilihan jumlah={pilih.ukuran} satuan="produk" onBatal={pilih.kosongkan} sibuk={kirimMut.isPending}>
         <SalinMasterProduk ids={pilih.daftar.map(p => p.id)} disabled={kirimMut.isPending} />
         <Button onClick={kirim} disabled={kirimMut.isPending}>
-          {kirimMut.isPending ? 'Mengirim…' : 'Kirim ke toko web'}
+          {kirimMut.isPending ? 'Menyalin…' : 'Salin ke Toko Web'}
         </Button>
       </BarPilihan>}
     </div>

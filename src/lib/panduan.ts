@@ -96,7 +96,7 @@ export const panduan: Panduan[] = [
       'Gunakan kelola produk untuk nama/SKU/deskripsi dan tampil/sembunyikan; Buat / Salin Produk untuk listing baru; Promosi Diskon untuk diskon.',
     ],
     dampak:
-      'Membaca katalog tidak mengubah stok. Edit, aktivasi dan promosi mengubah listing Shopee; kirim ke toko web mempunyai tujuan tersendiri.',
+      'Membaca katalog tidak mengubah stok. Edit, aktivasi dan promosi mengubah listing Shopee; salin ke toko web mempunyai tujuan tersendiri.',
   },
   {
     path: '/produk',
