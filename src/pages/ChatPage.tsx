@@ -289,8 +289,6 @@ export default function ChatPage() {
     .filter((c) => !search || (c.to_name || '').toLowerCase().includes(search.toLowerCase()))
     .sort(
       (a, b) =>
-        Number(chatNeedsReply(b) === true) - Number(chatNeedsReply(a) === true) ||
-        Number(b.unread_count > 0) - Number(a.unread_count > 0) ||
         chatTimestamp(b.last_message_timestamp) - chatTimestamp(a.last_message_timestamp) ||
         String(a.conversation_id).localeCompare(String(b.conversation_id)),
     )
