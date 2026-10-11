@@ -680,10 +680,10 @@ h4,
   .erp-content .bar-halaman { gap: .75rem; }
 }
 
-[data-slot="dialog-content"] p.whitespace-pre-wrap { text-align: justify; overflow-wrap: anywhere; line-height: 1.65; }
+[data-slot="dialog-content"] p.whitespace-pre-wrap { overflow-wrap: anywhere; line-height: 1.65; }
 .erp-content input[type="checkbox"], .erp-content input[type="radio"] { width: 1rem; height: 1rem; min-height: 1rem; flex-shrink: 0; }
 .erp-content .bar-halaman p { text-align: left; line-height: 1.5; }
-.erp-content p.whitespace-pre-wrap { text-align: justify; line-height: 1.6; }
+.erp-content p.whitespace-pre-wrap { line-height: 1.6; }
 
 /* Tables keep numeric values and identifiers intact; descriptive cells wrap at words. */
 .erp-content table { overflow-wrap: normal; }
@@ -719,7 +719,12 @@ h4,
 .assistant-answer li { padding-left: .125rem; }
 .assistant-answer strong { font-weight: 700; }
 
-.assistant-answer p, .assistant-answer li { text-align: justify; text-justify: inter-word; }
+/* Justify only text with at least three rendered lines; keep the final line natural. */
+[data-multiline-justify] {
+  text-align: justify !important;
+  text-justify: inter-word;
+  text-align-last: start;
+}
 
 /* Native selects follow the same dimensions as SelectTrigger. */
 select:not([multiple]) { height: 2.75rem; min-height: 2.75rem; border-radius: 1rem; padding: .5rem 1rem; font-size: .875rem; }
