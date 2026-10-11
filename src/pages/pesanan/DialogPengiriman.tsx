@@ -15,7 +15,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
   onConfirm: (ids: string[], pengaturan: Record<string, PengaturanPengiriman>) => void
 }) {
   const [hasil, setHasil] = useState<Record<string, HasilOpsi>>({})
-  const [metode, setMetode] = useState<MetodePengiriman | ''>('')
+  const [metode, setMetode] = useState<MetodePengiriman | ''>(()=>pesanan.every(p=>p.status_marketplace==='RETRY_SHIP')?'pickup':'dropoff')
   const [edits, setPengaturan] = useState<Record<string, PengaturanPengiriman>>({})
   const [dikecualikan, setDikecualikan] = useState<Record<string, boolean>>({})
   const [putaran, setPutaran] = useState(0)
