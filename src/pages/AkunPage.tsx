@@ -1,3 +1,4 @@
+import AutoOrderSettings from '@/components/AutoOrderSettings'
 import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
 import FormDialog from '@/components/FormDialog'
@@ -248,6 +249,7 @@ export default function AkunPage() {
       {connections.error && <QueryError error={connections.error} retry={connections.refetch}/>}
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Kelola Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
+      {user?.role==='admin'&&<AutoOrderSettings/>}
 
       <Card>
         <CardHeader>
