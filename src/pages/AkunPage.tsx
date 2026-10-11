@@ -258,7 +258,7 @@ export default function AkunPage() {
             <Spinner column label="Memuat toko…" />
           ) : (
             <>
-            <div className="hidden lg:block"><TabelLokal
+            <TabelLokal
               label="Daftar toko marketplace"
               items={akunList}
               kolom={columns}
@@ -267,8 +267,9 @@ export default function AkunPage() {
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
               aksi={actions}
               minWidth={980}
-            /></div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{akunList?.map(akun=><article key={akun.id} className="min-w-0 space-y-3 rounded-xl border p-4"><h2 className="break-words font-semibold">{akun.nama_toko}</h2><p className="text-xs text-muted-foreground">{PLATFORM_LABELS[akun.platform]} · {akun.id_toko_eksternal??'Belum terhubung'}</p>{columns.find(c=>c.kunci==='koneksi')?.sel(akun)}<div className="text-sm"><p className="text-xs text-muted-foreground">Sinkronisasi pesanan terakhir</p><p className="mt-1">{columns.find(c=>c.kunci==='sinkron')?.sel(akun)}</p></div><div className="flex justify-end border-t pt-3">{actions(akun)}</div></article>)}</div>
+              kartu={akun => <article key={akun.id} className="min-w-0 space-y-3 rounded-xl border p-4"><h2 className="break-words font-semibold">{akun.nama_toko}</h2><p className="text-xs text-muted-foreground">{PLATFORM_LABELS[akun.platform]} · {akun.id_toko_eksternal??'Belum terhubung'}</p>{columns.find(c=>c.kunci==='koneksi')?.sel(akun)}<div className="text-sm"><p className="text-xs text-muted-foreground">Sinkronisasi pesanan terakhir</p><p className="mt-1">{columns.find(c=>c.kunci==='sinkron')?.sel(akun)}</p></div><div className="flex justify-end border-t pt-3">{actions(akun)}</div></article>}
+            />
+
             {(akunList ?? []).length === 0 && (
               <p className="py-8 text-center text-muted-foreground">Belum ada toko. Tambahkan toko pertama Anda.</p>
             )}

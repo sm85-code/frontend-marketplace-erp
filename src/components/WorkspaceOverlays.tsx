@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Bot, ChevronDown, EyeOff, X } from 'lucide-react'
+import { Bot, ChevronDown, EyeOff } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import Spinner from './Spinner'
@@ -26,7 +26,7 @@ function FloatingAssistant() {
       <Button ref={trigger} className="rounded-full shadow-lg" aria-label="Buka AI asisten" aria-expanded={visible} onClick={()=>{setMounted(true);setOpen(true)}}><Bot className="size-5"/><span>AI</span></Button>
     </div>
     {mounted && <section hidden={!visible} role="region" aria-label="Panel AI asisten" onKeyDown={e=>{if(e.key==='Escape')minimize()}} className={`fixed inset-x-2 top-20 bottom-24 z-50 ${visible?'flex':'hidden'} flex-col overflow-hidden rounded-2xl border bg-background shadow-xl sm:left-auto sm:w-[min(36rem,calc(100vw-1rem))] lg:top-4 lg:right-4 lg:bottom-4`}>
-      <header className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-2"><span className="flex items-center gap-2 font-semibold"><Bot className="size-4"/>Asisten AI</span><div className="flex gap-1"><Button variant="ghost" size="icon" aria-label="Sembunyikan tombol AI" onClick={()=>{setHidden(true);setOpen(false)}}><EyeOff className="size-4"/></Button><Button variant="ghost" size="icon" aria-label="Minimalkan AI asisten" onClick={minimize}><ChevronDown className="size-4"/></Button><Button variant="ghost" size="icon" aria-label="Tutup panel AI" onClick={minimize}><X className="size-4"/></Button></div></header>
+      <header className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-2"><span className="flex items-center gap-2 font-semibold"><Bot className="size-4"/>Asisten AI</span><div className="flex gap-1"><Button variant="ghost" size="icon" aria-label="Sembunyikan tombol AI" onClick={()=>{setHidden(true);setOpen(false)}}><EyeOff className="size-4"/></Button><Button variant="ghost" size="icon" aria-label="Minimalkan AI asisten" onClick={minimize}><ChevronDown className="size-4"/></Button></div></header>
       <div className="min-h-0 flex-1 overflow-y-auto p-3"><Suspense fallback={<Spinner column/>}><AssistantPage embedded/></Suspense></div>
     </section>}
   </>

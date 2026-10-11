@@ -10,14 +10,14 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-primary-foreground shadow-soft hover:brightness-90',
         outline:
-          'border-primary/35 bg-primary/12 text-foreground shadow-sm hover:bg-primary/22',
+          'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
         secondary:
-          'border-primary/30 bg-primary/20 text-foreground shadow-sm hover:bg-primary/30',
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost:
-          'border-primary/25 bg-primary/10 text-foreground hover:bg-primary/20',
+          'bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground',
         destructive:
           'bg-destructive/10 text-[color-mix(in_oklab,var(--destructive)_70%,black)] hover:bg-destructive/20 dark:text-[color-mix(in_oklab,var(--destructive)_65%,white)]',
-        link: 'border-primary/30 bg-primary/15 text-foreground underline underline-offset-4 hover:bg-primary/25',
+        link: 'bg-transparent text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-10 px-3',

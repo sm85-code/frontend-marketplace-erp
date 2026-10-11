@@ -12,6 +12,7 @@ export default function TabelLokal<T>({
   items,
   kolom,
   urutAwal = null,
+  kartu,
   ...rest
 }: {
   label: string
@@ -26,6 +27,8 @@ export default function TabelLokal<T>({
   judulAksi?: string
   minWidth?: number
   footer?: ReactNode
+  /** Phone cards share the table sorting and pagination. */
+  kartu?: (item: T) => ReactNode
 }) {
   const [page, setPage] = useState(1)
   const nilaiDari = (item: T, kunci: string) =>
@@ -55,14 +58,15 @@ export default function TabelLokal<T>({
     : undefined
   return (
     <div className="space-y-3">
-      <TabelData
+      <div className={kartu ? "hidden lg:block" : undefined}><TabelData
         {...rest}
         pilihan={selection}
         items={visible}
         kolom={dapatDiurut}
         urut={urut}
         onUrut={ubah}
-      />
+      /></div>
+      {kartu && <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{visible.map(item => <div key={rest.idDari(item)} className="min-w-0">{kartu(item)}</div>)}</div>}
       {pages > 1 && (
         <p className="text-xs text-center text-muted-foreground">
           {(current - 1) * 10 + 1}–{Math.min(current * 10, hasil.length)} dari{' '}
