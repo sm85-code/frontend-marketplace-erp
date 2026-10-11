@@ -707,3 +707,7 @@ h4,
 .assistant-answer strong { font-weight: 700; }
 
 .assistant-answer p, .assistant-answer li { text-align: justify; text-justify: inter-word; }
+
+/* Native selects follow the same dimensions as SelectTrigger. */
+select:not([multiple]) { height: 2.75rem; min-height: 2.75rem; border-radius: 1rem; padding: .5rem 1rem; font-size: .875rem; }
+select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }

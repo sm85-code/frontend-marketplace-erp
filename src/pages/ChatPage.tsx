@@ -537,7 +537,7 @@ export default function ChatPage() {
                       </Link>
                     )}
                     {m.context?.katalog_id && (
-                      <Link className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg border bg-muted/70 text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring" to={`/katalog/${encodeURIComponent(m.context.katalog_id)}`} target="_blank" rel="noopener noreferrer" aria-label="Buka produk terkait di tab baru" title="Buka produk di tab baru">
+                      <Link className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/70 text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring" to={`/katalog/${encodeURIComponent(m.context.katalog_id)}`} target="_blank" rel="noopener noreferrer" aria-label="Buka produk terkait di tab baru" title="Buka produk di tab baru">
                         <ArrowUpRight className="size-4" aria-hidden="true" />
                       </Link>
                     )}
