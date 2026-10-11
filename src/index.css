@@ -694,7 +694,20 @@ h4,
   [data-slot="button"], [data-slot="select-trigger"], [data-slot="input"] { min-height: 44px; }
   [data-slot="dialog-close"] { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
 }
-[data-slot="table-header"] { position: sticky; top: 0; z-index: 2; background: var(--card); }
+/* An opaque header also keeps frozen columns distinct from body rows. */
+[data-slot="table-header"] {
+  --table-heading-background: color-mix(in oklab, var(--primary) 18%, var(--card));
+  position: sticky; top: 0; z-index: 2;
+  background: var(--table-heading-background);
+}
+[data-slot="table-header"] [data-slot="table-row"] { border-bottom: 2px solid color-mix(in oklab, var(--primary) 40%, var(--border)); }
+[data-slot="table-header"] [data-slot="table-head"] {
+  background: var(--table-heading-background);
+  color: var(--foreground);
+  font-weight: 700;
+  padding-block: .75rem;
+}
+[data-slot="table-header"] [data-slot="table-row"]:hover { background: var(--table-heading-background); }
 [data-slot="dialog-footer"] { gap: .5rem; }
 .section-tabs { height: auto; max-width: 100%; flex-wrap: wrap; gap: .25rem; padding: .25rem; }
 .section-tabs [data-slot="tabs-trigger"] { min-height: 44px; flex: 1 0 auto; }
