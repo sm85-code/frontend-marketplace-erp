@@ -47,7 +47,7 @@ export default function MultilineText() {
       if (!disposed && !frame) frame = requestAnimationFrame(update)
     }
     const mutations = new MutationObserver(schedule)
-    mutations.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open'] })
+    mutations.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open', 'data-font', 'data-huruf'] })
     const resize = new ResizeObserver(schedule)
     resize.observe(document.body)
     window.addEventListener('resize', schedule)
