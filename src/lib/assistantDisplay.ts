@@ -8,6 +8,13 @@ export function aiIncomplete(status: string, answer: string): boolean {
   return status === 'partial' || (status === 'completed' && /^(Jawaban AI terpotong|Batas (konteks\/biaya pesan|langkah AI|tindakan pesan) tercapai)/.test(answer))
 }
 
+/** Only a definite client rejection allows a new operation ID. Transport/5xx
+ * outcomes retain the original request so a committed turn cannot run twice. */
+export function definiteRejection(error: unknown): boolean {
+  const status = (error as {response?: {status?: number}})?.response?.status
+  return typeof status === 'number' && status >= 400 && status < 500 && status !== 408
+}
+
 export interface AssistantProduct { id: string; akun_id: string; item_id: string; nama: string; nama_toko: string; foto: string|null; url: string|null; harga_min: string|null; harga_max: string|null }
 export function mentionedProducts(answer: string, actions: { tool: string; status: string; result: unknown }[]): AssistantProduct[] {
   const cards = new Map<string, AssistantProduct>()

@@ -2,9 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement } from 'react'
 import AssistantAnswer from '@/components/AssistantAnswer'
-import { aiMoney, aiIncomplete, mentionedProducts } from '@/lib/assistantDisplay'
+import { aiMoney, aiIncomplete, mentionedProducts, definiteRejection } from '@/lib/assistantDisplay'
 
 describe('assistant results', () => {
+ it('unlocks definite rejections but retains uncertain request identities', () => {
+  expect(definiteRejection({response:{status:422}})).toBe(true)
+  expect(definiteRejection({response:{status:429}})).toBe(true)
+  expect(definiteRejection({response:{status:504}})).toBe(false)
+  expect(definiteRejection({response:{status:408}})).toBe(false)
+  expect(definiteRejection(new Error('network'))).toBe(false)
+ })
  it('uses server exchange rate with no guessed rate on old servers', () => {
   expect(aiMoney('0.0758','18000')).toBe('Rp1.364')
   expect(aiMoney('2','18000')).toBe('Rp36.000')
