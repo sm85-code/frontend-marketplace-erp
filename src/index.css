@@ -734,3 +734,7 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 [data-slot="table-head"]:first-child, [data-slot="table-cell"]:first-child { padding-left: 1.25rem; }
 [data-slot="table-head"]:last-child, [data-slot="table-cell"]:last-child { padding-right: 1.25rem; }
 .section-tabs [data-slot="tabs-trigger"] { padding: .5rem 1rem; }
+
+/* Order status filters stay on one scrollable row, including on phones. */
+.section-tabs.order-status-tabs { max-width: none; width: max-content; flex-wrap: nowrap; }
+.section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 0 0 auto; }

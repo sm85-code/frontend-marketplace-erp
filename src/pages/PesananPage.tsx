@@ -1,3 +1,4 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { tahapDariTautan } from '@/lib/tautanPesanan'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -5,7 +6,7 @@ import UkuranHalaman from '@/components/UkuranHalaman'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
@@ -61,12 +62,30 @@ export default function PesananPage() {
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
 
   const { dari, sampai } = rentangTanggal(f.nilai.tanggal as PresetTanggal, { dari: f.nilai.dari, sampai: f.nilai.sampai })
+  const statusScroll = useRef<HTMLDivElement>(null)
   const kriteria = { q: f.nilai.q || undefined, dari, sampai, akun_id: f.nilai.toko || undefined, tahap: tahapDariTautan(f.nilai.tahap) || undefined }
   const { data: ringkasan } = useQuery({
     queryKey: qk.pesananRingkasan(kriteria),
     queryFn: () => endpoints.ringkasanPesanan(kriteria),
     placeholderData: (prev) => prev,
   })
+  useEffect(() => {
+    const container = statusScroll.current
+    if (!container) return
+    const revealSelected = () => {
+      const active = container.querySelector<HTMLElement>('[data-state="active"]')
+      if (!active) return
+      const viewport = container.getBoundingClientRect()
+      const tab = active.getBoundingClientRect()
+      if (tab.left < viewport.left) container.scrollLeft -= viewport.left - tab.left
+      else if (tab.right > viewport.right) container.scrollLeft += tab.right - viewport.right
+    }
+    revealSelected()
+    const resize = new ResizeObserver(revealSelected)
+    resize.observe(container)
+    return () => resize.disconnect()
+  }, [f.nilai.tahap, ringkasan])
+
   const paramDaftar = { ...kriteria, resi: f.nilai.resi || undefined, urut: f.nilai.urut, halaman: f.halaman, per_halaman: perHalaman }
   const { data: daftar, isLoading, isFetching, error: queryError, refetch: retryQuery } = useQuery({
     queryKey: qk.pesananDaftar(paramDaftar),
@@ -251,7 +270,7 @@ export default function PesananPage() {
   }
 
   return (
-    <div className="space-y-4 pb-24">
+    <Tabs value={tahapDariTautan(f.nilai.tahap) || 'semua'} onValueChange={(tahap) => f.ubah({ tahap: tahap === 'semua' ? '' : tahap })} className="block min-w-0 space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
         <Sinkronisasi jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
@@ -265,17 +284,17 @@ export default function PesananPage() {
       </BarHalaman>
 
       <BarFilter
-        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
-        utama={<FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
+        aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0) - (f.nilai.tahap !== AWAL.tahap ? 1 : 0)}
+        utama={<div className="min-w-0 space-y-3" style={{ gridColumn: '1 / -1' }}>
+          <FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />
+          <div ref={statusScroll} className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg">
+            <TabsList aria-label="Status pesanan" className="section-tabs order-status-tabs">
+              {TAHAP_ORDER.map((tahap) => <TabsTrigger key={tahap} value={tahap}>{TAHAP_LABELS[tahap]} <span className="tabular-nums">({ringkasan?.tahap[tahap] ?? '…'})</span></TabsTrigger>)}
+              <TabsTrigger value="semua">Semua <span className="tabular-nums">({ringkasan?.tahap.semua ?? '…'})</span></TabsTrigger>
+            </TabsList>
+          </div>
+        </div>}
       >
-        <FilterPilih
-          id="pesanan-status"
-          label="Status"
-          nilai={tahapDariTautan(f.nilai.tahap)}
-          onUbah={(tahap) => f.ubah({ tahap })}
-          semua={`Semua status (${ringkasan?.tahap.semua ?? '…'})`}
-          opsi={TAHAP_ORDER.map((t) => ({ value: t, label: `${TAHAP_LABELS[t]} (${ringkasan?.tahap[t] ?? '…'})` }))}
-        />
         <FilterPilih
           id="pesanan-toko"
           label="Toko"
@@ -305,6 +324,7 @@ export default function PesananPage() {
       </BarFilter>
 
 
+      <TabsContent value={tahapDariTautan(f.nilai.tahap) || 'semua'} className="space-y-4">
       {isLoading ? (
         <Spinner column label="Memuat pesanan…" />
       ) : items.length === 0 ? (
@@ -367,6 +387,8 @@ export default function PesananPage() {
         </div>
       )}
 
+      </TabsContent>
+
       <BarPilihan terlihat={items.filter(p=>pilih.ada(p.id)).length} ringkasan={dipilih.map(p=><div key={p.id}>{p.id_eksternal} · {p.nama_pembeli}</div>)} jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
         {idProses.length > 0 && (
           <>
@@ -393,6 +415,6 @@ export default function PesananPage() {
       {pengiriman && <DialogPengiriman pesanan={pengiriman.pesanan} cetak={pengiriman.cetak}
         onClose={() => setPengiriman(null)} onConfirm={konfirmasiPengiriman} />}
       <FormPesananManual open={formBuka} onOpenChange={setFormBuka} akunList={akunList ?? []} />
-    </div>
+    </Tabs>
   )
 }
