@@ -665,7 +665,7 @@ h4,
 [role="region"] table th { white-space: nowrap; }
 @media (max-width: 767px) {
   .bar-halaman h1 { font-size: 1.25rem; }
-  [role="region"] table td, [role="region"] table th { padding: .75rem; }
+  [role="region"] table td, [role="region"] table th { padding: .75rem 1rem; }
   [role="region"] { touch-action: pan-x pan-y; }
 }
 
@@ -709,7 +709,7 @@ h4,
 }
 [data-slot="table-header"] [data-slot="table-row"]:hover { background: var(--table-heading-background); }
 [data-slot="dialog-footer"] { gap: .5rem; }
-.section-tabs { height: auto; max-width: 100%; flex-wrap: wrap; gap: .25rem; padding: .25rem; }
+.section-tabs { height: auto; max-width: 100%; flex-wrap: wrap; gap: .25rem; padding: .5rem; }
 .section-tabs [data-slot="tabs-trigger"] { min-height: 44px; flex: 1 0 auto; }
 .section-tabs [data-slot="tabs-trigger"][data-state="active"] { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 1px 3px var(--border); }
 .section-tabs [data-slot="tabs-trigger"][data-state="inactive"] { background: var(--muted); color: var(--foreground); }
@@ -729,3 +729,8 @@ h4,
 /* Native selects follow the same dimensions as SelectTrigger. */
 select:not([multiple]) { height: 2.75rem; min-height: 2.75rem; border-radius: 1rem; padding: .5rem 1rem; font-size: .875rem; }
 select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* Keep text clear of rounded corners, including frozen table columns. */
+[data-slot="table-head"]:first-child, [data-slot="table-cell"]:first-child { padding-left: 1.25rem; }
+[data-slot="table-head"]:last-child, [data-slot="table-cell"]:last-child { padding-right: 1.25rem; }
+.section-tabs [data-slot="tabs-trigger"] { padding: .5rem 1rem; }
