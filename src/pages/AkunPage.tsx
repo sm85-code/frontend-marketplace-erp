@@ -212,6 +212,7 @@ export default function AkunPage() {
 
   const actions = (akun:AkunMarketplace) => (
     <AksiLainnya>
+      {akun.platform === 'shopee' && user?.role === 'admin' && <><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(akun.id)}&tab=rating`}>Balasan Rating Otomatis</Link></Button><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(akun.id)}&tab=boost`}>Boost Otomatis</Link></Button></>}
       {akun.platform === 'shopee' && akun.id_toko_eksternal && user?.role === 'admin' && <Button size="sm" variant="outline" asChild><Link to={`/pengaturan-toko?toko=${encodeURIComponent(akun.id)}`}>Pengaturan Toko</Link></Button>}
       {akun.platform === 'shopee' && isOwnerLevel(user?.role) && (
         <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
