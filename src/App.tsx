@@ -9,6 +9,7 @@ import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Role } from '@/api/types'
 
+const EngagementAutomationPage = lazy(() => import('@/pages/EngagementAutomationPage'))
 const ShopSettingsPage = lazy(() => import('@/pages/ShopSettingsPage'))
 const AssistantPage = lazy(() => import('@/pages/AssistantPage'))
 const PerformaTokoPage = lazy(() => import('@/pages/PerformaTokoPage'))
@@ -83,6 +84,7 @@ export default function App() {
               />
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
               <Route path="/asisten" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AssistantPage /></LazyPage></Protected>} />
+              <Route path="/otomasi-produk" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
               <Route path="/pengaturan-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
               <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
