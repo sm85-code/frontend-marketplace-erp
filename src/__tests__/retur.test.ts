@@ -4,10 +4,10 @@ vi.mock('@/api/client', () => ({ default: api }))
 import { daftarRetur, getRetur } from '@/api/endpoints'
 import { labelRetur, nominalRetur, rentangAwalRetur, solusiRetur, validasiRentangRetur, waktuRetur } from '@/lib/retur'
 beforeEach(() => vi.clearAllMocks())
-it('uses 15 complete WIB days even when UTC is still the previous day', () => {
-  expect(rentangAwalRetur(new Date('2026-10-07T18:00:00Z'))).toEqual({ dari: '2026-09-24', sampai: '2026-10-08' })
-  expect(validasiRentangRetur('2026-10-01', '2026-10-15')).toBeNull()
-  expect(validasiRentangRetur('2026-10-01', '2026-10-16')).not.toBeNull()
+it('uses 14 complete WIB days even when UTC is still the previous day', () => {
+  expect(rentangAwalRetur(new Date('2026-10-07T18:00:00Z'))).toEqual({ dari: '2026-09-25', sampai: '2026-10-08' })
+  expect(validasiRentangRetur('2026-10-01', '2026-10-14')).toBeNull()
+  expect(validasiRentangRetur('2026-10-01', '2026-10-15')).not.toBeNull()
   expect(validasiRentangRetur('2026-10-03', '2026-10-02')).not.toBeNull()
   expect(validasiRentangRetur('2026-02-30', '2026-03-01')).not.toBeNull()
   expect(validasiRentangRetur('', '')).not.toBeNull()

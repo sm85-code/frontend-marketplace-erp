@@ -1,3 +1,4 @@
+import Bantuan from '@/components/Bantuan'
 import { toast } from 'sonner'
 import { Minimize2, Maximize2 } from 'lucide-react'
 import Spinner from '@/components/Spinner'
@@ -146,7 +147,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
       {!busy && <div className="mt-1 flex gap-2"><Button size="sm" variant="ghost" onClick={() => setOpen(true)}>Lihat hasil</Button>{!job?.tersisa && <Button size="sm" variant="ghost" onClick={() => setRequest(null)}>Sembunyikan</Button>}</div>}
     </div>}
     <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Sinkronisasi {jenis === 'pesanan' ? 'Pesanan' : 'Produk'}</DialogTitle></DialogHeader><Button size="sm" variant="outline" className="justify-self-start" onClick={() => setOpen(false)}><Minimize2 className="size-4" />Minimize</Button>
-      <p className="text-sm text-muted-foreground">Membaca data terbaru dari marketplace. Harga dan stok master ERP tidak ditimpa. Pesanan seluruh toko membaca perubahan 15 hari terakhir.</p>
+      <Bantuan>Membaca data terbaru dari marketplace. Harga dan stok master ERP tidak ditimpa. Pesanan seluruh toko membaca perubahan 14 hari terakhir.</Bantuan>
       <label className="space-y-1">Cakupan<select aria-label="Cakupan sinkronisasi" className="w-full rounded-md border p-2" value={scope} onChange={e => setScope(e.target.value)} disabled={busy || !!job?.tersisa}>
         {!!ids.length && <option value="pilihan">{satu ? 'Item ini' : `${ids.length} item terpilih`}</option>}
         {!satu && <><option value="toko">Satu toko</option><option value="semua">Seluruh toko yang diizinkan</option></>}

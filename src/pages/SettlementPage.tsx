@@ -117,8 +117,8 @@ export default function SettlementPage() {
         </Button>
       </BarHalaman>
 
-      <Tabs defaultValue="dana">
-        <TabsList className="section-tabs"><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="pendapatan">Pendapatan</TabsTrigger><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
+      <Tabs defaultValue="saldo">
+        <TabsList className="section-tabs"><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="pendapatan">Pendapatan</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
         <TabsContent value="dana"><DanaShopee /></TabsContent>
         <TabsContent value="pendapatan"><PendapatanShopee /></TabsContent>
         <TabsContent value="saldo"><SaldoToko /></TabsContent>

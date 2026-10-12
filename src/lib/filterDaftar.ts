@@ -15,7 +15,7 @@ export function useFilterDaftar<F extends Record<string, string | boolean>>(
       Object.entries(awal).map(([key, value]) => [
         key,
         typeof value === 'string'
-          ? (query.get(key) ?? (key === 'toko' ? toko : value))
+          ? (key === 'tanggal' && query.get(key) === '15' ? '14' : (query.get(key) ?? (key === 'toko' ? toko : value)))
           : value,
       ]),
     ) as F

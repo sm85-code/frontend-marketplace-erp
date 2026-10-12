@@ -6,7 +6,6 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import QueryError from '@/components/QueryError'
 import Bantuan from '@/components/Bantuan'
-import { getApiError } from '@/api/client'
 
 interface Saldo {
   akun_id: string
@@ -57,18 +56,6 @@ export default function SaldoToko() {
           : amount(r.query.data?.saldo_terakhir, r.query.data?.currency),
     },
     {
-      kunci: 'tersedia',
-      judul: 'Tersedia untuk ditarik',
-      rata: 'kanan',
-      sel: (r) => amount(r.query.data?.saldo_tersedia, r.query.data?.currency),
-    },
-    {
-      kunci: 'tertahan',
-      judul: 'Saldo tertahan',
-      rata: 'kanan',
-      sel: (r) => amount(r.query.data?.saldo_tertahan, r.query.data?.currency),
-    },
-    {
       kunci: 'waktu',
       judul: 'Waktu transaksi saldo',
       kelas: 'whitespace-nowrap',
@@ -87,19 +74,6 @@ export default function SaldoToko() {
         r.query.data?.diperiksa_at
           ? fmtDateTime(r.query.data.diperiksa_at)
           : '—',
-    },
-    {
-      kunci: 'status',
-      judul: 'Status data',
-      kelas: 'min-w-[180px]',
-      sel: (r) =>
-        r.query.error ? (
-          <span className="text-destructive">{getApiError(r.query.error)}</span>
-        ) : r.query.data?.saldo_terakhir == null ? (
-          'Tidak ada saldo pada mutasi 15 hari terakhir'
-        ) : (
-          'Saldo tercatat, bukan konfirmasi saldo siap tarik'
-        ),
     },
   ]
   const totals = new Map<string, number>()
@@ -130,19 +104,18 @@ export default function SaldoToko() {
           Sinkronisasi seluruh toko
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Saldo terakhir tercatat; belum merupakan konfirmasi dana siap ditarik.
-      </p>
+
       <Bantuan>
-        Saldo berasal dari transaksi terbaru dalam 15 hari terakhir. API yang
+        Saldo berasal dari transaksi terbaru dalam 14 hari terakhir. API yang
         didokumentasikan belum menyediakan saldo tersedia/tertahan. Total
         dipisahkan menurut mata uang dan tidak memasukkan toko yang datanya
         belum tersedia.
       </Bantuan>
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
+      {rows.filter(r => r.query.error).map(r => <div key={r.shop.id} className="space-y-1"><p className="text-sm font-medium">{r.shop.nama_toko}</p><QueryError error={r.query.error} retry={r.query.refetch}/></div>)}
       <TabelData
         label="Saldo toko"
-        minWidth={1280}
+        minWidth={800}
         items={rows}
         kolom={cols}
         idDari={(r) => r.shop.id}
@@ -167,9 +140,7 @@ export default function SaldoToko() {
                   ))
                 : 'Belum tersedia'}
             </TableCell>
-            <TableCell className="text-right">Belum tersedia</TableCell>
-            <TableCell className="text-right">Belum tersedia</TableCell>
-            <TableCell colSpan={4} />
+            <TableCell colSpan={3} />
           </TableRow>
         }
       />
