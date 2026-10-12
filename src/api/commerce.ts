@@ -43,3 +43,12 @@ export const hourlyAds = (id: string, tanggal: string, campaign_id?: string) => 
 
 export interface ShopConnection {id:string;status:string;otorisasi_tersedia:boolean;perlu_otorisasi_ulang:boolean;sinkron_pesanan_at:string|null;sinkron_penuh_at:string|null}
 export const shopConnections=()=>api.get<ShopConnection[]>('/koneksi-toko').then(r=>r.data)
+
+export interface ShopeeDiagnostic { diagnostic_id: string; time: string; endpoint: string; account_id: string | null; request_id: string | null; error: string; message: string; failures: { item_id?: string; comment_id?: string; error: string; message: string }[] }
+export interface EngagementResult { ok: boolean; success_ids: string[]; failures: { item_id?: string; comment_id?: string; error: string; message: string }[]; request_id: string | null; diagnostic: ShopeeDiagnostic | null; warnings: string[] }
+export interface ProductComment { comment_id: string; item_id: string; comment: string; rating_star: number | null; buyer_username: string | null; create_time: number | null; reply: string }
+export interface CommentPage { items: ProductComment[]; more: boolean; next_cursor: string; request_id: string | null }
+export const productComments = (id: string, cursor = '') => api.get<CommentPage>(`${product(id)}/ulasan`, { params: { cursor, page_size: 20 } }).then(r => r.data)
+export const replyComment = (id: string, comment_id: string, comment: string) => api.post<EngagementResult>(`${product(id)}/ulasan/balas`, { comment_list: [{ comment_id, comment }] }).then(r => r.data)
+export const boostedProducts = (id: string) => api.get<{ items: { item_id: string; cool_down_second: number }[]; request_id: string | null }>(`${shop(id)}/produk-boost`).then(r => r.data)
+export const boostProducts = (id: string, katalog_ids: string[]) => api.post<EngagementResult>(`${shop(id)}/produk-boost`, { katalog_ids }).then(r => r.data)
