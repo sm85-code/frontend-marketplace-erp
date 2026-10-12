@@ -7,6 +7,7 @@ import type { AkunMarketplace } from '@/api/types'
 import Bantuan from '@/components/Bantuan'
 import { useUrutLokal } from '@/lib/urut'
 import QueryError from '@/components/QueryError'
+import { ErrorDetails } from '@/pages/katalog/ShopeeEngagement'
 import Spinner from '@/components/Spinner'
 import { TabelData, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
@@ -55,11 +56,20 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
   const [pages, setPages] = useState<Record<string, string | null>[]>([{}])
   const current = pages[pages.length - 1]
   const sources = shops.flatMap(shop => ([2, 1] as const).map(status => ({ shop, status, key: `${shop.id}:${status}` })))
-  const queries = useQueries({ queries: sources.map(source => ({
-    queryKey: ['income-shopee', source.shop.id, start, end, source.status, current[source.key] ?? ''],
-    queryFn: () => api.income(source.shop.id, { dari: start, sampai: end, income_status: source.status, cursor: current[source.key] ?? '', page_size: 10 }),
-    enabled: !!start && !!end && current[source.key] !== null, retry: false, staleTime: 60000,
-  })) })
+  const incomeOptions = (index: number, ready = true) => {
+    const source = sources[index]
+    return {
+      queryKey: ['income-shopee', source.shop.id, start, end, source.status, current[source.key] ?? ''],
+      queryFn: () => api.income(source.shop.id, { dari: start, sampai: end, income_status: source.status, cursor: current[source.key] ?? '', page_size: 10 }),
+      enabled: ready && !!start && !!end && current[source.key] !== null, retry: false, staleTime: 60000,
+    }
+  }
+  // Read one status at a time; avoid competing token refresh and provider reads.
+  const pendingQuery = useQuery(incomeOptions(0))
+  const releasedQuery = useQuery(incomeOptions(1, current[sources[0].key] === null || (!pendingQuery.isFetching && !pendingQuery.isPending)))
+  const queries = [pendingQuery, releasedQuery]
+  const incomeBusy = sources.some((source, i) => current[source.key] !== null && (queries[i].isFetching || queries[i].isPending))
+
   const loaded = sources.flatMap((source, index) => {
     if (current[source.key] === null) return []
     return (queries[index].data?.items ?? []).map((row, position) => ({ ...row, _shop: source.shop.id, _shopName: source.shop.nama_toko, _status: source.status, _key: `${source.shop.id}:${row.order_sn || `${source.status}:${position}`}` }))
@@ -78,12 +88,12 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
     const numbers = [...new Set(items.filter(r => r._shop === shop.id).map(r => r.order_sn).filter((n): n is string => !!n && /^[A-Za-z0-9]{1,50}$/.test(n)))]
     return Array.from({ length: Math.ceil(numbers.length / 30) }, (_, index) => ({ id: shop.id, numbers: numbers.slice(index * 30, index * 30 + 30) }))
   })
-  const details = useQueries({ queries: batches.map(batch => ({ queryKey: ['income-orders', batch.id, batch.numbers.join(',')], queryFn: () => api.incomeOrders(batch.id, batch.numbers), staleTime: 60000, retry: false })) })
+  const details = useQueries({ queries: batches.map(batch => ({ queryKey: ['income-orders', batch.id, batch.numbers.join(',')], queryFn: () => api.incomeOrders(batch.id, batch.numbers), enabled: !incomeBusy, staleTime: 60000, retry: false })) })
   const detailRows = details.flatMap((result, i) => (result.data?.items ?? []).map(row => ({ ...row, shopId: batches[i].id })))
   const packages = detailRows.flatMap(r => r.packages.length > 1
     ? r.packages.map(p => ({ id: r.shopId, number: r.order_sn, package: p.package_number, valid: !!p.package_number }))
     : [{ id: r.shopId, number: r.order_sn, package: r.packages[0]?.package_number, valid: true }])
-  const tracking = useQueries({ queries: packages.map(p => ({ queryKey: ['income-tracking', p.id, p.number, p.package ?? ''], queryFn: () => api.incomeTracking(p.id, p.number, p.package), enabled: p.valid, staleTime: 60000, retry: false })) })
+  const tracking = useQueries({ queries: packages.map(p => ({ queryKey: ['income-tracking', p.id, p.number, p.package ?? ''], queryFn: () => api.incomeTracking(p.id, p.number, p.package), enabled: p.valid && !incomeBusy, staleTime: 60000, retry: false })) })
   const rows: Row[] = items.map(r => {
     const detail = detailRows.find(d => d.shopId === r._shop && d.order_sn === r.order_sn)
     const traces = packages.flatMap((p, i) => p.id === r._shop && p.number === r.order_sn ? [tracking[i].data] : [])
@@ -127,7 +137,7 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
       {paginationUnknown && <p className="mt-2">Shopee belum memberikan token halaman berikutnya untuk sebagian hasil. Data yang tampil tetap dapat digunakan, tetapi belum dapat dinyatakan sebagai daftar lengkap.</p>}
     </Bantuan>
     {q.isPending && <Spinner column />}
-    {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · {source.status === 1 ? 'Sudah dirilis' : 'Belum cair'}</p><QueryError error={queries[i].error} retry={queries[i].refetch}/></div> : null)}
+    {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · {source.status === 1 ? 'Sudah dirilis' : 'Belum cair'}</p><ErrorDetails error={queries[i].error}/><Button variant="outline" onClick={() => void queries[i].refetch()}>Coba lagi</Button></div> : null)}
     {details.filter(r => r.error).map((r, i) => <QueryError key={i} error={r.error} retry={r.refetch} />)}
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
