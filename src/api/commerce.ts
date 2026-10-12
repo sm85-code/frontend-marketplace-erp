@@ -52,3 +52,13 @@ export const productComments = (id: string, cursor = '') => api.get<CommentPage>
 export const replyComment = (id: string, comment_id: string, comment: string) => api.post<EngagementResult>(`${product(id)}/ulasan/balas`, { comment_list: [{ comment_id, comment }] }).then(r => r.data)
 export const boostedProducts = (id: string) => api.get<{ items: { item_id: string; cool_down_second: number }[]; request_id: string | null }>(`${shop(id)}/produk-boost`).then(r => r.data)
 export const boostProducts = (id: string, katalog_ids: string[]) => api.post<EngagementResult>(`${shop(id)}/produk-boost`, { katalog_ids }).then(r => r.data)
+
+export interface IncomeOrderDetail {
+  order_sn: string
+  order_status?: string
+  pickup_done_time?: number | null
+  items: { name?: string; variant?: string }[]
+  packages: { package_number?: string; logistics_status?: string }[]
+}
+export const incomeOrders = (id: string, numbers: string[]) => api.get<{ items: IncomeOrderDetail[]; warnings: string[] }>(`${shop(id)}/rincian-pesanan-pendapatan`, { params: { order_sn_list: numbers.join(',') } }).then(r => r.data)
+export const incomeTracking = (id: string, number: string, package_number?: string) => api.get<Tracking>(`${shop(id)}/pelacakan-pendapatan/${encodeURIComponent(number)}`, { params: { package_number } }).then(r => r.data)
