@@ -35,7 +35,9 @@ function Settings({ shopId, initial, tab }: { shopId: string; initial: api.Autom
   const save = useMutation({ retry: false, mutationFn: () => api.save(shopId, form), onSuccess: () => { toast.success('Pengaturan otomatis disimpan'); void qc.invalidateQueries({ queryKey: ['engagement-automation', shopId] }) } })
   const review = useMutation({ retry: false, mutationFn: (key: string) => api.reviewed(shopId, key), onSuccess: () => void qc.invalidateQueries({ queryKey: ['engagement-automation', shopId] }) })
   async function submit() {
-    if (form.replies_enabled || form.boost_enabled) {
+    const authorizeReplies = form.replies_enabled && (!initial.replies_enabled || form.high_template.trim() !== initial.high_template || form.low_template.trim() !== initial.low_template)
+    const authorizeBoost = form.boost_enabled && (!initial.boost_enabled || form.boost_interval_minutes !== initial.boost_interval_minutes || [...form.boost_catalog_ids].sort().join(',') !== [...initial.boost_catalog_ids].sort().join(','))
+    if (authorizeReplies || authorizeBoost) {
       if (!await confirm({ title: 'Izinkan tindakan otomatis untuk toko ini?', description: `${initial.nama_toko}: ${form.replies_enabled ? 'rating baru akan dibalas dengan template tersimpan. ' : ''}${form.boost_enabled ? `${form.boost_catalog_ids.length} produk pilihan akan diminta boost berulang, minimal setiap ${form.boost_interval_minutes / 60} jam dan sesuai cooldown Shopee. ` : ''}Tindakan berjalan tanpa token AI dan tanpa konfirmasi per rating/boost. Anda dapat mematikannya di halaman ini.` })) return
     }
     save.mutate()
