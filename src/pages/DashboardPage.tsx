@@ -16,7 +16,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 
-const PRESET_DASHBOARD: PresetTanggal[] = ['7', '15', '30', '90', 'bulan_ini']
+const PRESET_DASHBOARD: PresetTanggal[] = ['7', '14', '30', '90', 'bulan_ini']
 
 
 const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
@@ -82,7 +82,7 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
 export default function DashboardPage() {
   const { user } = useAuth()
   const { data: semuaToko } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
-  const [preset, setPreset] = useState<PresetTanggal>('15')
+  const [preset, setPreset] = useState<PresetTanggal>('14')
   const [toko,setToko]=useTokoAktif()
   // Whole local days, so the key (and the request) stays the same all day long instead of changing every render.
   const { dari = '', sampai = '' } = rentangTanggal(preset)

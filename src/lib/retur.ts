@@ -4,14 +4,14 @@ export function rentangAwalRetur(now = new Date()): { dari: string; sampai: stri
   const part = (name: string) => parts.find((p) => p.type === name)!.value
   const sampai = `${part('year')}-${part('month')}-${part('day')}`
   const first = new Date(`${sampai}T00:00:00Z`)
-  first.setUTCDate(first.getUTCDate() - 14)
+  first.setUTCDate(first.getUTCDate() - 13)
   return { dari: first.toISOString().slice(0, 10), sampai }
 }
 export function validasiRentangRetur(dari: string, sampai: string): string | null {
   const day = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s
   if (!day(dari) || !day(sampai)) return 'Isi tanggal awal dan akhir yang valid.'
   const days = (Date.parse(sampai) - Date.parse(dari)) / 86400000
-  return days < 0 || days >= 15 ? 'Rentang harus berurutan dan maksimal 15 hari kalender.' : null
+  return days < 0 || days >= 14 ? 'Rentang harus berurutan dan maksimal 14 hari kalender.' : null
 }
 export function nominalRetur(value: string | null, currency: string | null): string {
   if (value == null) return '—'

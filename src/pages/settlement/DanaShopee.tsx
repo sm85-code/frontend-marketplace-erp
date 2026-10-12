@@ -1,3 +1,4 @@
+import Bantuan from '@/components/Bantuan'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
@@ -35,7 +36,7 @@ const AWAL = { toko: '', q: '', tanggal: '30', dari: '', sampai: '', urut: 'diri
 const PRESET: PresetTanggal[] = ['semua', 'hari_ini', '7', '30', '90', 'bulan_ini', 'kustom']
 const HARI_SINKRON = [
   { value: '7', label: '7 hari terakhir' },
-  { value: '15', label: '15 hari terakhir' },
+  { value: '14', label: '14 hari terakhir' },
   { value: '30', label: '30 hari terakhir' },
   { value: '60', label: '60 hari terakhir' },
   { value: '90', label: '90 hari terakhir' },
@@ -46,10 +47,11 @@ const potong = (v: string) => fmtRp(-Math.abs(Number(v)))
 export default function DanaShopee() {
   const qc = useQueryClient()
   const f = useFilterDaftar(AWAL)
-  const [hariSinkron, setHariSinkron] = useState('15')
+  const [hariSinkron, setHariSinkron] = useState('14')
 
   const { data: akunList, error: akunError, refetch: retryAkun } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
-  const tokoShopee = (akunList ?? []).filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
+  const tokoShopee = (akunList ?? []).filter((a) => a.platform === 'shopee')
+  const tokoSinkron = tokoShopee.filter(a => a.id_toko_eksternal)
 
   const { dari, sampai } = rentangTanggal(f.nilai.tanggal as PresetTanggal, { dari: f.nilai.dari, sampai: f.nilai.sampai })
   const kriteria = { q: f.nilai.q || undefined, dari, sampai }
@@ -76,7 +78,7 @@ export default function DanaShopee() {
       let sisa = 0
       let totalSisa = 0
       const gagal: string[] = []
-      for (const [i, t] of tokoShopee.entries()) {
+      for (const [i, t] of tokoSinkron.entries()) {
         sisa = 0
         if (berhenti.current) break
         let putaran = 0
@@ -84,9 +86,9 @@ export default function DanaShopee() {
           putaran += 1
           setProgres({
             selesai: i,
-            total: tokoShopee.length,
+            total: tokoSinkron.length,
             mulai,
-            keterangan: `Toko ${i + 1} dari ${tokoShopee.length}: ${t.nama_toko}${putaran > 1 ? ` (lanjutan ${putaran})` : ''} · ${baru} pesanan baru sejauh ini`,
+            keterangan: `Toko ${i + 1} dari ${tokoSinkron.length}: ${t.nama_toko}${putaran > 1 ? ` (lanjutan ${putaran})` : ''} · ${baru} pesanan baru sejauh ini`,
           })
           try {
             const h = await endpoints.syncSettlementAkun(t.id, Number(hariSinkron))
@@ -123,11 +125,10 @@ export default function DanaShopee() {
     <Card>
       <CardHeader>
         <CardTitle>Dana Cair dari Shopee</CardTitle>
-        <p className="teks-data text-muted-foreground">
-          Dihitung per pesanan dari data Shopee: penjualan, potongan, dan dana yang benar-benar cair. Tanggal mengikuti tanggal dana cair.
-        </p>
+
       </CardHeader>
       <CardContent className="space-y-4">
+        <Bantuan>Dana sudah dilepas Shopee ke saldo toko. Tanggal mengikuti tanggal pelepasan. Filter menampilkan seluruh toko Shopee; sinkronisasi hanya berjalan pada toko terhubung.</Bantuan>
         <BarFilter
           aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
           utama={<FilterCari id="dana-cari" placeholder="No. pesanan" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
@@ -137,8 +138,8 @@ export default function DanaShopee() {
             label="Toko"
             nilai={f.nilai.toko}
             onUbah={(toko) => f.ubah({ toko })}
-            semua={`Semua toko (${ringkasan?.toko.length ?? '…'})`}
-            opsi={(ringkasan?.toko ?? []).map((t) => ({ value: t.akun_id, label: `${t.nama_toko} (${t.pesanan})` }))}
+            semua={`Semua toko (${tokoShopee.length})`}
+            opsi={tokoShopee.map(t => ({ value: t.id, label: t.nama_toko }))}
           />
           <FilterTanggal
             id="dana-tanggal"
@@ -153,7 +154,7 @@ export default function DanaShopee() {
           </Medan>
           <FilterPilih id="dana-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           <FilterAksi>
-            <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
+            <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoSinkron.length === 0}>
               {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
             </Button>
           </FilterAksi>

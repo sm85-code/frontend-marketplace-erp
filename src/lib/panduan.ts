@@ -38,7 +38,7 @@ export const panduan: Panduan[] = [
     judul: 'Retur & Refund',
     tujuan: 'Tangani pengembalian berdasarkan status, solusi dan tenggat dari marketplace.',
     langkah: [
-      'Pilih toko dan tanggal pengajuan (maksimal 15 hari WIB), lalu Tampilkan. Buka Detail untuk membaca alasan dan barang.',
+      'Pilih toko dan tanggal pengajuan (maksimal 14 hari WIB), lalu Tampilkan. Buka Detail untuk membaca alasan dan barang.',
       'Setujui Retur / Refund jika menerima solusi. Jika tidak sesuai, buka Ajukan Sengketa, pilih alasan yang tersedia dan unggah foto tiap bagian wajib.',
       'Refresh detail setelah keputusan. Periksa barang fisik sebelum mencatat stok masuk; proses video/negosiasi lanjutan melalui Seller Centre.',
     ],
@@ -144,7 +144,7 @@ export const panduan: Panduan[] = [
     tujuan: 'Bedakan dana bersih pesanan, mutasi saldo penjual dan catatan pembayaran ERP.',
     langkah: [
       'Pilih toko/periode untuk melihat dana Shopee dan rincian potongan per pesanan.',
-      'Transaksi Saldo Penjual menampilkan arus masuk/keluar, biaya dan penarikan dalam rentang maksimal 15 hari WIB.',
+      'Transaksi Saldo Penjual menampilkan arus masuk/keluar, biaya dan penarikan dalam rentang maksimal 14 hari WIB.',
       'Cocokkan bukti pembayaran sebelum Catat Settlement / Tandai Dibayar. Jangan menjumlahkan penarikan dan pendapatan sebagai dua pendapatan.',
     ],
     dampak: 'Data Shopee dibaca saja. Catatan manual/tanda dibayar mengubah catatan ERP, tidak menarik saldo atau mengirim uang.',
