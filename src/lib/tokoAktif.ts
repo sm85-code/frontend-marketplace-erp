@@ -5,27 +5,29 @@ import { listAkun } from '@/api/endpoints'
 import { useAuth } from '@/lib/auth'
 import { bacaSimpan, tulisSimpan } from '@/lib/simpan'
 
-/** Remember only a shop the current user may access; the backend remains authoritative. */
+/** A shop filter belongs to its page and user, never to the whole ERP. */
 export function useTokoAktif(single = false) {
   const { user } = useAuth()
-  const {search}=useLocation()
-  const key = `erp.toko.${user?.id ?? 'anonymous'}`
-  const [stored, setStored] = useState(
-    () =>
-      new URLSearchParams(search).get('toko') ??
-      bacaSimpan(key) ??
-      '',
-  )
+  const { pathname, search } = useLocation()
+  const key = `erp.toko.halaman.${user?.id ?? 'anonymous'}.${pathname}`
+  const read = () => new URLSearchParams(search).get('toko') ?? bacaSimpan(key) ?? ''
+  const [selection, setSelection] = useState(() => ({ key, value: read() }))
+  // A persistent floating assistant can remain mounted during navigation.
+  // Never expose the previous page's selection while the effect catches up.
+  const stored = selection.key === key ? selection.value : read()
   const shops = useQuery({
     queryKey: ['akun'],
     queryFn: () => listAkun(),
     enabled: !!user,
   })
   useEffect(() => {
-    const update = () => setStored(bacaSimpan(key) ?? '')
+    const update = (event?: Event) => {
+      if (event && (event as CustomEvent<string>).detail !== key) return
+      setSelection({ key, value: bacaSimpan(key) ?? '' })
+    }
     const linked = new URLSearchParams(search).get('toko')
     if (linked !== null) {
-      setStored(linked)
+      setSelection({ key, value: linked })
       tulisSimpan(key, linked)
     } else update()
     window.addEventListener('erp-toko', update)
@@ -40,8 +42,8 @@ export function useTokoAktif(single = false) {
     (next: string) => {
       if (next && !shops.data?.some((s) => s.id === next)) return
       tulisSimpan(key, next)
-      setStored(next)
-      window.dispatchEvent(new Event('erp-toko'))
+      setSelection({ key, value: next })
+      window.dispatchEvent(new CustomEvent('erp-toko', { detail: key }))
     },
     [key, shops.data],
   )
