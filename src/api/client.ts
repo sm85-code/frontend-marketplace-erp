@@ -34,6 +34,7 @@ export function getApiError(
     return detail.map((item: { msg?: string }) => item.msg ?? String(item)).join(', ')
   }
   if (typeof detail === 'string') return detail
+  if (detail && typeof detail === 'object' && 'message' in detail && typeof detail.message === 'string') return detail.message
   // The proxy answers a slow backend with an HTML 502/503/504 page: no `detail`, only an opaque axios message.
   const status = (error as { response?: { status?: number } })?.response?.status
   if (status === 502 || status === 503 || status === 504) {
