@@ -40,10 +40,11 @@ export default function PendapatanShopee() {
   const [shop, setShop] = useState('')
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => listAkun() })
   const available = (shops.data ?? []).filter(a => a.platform === 'shopee' && a.id_toko_eksternal)
+  const selected = available.find(a => a.id === shop)
   return <div className="space-y-4">
-    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="">Semua toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
+    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="" disabled>Pilih toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
-    {available.length > 0 && <Income key={shop} shops={shop ? available.filter(a => a.id === shop) : available} />}
+    {selected && <Income key={selected.id} shops={[selected]} />}
     {!shops.isPending && !available.length && <p className="text-sm text-muted-foreground">Belum ada toko Shopee terhubung.</p>}
   </div>
 }
@@ -56,7 +57,7 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
   const sources = shops.flatMap(shop => ([2, 1] as const).map(status => ({ shop, status, key: `${shop.id}:${status}` })))
   const queries = useQueries({ queries: sources.map(source => ({
     queryKey: ['income-shopee', source.shop.id, start, end, source.status, current[source.key] ?? ''],
-    queryFn: () => api.income(source.shop.id, { dari: start, sampai: end, income_status: source.status, cursor: current[source.key] ?? '', page_size: 5 }),
+    queryFn: () => api.income(source.shop.id, { dari: start, sampai: end, income_status: source.status, cursor: current[source.key] ?? '', page_size: 10 }),
     enabled: !!start && !!end && current[source.key] !== null, retry: false, staleTime: 60000,
   })) })
   const loaded = sources.flatMap((source, index) => {
@@ -116,18 +117,21 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
   const { hasil, urut, ubah } = useUrutLokal(rows, (row, key) => columns.find(c => c.kunci === key)?.nilai?.(row))
   const sortedColumns = columns.map(c => c.nilai ? { ...c, urut: { kunci: c.kunci } } : { ...c, sel: (r: Row) => hasil.findIndex(x => x.key === r.key) + 1 })
   const trackingFailure = tracking.find(t => t.error)
+  const paginationUnknown = sources.some((source, i) => current[source.key] !== null && queries[i].data?.pagination_known === false)
   return <div className="space-y-4">
     <div className="grid items-end gap-3 sm:grid-cols-2">
       <div className="space-y-1"><Label htmlFor="income-start">Dari (WIB)</Label><Input id="income-start" type="date" value={start} onChange={e => { setStart(e.target.value); setPages([{}]) }} /></div>
       <div className="space-y-1"><Label htmlFor="income-end">Sampai (WIB)</Label><Input id="income-end" type="date" value={end} onChange={e => { setEnd(e.target.value); setPages([{}]) }} /></div>
     </div>
-    <Bantuan>Sortir berlaku pada halaman ini. Dana cair adalah pelepasan ke saldo toko: belum cair memakai estimasi, sudah dirilis memakai nominal aktual. Rentang tanggal berlaku untuk dana dirilis; Shopee mengembalikan dana belum cair terkini. Tanggal yang belum tersedia ditampilkan —. Maksimal 14 hari per periode.</Bantuan>
+    <Bantuan>Sortir berlaku pada halaman ini. Dana cair adalah pelepasan ke saldo toko: belum cair memakai estimasi, sudah dirilis memakai nominal aktual. Rentang tanggal berlaku untuk dana dirilis; Shopee mengembalikan dana belum cair terkini. Tanggal yang belum tersedia ditampilkan —. Maksimal 14 hari per periode.
+      {paginationUnknown && <p className="mt-2">Shopee belum memberikan token halaman berikutnya untuk sebagian hasil. Data yang tampil tetap dapat digunakan, tetapi belum dapat dinyatakan sebagai daftar lengkap.</p>}
+    </Bantuan>
     {q.isPending && <Spinner column />}
     {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · {source.status === 1 ? 'Sudah dirilis' : 'Belum cair'}</p><QueryError error={queries[i].error} retry={queries[i].refetch}/></div> : null)}
     {details.filter(r => r.error).map((r, i) => <QueryError key={i} error={r.error} retry={r.refetch} />)}
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
-      {[...(q.data.warnings ?? []), ...details.flatMap(r => r.data?.warnings ?? [])].map(w => <p key={w} role="status" className="rounded-lg bg-muted p-3 text-sm">{w}</p>)}
+      {[...(q.data.warnings ?? []).filter(w => !w.includes('Shopee tidak menyertakan informasi halaman berikutnya.')), ...details.flatMap(r => r.data?.warnings ?? [])].map(w => <p key={w} role="status" className="rounded-lg bg-muted p-3 text-sm">{w}</p>)}
       {(q.isFetching || details.some(r => r.isFetching) || tracking.some(t => t.isFetching)) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian produk dan pengiriman…</p>}
       <TabelData label="Rincian pendapatan Shopee" items={hasil} kolom={sortedColumns} idDari={r => r.key} namaDari={r => r.number} urut={urut} onUrut={ubah} minWidth={1900} />
       {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pendapatan pada permintaan ini.</p>}
