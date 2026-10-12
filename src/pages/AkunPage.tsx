@@ -1,3 +1,4 @@
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import AutoOrderSettings from '@/components/AutoOrderSettings'
 import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -122,7 +123,7 @@ export default function AkunPage() {
   const syncPesananMut = useMutation({
     mutationFn: endpoints.syncPesananAkun,
     onMutate: (akunId: string): Progres => mulaiProgres(`Sinkronisasi pesanan ${akunList?.find((a) => a.id === akunId)?.nama_toko ?? 'toko'}`),
-    onSuccess: (_data, _id, progres) => { progres.selesai("Pesanan ditarik ulang. model_name dan ship_by_date ikut diisi."); qc.invalidateQueries({ queryKey: ["pesanan"] }) },
+    onSuccess: (_data, _id, progres) => { progres.selesai("Sinkronisasi pesanan berhasil."); qc.invalidateQueries({ queryKey: ["pesanan"] }) },
     onError: (e, _id, progres) => progres?.gagal(getApiError(e, "Sync pesanan gagal")),
   })
 
@@ -212,8 +213,6 @@ export default function AkunPage() {
 
   const actions = (akun:AkunMarketplace) => (
     <AksiLainnya>
-      {akun.platform === 'shopee' && user?.role === 'admin' && <><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(akun.id)}&tab=rating`}>Balasan Rating Otomatis</Link></Button><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(akun.id)}&tab=boost`}>Boost Otomatis</Link></Button></>}
-      {akun.platform === 'shopee' && akun.id_toko_eksternal && user?.role === 'admin' && <Button size="sm" variant="outline" asChild><Link to={`/pengaturan-toko?toko=${encodeURIComponent(akun.id)}`}>Pengaturan Toko</Link></Button>}
       {akun.platform === 'shopee' && isOwnerLevel(user?.role) && (
         <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
           {akun.id_toko_eksternal ? 'Otorisasi ulang' : 'Hubungkan Shopee'}
@@ -249,8 +248,14 @@ export default function AkunPage() {
     <div className="space-y-4">
       {connections.error && <QueryError error={connections.error} retry={connections.refetch}/>}
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Kelola Toko">{isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}</BarHalaman>
-      {user?.role==='admin'&&<AutoOrderSettings/>}
+      <BarHalaman judul="Kelola Toko" />
+      <Tabs defaultValue="toko">
+        <TabsList className="section-tabs w-full">
+          <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>
+          {user?.role === 'admin' && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
+        </TabsList>
+        <TabsContent value="toko" className="space-y-4">
+          {isOwnerLevel(user?.role) && <div className="flex justify-end"><Button onClick={openCreate}>Tambah Toko</Button></div>}
 
       <Card>
         <CardHeader>
@@ -281,6 +286,15 @@ export default function AkunPage() {
         </CardContent>
       </Card>
 
+        </TabsContent>
+        {user?.role === 'admin' && <>
+          <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><AutoOrderSettings /></TabsContent>
+          <TabsContent value="otomasi">
+            <div className="grid gap-3 md:grid-cols-2">{(akunList ?? []).filter(a => a.platform === 'shopee').map(a => <Card key={a.id}><CardHeader><CardTitle>{a.nama_toko}</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=rating`}>Balasan Rating Otomatis</Link></Button><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=boost`}>Boost Otomatis</Link></Button></CardContent></Card>)}</div>
+            {!isLoading && !(akunList ?? []).some(a => a.platform === 'shopee') && <p className="py-8 text-center text-muted-foreground">Belum ada toko Shopee.</p>}
+          </TabsContent>
+        </>}
+      </Tabs>
       <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
