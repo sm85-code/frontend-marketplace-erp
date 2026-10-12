@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { Minimize2, Maximize2 } from 'lucide-react'
 import Spinner from '@/components/Spinner'
 import { useAuth } from '@/lib/auth'
@@ -28,6 +29,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
   const { jenis = 'pesanan', ids = [], akunId, satu = false } = request ?? {}
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [dockVisible, setDockVisible] = useState(true)
   const [scope, setScope] = useState(ids.length ? 'pilihan' : akunId ? 'toko' : 'semua')
   const [shop, setShop] = useState(akunId ?? '')
   const [busy, setBusy] = useState(false)
@@ -101,6 +103,15 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
       recovery.current = false; setRecovering(false)
       if (current.tersisa === 0 && !current.gagal.length) localStorage.removeItem(key)
       for (const queryKey of [['pesanan'], ['katalog'], ['produk'], ['listing']]) await qc.invalidateQueries({ queryKey })
+      if (current.tersisa === 0) {
+        setOpen(false); setDockVisible(false)
+        if (!current.gagal.length) {
+          setRequest(null); setJob(null)
+          toast.success('Sinkronisasi berhasil', { description: `${current.selesai} langkah selesai. Data terbaru sudah ditampilkan.`, duration: 5000 })
+        } else {
+          toast.warning('Sinkronisasi selesai sebagian', { description: `${current.selesai} langkah selesai, ${current.gagal.length} gagal.`, duration: 10000, action: { label: 'Lihat rincian', onClick: () => setOpen(true) } })
+        }
+      }
     } catch (e) {
       if (!mounted.current) return
       const failure = e as { code?: string; response?: { status?: number } }
@@ -112,6 +123,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
   }
   resume.current = () => { void run(false, true) }
   function show(next: Request) {
+    setDockVisible(true)
     if (!busy && !job?.tersisa) {
       setRequest(next)
       setScope(next.ids?.length ? 'pilihan' : next.akunId ? 'toko' : 'semua')
@@ -124,7 +136,7 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
   const percent = total ? Math.round((job!.selesai / total) * 100) : 0
   return <SyncContext.Provider value={show}>
     {children}
-    {request && !open && (job || busy || error) && <div className="fixed right-3 bottom-24 z-40 w-[min(320px,calc(100vw-1.5rem))] rounded-xl border bg-card p-3 shadow-lg lg:right-6 lg:bottom-6" aria-label="Progres sinkronisasi">
+    {request && !open && (dockVisible || busy || recovering || !!job?.tersisa) && (job || busy || error) && <div className="fixed left-1/2 top-[calc(env(safe-area-inset-top)+5rem)] z-[60] w-[min(360px,calc(100vw-1.5rem))] -translate-x-1/2 rounded-2xl border bg-card p-4 shadow-lg" aria-label="Progres sinkronisasi">
       <button className="flex w-full items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => setOpen(true)} aria-label="Buka progres sinkronisasi">
         {busy && <Spinner size={22} label={null} />}
         <span className="min-w-0 flex-1 text-sm"><span className="block font-semibold">Sinkronisasi {jenis}</span><span role="status" className="text-xs text-muted-foreground">{recovering && error ? 'Menunggu koneksi · lanjut otomatis' : error ? 'Perlu dilanjutkan' : busy ? `${job?.selesai ?? 0} selesai · ${job?.tersisa ?? 0} tersisa` : paused ? 'Dijeda' : job?.gagal.length ? 'Selesai dengan kegagalan' : 'Selesai'}</span></span>

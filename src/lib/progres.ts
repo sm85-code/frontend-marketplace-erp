@@ -46,10 +46,14 @@ export function mulaiProgres(judul: string): Progres {
       akhiri(() => toast.success(pesan, { duration: 5000 }))
     },
     sebagian: (pesan, deskripsi) => {
-      akhiri(() => toast.warning(pesan, { description: deskripsi, duration: 10000 }))
+      akhiri(() => {
+        const result = toast.warning(pesan, { description: deskripsi, duration: 10000, action: { label: 'OK', onClick: () => toast.dismiss(result) } })
+      })
     },
     gagal: (pesan) => {
-      akhiri(() => toast.error(pesan, { duration: 10000 }))
+      akhiri(() => {
+        const result = toast.error(pesan, { duration: 10000, action: { label: 'OK', onClick: () => toast.dismiss(result) } })
+      })
     },
     tutup: () => {
       berhenti()
