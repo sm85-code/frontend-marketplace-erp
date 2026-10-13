@@ -27,7 +27,7 @@ import { useFilterDaftar } from '@/lib/filterDaftar'
 import { useKolomTersimpan } from '@/lib/kolom'
 import { rentangTanggal, type PresetTanggal } from '@/lib/rentang'
 import { opsiUrutan, teksKeUrut, ubahUrut, urutKeTeks } from '@/lib/urut'
-import { kolomRingkasanToko, kolomSettlementPesanan } from './kolom'
+import { komponenLainNeto, kolomRingkasanToko, kolomSettlementPesanan } from './kolom'
 
 const PER_HALAMAN = 10
 /** A shop with a big backlog is pulled again by itself, up to this many times in one go. */
@@ -128,7 +128,7 @@ export default function DanaShopee() {
 
       </CardHeader>
       <CardContent className="space-y-4">
-        <Bantuan>Dana sudah dilepas Shopee ke saldo toko. Tanggal mengikuti tanggal pelepasan. Filter menampilkan seluruh toko Shopee; sinkronisasi hanya berjalan pada toko terhubung.</Bantuan>
+        <Bantuan>Dana sudah dilepas Shopee ke saldo toko. Tanggal mengikuti tanggal pelepasan. Perhitungan: penjualan sebelum diskon − komisi − layanan + ongkir neto + komponen lain neto = dana cair. Ongkir negatif mengurangi dana; ongkir positif menambah dana. Komponen lain adalah selisih terhadap dana cair dari Shopee, bukan jenis biaya tersendiri; dapat mencakup diskon, voucher, biaya transaksi, pajak, pengembalian, dan penyesuaian. Kolom rincian tambahan dapat dibuka melalui pemilih kolom dan tidak boleh ditambahkan lagi ke rumus tersebut. Filter menampilkan seluruh toko Shopee; sinkronisasi hanya berjalan pada toko terhubung.</Bantuan>
         <BarFilter
           aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
           utama={<FilterCari id="dana-cari" placeholder="No. pesanan" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}
@@ -150,7 +150,7 @@ export default function DanaShopee() {
           />
           <FilterPilih id="dana-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
           <Medan>
-            <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
+            <PemilihKolom semua={semuaKolom.filter(k => k.kunci !== 'komponen_lain')} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
           </Medan>
           <FilterPilih id="dana-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           <FilterAksi>
@@ -211,6 +211,7 @@ export default function DanaShopee() {
                       <TableCell className="text-right font-semibold whitespace-nowrap">{potong(total.komisi)}</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{potong(total.layanan)}</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(total.ongkir)}</TableCell>
+                      <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(komponenLainNeto(total) ?? 0)}</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(total.jumlah_cair)}</TableCell>
                       <TableCell />
                     </TableRow>
@@ -227,7 +228,7 @@ export default function DanaShopee() {
                 <TabelData
                   label="Rincian dana cair per pesanan"
                   items={daftar?.items ?? []}
-                  kolom={semuaKolom.filter((k) => kolom.tampil.includes(k.kunci))}
+                  kolom={semuaKolom.filter((k) => (k.kunci === 'komponen_lain' || kolom.tampil.includes(k.kunci)))}
                   idDari={(r) => r.id}
                   namaDari={(r) => `pesanan ${r.order_sn}`}
                   urut={urutSekarang}
