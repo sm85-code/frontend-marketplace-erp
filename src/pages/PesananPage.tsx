@@ -347,7 +347,7 @@ export default function PesananPage() {
                 <div className="min-w-0 flex-1 break-words">{semuaKolom.find((k) => k.kunci === 'pesanan')?.sel(p)}</div>
               </div>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
-                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && (k.kunci === 'catatan' ? Boolean(p.message_to_seller?.trim()) : k.kunci === 'kota' ? Boolean(p.kota) || kolom.tampil.includes(k.kunci) : kolom.tampil.includes(k.kunci))).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['produk', 'catatan'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
+                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && (k.kunci === 'toko' || (k.kunci === 'catatan' ? Boolean(p.message_to_seller?.trim()) : k.kunci === 'kota' ? Boolean(p.kota) || kolom.tampil.includes(k.kunci) : kolom.tampil.includes(k.kunci)))).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['toko', 'produk', 'catatan'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
               </dl>
               <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: false })} cetakSibuk={sedangBekerja} /></div>
             </li>)}
