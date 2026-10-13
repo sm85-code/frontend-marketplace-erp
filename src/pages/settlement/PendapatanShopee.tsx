@@ -11,7 +11,6 @@ import { ErrorDetails } from '@/pages/katalog/ShopeeEngagement'
 import Spinner from '@/components/Spinner'
 import { TabelData, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 const field = 'w-full rounded-lg border bg-background p-2'
@@ -34,7 +33,7 @@ const eventTime = (data: api.Tracking | undefined, codes: string[]) => {
 interface Row {
   key: string; shop: string; number: string; products: string[]; variants: string[]
   shipping: string | null; amount: number | null; currency?: string
-  shipped: number | null; received: number | null; incomeStatus: string
+  shipped: number | null; received: number | null; payout: number | null
 }
 
 export default function PendapatanShopee() {
@@ -51,11 +50,11 @@ export default function PendapatanShopee() {
 }
 function Income({ shops }: { shops: AkunMarketplace[] }) {
   const wibDate = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(date)
-  const [start, setStart] = useState(() => wibDate(new Date(Date.now() - 13 * 86400000)))
-  const [end, setEnd] = useState(() => wibDate(new Date()))
+  const [start] = useState(() => wibDate(new Date(Date.now() - 13 * 86400000)))
+  const [end] = useState(() => wibDate(new Date()))
   const [pages, setPages] = useState<Record<string, string | null>[]>([{}])
   const current = pages[pages.length - 1]
-  const sources = shops.flatMap(shop => ([2, 1] as const).map(status => ({ shop, status, key: `${shop.id}:${status}` })))
+  const sources = shops.flatMap(shop => ([2] as const).map(status => ({ shop, status, key: `${shop.id}:${status}` })))
   const incomeOptions = (index: number, ready = true) => {
     const source = sources[index]
     return {
@@ -64,20 +63,15 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
       enabled: ready && !!start && !!end && current[source.key] !== null, retry: false, staleTime: 60000,
     }
   }
-  // Read one status at a time; avoid competing token refresh and provider reads.
   const pendingQuery = useQuery(incomeOptions(0))
-  const releasedQuery = useQuery(incomeOptions(1, current[sources[0].key] === null || (!pendingQuery.isFetching && !pendingQuery.isPending)))
-  const queries = [pendingQuery, releasedQuery]
+  const queries = [pendingQuery]
   const incomeBusy = sources.some((source, i) => current[source.key] !== null && (queries[i].isFetching || queries[i].isPending))
 
   const loaded = sources.flatMap((source, index) => {
     if (current[source.key] === null) return []
     return (queries[index].data?.items ?? []).map((row, position) => ({ ...row, _shop: source.shop.id, _shopName: source.shop.nama_toko, _status: source.status, _key: `${source.shop.id}:${row.order_sn || `${source.status}:${position}`}` }))
   })
-  // A payout may change status while the two reads run. Show it once, preferring released.
-  const distinct = new Map<string, typeof loaded[number]>()
-  for (const row of loaded) { if (!distinct.has(row._key) || row._status === 1) distinct.set(row._key, row) }
-  const items = [...distinct.values()]
+  const items = [...new Map(loaded.map(row => [row._key, row])).values()]
   const active = queries.filter((_, i) => current[sources[i].key] !== null)
   const q = {
     isPending: active.some(r => r.isPending) && !active.some(r => r.data),
@@ -102,14 +96,14 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
     const states = [...new Set(traces.map(t => t?.logistics_status).filter(Boolean))]
     const fallback = detail?.packages.map(p => p.logistics_status).filter(Boolean) ?? []
     const labels = (states.length === traces.length && states.length ? states : fallback.length ? fallback : [detail?.order_status]).filter((v): v is string => !!v).map(v => shippingLabels[v] ?? v)
-    const amount = r._status === 1 ? r.released_amount : r.estimated_escrow_amount
+    const amount = r.estimated_escrow_amount
     return { key: r._key, shop: r._shopName, number: r.order_sn ?? '—',
       products: detail?.items.map(i => i.name || '—') ?? [], variants: detail?.items.map(i => i.variant || '—') ?? [],
       shipping: [...new Set(labels)].join(' · ') || null,
       amount: amount == null ? null : Number(amount), currency: r.currency,
       shipped: stamp(detail?.pickup_done_time) ?? (shipped.length ? Math.min(...shipped) : null),
       received: received.length && received.every((v): v is number => v != null) ? Math.max(...received) : null,
-      incomeStatus: r._status === 1 ? 'Sudah dirilis' : 'Belum cair' }
+      payout: stamp(r.estimated_payout_time) }
   })
   const names = (values: string[]) => values.length ? <div className="space-y-2">{values.map((v, i) => <div key={i}>{v}</div>)}</div> : '—'
   const columns: KolomTabel<Row>[] = [
@@ -119,32 +113,28 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
     { kunci: 'products', judul: 'Nama Produk', sel: r => names(r.products), nilai: r => r.products.join(' · '), kelas: 'min-w-60' },
     { kunci: 'variants', judul: 'Varian', sel: r => names(r.variants), nilai: r => r.variants.join(' · '), kelas: 'min-w-36' },
     { kunci: 'shipping', judul: 'Status Pengiriman', sel: r => r.shipping ?? '—', nilai: r => r.shipping },
-    { kunci: 'amount', judul: 'Dana Cair / Estimasi', sel: r => r.amount == null ? '—' : fmtMoney(r.amount, r.currency), nilai: r => r.amount, rata: 'kanan', kelas: 'whitespace-nowrap' },
+    { kunci: 'amount', judul: 'Estimasi Dana Cair', sel: r => r.amount == null ? '—' : fmtMoney(r.amount, r.currency), nilai: r => r.amount, rata: 'kanan', kelas: 'whitespace-nowrap' },
     { kunci: 'shipped', judul: 'Tanggal Dikirim', sel: r => time(r.shipped), nilai: r => r.shipped, kelas: 'whitespace-nowrap' },
     { kunci: 'received', judul: 'Tanggal Diterima', sel: r => time(r.received), nilai: r => r.received, kelas: 'whitespace-nowrap' },
-    { kunci: 'incomeStatus', judul: 'Status Pendapatan', sel: r => r.incomeStatus, nilai: r => r.incomeStatus, kelas: 'whitespace-nowrap' },
+    { kunci: 'payout', judul: 'Estimasi Tgl. Pencairan', sel: r => time(r.payout), nilai: r => r.payout, kelas: 'whitespace-nowrap' },
   ]
   const { hasil, urut, ubah } = useUrutLokal(rows, (row, key) => columns.find(c => c.kunci === key)?.nilai?.(row))
   const sortedColumns = columns.map(c => c.nilai ? { ...c, urut: { kunci: c.kunci } } : { ...c, sel: (r: Row) => hasil.findIndex(x => x.key === r.key) + 1 })
   const trackingFailure = tracking.find(t => t.error)
   const paginationUnknown = sources.some((source, i) => current[source.key] !== null && queries[i].data?.pagination_known === false)
   return <div className="space-y-4">
-    <div className="grid items-end gap-3 sm:grid-cols-2">
-      <div className="space-y-1"><Label htmlFor="income-start">Dari (WIB)</Label><Input id="income-start" type="date" value={start} onChange={e => { setStart(e.target.value); setPages([{}]) }} /></div>
-      <div className="space-y-1"><Label htmlFor="income-end">Sampai (WIB)</Label><Input id="income-end" type="date" value={end} onChange={e => { setEnd(e.target.value); setPages([{}]) }} /></div>
-    </div>
-    <Bantuan>Sortir berlaku pada halaman ini. Dana cair adalah pelepasan ke saldo toko: belum cair memakai estimasi, sudah dirilis memakai nominal aktual. Rentang tanggal berlaku untuk dana dirilis; Shopee mengembalikan dana belum cair terkini. Tanggal yang belum tersedia ditampilkan —. Maksimal 14 hari per periode.
+    <Bantuan>Dana pesanan yang belum dilepas ke saldo penjual, baik masih dalam pengiriman maupun sudah diterima pembeli. Shopee mengembalikan kondisi belum cair terkini. Dana yang sudah dirilis tersedia di tab Dana Dilepas setelah sinkronisasi. Sortir berlaku pada halaman ini; estimasi tanggal yang tidak tersedia ditampilkan —.
       {paginationUnknown && <p className="mt-2">Shopee belum memberikan token halaman berikutnya untuk sebagian hasil. Data yang tampil tetap dapat digunakan, tetapi belum dapat dinyatakan sebagai daftar lengkap.</p>}
     </Bantuan>
     {q.isPending && <Spinner column />}
-    {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · {source.status === 1 ? 'Sudah dirilis' : 'Belum cair'}</p><ErrorDetails error={queries[i].error}/><Button variant="outline" onClick={() => void queries[i].refetch()}>Coba lagi</Button></div> : null)}
+    {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · Menunggu pencairan</p><ErrorDetails error={queries[i].error}/><Button variant="outline" onClick={() => void queries[i].refetch()}>Coba lagi</Button></div> : null)}
     {details.filter(r => r.error).map((r, i) => <QueryError key={i} error={r.error} retry={r.refetch} />)}
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
       {[...(q.data.warnings ?? []).filter(w => !w.includes('Shopee tidak menyertakan informasi halaman berikutnya.')), ...details.flatMap(r => r.data?.warnings ?? [])].map(w => <p key={w} role="status" className="rounded-lg bg-muted p-3 text-sm">{w}</p>)}
       {(q.isFetching || details.some(r => r.isFetching) || tracking.some(t => t.isFetching)) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian produk dan pengiriman…</p>}
-      <TabelData label="Rincian pendapatan Shopee" items={hasil} kolom={sortedColumns} idDari={r => r.key} namaDari={r => r.number} urut={urut} onUrut={ubah} minWidth={1900} />
-      {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pendapatan pada permintaan ini.</p>}
+      <TabelData label="Pesanan menunggu pencairan" items={hasil} kolom={sortedColumns} idDari={r => r.key} namaDari={r => r.number} urut={urut} onUrut={ubah} minWidth={1900} />
+      {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan menunggu pencairan pada permintaan ini.</p>}
       {(pages.length > 1 || q.data.ada_lagi) && <div className="paginasi">
         <Button variant="outline" disabled={q.isFetching || pages.length === 1} onClick={() => setPages(p => p.slice(0, -1))}>Sebelumnya</Button>
         <span className="text-sm text-muted-foreground">Halaman {pages.length}</span>

@@ -67,11 +67,12 @@ function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Sett
 export default function SettlementPage() {
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
 
   const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
-  const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.settlement({}), queryFn: () => endpoints.listSettlement() })
+  const { data, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.settlement({}), queryFn: () => endpoints.listSettlement(), enabled: manualOpen })
 
   const createMut = useMutation({
     mutationFn: endpoints.createSettlement,
@@ -110,26 +111,25 @@ export default function SettlementPage() {
 
   return (
     <div className="space-y-4">
-      {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Settlement">
-        <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
-          Catat Manual
-        </Button>
-      </BarHalaman>
+      <BarHalaman judul="Dana & Saldo Shopee" />
 
       <Tabs defaultValue="saldo">
-        <TabsList className="section-tabs"><TabsTrigger value="saldo">Saldo Toko</TabsTrigger><TabsTrigger value="dana">Dana Cair</TabsTrigger><TabsTrigger value="pendapatan">Pendapatan</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger><TabsTrigger value="manual">Catatan Manual</TabsTrigger></TabsList>
-        <TabsContent value="dana"><DanaShopee /></TabsContent>
+        <TabsList className="section-tabs"><TabsTrigger value="saldo">Saldo Penjual</TabsTrigger><TabsTrigger value="pendapatan">Menunggu Pencairan</TabsTrigger><TabsTrigger value="dana">Dana Dilepas</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger></TabsList>
         <TabsContent value="pendapatan"><PendapatanShopee /></TabsContent>
         <TabsContent value="saldo"><SaldoToko /></TabsContent>
         <TabsContent value="mutasi"><TransaksiDana /></TabsContent>
-        <TabsContent value="manual">
+        <TabsContent value="dana">
+          <DanaShopee />
+          <details className="mt-4 rounded-xl border bg-card p-4" onToggle={e => setManualOpen(e.currentTarget.open)}>
+            <summary className="cursor-pointer text-sm font-medium">Catatan manual pencairan (terpisah dari data Shopee)</summary>
 
       <Card>
         <CardHeader>
           <CardTitle>Catatan Manual Pencairan</CardTitle>
+          <Button className="self-start" onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>Catat Manual</Button>
         </CardHeader>
         <CardContent>
+          {queryError && <QueryError error={queryError} retry={retryQuery} />}
           {isLoading ? (
             <Spinner column label="Memuat settlement…" />
           ) : (
@@ -155,6 +155,7 @@ export default function SettlementPage() {
           )}
         </CardContent>
       </Card>
+        </details>
         </TabsContent>
       </Tabs>
 
