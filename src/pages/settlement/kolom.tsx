@@ -83,7 +83,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     },
     { kunci: 'subsidi', judul: 'Subsidi ongkir', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.subsidi_ongkir) },
     { kunci: 'penyesuaian', judul: 'Penyesuaian', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.penyesuaian) },
-    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: angka, tetap: true, sel: tampilKomponenLain },
+    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: angka, sel: tampilKomponenLain },
     {
       kunci: 'cair',
       judul: 'Dana cair',

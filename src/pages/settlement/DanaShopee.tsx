@@ -150,7 +150,7 @@ export default function DanaShopee() {
           />
           <FilterPilih id="dana-urut" label="Urutan" nilai={f.nilai.urut} onUbah={(urut) => f.ubah({ urut })} opsi={opsiUrutan(semuaKolom)} />
           <Medan>
-            <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
+            <PemilihKolom semua={semuaKolom.filter(k => k.kunci !== 'komponen_lain')} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
           </Medan>
           <FilterPilih id="dana-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           <FilterAksi>
