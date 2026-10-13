@@ -6,6 +6,18 @@ const uang = (v: string) => Number(v)
 /** Costs are shown with a minus sign so a column reads as "what was taken off". */
 const potong = (v: string | null) => v == null ? '—' : (uang(v) === 0 ? fmtRp(0) : fmtRp(-Math.abs(uang(v))))
 
+/** Reconciliation difference, not a provider-reported fee or an estimated payout. */
+export function komponenLainNeto(r: Pick<SettlementPesanan, 'penjualan' | 'komisi' | 'layanan' | 'ongkir' | 'jumlah_cair'>): number | null {
+  const values = [r.penjualan, r.komisi, r.layanan, r.ongkir, r.jumlah_cair]
+  if (values.some(v => v == null || v.trim() === '' || !Number.isFinite(Number(v)))) return null
+  const [penjualan, komisi, layanan, ongkir, cair] = values.map(v => Math.round(Number(v) * 100))
+  return (cair - (penjualan - Math.abs(komisi) - Math.abs(layanan) + ongkir)) / 100
+}
+const tampilKomponenLain = (r: Parameters<typeof komponenLainNeto>[0]) => {
+  const nilai = komponenLainNeto(r)
+  return nilai == null ? '—' : fmtRp(nilai)
+}
+
 /**
  * Every column of the released-money list, declared once: the table, the column picker and the sort dropdown all
  * come from it. `urut.kunci` must be a sort key the API knows (dirilis pesanan toko penjualan komisi layanan ongkir cair).
@@ -62,7 +74,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     { kunci: 'transaksi', judul: 'Biaya transaksi', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => potong(r.transaksi) },
     {
       kunci: 'ongkir',
-      judul: 'Ongkir',
+      judul: 'Ongkir (neto)',
       rata: 'kanan',
       kelas: angka,
       urut: { kunci: 'ongkir', label: ['Paling besar ditanggung', 'Paling kecil ditanggung'] },
@@ -71,6 +83,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     },
     { kunci: 'subsidi', judul: 'Subsidi ongkir', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.subsidi_ongkir) },
     { kunci: 'penyesuaian', judul: 'Penyesuaian', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.penyesuaian) },
+    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: angka, tetap: true, sel: tampilKomponenLain },
     {
       kunci: 'cair',
       judul: 'Dana cair',
@@ -93,7 +106,8 @@ export function kolomRingkasanToko(): KolomTabel<BarisToko>[] {
     { kunci: 'penjualan', judul: 'Penjualan sebelum Diskon', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.penjualan), nilai: (t) => uang(t.penjualan) },
     { kunci: 'komisi', judul: 'Komisi', rata: 'kanan', kelas: a, sel: (t) => potong(t.komisi), nilai: (t) => uang(t.komisi) },
     { kunci: 'layanan', judul: 'Layanan', rata: 'kanan', kelas: a, sel: (t) => potong(t.layanan), nilai: (t) => uang(t.layanan) },
-    { kunci: 'ongkir', judul: 'Ongkir', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.ongkir), nilai: (t) => uang(t.ongkir) },
+    { kunci: 'ongkir', judul: 'Ongkir (neto)', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.ongkir), nilai: (t) => uang(t.ongkir) },
+    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: a, sel: tampilKomponenLain, nilai: komponenLainNeto },
     {
       kunci: 'cair',
       judul: 'Dana cair',
