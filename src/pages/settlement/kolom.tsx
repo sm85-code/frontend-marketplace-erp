@@ -7,9 +7,9 @@ const uang = (v: string) => Number(v)
 const potong = (v: string | null) => v == null ? '—' : (uang(v) === 0 ? fmtRp(0) : fmtRp(-Math.abs(uang(v))))
 
 /** Reconciliation difference, not a provider-reported fee or an estimated payout. */
-export function komponenLainNeto(r: Pick<SettlementPesanan, 'penjualan' | 'komisi' | 'layanan' | 'ongkir' | 'jumlah_cair'>): number | null {
+export function komponenLainNeto(r: Record<'penjualan' | 'komisi' | 'layanan' | 'ongkir' | 'jumlah_cair', string | number | null>): number | null {
   const values = [r.penjualan, r.komisi, r.layanan, r.ongkir, r.jumlah_cair]
-  if (values.some(v => v == null || v.trim() === '' || !Number.isFinite(Number(v)))) return null
+  if (values.some(v => v == null || (typeof v !== 'string' && typeof v !== 'number') || String(v).trim() === '' || !Number.isFinite(Number(v)))) return null
   const [penjualan, komisi, layanan, ongkir, cair] = values.map(v => Math.round(Number(v) * 100))
   return (cair - (penjualan - Math.abs(komisi) - Math.abs(layanan) + ongkir)) / 100
 }

@@ -8,6 +8,9 @@ describe('reconciliation with Shopee released funds', () => {
   it('keeps positive shipping credits and fractional amounts', () => {
     expect(komponenLainNeto({ penjualan: '100.10', komisi: '8.10', layanan: '3', ongkir: '2.50', jumlah_cair: '91.50' })).toBe(0)
   })
+  it('accepts numeric JSON amounts returned by the API without crashing', () => {
+    expect(komponenLainNeto({ penjualan: 54000, komisi: 4860, layanan: 6480, ongkir: 0, jumlah_cair: 37943 })).toBe(-4717)
+  })
   it('does not claim reconciliation when a component is unavailable', () => {
     expect(komponenLainNeto({ penjualan: null, komisi: '8', layanan: '3', ongkir: '0', jumlah_cair: '79' })).toBeNull()
   })
