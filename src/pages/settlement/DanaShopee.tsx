@@ -128,7 +128,7 @@ export default function DanaShopee() {
 
       </CardHeader>
       <CardContent className="space-y-4">
-        <Bantuan>Dana sudah dilepas Shopee ke saldo toko. Tanggal mengikuti tanggal pelepasan. Perhitungan: penjualan sebelum diskon − komisi − layanan + ongkir neto + komponen lain neto = dana cair. Ongkir negatif mengurangi dana; ongkir positif menambah dana. Komponen lain adalah selisih terhadap dana cair dari Shopee, bukan jenis biaya tersendiri; dapat mencakup diskon, voucher, biaya transaksi, pajak, pengembalian, dan penyesuaian. Kolom rincian tambahan dapat dibuka melalui pemilih kolom dan tidak boleh ditambahkan lagi ke rumus tersebut. Filter menampilkan seluruh toko Shopee; sinkronisasi hanya berjalan pada toko terhubung.</Bantuan>
+        <Bantuan>Dana sudah dilepas Shopee ke saldo toko. Tanggal mengikuti tanggal pelepasan. Perhitungan: penjualan sebelum diskon − komisi − layanan + ongkir + komponen lain = dana cair. Ongkir negatif mengurangi dana; ongkir positif menambah dana. Komponen lain adalah selisih terhadap dana cair dari Shopee, bukan jenis biaya tersendiri; dapat mencakup diskon, voucher, biaya transaksi, pajak, pengembalian, dan penyesuaian. Kolom rincian tambahan dapat dibuka melalui pemilih kolom dan tidak boleh ditambahkan lagi ke rumus tersebut. Filter menampilkan seluruh toko Shopee; sinkronisasi hanya berjalan pada toko terhubung.</Bantuan>
         <BarFilter
           aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0)}
           utama={<FilterCari id="dana-cari" placeholder="No. pesanan" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />}

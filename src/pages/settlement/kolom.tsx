@@ -74,7 +74,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     { kunci: 'transaksi', judul: 'Biaya transaksi', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => potong(r.transaksi) },
     {
       kunci: 'ongkir',
-      judul: 'Ongkir (neto)',
+      judul: 'Ongkir',
       rata: 'kanan',
       kelas: angka,
       urut: { kunci: 'ongkir', label: ['Paling besar ditanggung', 'Paling kecil ditanggung'] },
@@ -83,7 +83,7 @@ export function kolomSettlementPesanan(): KolomTabel<SettlementPesanan>[] {
     },
     { kunci: 'subsidi', judul: 'Subsidi ongkir', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.subsidi_ongkir) },
     { kunci: 'penyesuaian', judul: 'Penyesuaian', rata: 'kanan', kelas: angka, bawaan: false, sel: (r) => fmtRp(r.penyesuaian) },
-    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: angka, sel: tampilKomponenLain },
+    { kunci: 'komponen_lain', judul: 'Komponen lain', rata: 'kanan', kelas: angka, sel: tampilKomponenLain },
     {
       kunci: 'cair',
       judul: 'Dana cair',
@@ -106,8 +106,8 @@ export function kolomRingkasanToko(): KolomTabel<BarisToko>[] {
     { kunci: 'penjualan', judul: 'Penjualan sebelum Diskon', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.penjualan), nilai: (t) => uang(t.penjualan) },
     { kunci: 'komisi', judul: 'Komisi', rata: 'kanan', kelas: a, sel: (t) => potong(t.komisi), nilai: (t) => uang(t.komisi) },
     { kunci: 'layanan', judul: 'Layanan', rata: 'kanan', kelas: a, sel: (t) => potong(t.layanan), nilai: (t) => uang(t.layanan) },
-    { kunci: 'ongkir', judul: 'Ongkir (neto)', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.ongkir), nilai: (t) => uang(t.ongkir) },
-    { kunci: 'komponen_lain', judul: 'Komponen lain (neto)', rata: 'kanan', kelas: a, sel: tampilKomponenLain, nilai: komponenLainNeto },
+    { kunci: 'ongkir', judul: 'Ongkir', rata: 'kanan', kelas: a, sel: (t) => fmtRp(t.ongkir), nilai: (t) => uang(t.ongkir) },
+    { kunci: 'komponen_lain', judul: 'Komponen lain', rata: 'kanan', kelas: a, sel: tampilKomponenLain, nilai: komponenLainNeto },
     {
       kunci: 'cair',
       judul: 'Dana cair',
