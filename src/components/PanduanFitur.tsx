@@ -7,7 +7,7 @@ export default function PanduanFitur({ path }: { path: string }) {
   if (!guide) return null
   return (
     <Dialog key={path}>
-      <DialogTrigger asChild><Button variant="ghost" className="w-full justify-start gap-2"><BookOpen className="size-4" aria-hidden="true" />Bantuan halaman</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label="Bantuan halaman" title="Bantuan halaman"><BookOpen className="size-5" aria-hidden="true" /></Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>{guide.judul}</DialogTitle><DialogDescription>{guide.tujuan}</DialogDescription></DialogHeader>
         <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed">{guide.langkah.map(step => <li key={step}>{step}</li>)}</ol>
