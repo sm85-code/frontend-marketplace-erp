@@ -56,6 +56,12 @@ export default function PesananDetailPage() {
     enabled: Boolean(id),
   })
 
+  const shops = useQuery({
+    queryKey: qk.akun(),
+    queryFn: () => endpoints.listAkun(),
+    enabled: Boolean(pesanan?.akun_id),
+  })
+
   const statusMut = useMutation({
     mutationFn: (status: string) => endpoints.ubahStatusPesanan(id!, status),
     onSuccess: () => {
@@ -231,6 +237,10 @@ export default function PesananDetailPage() {
           <CardTitle>Ringkasan</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-3 text-sm">
+          <div className="col-span-2 min-w-0 md:hidden">
+            <div className="text-xs text-muted-foreground">Toko</div>
+            <div className="break-words font-medium">{pesanan.akun_id ? (shops.data?.find(shop => shop.id === pesanan.akun_id)?.nama_toko ?? (shops.isPending ? 'Memuat…' : 'Toko tidak tersedia')) : 'Tanpa toko'}</div>
+          </div>
           <div>
             <div className="text-xs text-muted-foreground">Platform</div>
             <div className="font-medium">{PLATFORM_LABELS[pesanan.platform]}</div>
