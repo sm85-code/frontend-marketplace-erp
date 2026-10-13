@@ -22,7 +22,7 @@ const selectClass =
 
 export default function AppearancePopover({
   triggerClassName,
-  align = 'start',
+  align = 'end',
 }: {
   triggerClassName?: string
   align?: 'start' | 'center' | 'end'
@@ -33,8 +33,8 @@ export default function AppearancePopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button data-testid="appearance-trigger" variant="outline" size="sm" className={triggerClassName ?? 'gap-2'}>
-          <Palette className="size-4" /> Tampilan
+        <Button data-testid="appearance-trigger" variant="ghost" size="icon" aria-label="Tampilan" title="Tampilan" className={triggerClassName ?? 'size-11 shrink-0 rounded-full'}>
+          <Palette className="size-5" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
