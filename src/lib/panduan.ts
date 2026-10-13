@@ -140,12 +140,12 @@ export const panduan: Panduan[] = [
   },
   {
     path: '/settlement',
-    judul: 'Settlement & Dana',
-    tujuan: 'Bedakan dana bersih pesanan, mutasi saldo penjual dan catatan pembayaran ERP.',
+    judul: 'Dana & Saldo Shopee',
+    tujuan: 'Bedakan posisi saldo penjual, pesanan menunggu pencairan, dana dilepas dan mutasi saldo.',
     langkah: [
-      'Pilih toko/periode untuk melihat dana Shopee dan rincian potongan per pesanan.',
-      'Transaksi Saldo Penjual menampilkan arus masuk/keluar, biaya dan penarikan dalam rentang maksimal 14 hari WIB.',
-      'Cocokkan bukti pembayaran sebelum Catat Settlement / Tandai Dibayar. Jangan menjumlahkan penarikan dan pendapatan sebagai dua pendapatan.',
+      'Saldo Penjual menunjukkan saldo terakhir beserta waktu transaksinya. Menunggu Pencairan hanya berisi dana yang belum dilepas.',
+      'Dana Dilepas menyimpan pelepasan per pesanan setelah sinkronisasi. Mutasi Saldo mencatat uang masuk/keluar, biaya dan penarikan; maksimal 14 hari WIB.',
+      'Catatan manual dilipat di Dana Dilepas dan terpisah dari data Shopee. Jangan menjumlahkan saldo, dana dilepas dan mutasi sebagai pendapatan baru.',
     ],
     dampak: 'Data Shopee dibaca saja. Catatan manual/tanda dibayar mengubah catatan ERP, tidak menarik saldo atau mengirim uang.',
   },
@@ -221,7 +221,7 @@ export const panduan: Panduan[] = [
     tujuan: 'Ringkasan aktivitas ERP berdasarkan data yang sudah tersinkron.',
     langkah: [
       'Periksa waktu pembaruan dan toko yang dapat diakses.',
-      'Buka menu Pesanan, Katalog, Settlement atau Iklan untuk melihat rincian.',
+      'Buka menu Pesanan, Katalog, Dana & Saldo Shopee atau Iklan untuk melihat rincian.',
       'Sinkronkan fitur terkait jika data belum terbaru.',
     ],
     dampak: 'Membaca ringkasan tidak menjalankan perubahan marketplace.',

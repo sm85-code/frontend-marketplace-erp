@@ -94,7 +94,7 @@ export default function SaldoToko() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Saldo Toko</h2>
+        <h2 className="font-semibold">Saldo Penjual</h2>
         <Button
           disabled={!rows.length || queries.some((q) => q.isFetching)}
           onClick={() => {
@@ -114,7 +114,7 @@ export default function SaldoToko() {
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
       {rows.filter(r => r.query.error).map(r => <div key={r.shop.id} className="space-y-1"><p className="text-sm font-medium">{r.shop.nama_toko}</p><QueryError error={r.query.error} retry={r.query.refetch}/></div>)}
       <TabelData
-        label="Saldo toko"
+        label="Saldo penjual"
         minWidth={800}
         items={rows}
         kolom={cols}

@@ -124,7 +124,7 @@ export default function DanaShopee() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dana Cair dari Shopee</CardTitle>
+        <CardTitle>Dana Dilepas ke Saldo Penjual</CardTitle>
 
       </CardHeader>
       <CardContent className="space-y-4">
