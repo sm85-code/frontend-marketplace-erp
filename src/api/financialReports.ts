@@ -34,7 +34,7 @@ export type Result = {
   pengeluaran: string; laba: string; kas_masuk: string; kas_keluar: string; transfer_antar_kas: string;
   saldo_awal: Balances; saldo_akhir: Balances; neraca: { aset: string; utang: string; ekuitas: string; selisih: string }
 }
-export type Report = { preview_token: string; tanggal: string; mulai: string; jadwal_laporan: string; lengkap?: boolean; calendar_version?: number; imported_historical?: boolean; tutup_bulanan: boolean; input: CloseInput; sumber: Sources; hasil: Result; created_by?: string; created_at?: string }
+export type Report = { rincian_toko?: { nama: string; nominal: string }[]; preview_token: string; tanggal: string; mulai: string; jadwal_laporan: string; lengkap?: boolean; calendar_version?: number; imported_historical?: boolean; tutup_bulanan: boolean; input: CloseInput; sumber: Sources; hasil: Result; created_by?: string; created_at?: string }
 export type Overview = {
   sumber_utama: 'google_drive' | 'erp'; asal: { url: string; tab: string; read_at: string } | null; akhir_bulan: string; jadwal_bulanan: string; mingguan: { mulai: string; tanggal: string; jadwal_laporan: string; laporan: Report | null }[]; laporan_bulanan: Report | null; legacy: Report[]; saldo_awal: { tanggal: string; saldo: Balances } | null;
   laporan: Report[]; berikutnya: string | null; terakhir: string | null;
