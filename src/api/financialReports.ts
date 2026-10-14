@@ -52,3 +52,7 @@ export const history = async () => (await api.get<Audit[]>('/laporan-keuangan/ri
 export type Comparison = { laporan: { piutang_pengiriman: string; saldo_toko: string; piutang_total: string; biaya_iklan: string }; erp: { piutang_pengiriman_bruto: string; saldo_toko: null; piutang_belum_ditarik: null; biaya_iklan: string; pesanan: Sources['pesanan_pengiriman'] }; dibaca_at: string; catatan: string }
 export const comparison = async (tanggal: string) => (await api.get<Comparison>(`/laporan-keuangan/${tanggal}/pembanding`)).data
 export const importDrive = async (data: unknown) => (await api.post('/laporan-keuangan/impor-drive', data)).data
+
+export type ShopeeIncomeCell = { estimasi: string; riil: string; belum_riil: number; jumlah: string | null }
+export type ShopeeIncome = { periode: string; minggu: { mulai: string; akhir: string }[]; toko: { id: string; nama: string; minggu: ShopeeIncomeCell[] }[]; catatan: string }
+export const shopeeIncome = async (periode: string, jumlah_kolom: number) => (await api.get<ShopeeIncome>('/laporan-keuangan/pemasukan-shopee', { params: { periode, jumlah_kolom } })).data

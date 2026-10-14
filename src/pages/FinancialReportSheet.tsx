@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
 import type { Overview, Report } from '@/api/financialReports'
+import { sumAmounts } from '@/lib/financialAmounts'
+export { sumAmounts } from '@/lib/financialAmounts'
+import FinancialShopeeIncome from './FinancialShopeeIncome'
 import { fmtRp } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { Button } from '@/components/ui/button'
@@ -12,18 +15,6 @@ const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key]
 const result = (key: 'pemasukan_toko' | 'perubahan_piutang' | 'pemasukan' | 'pengeluaran' | 'laba' | 'kas_masuk' | 'kas_keluar' | 'transfer_antar_kas') => (r: Report) => r.hasil[key]
 const end = (key: keyof Report['hasil']['saldo_akhir']) => (r: Report) => r.hasil.saldo_akhir[key]
 const before = (key: keyof Report['hasil']['saldo_awal']) => (r: Report) => r.hasil.saldo_awal[key]
-
-// Preserve cents for column totals without rounding through floating-point arithmetic.
-export function sumAmounts(values: string[]): string {
-  const cents = values.reduce((sum, value) => {
-    const negative = value.startsWith('-')
-    const [whole, fraction = ''] = value.replace(/^-/, '').split('.')
-    const n = BigInt(whole || '0') * 100n + BigInt(fraction.padEnd(2, '0').slice(0, 2))
-    return sum + (negative ? -n : n)
-  }, 0n)
-  const magnitude = cents < 0n ? -cents : cents
-  return `${cents < 0n ? '-' : ''}${magnitude / 100n}.${String(magnitude % 100n).padStart(2, '0')}`
-}
 
 const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day:'2-digit', month:'2-digit', year:'numeric' })
@@ -134,6 +125,7 @@ export default function FinancialReportSheet({ data, month, comparison }: { data
             </div>
           </CardContent>
         </Card>
+        {i === 0 && <FinancialShopeeIncome month={month} columns={days.length} />}
       </TabsContent>)}
       {comparison && <TabsContent value="comparison">{comparison}</TabsContent>}
     </Tabs>
