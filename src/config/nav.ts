@@ -55,6 +55,7 @@ export const NAV: NavItem[] = [
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
+  { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
