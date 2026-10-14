@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MoneyInput from '@/components/MoneyInput'
+import FinancialReportSheet from './FinancialReportSheet'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 
@@ -23,34 +24,33 @@ export default function FinancialReportsPage() {
   const { user } = useAuth()
   const allowed = user?.role === 'admin'
   const [month, setMonth] = useState(monthNow)
+  const [manageOpen, setManageOpen] = useState(false)
   const qc = useQueryClient()
   const overview = useQuery({ queryKey: ['financial-reports', month], queryFn: () => reports.overview(month), enabled: allowed })
   const audit = useQuery({ queryKey: ['financial-report-history'], queryFn: reports.history, enabled: allowed })
   const refresh = async () => { await qc.invalidateQueries({ queryKey: ['financial-reports'] }); await qc.invalidateQueries({ queryKey: ['financial-report-history'] }); await qc.invalidateQueries({ queryKey: ['financial-report-sources'] }) }
   if (!allowed) return <p role="alert">Laporan keuangan hanya dapat diakses admin.</p>
   return <div className="space-y-6">
-    <div><h1 className="page-h1">Laporan Keuangan</h1><p className="text-muted-foreground">Periode mingguan Senin–Minggu, dilaporkan setiap Selasa. Bulanan mengikuti tanggal 1 sampai akhir bulan dan disajikan Selasa berikutnya.</p></div>
-    <div className="flex items-center gap-3"><Label htmlFor="report-month">Bulan laporan</Label><Input id="report-month" type="month" className="w-44" value={month} onChange={e => setMonth(e.target.value)} /></div>
+    <div><h1 className="page-h1">Laporan Keuangan</h1><p className="text-sm text-muted-foreground">Buku utama Bumi Lestari · ERP sebagai pembanding</p></div>
+    <div className="flex flex-wrap items-center gap-3"><Label htmlFor="report-month">Bulan laporan</Label><Input id="report-month" type="month" className="w-44" value={month} onChange={e => setMonth(e.target.value)} /></div>
     {overview.isLoading && <Spinner label="Memuat laporan…" />}
     {overview.error && <div role="alert"><p>{getApiError(overview.error)}</p><Button onClick={() => void overview.refetch()}>Coba lagi</Button></div>}
     {overview.data && <>
-      <p className="text-sm">Tutup bulanan: <strong>{dateLabel(overview.data.akhir_bulan)}</strong> pukul 23:59 WIB. Disajikan Selasa <strong>{dateLabel(overview.data.jadwal_bulanan)}</strong>. Minggu yang melintasi bulan dipisahkan berdasarkan tanggal transaksi; saldo akhir bulan dicatat tersendiri.</p>
-      {overview.data.asal && <Card><CardContent className="pt-4"><strong>Data utama: laporan Google Drive</strong><p><a href={overview.data.asal.url} target="_blank" rel="noreferrer" className="underline">{overview.data.asal.tab}</a> · ERP hanya pembanding. Angka ERP tidak mengganti angka pembukuan.</p></CardContent></Card>}
-      {!overview.data.saldo_awal && <DriveImportForm onSaved={refresh} />}
-      {!overview.data.saldo_awal ? <OpeningForm onSaved={refresh} /> : <>
-        <Card><CardHeader><CardTitle>Ringkasan {overview.data.bulanan.final ? 'bulanan final' : 'bulan berjalan'}</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-3">
-          <div>Pemasukan<p className="font-semibold">{fmtRp(overview.data.bulanan.pemasukan)}</p></div><div>Pengeluaran<p className="font-semibold">{fmtRp(overview.data.bulanan.pengeluaran)}</p></div><div>Laba/rugi<p className="font-semibold">{fmtRp(overview.data.bulanan.laba)}</p></div>
-        </CardContent></Card>
-        <MonthlyTable weeks={overview.data.mingguan} />
-        {overview.data.laporan_bulanan && <details><summary className="font-medium cursor-pointer">Laporan bulanan kalender · {overview.data.bulanan.final ? 'Final' : 'Belum lengkap'}</summary><ReportView report={overview.data.laporan_bulanan} /></details>}
-        {overview.data.mingguan.filter(w => w.laporan).map(w => <details key={w.tanggal}><summary className="font-medium cursor-pointer">Mingguan {dateLabel(w.mulai)} – {dateLabel(w.tanggal)} · dilaporkan {dateLabel(w.jadwal_laporan)}{!w.laporan?.lengkap ? ' · Belum lengkap' : ''}</summary><ReportView report={w.laporan!} /></details>)}
-        <p className="text-sm text-muted-foreground">Rincian cut-off tersimpan (Minggu dan akhir bulan):</p>
-        {overview.data.laporan.map(report => <ReportView key={report.tanggal} report={report} canReopen={report.tanggal === overview.data?.terakhir} onChanged={refresh} />)}
-        {overview.data.berikutnya?.startsWith(month) ? <CloseForm key={overview.data.berikutnya} date={overview.data.berikutnya} onSaved={refresh} /> : <p>Tutup buku berikutnya: {overview.data.berikutnya ? dateLabel(overview.data.berikutnya) : '—'}. Pilih bulan tersebut untuk melanjutkan.</p>}
-        <details><summary className="cursor-pointer font-medium">Saldo awal · {dateLabel(overview.data.saldo_awal.tanggal)}</summary><BalanceTable values={overview.data.saldo_awal.saldo} /></details>
-      </>}
+      <FinancialReportSheet data={overview.data} month={month} />
+      {!!overview.data.laporan.length && <ReportComparison date={overview.data.laporan.at(-1)!.tanggal} />}
+      <details><summary className="cursor-pointer text-sm font-medium">Periode dan sumber laporan</summary><div className="space-y-2 pt-2 text-sm">
+        <p>Mingguan Senin–Minggu, disajikan Selasa. Bulanan ditutup {dateLabel(overview.data.akhir_bulan)} pukul 23:59 WIB dan disajikan {dateLabel(overview.data.jadwal_bulanan)}.</p>
+        {overview.data.asal && <p><a href={overview.data.asal.url} target="_blank" rel="noreferrer" className="underline">Laporan asli Google Drive</a>. Riwayat sebelum perpindahan sistem dipertahankan pada tanggal aslinya.</p>}
+      </div></details>
+      <details onToggle={e => setManageOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-medium">Kelola pembukuan</summary>{manageOpen && <div className="space-y-4 pt-3">
+        {!overview.data.saldo_awal ? <><DriveImportForm onSaved={refresh} /><OpeningForm onSaved={refresh} /></> : <>
+          {overview.data.berikutnya?.startsWith(month) && <CloseForm key={overview.data.berikutnya} date={overview.data.berikutnya} onSaved={refresh} />}
+          <details><summary className="cursor-pointer">Saldo awal · {dateLabel(overview.data.saldo_awal.tanggal)}</summary><BalanceTable values={overview.data.saldo_awal.saldo} /></details>
+          {overview.data.laporan.map(report => <details key={report.tanggal}><summary className="cursor-pointer">Rincian dan koreksi · {dateLabel(report.tanggal)}</summary><ReportView report={report} canReopen={report.tanggal === overview.data?.terakhir} onChanged={refresh} /></details>)}
+        </>}
+        {!!overview.data.legacy.length && <Card><CardHeader><CardTitle>Riwayat kalender lama</CardTitle></CardHeader><CardContent>{overview.data.legacy.map(r => <ReportView key={r.tanggal} report={r} canReopen={r.tanggal === overview.data?.terakhir} onChanged={refresh} />)}</CardContent></Card>}
+      </div>}</details>
     </>}
-    {!!overview.data?.legacy.length && <Card><CardHeader><CardTitle>Laporan dengan kalender lama</CardTitle><p>Laporan Selasa lama tidak dijumlahkan ke kalender baru. Buka kembali berurutan dari laporan terakhir untuk memperbaikinya; riwayat tetap tersimpan.</p></CardHeader><CardContent>{overview.data.legacy.map(r => <ReportView key={r.tanggal} report={r} canReopen={r.tanggal === overview.data?.terakhir} onChanged={refresh} />)}</CardContent></Card>}
     <details><summary className="cursor-pointer font-medium">Riwayat tutup buku dan koreksi</summary>
       {audit.error && <p role="alert">{getApiError(audit.error)}</p>}
       <ul className="space-y-2 pt-3">{audit.data?.map(a => <li key={a.id} className="text-sm">{dateLabel(a.tanggal)} · {a.action === 'reopen' ? 'Dibuka kembali' : a.action === 'opening' ? 'Saldo awal' : 'Ditutup'} · {a.alasan} · {a.oleh}</li>)}</ul>
@@ -130,14 +130,6 @@ function BalanceTable({ values }: { values: Balances }) {
   return <dl className="grid gap-2 sm:grid-cols-2">{(Object.keys(reports.balanceLabels) as BalanceKey[]).map(k => <div key={k} className="flex justify-between gap-4 border-b py-2"><dt>{reports.balanceLabels[k]}</dt><dd className="whitespace-nowrap tabular-nums">{fmtRp(values[k])}</dd></div>)}</dl>
 }
 
-function MonthlyTable({ weeks }: { weeks: reports.Overview['mingguan'] }) {
-  const rows: [string, (r: Report) => string][] = [
-    ['A. Pemasukan', r => r.hasil.pemasukan], ['B. Pengeluaran', r => r.hasil.pengeluaran],
-    ['C. Laba/rugi', r => r.hasil.laba], ['D. Saldo akhir kas utama', r => r.hasil.saldo_akhir.kas_utama],
-    ['E. Total aset', r => r.hasil.neraca.aset], ['Selisih neraca', r => r.hasil.neraca.selisih],
-  ]
-  return <div className="overflow-x-auto rounded-xl border"><table className="w-full text-sm"><caption className="p-3 text-left">Mingguan Senin–Minggu · laporan Selasa berikutnya</caption><thead><tr><th className="p-3 text-left">Uraian</th>{weeks.map(w => <th className="p-3 text-right whitespace-nowrap" key={w.tanggal}>{dateLabel(w.mulai)} – {dateLabel(w.tanggal)}<span className="block text-xs">Laporan: {dateLabel(w.jadwal_laporan)}{w.laporan && !w.laporan.lengkap ? ' · Belum lengkap' : ''}</span></th>)}</tr></thead><tbody>{rows.map(([label, value]) => <tr key={label} className="border-t"><th className="p-3 text-left font-medium">{label}</th>{weeks.map(w => <td className="p-3 text-right whitespace-nowrap tabular-nums" key={w.tanggal}>{w.laporan ? fmtRp(value(w.laporan)) : 'Belum ditutup'}</td>)}</tr>)}</tbody></table></div>
-}
 
 function ReportView({ report, canReopen = false, onChanged }: { report: Report; canReopen?: boolean; onChanged?: () => Promise<void> }) {
   const [reason, setReason] = useState('')
