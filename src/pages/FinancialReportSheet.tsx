@@ -1,7 +1,11 @@
+import type { ReactNode } from 'react'
 import type { Overview, Report } from '@/api/financialReports'
 import { fmtRp } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export type SheetRow = { label: string; value: (r: Report) => string; total?: 'sum' | 'first' | 'last'; emphasis?: boolean }
 const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key] ?? '0')
@@ -80,7 +84,7 @@ function columnTotal(row: SheetRow, records: Report[]) {
   return sumAmounts(records.map(row.value))
 }
 
-export default function FinancialReportSheet({ data, month }: { data: Overview; month: string }) {
+export default function FinancialReportSheet({ data, month, comparison }: { data: Overview; month: string; comparison?: ReactNode }) {
   const records = [...data.laporan].sort((a,b)=>a.tanggal.localeCompare(b.tanggal))
   const days = records.map(r=>r.tanggal)
   // Continue from the last actual report, keeping imported historical dates intact.
@@ -101,17 +105,38 @@ export default function FinancialReportSheet({ data, month }: { data: Overview; 
   const exportReport = () => exportCsv(`laporan-${month}.csv`, [[title], ['Uraian', ...days.map(dateLabel), 'JUMLAH / POSISI TERAKHIR'], ...sections.flatMap(s=>[[s.title], ...s.rows.map(row=>[row.label,...days.map(d=>{const r=records.find(r=>r.tanggal===d);return r?row.value(r):null}),columnTotal(row,records)])])])
   return <section aria-label="Tabel laporan keuangan" className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{data.asal ? 'Buku utama Bumi Lestari' : 'Buku utama'} · {records.length ? `Terisi sampai ${dateLabel(records.at(-1)!.tanggal)}` : 'Data belum tersedia'}</p></div><Button variant="outline" onClick={exportReport} disabled={!records.length}>Unduh laporan</Button></div>
-    <p className="text-xs text-muted-foreground sm:hidden">Geser tabel ke samping untuk melihat minggu berikutnya dan jumlah.</p>
-    <div className="max-w-full overflow-x-auto rounded-xl border bg-background">
-      <div style={{minWidth:220+(days.length+1)*142}}>
-        {sections.map(section=><table key={section.title} className="w-full table-fixed border-collapse text-sm">
-          <colgroup><col style={{width:220}}/>{days.map(d=><col key={d} style={{width:142}}/>)}<col style={{width:142}}/></colgroup>
-          <thead><tr><th colSpan={days.length+2} className="border-b border-t bg-emerald-900 px-3 py-3 text-left font-semibold text-white">{section.title}</th></tr>
-            <tr><th className="sticky left-0 z-10 border-b border-r bg-emerald-50 p-3 text-left text-emerald-950">URAIAN</th>{days.map((d,i)=><th key={d} className="border-b border-r bg-emerald-50 p-2 text-center text-emerald-950"><span className="block">{['I','II','III','IV','V','VI','VII'][i]} · {months[Number(month.slice(5))-1]}</span><span className="block text-xs font-normal">{dateLabel(d)}</span></th>)}<th className="border-b bg-emerald-100 p-2 text-center text-emerald-950">{section.title.startsWith('E.')?'POSISI TERAKHIR':'JUMLAH'}</th></tr>
-          </thead><tbody>{section.rows.map(row=><tr key={row.label} className={row.emphasis?'font-semibold':'hover:bg-muted/40'}><th scope="row" className={`sticky left-0 z-10 border-b border-r px-3 py-2.5 text-left ${row.emphasis?'bg-emerald-50':'bg-background font-normal'}`}>{row.label}</th>{days.map(d=>{const r=records.find(r=>r.tanggal===d);return <td key={d} className={`border-b border-r px-2 py-2.5 text-right whitespace-nowrap tabular-nums ${row.emphasis?'bg-emerald-50':''}`}>{r?fmtRp(row.value(r)):'—'}</td>})}<td className="border-b bg-emerald-50/70 px-2 py-2.5 text-right whitespace-nowrap tabular-nums">{fmtRp(columnTotal(row,records))}</td></tr>)}</tbody>
-        </table>)}
-      </div>
-    </div>
+    <Tabs defaultValue="0">
+      <TabsList className="section-tabs w-full" aria-label="Bagian laporan keuangan">
+        {['Pemasukan', 'Pengeluaran', 'Laba/Rugi', 'Arus Kas', 'Neraca'].map((label, i) => <TabsTrigger key={label} value={String(i)}>{label}</TabsTrigger>)}
+        {comparison && <TabsTrigger value="comparison">Pembanding ERP</TabsTrigger>}
+      </TabsList>
+      {sections.map((section, i) => <TabsContent key={section.title} value={String(i)}>
+        <Card>
+          <CardHeader><CardTitle>{section.title.slice(3)}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground sm:hidden">Geser tabel ke samping untuk melihat minggu berikutnya dan jumlah.</p>
+            <div className="max-w-full overflow-x-auto rounded-lg border">
+              <Table className="table-fixed" style={{minWidth:220+(days.length+1)*142}} aria-label={section.title.slice(3)}>
+                <colgroup><col style={{width:220}}/>{days.map(d=><col key={d} style={{width:142}}/>)}<col style={{width:142}}/></colgroup>
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
+                    {days.map((d,i)=><TableHead key={d} className="text-center"><span className="block">{['I','II','III','IV','V','VI','VII'][i]} · {months[Number(month.slice(5))-1]}</span><span className="block text-xs font-normal">{dateLabel(d)}</span></TableHead>)}
+                    <TableHead className="text-right">{section.title.startsWith('E.')?'Posisi terakhir':'Jumlah'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>{section.rows.map(row=><TableRow key={row.label} className={row.emphasis?'bg-muted/50 font-semibold':undefined}>
+                  <TableCell className={`sticky left-0 z-10 ${row.emphasis?'bg-muted font-semibold':'bg-card'}`}>{row.label}</TableCell>
+                  {days.map(d=>{const r=records.find(r=>r.tanggal===d);return <TableCell key={d} className="text-right whitespace-nowrap tabular-nums">{r?fmtRp(row.value(r)):'—'}</TableCell>})}
+                  <TableCell className="bg-muted/40 text-right whitespace-nowrap tabular-nums">{fmtRp(columnTotal(row,records))}</TableCell>
+                </TableRow>)}</TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>)}
+      {comparison && <TabsContent value="comparison">{comparison}</TabsContent>}
+    </Tabs>
     <p className="text-xs text-muted-foreground">Jumlah pemasukan, pengeluaran dan laba merupakan akumulasi periode terisi. Saldo kas dan neraca memakai posisi terakhir, bukan penjumlahan saldo mingguan.</p>
   </section>
 }

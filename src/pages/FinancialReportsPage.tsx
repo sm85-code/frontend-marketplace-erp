@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MoneyInput from '@/components/MoneyInput'
+import BarHalaman from '@/components/daftar/BarHalaman'
 import FinancialReportSheet from './FinancialReportSheet'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
@@ -31,13 +32,11 @@ export default function FinancialReportsPage() {
   const refresh = async () => { await qc.invalidateQueries({ queryKey: ['financial-reports'] }); await qc.invalidateQueries({ queryKey: ['financial-report-history'] }); await qc.invalidateQueries({ queryKey: ['financial-report-sources'] }) }
   if (!allowed) return <p role="alert">Laporan keuangan hanya dapat diakses admin.</p>
   return <div className="space-y-6">
-    <div><h1 className="page-h1">Laporan Keuangan</h1><p className="text-sm text-muted-foreground">Buku utama Bumi Lestari · ERP sebagai pembanding</p></div>
-    <div className="flex flex-wrap items-center gap-3"><Label htmlFor="report-month">Bulan laporan</Label><Input id="report-month" type="month" className="w-44" value={month} onChange={e => setMonth(e.target.value)} /></div>
+    <BarHalaman judul="Laporan Keuangan" deskripsi="Buku utama Bumi Lestari · ERP sebagai pembanding"><Label htmlFor="report-month">Bulan laporan</Label><Input id="report-month" type="month" className="w-44" value={month} onChange={e => setMonth(e.target.value)} /></BarHalaman>
     {overview.isLoading && <Spinner label="Memuat laporan…" />}
     {overview.error && <div role="alert"><p>{getApiError(overview.error)}</p><Button onClick={() => void overview.refetch()}>Coba lagi</Button></div>}
     {overview.data && <>
-      <FinancialReportSheet data={overview.data} month={month} />
-      {!!overview.data.laporan.length && <ReportComparison date={overview.data.laporan.at(-1)!.tanggal} />}
+      <FinancialReportSheet data={overview.data} month={month} comparison={overview.data.laporan.length ? <ReportComparison date={overview.data.laporan.at(-1)!.tanggal} /> : undefined} />
       <details><summary className="cursor-pointer text-sm font-medium">Periode dan sumber laporan</summary><div className="space-y-2 pt-2 text-sm">
         <p>Mingguan Senin–Minggu, disajikan Selasa. Bulanan ditutup {dateLabel(overview.data.akhir_bulan)} pukul 23:59 WIB dan disajikan {dateLabel(overview.data.jadwal_bulanan)}.</p>
         {overview.data.asal && <p><a href={overview.data.asal.url} target="_blank" rel="noreferrer" className="underline">Laporan asli Google Drive</a>. Riwayat sebelum perpindahan sistem dipertahankan pada tanggal aslinya.</p>}
