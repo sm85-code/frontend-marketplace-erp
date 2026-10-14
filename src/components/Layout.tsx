@@ -77,9 +77,6 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div className="text-xs leading-5 font-medium" style={{ color: 'var(--text-muted)' }}>
                 ERP System
               </div>
-              <div className="text-xs leading-5" style={{ color: 'var(--text-muted)' }}>
-                Panel multi-toko
-              </div>
             </div>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
               <X className="size-5" aria-hidden="true" />
