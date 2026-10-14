@@ -6,6 +6,9 @@ export interface Panduan {
   dampak: string
 }
 export const panduan: Panduan[] = [
+  { path: '/laporan-keuangan', judul: 'Laporan Keuangan', tujuan: 'Susun laporan Senin–Minggu yang dilaporkan Selasa, serta laporan bulanan kalender.',
+    langkah: ['Isi saldo awal yang seimbang sebelum laporan pertama.', 'Periksa sumber ERP, beri tanggal penarikan dan transaksi pelengkap, lalu isi saldo akhir pada batas Minggu atau akhir bulan.', 'Pratinjau dan simpan tutup buku. Bulanan memakai tanggal 1 sampai akhir bulan; minggu lintas bulan dipisahkan; koreksi dibuka dari laporan terakhir.'],
+    dampak: 'Hanya admin. Tutup buku menyimpan laporan dan riwayatnya; tidak mengubah pesanan, stok, settlement, atau iklan ERP.' },
   {path: '/asisten', judul: 'Asisten AI', tujuan: 'Tanyakan data ERP atau jalankan perintah khusus admin.',
    langkah: ['Pilih toko, lalu gunakan mode Tanya untuk membaca data.', 'Gunakan Jalankan perintah untuk perubahan; sebutkan produk, tindakan dan nilainya.', 'Periksa jawaban dan catatan tindakan. Hasil belum pasti tidak dikirim ulang otomatis.'],
    dampak: 'Mode perintah dapat mengubah produk, iklan dan promosi di Shopee. Penggunaan AI dikenai biaya token.'},
