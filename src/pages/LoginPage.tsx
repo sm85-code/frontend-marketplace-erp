@@ -47,7 +47,12 @@ export default function LoginPage() {
             alt="Ampel Kuning"
             className="mx-auto h-16 w-32 rounded-lg bg-white object-contain sm:h-20 sm:w-40"
           />
-          <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">Ampel Kuning ERP</CardTitle>
+          <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">
+            Ampel Kuning
+            <span className="block text-base font-medium sm:text-lg" style={{ color: 'var(--text-muted)' }}>
+              ERP System
+            </span>
+          </CardTitle>
           <CardDescription className="mx-auto max-w-xs text-sm leading-6">Masuk untuk mengelola toko dan pesanan Anda</CardDescription>
         </CardHeader>
         <CardContent className="px-6 sm:px-8">
