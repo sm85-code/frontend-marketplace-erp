@@ -10,21 +10,16 @@ import { sumAmounts } from '@/lib/financialAmounts'
 const labels = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 const dateLabel = (value: string) => new Date(value+'T12:00:00+07:00').toLocaleDateString('id-ID', {day:'numeric',month:'short'})
 function aggregate(cells: ShopeeIncomeCell[]): ShopeeIncomeCell {
-  const estimasi = sumAmounts(cells.map(c=>c.estimasi))
-  const riil = sumAmounts(cells.map(c=>c.riil))
-  const belum_riil = cells.reduce((s,c)=>s+c.belum_riil,0)
-  return {estimasi,riil,belum_riil,jumlah:belum_riil?null:sumAmounts([estimasi,riil])}
+  const estimasi = cells.some(c=>c.estimasi === null) ? null : sumAmounts(cells.map(c=>c.estimasi!))
+  return {estimasi,riil:'0',belum_riil:0,jumlah:estimasi}
 }
 function Amount({cell}:{cell:ShopeeIncomeCell}) {
-  return <><span className="block whitespace-nowrap">{cell.jumlah === null ? 'Belum lengkap' : fmtRp(cell.jumlah)}</span>
-    <span className="block whitespace-normal text-xs font-normal text-muted-foreground">Estimasi {fmtRp(cell.estimasi)}</span>
-    <span className="block whitespace-normal text-xs font-normal text-muted-foreground">Riil {fmtRp(cell.riil)}</span>
-    {!!cell.belum_riil && <span className="block whitespace-normal text-xs font-normal text-muted-foreground">{cell.belum_riil} pesanan selesai belum ada pencairan riil</span>}</>
+  return <span className="block whitespace-nowrap">{cell.estimasi === null ? 'Belum tersedia' : fmtRp(cell.estimasi)}</span>
 }
 export default function FinancialShopeeIncome({month,columns}:{month:string;columns:number}) {
   const q = useQuery({queryKey:['financial-shopee-income',month,columns],queryFn:()=>shopeeIncome(month,columns),enabled:columns>0})
   const monthLabel = new Date(month+'-01T12:00:00+07:00').toLocaleDateString('id-ID',{month:'long'})
-  return <Card className="mt-4"><CardHeader><CardTitle>PEMASUKAN (SHOPEE)</CardTitle></CardHeader><CardContent className="space-y-3">
+  return <Card className="mt-4"><CardHeader><CardTitle>PEMASUKAN (SHOPEE)</CardTitle><p className="text-sm text-muted-foreground">Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai.</p></CardHeader><CardContent className="space-y-3">
     {q.isLoading && <Spinner label="Memuat pemasukan Shopee…" />}
     {q.error && <div role="alert"><p>{getApiError(q.error)}</p><Button variant="outline" onClick={()=>void q.refetch()}>Coba lagi</Button></div>}
     {q.data && <>
@@ -36,7 +31,7 @@ export default function FinancialShopeeIncome({month,columns}:{month:string;colu
             <TableHead className="text-right">Jumlah</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {q.data.toko.map(shop=><TableRow key={shop.id}><TableCell className="sticky left-0 z-10 bg-card">{shop.nama}</TableCell>
+            {q.data.toko.map(shop=><TableRow key={shop.id}><TableCell className="sticky left-0 z-10 bg-card">{shop.nama}{shop.akun_ditemukan === false && <span className="block whitespace-normal text-xs text-muted-foreground">Akun toko ERP belum ditemukan</span>}</TableCell>
               {shop.minggu.map((c,i)=><TableCell key={i} className="text-right tabular-nums"><Amount cell={c}/></TableCell>)}
               <TableCell className="bg-muted/40 text-right tabular-nums"><Amount cell={aggregate(shop.minggu)}/></TableCell>
             </TableRow>)}
