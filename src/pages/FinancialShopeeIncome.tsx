@@ -16,9 +16,10 @@ function aggregate(cells: ShopeeIncomeCell[]): ShopeeIncomeCell {
   return {estimasi,riil,belum_riil,jumlah:belum_riil?null:sumAmounts([estimasi,riil])}
 }
 function Amount({cell}:{cell:ShopeeIncomeCell}) {
-  return <><span className="block">{cell.jumlah === null ? 'Belum lengkap' : fmtRp(cell.jumlah)}</span>
-    <span className="block text-xs font-normal text-muted-foreground">Estimasi {fmtRp(cell.estimasi)} · Riil {fmtRp(cell.riil)}</span>
-    {!!cell.belum_riil && <span className="block text-xs font-normal text-muted-foreground">{cell.belum_riil} pesanan selesai belum ada pencairan riil</span>}</>
+  return <><span className="block whitespace-nowrap">{cell.jumlah === null ? 'Belum lengkap' : fmtRp(cell.jumlah)}</span>
+    <span className="block whitespace-normal text-xs font-normal text-muted-foreground">Estimasi {fmtRp(cell.estimasi)}</span>
+    <span className="block whitespace-normal text-xs font-normal text-muted-foreground">Riil {fmtRp(cell.riil)}</span>
+    {!!cell.belum_riil && <span className="block whitespace-normal text-xs font-normal text-muted-foreground">{cell.belum_riil} pesanan selesai belum ada pencairan riil</span>}</>
 }
 export default function FinancialShopeeIncome({month,columns}:{month:string;columns:number}) {
   const q = useQuery({queryKey:['financial-shopee-income',month,columns],queryFn:()=>shopeeIncome(month,columns),enabled:columns>0})
