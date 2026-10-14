@@ -46,7 +46,12 @@ export default function Layout({ children }: { children: ReactNode }) {
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
-          <span className="font-heading truncate text-sm font-semibold">Ampel Kuning ERP</span>
+          <div className="min-w-0 leading-tight">
+            <div className="font-heading truncate text-sm font-semibold">Ampel Kuning</div>
+            <div className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
+              ERP System
+            </div>
+          </div>
         </div>
         <div className="flex shrink-0 items-center">
           <AppearancePopover />
@@ -68,7 +73,10 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="flex shrink-0 items-center gap-3 px-4 pt-5 pb-4">
             <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-10 w-14 shrink-0 rounded-md bg-white object-contain" />
             <div className="min-w-0 flex-1">
-              <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">Ampel Kuning ERP</div>
+              <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">Ampel Kuning</div>
+              <div className="text-xs leading-5 font-medium" style={{ color: 'var(--text-muted)' }}>
+                ERP System
+              </div>
               <div className="text-xs leading-5" style={{ color: 'var(--text-muted)' }}>
                 Panel multi-toko
               </div>
