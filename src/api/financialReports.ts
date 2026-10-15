@@ -56,3 +56,5 @@ export const importDrive = async (data: unknown) => (await api.post('/laporan-ke
 export type ShopeeIncomeCell = { estimasi: string | null; riil: string; belum_riil: number; jumlah: string | null }
 export type ShopeeIncome = { periode: string; minggu: { mulai: string; akhir: string }[]; toko: { id: string; nama: string; akun_ditemukan?: boolean; minggu: ShopeeIncomeCell[] }[]; catatan: string }
 export const shopeeIncome = async (periode: string, jumlah_kolom: number) => (await api.get<ShopeeIncome>('/laporan-keuangan/pemasukan-shopee', { params: { periode, jumlah_kolom } })).data
+
+export const shopeeReleasedFunds = async (periode: string, jumlah_kolom: number) => (await api.get<ShopeeIncome>('/laporan-keuangan/saldo-penjual-shopee', { params: { periode, jumlah_kolom } })).data
