@@ -6,6 +6,7 @@ export interface Panduan {
   dampak: string
 }
 export const panduan: Panduan[] = [
+  {path: '/processing', judul: 'Processing', tujuan: 'Baca data tukang kayu, supplier, dan harga produksi dari Drive.', langkah: ['Buka Data untuk mencari nama, SKU, kode, dan ukuran.', 'Periksa baris berharga nol pada daftar harga produksi.', 'Pemetaan Order menyiapkan pengaitan order dengan data produksi.'], dampak: 'Khusus admin. Data Processing terpisah dari transaksi, stok, dan laporan keuangan.'},
   { path: '/laporan-keuangan', judul: 'Laporan Keuangan', tujuan: 'Susun laporan Senin–Minggu yang dilaporkan Selasa, serta laporan bulanan kalender.',
     langkah: ['Isi saldo awal yang seimbang sebelum laporan pertama.', 'Periksa sumber ERP, beri tanggal penarikan dan transaksi pelengkap, lalu isi saldo akhir pada batas Minggu atau akhir bulan.', 'Pratinjau dan simpan tutup buku. Bulanan memakai tanggal 1 sampai akhir bulan; minggu lintas bulan dipisahkan; koreksi dibuka dari laporan terakhir.'],
     dampak: 'Hanya admin. Tutup buku menyimpan laporan dan riwayatnya; tidak mengubah pesanan, stok, settlement, atau iklan ERP.' },
