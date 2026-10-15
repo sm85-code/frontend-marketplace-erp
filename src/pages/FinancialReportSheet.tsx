@@ -126,7 +126,7 @@ export default function FinancialReportSheet({ data, month, comparison }: { data
             </div>
           </CardContent>
         </Card>
-        {i === 0 && <><FinancialShopeeIncome month={month} columns={days.length} /><FinancialShopeeIncome month={month} columns={days.length} released /><FinancialSellerBalance /></>}
+        {i === 0 && <><FinancialShopeeIncome month={month} columns={days.length} /><FinancialShopeeIncome month={month} columns={days.length} released /><FinancialSellerBalance month={month} columns={days.length} /></>}
       </TabsContent>)}
       {comparison && <TabsContent value="comparison">{comparison}</TabsContent>}
     </Tabs>
