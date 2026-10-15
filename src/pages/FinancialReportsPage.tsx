@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MoneyInput from '@/components/MoneyInput'
 import BarHalaman from '@/components/daftar/BarHalaman'
 import FinancialReportSheet from './FinancialReportSheet'
+import FinancialComparisonDetails from './FinancialComparisonDetails'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 
@@ -157,9 +158,9 @@ function ReportComparison({ date }: { date: string }) {
     {q.isLoading && <Spinner label="Membaca pembanding ERP…" />}{q.error && <p role="alert">{getApiError(q.error)}</p>}
     {q.data && <><div className="grid gap-4 md:grid-cols-2">
       <div className="space-y-2 rounded-lg border p-4"><h3 className="font-semibold">Laporan / Google Drive</h3><p>Piutang pengiriman: <strong>{fmtRp(q.data.laporan.piutang_pengiriman)}</strong></p><p>Saldo tertahan toko: <strong>{fmtRp(q.data.laporan.saldo_toko)}</strong></p><p>Total piutang: <strong>{fmtRp(q.data.laporan.piutang_total)}</strong></p></div>
-      <div className="space-y-2 rounded-lg border p-4"><h3 className="font-semibold">ERP · pembanding</h3><p>Pesanan dalam pengiriman (bruto): <strong>{fmtRp(q.data.erp.piutang_pengiriman_bruto)}</strong></p><p>Saldo tertahan: <strong>Tidak dipisahkan di ERP</strong></p><p>Piutang belum ditarik (gabungan): <strong>Saldo terverifikasi belum tersedia</strong></p></div>
+      <div className="space-y-2 rounded-lg border p-4"><h3 className="font-semibold">ERP · pembanding</h3>{q.data.periode && <p className="text-sm text-muted-foreground">Tanggal kirim {dateLabel(q.data.periode.mulai)}–{dateLabel(q.data.periode.akhir)} · {q.data.periode.hari} · enam toko laporan</p>}{q.data.erp.rincian_toko?.some(t=>!t.akun_ditemukan) && <p className="text-sm text-muted-foreground">Data toko belum lengkap; lihat rincian enam toko.</p>}<p>Pesanan dalam pengiriman (bruto): <strong>{fmtRp(q.data.erp.piutang_pengiriman_bruto)}</strong></p>{q.data.erp.estimasi_bumi_tani != null && <p>Estimasi BUMI TANI IND · Dana Cepat: <strong>{fmtRp(q.data.erp.estimasi_bumi_tani)}</strong></p>}{q.data.erp.estimasi_cakupan_drive != null && <p>Estimasi lima toko cakupan Drive: <strong>{fmtRp(q.data.erp.estimasi_cakupan_drive)}</strong></p>}<p>Saldo tertahan: <strong>Tidak dipisahkan di ERP</strong></p><p>Piutang belum ditarik (gabungan): <strong>Saldo terverifikasi belum tersedia</strong></p></div>
     </div><p className="pt-3 text-sm text-muted-foreground">{q.data.catatan} Dibaca: {new Date(q.data.dibaca_at).toLocaleString('id-ID', { timeZone:'Asia/Jakarta' })}.</p>
-    <p className="pt-2 text-sm">Pemakaian iklan periode yang sama: laporan {fmtRp(q.data.laporan.biaya_iklan)} · ERP {fmtRp(q.data.erp.biaya_iklan)} · selisih {fmtRp(Number(q.data.laporan.biaya_iklan) - Number(q.data.erp.biaya_iklan))} (periksa kelengkapan sinkronisasi).</p></>}
+    <p className="pt-2 text-sm">Pemakaian iklan buku utama{q.data.periode_iklan_laporan && <> ({dateLabel(q.data.periode_iklan_laporan.mulai)}–{dateLabel(q.data.periode_iklan_laporan.akhir)})</>}: {fmtRp(q.data.laporan.biaya_iklan)} · ERP{q.data.periode && <> ({dateLabel(q.data.periode.mulai)}–{dateLabel(q.data.periode.akhir)})</>}: {fmtRp(q.data.erp.biaya_iklan)}. Periksa cakupan tanggal dan kelengkapan sinkronisasi.</p>{q.data.erp.catatan_dana_cepat && <p className="pt-2 text-sm text-muted-foreground">{q.data.erp.catatan_dana_cepat}</p>}<FinancialComparisonDetails data={q.data} /></>}
   </CardContent></Card>
 }
 
