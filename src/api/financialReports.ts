@@ -49,12 +49,12 @@ export const close = async (data: CloseInput) => (await api.post<Report>('/lapor
 export const reopen = async (tanggal: string, alasan: string) => (await api.post(`/laporan-keuangan/${tanggal}/buka-kembali`, { alasan })).data
 export const history = async () => (await api.get<Audit[]>('/laporan-keuangan/riwayat')).data
 
-export type Comparison = { laporan: { piutang_pengiriman: string; saldo_toko: string; piutang_total: string; biaya_iklan: string }; erp: { piutang_pengiriman_bruto: string; saldo_toko: null; piutang_belum_ditarik: null; biaya_iklan: string; pesanan: Sources['pesanan_pengiriman'] }; dibaca_at: string; catatan: string }
+export type Comparison = { periode?: { mulai: string; akhir: string; hari: string }; periode_iklan_laporan?: { mulai: string; akhir: string }; laporan: { piutang_pengiriman: string; saldo_toko: string; piutang_total: string; biaya_iklan: string }; erp: { piutang_pengiriman_bruto: string; saldo_toko: null; piutang_belum_ditarik: null; biaya_iklan: string; pesanan: (Sources['pesanan_pengiriman'][number] & { tanggal_kirim?: string; status?: string })[]; rincian_toko?: { nama: string; akun_ditemukan: boolean; jumlah_pesanan: number; nominal: string }[]; rincian_minggu?: { mulai: string; akhir: string; jumlah_pesanan: number; nominal: string }[] }; dibaca_at: string; catatan: string }
 export const comparison = async (tanggal: string) => (await api.get<Comparison>(`/laporan-keuangan/${tanggal}/pembanding`)).data
 export const importDrive = async (data: unknown) => (await api.post('/laporan-keuangan/impor-drive', data)).data
 
 export type ShopeeIncomeCell = { estimasi: string | null; riil: string; belum_riil: number; jumlah: string | null }
 export type ShopeeIncome = { periode: string; minggu: { mulai: string; akhir: string }[]; toko: { id: string; nama: string; akun_ditemukan?: boolean; minggu: ShopeeIncomeCell[] }[]; catatan: string }
-export const shopeeIncome = async (periode: string, jumlah_kolom: number) => (await api.get<ShopeeIncome>('/laporan-keuangan/pemasukan-shopee', { params: { periode, jumlah_kolom } })).data
+export const shopeeIncome = async (periode: string, jumlah_kolom: number, sampai?: string) => (await api.get<ShopeeIncome>('/laporan-keuangan/pemasukan-shopee', { params: { periode, jumlah_kolom, sampai } })).data
 
-export const shopeeReleasedFunds = async (periode: string, jumlah_kolom: number) => (await api.get<ShopeeIncome>('/laporan-keuangan/saldo-penjual-shopee', { params: { periode, jumlah_kolom } })).data
+export const shopeeReleasedFunds = async (periode: string, jumlah_kolom: number, sampai?: string) => (await api.get<ShopeeIncome>('/laporan-keuangan/saldo-penjual-shopee', { params: { periode, jumlah_kolom, sampai } })).data
