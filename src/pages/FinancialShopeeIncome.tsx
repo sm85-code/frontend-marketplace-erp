@@ -33,7 +33,7 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
             <TableHead className="text-right">Jumlah</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {q.data.toko.map(shop=><TableRow key={shop.id}><TableCell className="sticky left-0 z-10 bg-card">{shop.nama}{shop.akun_ditemukan === false && <span className="block whitespace-normal text-xs text-muted-foreground">Akun toko ERP belum ditemukan</span>}</TableCell>
+            {q.data.toko.map(shop=><TableRow key={shop.id}><TableCell className="sticky left-0 z-10 bg-card">{shop.nama}{!released && shop.nama==='BUMI TANI IND' && <span className="block whitespace-normal text-xs text-muted-foreground">Dana Cepat · estimasi tidak masuk Drive</span>}{shop.akun_ditemukan === false && <span className="block whitespace-normal text-xs text-muted-foreground">Akun toko ERP belum ditemukan</span>}</TableCell>
               {shop.minggu.map((c,i)=><TableCell key={i} className="text-right tabular-nums">{until && q.data!.minggu[i].mulai>until ? "—" : <Amount cell={c}/>}</TableCell>)}
               <TableCell className="bg-muted/40 text-right tabular-nums"><Amount cell={aggregate(shop.minggu)}/></TableCell>
             </TableRow>)}
