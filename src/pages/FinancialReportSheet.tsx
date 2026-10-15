@@ -3,6 +3,7 @@ import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
 export { sumAmounts } from '@/lib/financialAmounts'
 import FinancialShopeeIncome from './FinancialShopeeIncome'
+import FinancialSellerBalance from './FinancialSellerBalance'
 import { fmtRp } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { Button } from '@/components/ui/button'
@@ -125,7 +126,7 @@ export default function FinancialReportSheet({ data, month, comparison }: { data
             </div>
           </CardContent>
         </Card>
-        {i === 0 && <><FinancialShopeeIncome month={month} columns={days.length} /><FinancialShopeeIncome month={month} columns={days.length} released /></>}
+        {i === 0 && <><FinancialShopeeIncome month={month} columns={days.length} /><FinancialShopeeIncome month={month} columns={days.length} released /><FinancialSellerBalance /></>}
       </TabsContent>)}
       {comparison && <TabsContent value="comparison">{comparison}</TabsContent>}
     </Tabs>

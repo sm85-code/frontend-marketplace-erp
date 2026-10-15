@@ -17,10 +17,10 @@ function Amount({cell}:{cell:ShopeeIncomeCell}) {
   return <span className="block whitespace-nowrap">{cell.jumlah === null ? 'Belum tersedia' : fmtRp(cell.jumlah)}</span>
 }
 export default function FinancialShopeeIncome({month,columns,released=false}:{month:string;columns:number;released?:boolean}) {
-  const title = released ? 'SALDO PENJUAL (SHOPEE)' : 'PEMASUKAN (SHOPEE)'
+  const title = released ? 'DANA CAIR (SHOPEE)' : 'ESTIMASI DANA AKAN CAIR (SHOPEE)'
   const q = useQuery({queryKey:[released?'financial-shopee-released':'financial-shopee-income',month,columns],queryFn:()=>(released?shopeeReleasedFunds:shopeeIncome)(month,columns),enabled:columns>0})
   const monthLabel = new Date(month+'-01T12:00:00+07:00').toLocaleDateString('id-ID',{month:'long'})
-  return <Card className="mt-4"><CardHeader><CardTitle>{title}</CardTitle><p className="text-sm text-muted-foreground">{released ? 'Dana pesanan yang sudah cair, dikelompokkan sesuai tanggal cair.' : 'Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai.'}</p></CardHeader><CardContent className="space-y-3">
+  return <Card className="mt-4"><CardHeader><CardTitle>{title}</CardTitle><p className="text-sm text-muted-foreground">{released ? 'Dana pesanan yang sudah cair, dikelompokkan sesuai tanggal cair.' : 'Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai, dikelompokkan sesuai tanggal dikirim.'}</p></CardHeader><CardContent className="space-y-3">
     {q.isLoading && <Spinner label={released?'Memuat dana cair Shopee…':'Memuat pemasukan Shopee…'} />}
     {q.error && <div role="alert"><p>{getApiError(q.error)}</p><Button variant="outline" onClick={()=>void q.refetch()}>Coba lagi</Button></div>}
     {q.data && <>
