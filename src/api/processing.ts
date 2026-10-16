@@ -96,6 +96,9 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   reseller_total: string | null
   order_cancelled: boolean
   reference?: string
+  seller_code?: string
+  production_sku?: string
+  manual_order_code?: string
   events: { action: string; actor: string; at: string }[]
 }
 export type ProcessingJobEdit = Pick<
@@ -104,6 +107,7 @@ export type ProcessingJobEdit = Pick<
   | 'party_id'
   | 'price_id'
   | 'production_price'
+  | 'production_sku'
   | 'color'
   | 'paint_price_id'
   | 'paint_price'

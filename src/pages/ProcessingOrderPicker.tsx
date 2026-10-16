@@ -209,9 +209,11 @@ export function OrderPicker({
   )
 }
 
-export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => Promise<void> }) {
+export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onSaved: (route: 'tukang' | 'supplier') => Promise<void> }) {
   const [source, setSource] = useState<'internal' | 'reseller'>('internal')
   const [route, setRoute] = useState<'tukang' | 'supplier'>('tukang')
+  const [orderCode, setOrderCode] = useState('')
+  const [sellerCode, setSellerCode] = useState('')
   const [customer, setCustomer] = useState('')
   const [reference, setReference] = useState('')
   const [ordered, setOrdered] = useState(wibInputNow)
@@ -244,6 +246,7 @@ export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onS
             try {
               await createManualProcessingOrder({
                 source,
+                ...(source === 'internal' ? { order_code: orderCode } : { seller_code: sellerCode }),
                 route,
                 customer,
                 reference,
@@ -251,7 +254,7 @@ export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onS
                 deadline: `${deadline}:00+07:00`,
                 items,
               })
-              await onSaved()
+              await onSaved(route)
               onClose()
             } catch (err) {
               setError(getApiError(err))
@@ -266,6 +269,14 @@ export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onS
               <option value="reseller">Penjual lain / reseller</option>
             </SelectField>
           </Field>
+          {source === 'internal' ? <Field title="Kode pesanan">
+            <Input required maxLength={200} value={orderCode} onChange={e => setOrderCode(e.target.value)} placeholder="Ketik kode pesanan internal" />
+          </Field> : <div className="space-y-2">
+            <Field title="Kode penjual lain (2 huruf)">
+              <Input required maxLength={2} pattern="[A-Za-z]{2}" value={sellerCode} onChange={e => setSellerCode(e.target.value.toUpperCase())} placeholder="Contoh: AB" />
+            </Field>
+            <p className="text-xs text-muted-foreground">Kode per produk dibuat setelah SKU produksi dipilih: SKU produksi–DDMM batas kirim–kode penjual–nomor urut (01, 02, dst.).</p>
+          </div>}
           <Field title="Dikerjakan oleh">
             <SelectField value={route} onChange={e => setRoute(e.target.value as 'tukang' | 'supplier')}>
               <option value="tukang">Tukang kayu</option>

@@ -110,6 +110,7 @@ function MappingEditor({
     party_id: job.party_id,
     price_id: job.price_id,
     production_price: job.production_price,
+    production_sku: job.production_sku || '',
     color: job.color,
     paint_price_id: job.paint_price_id,
     paint_price: job.paint_price,
@@ -133,6 +134,7 @@ function MappingEditor({
         : {
             ...v,
             price_id: id,
+            production_sku: id === job.price_id ? job.production_sku || p?.sku || '' : p?.sku || '',
             production_price: id === job.price_id ? job.production_price : p?.harga || null,
           },
     )
@@ -159,7 +161,7 @@ function MappingEditor({
             {packingOnly ? 'Atur packing' : job.stage === 'draft' ? 'Petakan produk' : 'Edit pemetaan'}
           </DialogTitle>
           <DialogDescription>
-            {job.order_number} · {job.source !== 'erp' ? job.customer : job.shop}
+            <span className="break-all">{job.order_number}</span> · {job.source !== 'erp' ? job.customer : job.shop}
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4">
@@ -235,6 +237,9 @@ function MappingEditor({
                   />
                 </Field>
               </section>
+              {job.source === 'reseller' && job.seller_code && <Field title="SKU produksi untuk kode pesanan">
+                <Input required maxLength={200} disabled={!!edit.price_id && !!prices.find(p => p.id === edit.price_id)?.sku} value={edit.production_sku || ''} onChange={e => set('production_sku', e.target.value)} placeholder="Pilih harga produksi atau isi SKU custom" />
+              </Field>}
               {job.route === 'tukang' && (
                 <section className="space-y-3 border-t pt-4">
                   <h3 className="text-sm font-semibold">02 · Finishing</h3>
@@ -377,7 +382,7 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
         <DialogHeader>
           <DialogTitle>Detail pekerjaan</DialogTitle>
           <DialogDescription>
-            {job.order_number} · {job.source !== 'erp' ? job.customer : job.shop}
+            <span className="break-all">{job.order_number}</span> · {job.source !== 'erp' ? job.customer : job.shop}
           </DialogDescription>
         </DialogHeader>
         <div>
@@ -612,7 +617,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   )
   const order = (r: ProcessingJob) => (
     <div className="space-y-1">
-      <p className="max-w-44 truncate text-xs font-medium" title={r.order_number}>
+      <p className="break-all text-xs font-medium" title={r.order_number}>
         {r.order_number}
       </p>
       <p className="text-xs text-muted-foreground">{r.source !== 'erp' ? r.customer : r.shop}</p>
@@ -897,9 +902,9 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
       {manual && (
         <ManualOrderForm
           onClose={() => setManual(false)}
-          onSaved={async () => {
+          onSaved={async (route) => {
             await refresh()
-            setTable('tukang')
+            setTable(route)
             setStatus('all')
             setSearch('')
             setPage(1)
