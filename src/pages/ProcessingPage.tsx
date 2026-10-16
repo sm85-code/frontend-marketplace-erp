@@ -2,54 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { getProcessingData, importProcessingData, type ProcessingParty } from '@/api/processing'
+import { getProcessingData, importProcessingData } from '@/api/processing'
 import { fmtDateTime, getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { readProcessingCapsule } from '@/lib/processingImport'
-import { BarHalaman, TabelLokal, type KolomTabel } from '@/components/daftar'
+import { BarHalaman } from '@/components/daftar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProcessingPrices from './ProcessingPrices'
+import ProcessingParties from './ProcessingParties'
 import ProcessingWorkflow from './ProcessingWorkflow'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Spinner from '@/components/Spinner'
 
-const includes = (values: unknown[], search: string) =>
-  values.join(' ').toLocaleLowerCase('id-ID').includes(search.trim().toLocaleLowerCase('id-ID'))
-const partyColumns: KolomTabel<ProcessingParty>[] = [
-  { kunci: 'nama', judul: 'Nama', tetap: true, nilai: (r) => r.nama, sel: (r) => r.nama },
-  { kunci: 'catatan', judul: 'Keterangan', sel: (r) => r.catatan || '—' },
-  { kunci: 'sumber', judul: 'Baris sumber', sel: (r) => r.sumber },
-]
-function PartyTable({ title, items }: { title: string; items: ProcessingParty[] }) {
-  const [search, setSearch] = useState('')
-  return (
-    <Card className="min-w-0">
-      <CardHeader>
-        <CardTitle>
-          {title} <span className="text-sm font-normal text-muted-foreground">({items.length})</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Input
-          aria-label={`Cari ${title}`}
-          placeholder="Cari nama atau keterangan"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <TabelLokal
-          label={title}
-          items={items.filter((r) => includes([r.nama, r.catatan], search))}
-          kolom={partyColumns}
-          idDari={(r) => r.id}
-          namaDari={(r) => r.nama}
-          minWidth={560}
-        />
-      </CardContent>
-    </Card>
-  )
-}
 export default function ProcessingPage() {
   const { user } = useAuth()
   const allowed = user?.role === 'admin'
@@ -87,9 +53,9 @@ export default function ProcessingPage() {
   if (!allowed) return <p role="alert">Processing hanya dapat diakses admin.</p>
   const data = q.data?.data
   return (
-    <div className="min-w-0 space-y-4">
-      <BarHalaman judul="Processing" deskripsi="Produksi, pengecatan, dan packing pesanan internal." />
-      <Tabs defaultValue="data" className="min-w-0">
+    <div className="processing-page min-w-0 space-y-4 text-left [&_p]:text-left">
+      <BarHalaman judul="Processing" deskripsi="Kelola pesanan dari produksi hingga siap kirim." />
+      <Tabs defaultValue={privateKey ? 'data' : 'pemetaan'} className="min-w-0">
         <TabsList className="section-tabs">
           <TabsTrigger value="data">Data</TabsTrigger>
           <TabsTrigger value="pemetaan">Pemetaan Order</TabsTrigger>
@@ -110,15 +76,15 @@ export default function ProcessingPage() {
             <>
               <p className="text-sm text-muted-foreground">
                 Sumber:{' '}
-                <a className="underline" href={data.source_url} target="_blank" rel="noreferrer">
-                  {data.source_title}
-                </a>{' '}
+                {data.source_url ? (
+                  <a className="underline" href={data.source_url} target="_blank" rel="noreferrer">
+                    {data.source_title}
+                  </a>
+                ) : (
+                  <span>{data.source_title}</span>
+                )}{' '}
                 · Dibaca {fmtDateTime(data.read_at)}
               </p>
-              <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-                <PartyTable title="Daftar Tukang Kayu" items={data.tukang} />
-                <PartyTable title="Supplier" items={data.supplier} />
-              </div>
             </>
           )}
           {!q.isLoading && !data && !busy && (
@@ -134,7 +100,26 @@ export default function ProcessingPage() {
               </CardContent>
             </Card>
           )}
-          <ProcessingPrices />
+          <Tabs defaultValue="produksi" className="min-w-0">
+            <TabsList className="section-tabs">
+              <TabsTrigger value="produksi">Harga Produksi</TabsTrigger>
+              <TabsTrigger value="cat">Harga Pengecatan</TabsTrigger>
+              <TabsTrigger value="tukang">Tukang Kayu</TabsTrigger>
+              <TabsTrigger value="supplier">Supplier</TabsTrigger>
+            </TabsList>
+            <TabsContent value="produksi">
+              <ProcessingPrices kind="produksi" />
+            </TabsContent>
+            <TabsContent value="cat">
+              <ProcessingPrices kind="pengecatan" />
+            </TabsContent>
+            <TabsContent value="tukang">
+              <ProcessingParties kind="tukang" items={data?.tukang || []} />
+            </TabsContent>
+            <TabsContent value="supplier">
+              <ProcessingParties kind="supplier" items={data?.supplier || []} />
+            </TabsContent>
+          </Tabs>
           <details>
             <summary className="cursor-pointer text-sm font-medium">Impor berkas data Drive</summary>
             <div className="pt-3">
