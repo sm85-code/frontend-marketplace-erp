@@ -29,6 +29,7 @@ export type ProcessingPrice = {
   id: string
   kind: 'produksi' | 'pengecatan'
   version: number
+  jenis?: string
   produk: string
   sku: string
   ukuran: string
@@ -94,7 +95,7 @@ export type ProcessingJobEdit = Pick<
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -104,6 +105,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       ukuran,
       harga,
       catatan,
+      ...(kind === 'produksi' ? { jenis: jenis ?? '' } : {}),
     })
   ).data
 }
