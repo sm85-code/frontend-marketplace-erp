@@ -51,7 +51,7 @@ export type ProcessingCandidate = {
   ordered_at: string
   deadline: string | null
   note: string
-  source: 'erp' | 'reseller'
+  source: 'erp' | 'reseller' | 'internal'
 }
 export type ProcessingStage = 'draft' | 'produksi' | 'supplier' | 'pengecatan' | 'packing' | 'siap_kirim'
 export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
@@ -120,7 +120,7 @@ export const getProcessingCandidates = async (q: string, page: number) =>
   ).data
 export const selectProcessingItems = async (route: 'tukang' | 'supplier', item_ids: string[]) =>
   (await api.post('/processing/jobs/select', { route, item_ids })).data
-export const createResellerOrder = async (payload: unknown) =>
+export const createManualProcessingOrder = async (payload: unknown) =>
   (await api.post('/processing/jobs/manual', payload)).data
 export const editProcessingJob = async (id: string, payload: ProcessingJobEdit) =>
   (await api.put(`/processing/jobs/${id}`, payload)).data
