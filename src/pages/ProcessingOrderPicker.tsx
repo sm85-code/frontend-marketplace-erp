@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getProcessingCandidates, selectProcessingItems, createResellerOrder } from '@/api/processing'
+import { getProcessingCandidates, selectProcessingItems, createManualProcessingOrder } from '@/api/processing'
 import { getApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Field } from './processingShared'
+import { Field, SelectField } from './processingShared'
 import { workTime, wibInputNow } from '@/lib/processingTime'
 
 export function OrderPicker({
@@ -209,7 +209,9 @@ export function OrderPicker({
   )
 }
 
-export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => Promise<void> }) {
+export function ManualOrderForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => Promise<void> }) {
+  const [source, setSource] = useState<'internal' | 'reseller'>('internal')
+  const [route, setRoute] = useState<'tukang' | 'supplier'>('tukang')
   const [customer, setCustomer] = useState('')
   const [reference, setReference] = useState('')
   const [ordered, setOrdered] = useState(wibInputNow)
@@ -228,9 +230,9 @@ export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSave
     >
       <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Tambah Pesanan Reseller</DialogTitle>
+          <DialogTitle>Tambah pesanan</DialogTitle>
           <DialogDescription>
-            Pesanan custom/manual hanya disimpan internal. Setiap produk bisa ditugaskan ke tukang berbeda.
+            Pesanan custom/manual hanya disimpan internal. Setiap produk bisa dipetakan ke pelaksana berbeda.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -240,7 +242,9 @@ export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSave
             setBusy(true)
             setError('')
             try {
-              await createResellerOrder({
+              await createManualProcessingOrder({
+                source,
+                route,
                 customer,
                 reference,
                 ordered_at: `${ordered}:00+07:00`,
@@ -256,10 +260,27 @@ export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSave
             }
           }}
         >
-          <Field title="Nama reseller">
+          <Field title="Jenis pesanan">
+            <SelectField value={source} onChange={e => setSource(e.target.value as 'internal' | 'reseller')}>
+              <option value="internal">Internal</option>
+              <option value="reseller">Penjual lain / reseller</option>
+            </SelectField>
+          </Field>
+          <Field title="Dikerjakan oleh">
+            <SelectField value={route} onChange={e => setRoute(e.target.value as 'tukang' | 'supplier')}>
+              <option value="tukang">Tukang kayu</option>
+              <option value="supplier">Supplier</option>
+            </SelectField>
+          </Field>
+          <p className="text-sm text-muted-foreground">
+            {source === 'reseller' && route === 'tukang'
+              ? 'Biaya proses Rp10.000 per unit berlaku untuk pesanan reseller yang dikerjakan tukang kayu.'
+              : route === 'supplier' ? 'Tanpa biaya proses reseller. Barang dari supplier langsung ke packing setelah diterima.' : 'Tanpa biaya proses reseller. Pengecatan dilakukan oleh karyawan tanpa tagihan jasa.'}
+          </p>
+          <Field title={source === 'reseller' ? 'Nama reseller' : 'Nama pemesan'}>
             <Input required maxLength={200} value={customer} onChange={(e) => setCustomer(e.target.value)} />
           </Field>
-          <Field title="Nomor referensi reseller (opsional)">
+          <Field title="Nomor referensi (opsional)">
             <Input maxLength={200} value={reference} onChange={(e) => setReference(e.target.value)} />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -343,7 +364,7 @@ export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSave
           )}
           <DialogFooter>
             <Button type="submit" disabled={busy}>
-              {busy ? 'Menyimpan…' : 'Simpan pesanan reseller'}
+              {busy ? 'Menyimpan…' : 'Simpan pesanan'}
             </Button>
           </DialogFooter>
         </form>

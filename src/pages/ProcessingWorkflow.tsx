@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ProcessingColorField from './ProcessingColorField'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
@@ -40,7 +41,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { OrderPicker, ResellerForm } from './ProcessingOrderPicker'
+import { OrderPicker, ManualOrderForm } from './ProcessingOrderPicker'
 import { POL0S, SelectField, Field } from './processingShared'
 import { workTime } from '@/lib/processingTime'
 
@@ -74,7 +75,7 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.ukuran, p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
+          {[p.produk, p.ukuran, p.warna, p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
         </option>
       ))}
     </>
@@ -125,6 +126,7 @@ function MappingEditor({
       paint
         ? {
             ...v,
+            color: id === job.paint_price_id ? job.color : p?.warna || v.color,
             paint_price_id: id,
             paint_price: id === job.paint_price_id ? job.paint_price : p?.harga || '0',
           }
@@ -141,7 +143,7 @@ function MappingEditor({
         edit.party_id &&
           edit.production_price !== null &&
           edit.production_price !== '' &&
-          (edit.price_id || job.source === 'reseller' || job.route === 'supplier') &&
+          (edit.price_id || job.source !== 'erp' || job.route === 'supplier') &&
           (job.route === 'supplier' || edit.color.trim()),
       )
   return (
@@ -157,7 +159,7 @@ function MappingEditor({
             {packingOnly ? 'Atur packing' : job.stage === 'draft' ? 'Petakan produk' : 'Edit pemetaan'}
           </DialogTitle>
           <DialogDescription>
-            {job.order_number} · {job.source === 'reseller' ? job.customer : job.shop}
+            {job.order_number} · {job.source !== 'erp' ? job.customer : job.shop}
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-start gap-3 rounded-xl border bg-muted/30 p-4">
@@ -214,7 +216,7 @@ function MappingEditor({
                 <Field title="Produk pada daftar harga produksi">
                   <SelectField value={edit.price_id} onChange={(e) => pickPrice(e.target.value)}>
                     <option value="">
-                      {job.source === 'reseller' || job.route === 'supplier'
+                      {job.source !== 'erp' || job.route === 'supplier'
                         ? 'Harga custom / harga beli manual'
                         : 'Pilih produk produksi'}
                     </option>
@@ -227,7 +229,7 @@ function MappingEditor({
                     min="0"
                     step="0.01"
                     required
-                    disabled={!!edit.price_id || (job.source !== 'reseller' && job.route !== 'supplier')}
+                    disabled={!!edit.price_id || (job.source === 'erp' && job.route !== 'supplier')}
                     value={edit.production_price ?? ''}
                     onChange={(e) => set('production_price', e.target.value)}
                   />
@@ -257,15 +259,11 @@ function MappingEditor({
                     </Button>
                   </div>
                   {edit.color !== POL0S && (
-                    <Field title="Warna cat">
-                      <Input
-                        required
-                        placeholder="Contoh: Putih, Natural, Walnut"
-                        maxLength={200}
-                        value={edit.color}
-                        onChange={(e) => set('color', e.target.value)}
-                      />
-                    </Field>
+                    <ProcessingColorField
+                      value={edit.color}
+                      colors={prices.filter(p => p.kind === 'pengecatan').map(p => p.warna || '')}
+                      onChange={color => setEdit(v => ({ ...v, color, paint_price_id: '', paint_price: '0' }))}
+                    />
                   )}
                   {job.source === 'reseller' && edit.color !== POL0S && (
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -379,7 +377,7 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
         <DialogHeader>
           <DialogTitle>Detail pekerjaan</DialogTitle>
           <DialogDescription>
-            {job.order_number} · {job.source === 'reseller' ? job.customer : job.shop}
+            {job.order_number} · {job.source !== 'erp' ? job.customer : job.shop}
           </DialogDescription>
         </DialogHeader>
         <div>
@@ -617,10 +615,10 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
       <p className="max-w-44 truncate text-xs font-medium" title={r.order_number}>
         {r.order_number}
       </p>
-      <p className="text-xs text-muted-foreground">{r.source === 'reseller' ? r.customer : r.shop}</p>
-      {r.source === 'reseller' && (
+      <p className="text-xs text-muted-foreground">{r.source !== 'erp' ? r.customer : r.shop}</p>
+      {r.source !== 'erp' && (
         <Badge variant="outline" className="text-[10px]">
-          Reseller
+          {r.source === 'reseller' ? 'Reseller' : 'Internal'}
         </Badge>
       )}
     </div>
@@ -684,7 +682,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                 </Button>
               )}
               <Button variant="outline" onClick={() => setManual(true)}>
-                Pesanan Reseller
+                Tambah pesanan
               </Button>
             </div>
           </div>
@@ -752,7 +750,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
               {search || status !== 'all'
                 ? 'Ubah pencarian atau filter status untuk melihat pekerjaan lain.'
                 : sourceTable
-                  ? 'Pilih item dari Cek Pesanan atau tambahkan pesanan reseller.'
+                  ? 'Pilih item dari Cek Pesanan atau tambahkan pesanan manual.'
                   : table === 'pengecatan'
                     ? 'Produk yang perlu dicat otomatis masuk setelah produksi selesai.'
                     : 'Produk otomatis masuk setelah produksi, pengecatan, atau penerimaan supplier selesai.'}
@@ -897,7 +895,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
         />
       )}{' '}
       {manual && (
-        <ResellerForm
+        <ManualOrderForm
           onClose={() => setManual(false)}
           onSaved={async () => {
             await refresh()

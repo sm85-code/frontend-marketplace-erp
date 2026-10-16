@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
 
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' }) {
@@ -41,7 +42,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       (selectedKind !== 'produksi' ||
         category === 'all' ||
         (category === 'none' ? !categoryOf(p) : category === 'category:' + categoryOf(p))) &&
-      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis].join(' ').toLowerCase().includes(search.toLowerCase()),
+      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis, p.warna].join(' ').toLowerCase().includes(search.toLowerCase()),
   )
   const pages = Math.max(1, Math.ceil(filtered.length / 15))
   const current = Math.min(page, pages)
@@ -74,7 +75,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             ),
           },
         ]
-      : []),
+      : [{ kunci: 'warna', judul: 'Warna', nilai: (r: ProcessingPrice) => r.warna || '', sel: (r: ProcessingPrice) => <span>{r.warna || 'Belum ditentukan'}</span> }]),
     {
       kunci: 'harga',
       judul: 'Harga / unit',
@@ -128,6 +129,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     ukuran: '',
                     harga: '0',
                     catatan: '',
+                    warna: '',
                   })
                 }}
               >
@@ -151,7 +153,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             )}
             <Input
               aria-label={`Cari harga ${kind}`}
-              placeholder="Cari produk, ukuran, atau SKU"
+              placeholder={kind === 'pengecatan' ? 'Cari produk, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -196,6 +198,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                         {categoryOf(r) || 'Belum dikategorikan'}
                       </p>
                     )}
+                    {kind === 'pengecatan' && <p className="mt-1 text-sm text-muted-foreground">Warna: {r.warna || 'Belum ditentukan'}</p>}
                     <p className="mt-1 break-words text-xs text-muted-foreground">
                       {[r.ukuran, r.sku].filter(Boolean).join(' · ')}
                     </p>
@@ -311,6 +314,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   </datalist>
                 </>
               )}
+              {edit.kind === 'pengecatan' && <ProcessingColorField value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={color => change('warna', color)} />}
               <div className="grid grid-cols-2 gap-3">
                 <Field title="Ukuran">
                   <Input

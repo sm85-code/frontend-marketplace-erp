@@ -30,6 +30,7 @@ export type ProcessingPrice = {
   kind: 'produksi' | 'pengecatan'
   version: number
   jenis?: string
+  warna?: string
   produk: string
   sku: string
   ukuran: string
@@ -50,7 +51,7 @@ export type ProcessingCandidate = {
   ordered_at: string
   deadline: string | null
   note: string
-  source: 'erp' | 'reseller'
+  source: 'erp' | 'reseller' | 'internal'
 }
 export type ProcessingStage = 'draft' | 'produksi' | 'supplier' | 'pengecatan' | 'packing' | 'siap_kirim'
 export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
@@ -95,7 +96,7 @@ export type ProcessingJobEdit = Pick<
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -105,7 +106,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       ukuran,
       harga,
       catatan,
-      ...(kind === 'produksi' ? { jenis: jenis ?? '' } : {}),
+      ...(kind === 'produksi' ? { jenis: jenis ?? '' } : { warna: warna ?? '' }),
     })
   ).data
 }
@@ -119,7 +120,7 @@ export const getProcessingCandidates = async (q: string, page: number) =>
   ).data
 export const selectProcessingItems = async (route: 'tukang' | 'supplier', item_ids: string[]) =>
   (await api.post('/processing/jobs/select', { route, item_ids })).data
-export const createResellerOrder = async (payload: unknown) =>
+export const createManualProcessingOrder = async (payload: unknown) =>
   (await api.post('/processing/jobs/manual', payload)).data
 export const editProcessingJob = async (id: string, payload: ProcessingJobEdit) =>
   (await api.put(`/processing/jobs/${id}`, payload)).data
