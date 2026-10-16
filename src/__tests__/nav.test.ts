@@ -8,7 +8,7 @@ describe('filterNavForUser', () => {
 
   it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNavForUser({ role: 'admin' }).length).toBe(NAV.length)
-    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !['/processing', '/laporan-keuangan', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/pengaturan-toko'].includes(to)))
+    expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/pengaturan-toko'].includes(to)))
   })
 
   it('staff only gets the shared pages, in workflow order', () => {
@@ -19,14 +19,16 @@ describe('filterNavForUser', () => {
 
 describe('menu order follows the daily workflow', () => {
   it('lists the sections: harian, produk, keuangan, pengaturan', () => {
-    expect(GRUP_NAV.map((g) => g.id)).toEqual(['harian', 'produk', 'keuangan', 'info-toko', 'pengaturan'])
+    expect(GRUP_NAV.map((g) => g.id)).toEqual(['harian', 'produk', 'processing', 'data-produksi', 'keuangan', 'info-toko', 'pengaturan'])
   })
 
   it('groups the admin menu as agreed (Toko lives under Pengaturan, Iklan is admin-only)', () => {
     const peta = Object.fromEntries(kelompokNav(filterNavForUser({ role: 'admin' })).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
       harian: ['/dashboard', '/pesanan', '/chat'],
-      produk: ['/katalog', '/produk', '/listing', '/gudang', '/processing'],
+      produk: ['/katalog', '/produk', '/listing', '/gudang'],
+      processing: ['/processing/pemetaan'],
+      'data-produksi': ['/processing/tukang-kayu', '/processing/produk-kayu', '/processing/supplier', '/processing/katalog-siabumdes', '/processing/katalog-manual', '/processing/tarif-pengecatan', '/processing/tarif-packing'],
       keuangan: ['/laporan-keuangan', '/settlement', '/iklan'],
       'info-toko': ['/performa-toko', '/pengaturan-toko'],
       pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
@@ -36,7 +38,7 @@ describe('menu order follows the daily workflow', () => {
   it('hides Iklan from owner and staff (ads move real money: admin only)', () => {
     for (const role of ['owner', 'staff'] as const) {
       const semua = kelompokNav(filterNavForUser({ role })).flatMap((g) => g.items.map((n) => n.to))
-      expect(semua).not.toContain('/processing')
+      expect(semua.some(path => path.startsWith('/processing'))).toBe(false)
       expect(semua).not.toContain('/laporan-keuangan')
       expect(semua).not.toContain('/iklan')
       expect(semua).not.toContain('/settlement')

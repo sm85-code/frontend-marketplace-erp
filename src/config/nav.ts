@@ -31,12 +31,14 @@ export interface NavItem {
   posisiBawah?: number
 }
 
-export type GrupNav = 'harian' | 'produk' | 'keuangan' | 'info-toko' | 'pengaturan'
+export type GrupNav = 'harian' | 'produk' | 'processing' | 'data-produksi' | 'keuangan' | 'info-toko' | 'pengaturan'
 
 /** Sidebar sections in the order of the daily workflow: work the orders, manage products, money, then setup. */
 export const GRUP_NAV: { id: GrupNav; label: string }[] = [
   { id: 'harian', label: 'Harian' },
   { id: 'produk', label: 'Produk' },
+  { id: 'processing', label: 'Processing' },
+  { id: 'data-produksi', label: 'Data Produksi' },
   { id: 'keuangan', label: 'Keuangan & Iklan' },
   { id: 'info-toko', label: 'Info Toko' },
   { id: 'pengaturan', label: 'Pengaturan' },
@@ -56,7 +58,14 @@ export const NAV: NavItem[] = [
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, roles: ROLES_OWNER_ONLY, grup: 'produk' },
   { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, roles: ROLES_OWNER_ONLY, grup: 'produk' },
-  { to: '/processing', label: 'Processing', icon: Hammer, roles: ROLES_ADMIN_ONLY, grup: 'produk' },
+  { to: '/processing/pemetaan', label: 'Pemetaan Order', icon: Hammer, roles: ROLES_ADMIN_ONLY, grup: 'processing' },
+  { to: '/processing/tukang-kayu', label: 'Tukang Kayu', icon: Users, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/produk-kayu', label: 'Katalog Produk Kayu', icon: Package, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/supplier', label: 'Supplier', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/katalog-siabumdes', label: 'Katalog Siabumdes', icon: Link2, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/katalog-manual', label: 'Katalog Supplier Manual', icon: Package, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/tarif-pengecatan', label: 'Tarif Pengecatan', icon: Hammer, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
+  { to: '/processing/tarif-packing', label: 'Tarif Packing', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
   { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
