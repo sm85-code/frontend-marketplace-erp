@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
+import ProductionStructurePicker from './ProductionStructurePicker'
 import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
 
@@ -24,6 +25,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
+  const [useHierarchy, setUseHierarchy] = useState(true)
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
   const categoriesId = useId()
@@ -42,14 +44,14 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       (selectedKind !== 'produksi' ||
         category === 'all' ||
         (category === 'none' ? !categoryOf(p) : category === 'category:' + categoryOf(p))) &&
-      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis, p.warna].join(' ').toLowerCase().includes(search.toLowerCase()),
+      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis, p.warna, p.model, p.model_kode, p.sku_induk, p.kategori_kode].join(' ').toLowerCase().includes(search.toLowerCase()),
   )
   const pages = Math.max(1, Math.ceil(filtered.length / 15))
   const current = Math.min(page, pages)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const change = (k: keyof ProcessingPrice, v: string) => setEdit((p) => (p ? { ...p, [k]: v } : p))
-  const columns: KolomTabel<ProcessingPrice>[] = [
+  const baseColumns: KolomTabel<ProcessingPrice>[] = [
     {
       kunci: 'produk',
       judul: 'Produk / Ukuran',
@@ -99,6 +101,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
           size="sm"
           onClick={() => {
             setAdding(false)
+            setUseHierarchy(!!r.structure_model_id)
             setError('')
             setEdit(r)
           }}
@@ -108,6 +111,13 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       ),
     },
   ]
+  const columns: KolomTabel<ProcessingPrice>[] = selectedKind === 'produksi' ? [
+    { kunci: 'jenis', judul: 'Kategori', nilai: r => categoryOf(r), sel: r => <div><p className="font-medium">{r.jenis || 'Belum dikategorikan'}</p>{r.kategori_kode && <p className="text-xs text-muted-foreground">{r.kategori_kode}</p>}</div> },
+    { kunci: 'produk', judul: 'Produk / SKU induk', tetap: true, nilai: r => r.produk, sel: r => <div><p className="font-medium">{r.produk}</p><p className="text-xs text-muted-foreground">{r.sku_induk || 'Data lama · belum terstruktur'}</p></div> },
+    { kunci: 'model', judul: 'Model', nilai: r => r.model_kode || '', sel: r => <div>{r.model_kode || '—'}{r.model && r.model !== r.model_kode && <p className="text-xs text-muted-foreground">{r.model}</p>}</div> },
+    { kunci: 'ukuran', judul: 'Ukuran / SKU', nilai: r => r.ukuran, sel: r => <div>{r.ukuran || '—'}<p className="mt-1 break-all text-xs text-muted-foreground">{r.sku || '—'}</p></div> },
+    ...baseColumns.filter(c => c.kunci === 'harga' || c.kunci === 'aksi'),
+  ] : baseColumns
   return (
     <>
       {(selectedKind ? [selectedKind] : (['produksi', 'pengecatan'] as const)).map((kind) => (
@@ -119,6 +129,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 variant="default"
                 onClick={() => {
                   setAdding(true)
+                  setUseHierarchy(true)
                   setError('')
                   setEdit({
                     id: crypto.randomUUID(),
@@ -185,7 +196,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 kolom={columns}
                 idDari={(p) => p.id}
                 namaDari={(p) => p.produk}
-                minWidth={580}
+                minWidth={selectedKind === 'produksi' ? 950 : 580}
               />
             </div>
             <div className="divide-y md:hidden">
@@ -200,7 +211,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     )}
                     {kind === 'pengecatan' && <p className="mt-1 text-sm text-muted-foreground">Warna: {r.warna || 'Belum ditentukan'}</p>}
                     <p className="mt-1 break-words text-xs text-muted-foreground">
-                      {[r.ukuran, r.sku].filter(Boolean).join(' · ')}
+                      {[r.model_kode, r.ukuran, r.sku].filter(Boolean).join(' · ')}
                     </p>
                     <p className="mt-2 text-sm font-semibold tabular-nums">
                       {fmtRp(r.harga)}{' '}
@@ -213,6 +224,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     size="sm"
                     onClick={() => {
                       setAdding(false)
+                      setUseHierarchy(!!r.structure_model_id)
                       setError('')
                       setEdit(r)
                     }}
@@ -276,7 +288,10 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 try {
                   await saveProcessingPrice(edit)
                   await qc.invalidateQueries({ queryKey: ['processing-prices'] })
-                  setEdit(null)
+                  if ((e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-next-size') === 'true') {
+                    setAdding(true)
+                    setEdit({ ...edit, id: crypto.randomUUID(), version: 0, ukuran: '', sku: '', harga: '0' })
+                  } else setEdit(null)
                   setCategory('all')
                   setSearch('')
                   setPage(1)
@@ -288,6 +303,13 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 }
               }}
             >
+              {edit.kind === 'produksi' && useHierarchy ? (
+                <ProductionStructurePicker key={edit.id} value={edit} onChange={fields => setEdit(v => v ? { ...v, ...fields } : v)} />
+              ) : <>
+                {edit.kind === 'produksi' && <div className="rounded-xl border bg-muted/30 p-3 text-sm">
+                  <p>Harga ini memakai data lama. Susun kategori, produk, dan model untuk membuat SKU otomatis.</p>
+                  <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setUseHierarchy(true)}>Susun struktur</Button>
+                </div>}
               <Field title="Nama produk">
                 <Input
                   required
@@ -327,6 +349,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <Input maxLength={200} value={edit.sku} onChange={(e) => change('sku', e.target.value)} />
                 </Field>
               </div>
+              </>}
               <Field title="Harga per unit (Rp)">
                 <Input
                   type="number"
@@ -350,6 +373,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </p>
               )}
               <DialogFooter>
+                {edit.kind === 'produksi' && useHierarchy && <Button type="submit" variant="outline" data-next-size="true" disabled={busy}>Simpan & tambah ukuran</Button>}
                 <Button disabled={busy} type="submit">
                   {busy ? 'Menyimpan…' : 'Simpan harga'}
                 </Button>

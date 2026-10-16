@@ -41,6 +41,13 @@ export type ProcessingPrice = {
   version: number
   jenis?: string
   warna?: string
+  structure_model_id?: string
+  category_id?: string
+  product_id?: string
+  kategori_kode?: string
+  sku_induk?: string
+  model?: string
+  model_kode?: string
   produk: string
   sku: string
   ukuran: string
@@ -89,6 +96,9 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   reseller_total: string | null
   order_cancelled: boolean
   reference?: string
+  seller_code?: string
+  production_sku?: string
+  manual_order_code?: string
   events: { action: string; actor: string; at: string }[]
 }
 export type ProcessingJobEdit = Pick<
@@ -97,6 +107,7 @@ export type ProcessingJobEdit = Pick<
   | 'party_id'
   | 'price_id'
   | 'production_price'
+  | 'production_sku'
   | 'color'
   | 'paint_price_id'
   | 'paint_price'
@@ -106,7 +117,7 @@ export type ProcessingJobEdit = Pick<
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -116,7 +127,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       ukuran,
       harga,
       catatan,
-      ...(kind === 'produksi' ? { jenis: jenis ?? '' } : { warna: warna ?? '' }),
+      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : { warna: warna ?? '' }),
     })
   ).data
 }
@@ -161,3 +172,18 @@ export const saveProcessingParty = async (kind: 'tukang' | 'supplier', party: Pr
       catatan: party.catatan,
     })
   ).data
+
+export type ProductionStructureNode = {
+  id: string
+  kind: 'kategori' | 'produk' | 'model'
+  parent_id: string
+  code: string
+  name: string
+  version: number
+}
+export const getProductionStructure = async () =>
+  (await api.get<{ items: ProductionStructureNode[] }>('/processing/production-structure')).data
+export const saveProductionStructure = async (node: ProductionStructureNode) => {
+  const { id, ...body } = node
+  return (await api.put(`/processing/production-structure/${encodeURIComponent(id)}`, body)).data
+}
