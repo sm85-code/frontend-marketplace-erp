@@ -227,7 +227,7 @@ function MappingEditor({
                     min="0"
                     step="0.01"
                     required
-                    disabled={!!edit.price_id}
+                    disabled={!!edit.price_id || (job.source !== 'reseller' && job.route !== 'supplier')}
                     value={edit.production_price ?? ''}
                     onChange={(e) => set('production_price', e.target.value)}
                   />
@@ -884,7 +884,18 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           Waktu penyelesaian dicatat otomatis dalam WIB. Satu item diselesaikan untuk seluruh jumlah unitnya.
         </p>
       </div>
-      {picker && <OrderPicker route={picker} onClose={() => setPicker(null)} onSaved={refresh} />}{' '}
+      {picker && (
+        <OrderPicker
+          route={picker}
+          onClose={() => setPicker(null)}
+          onSaved={async () => {
+            await refresh()
+            setStatus('all')
+            setSearch('')
+            setPage(1)
+          }}
+        />
+      )}{' '}
       {manual && (
         <ResellerForm
           onClose={() => setManual(false)}
