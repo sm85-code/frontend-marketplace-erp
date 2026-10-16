@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ProcessingColorField from './ProcessingColorField'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
@@ -74,7 +75,7 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.ukuran, p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
+          {[p.produk, p.ukuran, p.warna, p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
         </option>
       ))}
     </>
@@ -125,6 +126,7 @@ function MappingEditor({
       paint
         ? {
             ...v,
+            color: id === job.paint_price_id ? job.color : p?.warna || v.color,
             paint_price_id: id,
             paint_price: id === job.paint_price_id ? job.paint_price : p?.harga || '0',
           }
@@ -257,15 +259,11 @@ function MappingEditor({
                     </Button>
                   </div>
                   {edit.color !== POL0S && (
-                    <Field title="Warna cat">
-                      <Input
-                        required
-                        placeholder="Contoh: Putih, Natural, Walnut"
-                        maxLength={200}
-                        value={edit.color}
-                        onChange={(e) => set('color', e.target.value)}
-                      />
-                    </Field>
+                    <ProcessingColorField
+                      value={edit.color}
+                      colors={prices.filter(p => p.kind === 'pengecatan').map(p => p.warna || '')}
+                      onChange={color => setEdit(v => ({ ...v, color, paint_price_id: '', paint_price: '0' }))}
+                    />
                   )}
                   {job.source === 'reseller' && edit.color !== POL0S && (
                     <div className="grid gap-3 sm:grid-cols-2">
