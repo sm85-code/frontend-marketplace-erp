@@ -41,6 +41,7 @@ export type ProcessingPrice = {
   kind: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing'
   version: number
   jenis?: string
+  kode?: string
   warna?: string
   packing_type?: 'biasa' | 'kayu'
   structure_model_id?: string
