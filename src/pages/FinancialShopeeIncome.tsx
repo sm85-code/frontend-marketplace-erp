@@ -20,7 +20,7 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
   const title = released ? 'DANA CAIR (SHOPEE)' : 'ESTIMASI DANA AKAN CAIR (SHOPEE)'
   const q = useQuery({queryKey:[released?'financial-shopee-released':'financial-shopee-income',month,columns,until],queryFn:()=>(released?shopeeReleasedFunds:shopeeIncome)(month,columns,until),enabled:columns>0})
   const monthLabel = new Date(month+'-01T12:00:00+07:00').toLocaleDateString('id-ID',{month:'long'})
-  return <Card className="mt-4"><CardHeader><CardTitle>{title}</CardTitle><p className="text-sm text-muted-foreground">{released ? 'Dana pesanan yang sudah cair, dikelompokkan sesuai tanggal cair.' : 'Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai, dikelompokkan sesuai tanggal dikirim.'}</p></CardHeader><CardContent className="space-y-3">
+  return <Card className="mt-4"><CardHeader><CardTitle>{released ? 'Dana cair (Shopee)' : 'Estimasi dana akan cair (Shopee)'}</CardTitle><p className="text-sm text-muted-foreground">{released ? 'Dana pesanan yang sudah cair, dikelompokkan sesuai tanggal cair.' : 'Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai, dikelompokkan sesuai tanggal dikirim.'}</p></CardHeader><CardContent className="space-y-3">
     {q.isLoading && <Spinner label={released?'Memuat dana cair Shopee…':'Memuat pemasukan Shopee…'} />}
     {q.error && <div role="alert"><p>{getApiError(q.error)}</p><Button variant="outline" onClick={()=>void q.refetch()}>Coba lagi</Button></div>}
     {until && <p className="text-sm text-muted-foreground">Data sampai {dateLabel(until)} {until.slice(0,4)}, mengikuti laporan terisi.</p>}
@@ -37,7 +37,7 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
               {shop.minggu.map((c,i)=><TableCell key={i} className="text-right tabular-nums">{until && q.data!.minggu[i].mulai>until ? "—" : <Amount cell={c}/>}</TableCell>)}
               <TableCell className="bg-muted/40 text-right tabular-nums"><Amount cell={aggregate(shop.minggu)}/></TableCell>
             </TableRow>)}
-            <TableRow className="bg-muted/50 font-semibold"><TableCell className="sticky left-0 z-10 bg-muted">TOTAL</TableCell>
+            <TableRow className="bg-muted/50 font-semibold"><TableCell className="sticky left-0 z-10 bg-muted">Total</TableCell>
               {q.data.minggu.map((w,i)=><TableCell key={w.mulai} className="text-right tabular-nums">{until && w.mulai>until ? "—" : <Amount cell={aggregate(q.data!.toko.map(s=>s.minggu[i]))}/>}</TableCell>)}
               <TableCell className="text-right tabular-nums"><Amount cell={aggregate(q.data.toko.flatMap(s=>s.minggu))}/></TableCell>
             </TableRow>

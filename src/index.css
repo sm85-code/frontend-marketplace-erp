@@ -773,3 +773,57 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   text-justify: auto;
 }
 .financial-page [data-multiline-justify] { text-align: left !important; text-justify: auto; }
+
+/* Financial reports: consistent reading hierarchy without changing ERP-wide typography. */
+.financial-page {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+.financial-page :is(h1, h2, h3, [data-slot="card-title"]) {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+}
+.financial-page h1 { font-size: 1.5rem; }
+.financial-page h2 { font-size: 1.125rem; }
+.financial-page [data-slot="card-title"] {
+  font-size: 1rem;
+  color: var(--foreground);
+  text-transform: none;
+}
+.financial-page [data-slot="table"] {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.financial-page [data-slot="table-head"] {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.5;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.financial-page [data-slot="table-cell"] {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.financial-page .text-xs { font-size: 0.8125rem; line-height: 1.5; }
+.financial-page :is(.tabular-nums, dd) {
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: normal;
+}
+.financial-page .financial-row-group {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.financial-page .financial-row-group [data-slot="table-head"] {
+  font-weight: 600;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}

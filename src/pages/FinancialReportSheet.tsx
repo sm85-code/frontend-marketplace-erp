@@ -18,6 +18,7 @@ export type SheetRow = {
   value: (r: Report) => string
   total?: 'sum' | 'first' | 'last'
   emphasis?: boolean
+  group?: boolean
 }
 const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key] ?? '0')
 const result =
@@ -51,6 +52,8 @@ const months = [
   'November',
   'Desember',
 ]
+const sentenceCase = (label: string) =>
+  label.toLocaleLowerCase('id-ID').replace(/^./, (letter) => letter.toLocaleUpperCase('id-ID'))
 const dateLabel = (date: string) =>
   new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', {
     day: '2-digit',
@@ -81,6 +84,7 @@ export function sheetSections(data: Overview): { title: string; rows: SheetRow[]
     total: SheetRow['total'] = 'sum',
     emphasis = false,
   ): SheetRow => ({ label, value, total, emphasis })
+  const group = (label: string): SheetRow => ({ label, value: () => '0', group: true })
   const debt = (r: Report) => r.hasil.neraca.utang
   const equity = (r: Report) => r.hasil.neraca.ekuitas
   return [
@@ -126,20 +130,23 @@ export function sheetSections(data: Overview): { title: string; rows: SheetRow[]
       title: 'D. ARUS KAS',
       rows: [
         row('SALDO AWAL KAS UTAMA', before('kas_utama'), 'first', true),
-        row('Kas Masuk: Saldo Toko', result('pemasukan_toko')),
-        row('Kas Masuk: Penjualan Produk + Proses', (r) =>
+        group('Kas masuk'),
+        row('Saldo toko', result('pemasukan_toko')),
+        row('Penjualan produk + proses', (r) =>
           sumAmounts([String(r.input.pendapatan_produk ?? 0), String(r.input.jasa_proses ?? 0)]),
         ),
-        row('Kas Masuk: Jasa Cat + Packing', (r) =>
+        row('Jasa cat + packing', (r) =>
           sumAmounts([String(r.input.jasa_cat_packing ?? 0), String(r.input.jasa_cat ?? 0)]),
         ),
         row('JUMLAH KAS MASUK', result('kas_masuk'), 'sum', true),
-        row('Kas Keluar: Bayar Tukang Kayu', input('bayar_tukang')),
-        row('Kas Keluar: Pembelian Produk', input('pembelian')),
-        row('Kas Keluar: Operasional', input('operasional')),
-        row('Kas Keluar: Langganan Rutin', input('langganan')),
-        row('Kas Keluar: Top-up Iklan', input('topup_iklan')),
+        group('Kas keluar'),
+        row('Bayar tukang kayu', input('bayar_tukang')),
+        row('Pembelian produk', input('pembelian')),
+        row('Operasional', input('operasional')),
+        row('Langganan rutin', input('langganan')),
+        row('Top-up iklan', input('topup_iklan')),
         row('JUMLAH KAS KELUAR', result('kas_keluar'), 'sum', true),
+        group('Transfer antar kas'),
         row('Transfer dari Kas Operasional (+)', input('transfer_kas_ops')),
         row('Penyisihan ke Kas Gaji (−)', (r) => sumAmounts([`-${r.input.transfer_kas_gaji ?? '0'}`])),
         ...(data.laporan.some((r) => Number(r.input.tambahan_modal) !== 0)
@@ -213,7 +220,7 @@ export default function FinancialReportSheet({
       ['Uraian', ...days.map(dateLabel), 'JUMLAH / POSISI TERAKHIR'],
       ...sections.flatMap((s) => [
         [s.title],
-        ...s.rows.map((row) => [
+        ...s.rows.map((row) => row.group ? [row.label] : [
           row.label,
           ...days.map((d) => {
             const r = records.find((r) => r.tanggal === d)
@@ -255,7 +262,7 @@ export default function FinancialReportSheet({
   const renderTable = (section: ReturnType<typeof sheetSections>[number]) => (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
-        <CardTitle>{section.title.slice(3)}</CardTitle>
+        <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
         <p className="text-xs text-muted-foreground">
           {records.length
             ? `${records.length} periode tersimpan · sampai ${dateLabel(latest!.tanggal)}`
@@ -293,12 +300,16 @@ export default function FinancialReportSheet({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {section.rows.map((row) => (
+              {section.rows.map((row) => row.group ? (
+                <TableRow key={row.label} className="financial-row-group">
+                  <TableHead colSpan={days.length + 2} scope="rowgroup">{row.label}</TableHead>
+                </TableRow>
+              ) : (
                 <TableRow key={row.label} className={row.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
                   <TableCell
                     className={`sticky left-0 z-10 ${row.emphasis ? 'bg-muted font-semibold' : 'bg-card'}`}
                   >
-                    {row.label}
+                    {row.emphasis ? sentenceCase(row.label) : row.label}
                   </TableCell>
                   {days.map((d) => {
                     const r = records.find((r) => r.tanggal === d)
@@ -333,6 +344,12 @@ export default function FinancialReportSheet({
           </SelectField>
           <dl className="overflow-hidden rounded-xl border">
             {section.rows.map((row) => {
+              if (row.group) return (
+                <div key={row.label} className="financial-row-group border-b px-3 py-2">
+                  <dt>{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
+                  <dd className="sr-only">Golongan transaksi</dd>
+                </div>
+              )
               const report = records.find((r) => r.tanggal === selectedPeriod)
               const amount =
                 selectedPeriod === 'total' ? columnTotal(row, records) : report ? row.value(report) : null
@@ -341,7 +358,7 @@ export default function FinancialReportSheet({
                   key={row.label}
                   className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b px-3 py-3 last:border-b-0 ${row.emphasis ? 'bg-primary/5 font-semibold' : ''}`}
                 >
-                  <dt className="text-xs leading-relaxed">{row.label}</dt>
+                  <dt className="text-xs leading-relaxed">{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
                   <dd className="whitespace-nowrap text-xs tabular-nums">
                     {amount === null ? '—' : fmtRp(amount)}
                   </dd>

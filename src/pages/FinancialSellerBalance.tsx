@@ -45,7 +45,7 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
   }
   const busy=accounts.isFetching || queries.some(q=>q.isFetching)
   return <Card className="mt-4"><CardHeader>
-    <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle>SALDO PENJUAL (SHOPEE)</CardTitle><Button variant="outline" disabled={busy} onClick={()=>{void accounts.refetch();selected.forEach((account,i)=>{if(account?.id_toko_eksternal)dates.forEach((d,w)=>{if(d<today)void get(i,w)?.refetch()})})}}>{busy?'Memuat…':'Perbarui saldo'}</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle>Saldo penjual (Shopee)</CardTitle><Button variant="outline" disabled={busy} onClick={()=>{void accounts.refetch();selected.forEach((account,i)=>{if(account?.id_toko_eksternal)dates.forEach((d,w)=>{if(d<today)void get(i,w)?.refetch()})})}}>{busy?'Memuat…':'Perbarui saldo'}</Button></div>
     <p className="text-sm text-muted-foreground">Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off.</p>
   </CardHeader><CardContent className="space-y-3">
     {accounts.error && <p role="alert">{getApiError(accounts.error)}</p>}
@@ -61,7 +61,7 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
           {usable(i,w) && get(i,w)!.data!.transaksi_at != null && <span className="block whitespace-normal text-xs text-muted-foreground">Mutasi {fmtDateTime(new Date(get(i,w)!.data!.transaksi_at!*1000).toISOString())}</span>}
           {get(i,w)?.error && <span className="block whitespace-normal text-xs text-destructive">{getApiError(get(i,w)!.error)}</span>}
         </TableCell>)}<TableCell className="bg-muted/40 text-right tabular-nums">{amount(i,lastClosed)}</TableCell></TableRow>)}
-        <TableRow className="bg-muted/50 font-semibold"><TableCell className="sticky left-0 z-10 bg-muted">TOTAL</TableCell>{dates.map((d,w)=><TableCell key={d} className="text-right tabular-nums">{totals(w)}</TableCell>)}<TableCell className="text-right tabular-nums">{totals(lastClosed)}</TableCell></TableRow>
+        <TableRow className="bg-muted/50 font-semibold"><TableCell className="sticky left-0 z-10 bg-muted">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className="text-right tabular-nums">{totals(w)}</TableCell>)}<TableCell className="text-right tabular-nums">{totals(lastClosed)}</TableCell></TableRow>
       </TableBody>
     </Table></div>
     <p className="text-xs text-muted-foreground">Saldo berasal dari mutasi terakhir sampai Minggu 23.59 WIB, dengan pencarian 14 hari ke belakang dari tiap cut-off. Riwayat tidak tersedia ditandai, tanpa memakai saldo saat ini. Saldo mingguan tidak dijumlahkan; kolom terakhir memakai posisi minggu terakhir yang sudah tutup. Total antar toko dipisahkan menurut mata uang. Sumber belum memisahkan saldo tersedia untuk ditarik dan tertahan.</p>
