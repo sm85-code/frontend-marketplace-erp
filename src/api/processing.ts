@@ -1,5 +1,5 @@
 import api from './client'
-export type ProcessingParty = { id: string; nama: string; catatan: string; sumber: string }
+export type ProcessingParty = { id: string; nama: string; catatan: string; sumber: string; version?: number }
 export type ProductionPrice = {
   id: string
   nomor: number
@@ -135,3 +135,12 @@ export const editProcessingPacking = async (
 ) =>
   (await api.put(`/processing/jobs/${job.id}/packing`, { version: job.version, packing_type, packing_price }))
     .data
+
+export const saveProcessingParty = async (kind: 'tukang' | 'supplier', party: ProcessingParty) =>
+  (
+    await api.put(`/processing/parties/${kind}/${encodeURIComponent(party.id)}`, {
+      version: party.version ?? 0,
+      nama: party.nama,
+      catatan: party.catatan,
+    })
+  ).data

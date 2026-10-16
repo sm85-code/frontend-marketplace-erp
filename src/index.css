@@ -766,3 +766,9 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 @media (prefers-reduced-motion: reduce) {
   .erp-feedback [data-sonner-toast] { transition: none !important; animation: none !important; }
 }
+
+/* Processing uses compact operation cards and forms; keep labels and instructions left aligned. */
+.processing-page [data-multiline-justify], .processing-dialog [data-multiline-justify] {
+  text-align: left !important;
+  text-justify: auto;
+}

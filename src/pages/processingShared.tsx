@@ -1,4 +1,4 @@
-import type { SelectHTMLAttributes, ReactNode } from 'react'
+import { cloneElement, useId, type SelectHTMLAttributes, type ReactElement } from 'react'
 export const POL0S = 'Polos / Tanpa Cat'
 export function SelectField({ children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -10,11 +10,15 @@ export function SelectField({ children, ...props }: SelectHTMLAttributes<HTMLSel
     </select>
   )
 }
-export function Field({ title, children }: { title: string; children: ReactNode }) {
+export function Field({ title, children }: { title: string; children: ReactElement<{ id?: string }> }) {
+  const generatedId = useId()
+  const id = children.props.id || generatedId
   return (
-    <label className="grid min-w-0 gap-1 text-sm">
-      <span className="font-medium">{title}</span>
-      {children}
-    </label>
+    <div className="grid min-w-0 gap-1 text-sm">
+      <label className="font-medium" htmlFor={id}>
+        {title}
+      </label>
+      {cloneElement(children, { id })}
+    </div>
   )
 }

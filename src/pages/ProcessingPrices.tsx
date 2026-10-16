@@ -17,18 +17,38 @@ import {
 } from '@/components/ui/dialog'
 import { Field } from './processingShared'
 
-export default function ProcessingPrices() {
+export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' }) {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
   const [search, setSearch] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [page, setPage] = useState(1)
+  const filtered = (q.data?.items || []).filter(
+    (p) =>
+      p.kind === selectedKind &&
+      [p.produk, p.sku, p.ukuran, p.catatan].join(' ').toLowerCase().includes(search.toLowerCase()),
+  )
+  const pages = Math.max(1, Math.ceil(filtered.length / 15))
+  const current = Math.min(page, pages)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const change = (k: keyof ProcessingPrice, v: string) => setEdit((p) => (p ? { ...p, [k]: v } : p))
   const columns: KolomTabel<ProcessingPrice>[] = [
-    { kunci: 'produk', judul: 'Produk', tetap: true, nilai: (r) => r.produk, sel: (r) => r.produk },
-    { kunci: 'ukuran', judul: 'Ukuran', sel: (r) => r.ukuran || '—' },
-    { kunci: 'sku', judul: 'SKU Produksi', sel: (r) => r.sku || '—' },
+    {
+      kunci: 'produk',
+      judul: 'Produk / Ukuran',
+      tetap: true,
+      nilai: (r) => r.produk,
+      sel: (r) => (
+        <div>
+          <p className="font-medium">{r.produk}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {[r.ukuran, r.sku].filter(Boolean).join(' · ') || '—'}
+          </p>
+        </div>
+      ),
+    },
     {
       kunci: 'harga',
       judul: 'Harga / unit',
@@ -42,7 +62,7 @@ export default function ProcessingPrices() {
         </>
       ),
     },
-    { kunci: 'catatan', judul: 'Keterangan', sel: (r) => r.catatan || '—' },
+
     {
       kunci: 'aksi',
       judul: 'Aksi',
@@ -51,6 +71,7 @@ export default function ProcessingPrices() {
           variant="outline"
           size="sm"
           onClick={() => {
+            setAdding(false)
             setError('')
             setEdit(r)
           }}
@@ -62,14 +83,15 @@ export default function ProcessingPrices() {
   ]
   return (
     <>
-      {(['produksi', 'pengecatan'] as const).map((kind) => (
+      {(selectedKind ? [selectedKind] : (['produksi', 'pengecatan'] as const)).map((kind) => (
         <Card className="min-w-0" key={kind}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <CardTitle>Daftar Harga {kind === 'produksi' ? 'Produksi' : 'Pengecatan'}</CardTitle>
               <Button
-                variant="outline"
+                variant="default"
                 onClick={() => {
+                  setAdding(true)
                   setError('')
                   setEdit({
                     id: crypto.randomUUID(),
@@ -105,47 +127,95 @@ export default function ProcessingPrices() {
               aria-label={`Cari harga ${kind}`}
               placeholder="Cari produk, ukuran, atau SKU"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
             />
-            <TabelLokal
-              label={`Harga ${kind}`}
-              items={(q.data?.items || []).filter(
-                (p) =>
-                  p.kind === kind &&
-                  [p.produk, p.sku, p.ukuran, p.catatan]
-                    .join(' ')
-                    .toLowerCase()
-                    .includes(search.toLowerCase()),
+            <div className="hidden md:block">
+              <TabelLokal
+                label={`Harga ${kind}`}
+                items={(q.data?.items || []).filter(
+                  (p) =>
+                    p.kind === kind &&
+                    [p.produk, p.sku, p.ukuran, p.catatan]
+                      .join(' ')
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                )}
+                kolom={columns}
+                idDari={(p) => p.id}
+                namaDari={(p) => p.produk}
+                minWidth={580}
+              />
+            </div>
+            <div className="divide-y md:hidden">
+              {filtered.slice((current - 1) * 15, current * 15).map((r) => (
+                <div className="flex items-start justify-between gap-3 py-4" key={r.id}>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{r.produk}</p>
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
+                      {[r.ukuran, r.sku].filter(Boolean).join(' · ')}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold tabular-nums">
+                      {fmtRp(r.harga)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">/ unit</span>
+                    </p>
+                    {Number(r.harga) === 0 && <p className="text-xs text-destructive">Harga nol — periksa</p>}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAdding(false)
+                      setError('')
+                      setEdit(r)
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ))}
+              {!filtered.length && (
+                <p className="py-8 text-center text-sm text-muted-foreground">Belum ada harga yang sesuai.</p>
               )}
-              kolom={columns}
-              idDari={(p) => p.id}
-              namaDari={(p) => p.produk}
-              minWidth={950}
-            />
+              {filtered.length > 15 && (
+                <div className="flex items-center justify-between gap-2 pt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={current === 1}
+                    onClick={() => setPage(current - 1)}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <span className="text-xs">
+                    {current} / {pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={current === pages}
+                    onClick={() => setPage(current + 1)}
+                  >
+                    Berikutnya
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       ))}
-      <Card>
-        <CardHeader>
-          <CardTitle>Biaya proses reseller</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>
-            Rp10.000 per unit, hanya untuk produk pesanan reseller yang dibuat tukang kayu. Tidak berlaku
-            untuk pesanan toko sendiri atau produk supplier.
-          </p>
-        </CardContent>
-      </Card>
       <Dialog
         open={!!edit}
         onOpenChange={(o) => {
           if (!busy && !o) setEdit(null)
         }}
       >
-        <DialogContent>
+        <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left">
           <DialogHeader>
             <DialogTitle>
-              {edit?.version === 0 ? 'Tambah' : 'Edit'} harga {edit?.kind}
+              {adding ? 'Tambah' : 'Edit'} harga {edit?.kind}
             </DialogTitle>
             <DialogDescription>
               Harga disimpan untuk pilihan pemetaan berikutnya. Riwayat order tidak berubah.

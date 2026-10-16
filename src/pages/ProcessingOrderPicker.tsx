@@ -41,7 +41,7 @@ export function OrderPicker({
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-5xl">
+      <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Cek Pesanan — {route === 'tukang' ? 'Tukang Kayu' : 'Supplier'}</DialogTitle>
           <DialogDescription>
@@ -58,7 +58,7 @@ export function OrderPicker({
             setPage(1)
           }}
         />
-        <div className="overflow-x-auto">
+        <div className="hidden overflow-x-auto md:block">
           <Table style={{ minWidth: 850 }}>
             <TableHeader>
               <TableRow>
@@ -113,6 +113,44 @@ export function OrderPicker({
             </TableBody>
           </Table>
         </div>
+        <div className="space-y-3 md:hidden">
+          {q.data?.items.map((r) => (
+            <label
+              key={r.item_id}
+              className={`flex items-start gap-3 rounded-xl border p-3 ${selected.has(r.item_id) ? 'border-primary bg-primary/5' : 'bg-card'}`}
+            >
+              <input
+                className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                type="checkbox"
+                aria-label={`Pilih ${r.order_number} ${r.produk} ${r.varian}`}
+                checked={selected.has(r.item_id)}
+                onChange={(e) =>
+                  setSelected((prev) => {
+                    const next = new Set(prev)
+                    if (e.target.checked) next.add(r.item_id)
+                    else next.delete(r.item_id)
+                    return next
+                  })
+                }
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">{r.produk}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {r.varian || 'Tanpa varian'} · {r.qty} unit
+                </span>
+                <span className="mt-3 block text-xs font-medium">{r.order_number}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{r.shop}</span>
+                <span className="mt-2 grid gap-1 border-t pt-2 text-xs text-muted-foreground">
+                  <span>Dipesan: {workTime(r.ordered_at)}</span>
+                  <span>Kirim sebelum: {workTime(r.deadline)}</span>
+                </span>
+              </span>
+            </label>
+          ))}
+          {!q.isLoading && !q.data?.items.length && (
+            <p className="py-8 text-center text-sm text-muted-foreground">Tidak ada item yang tersedia.</p>
+          )}
+        </div>
         {q.isLoading && <p>Memuat pesanan…</p>}
         {q.error && (
           <p role="alert">
@@ -130,7 +168,7 @@ export function OrderPicker({
           >
             Sebelumnya
           </Button>
-          <span className="text-sm">
+          <span className="text-center text-xs">
             Halaman {page} · {q.data?.total || 0} item
           </span>
           <Button
@@ -188,7 +226,7 @@ export function ResellerForm({ onClose, onSaved }: { onClose: () => void; onSave
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Tambah Pesanan Reseller</DialogTitle>
           <DialogDescription>
