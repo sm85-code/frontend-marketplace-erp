@@ -3,17 +3,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getProcessingData, importProcessingData } from '@/api/processing'
-import { fmtDateTime, getApiError } from '@/api/client'
+import { getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { readProcessingCapsule } from '@/lib/processingImport'
 import { BarHalaman } from '@/components/daftar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProcessingPrices from './ProcessingPrices'
 import ProcessingParties from './ProcessingParties'
 import ProcessingWorkflow from './ProcessingWorkflow'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import Spinner from '@/components/Spinner'
 
 export default function ProcessingPage() {
@@ -31,7 +29,7 @@ export default function ProcessingPage() {
     async (payload: unknown) => {
       await importProcessingData(payload)
       await qc.invalidateQueries({ queryKey: ['processing-data'] })
-      toast.success('Data Processing dari Drive sudah tersimpan')
+      toast.success('Data Processing sudah tersimpan')
       navigate('/processing', { replace: true })
     },
     [qc, navigate],
@@ -42,11 +40,7 @@ export default function ProcessingPage() {
     setBusy(true)
     void readProcessingCapsule(privateKey)
       .then(save)
-      .catch((err) =>
-        setError(
-          getApiError(err, 'Data Drive belum dapat dimuat. Buka kembali tautan impor yang diberikan.'),
-        ),
-      )
+      .catch((err) => setError(getApiError(err, 'Data Processing belum dapat dimuat. Coba kembali.')))
       .finally(() => setBusy(false))
     // Only an admin opening the explicit private import link triggers this one-time import.
   }, [allowed, privateKey, save])
@@ -61,7 +55,7 @@ export default function ProcessingPage() {
           <TabsTrigger value="pemetaan">Pemetaan Order</TabsTrigger>
         </TabsList>
         <TabsContent value="data" className="min-w-0 space-y-4">
-          {busy && <Spinner label="Memasukkan data referensi dari Google Drive…" />}
+          {busy && <Spinner label="Menyimpan data Processing…" />}
           {error && <p role="alert">{error}</p>}
           {q.isLoading && <Spinner label="Memuat data Processing…" />}
           {q.error && (
@@ -71,34 +65,6 @@ export default function ProcessingPage() {
                 Coba lagi
               </Button>
             </div>
-          )}
-          {data && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Sumber:{' '}
-                {data.source_url ? (
-                  <a className="underline" href={data.source_url} target="_blank" rel="noreferrer">
-                    {data.source_title}
-                  </a>
-                ) : (
-                  <span>{data.source_title}</span>
-                )}{' '}
-                · Dibaca {fmtDateTime(data.read_at)}
-              </p>
-            </>
-          )}
-          {!q.isLoading && !data && !busy && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Data referensi belum dimuat</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">
-                  Buka tautan impor Processing yang sudah disiapkan untuk memuat data Drive tanpa mengetik
-                  ulang.
-                </p>
-              </CardContent>
-            </Card>
           )}
           <Tabs defaultValue="produksi" className="min-w-0">
             <TabsList className="section-tabs">
@@ -120,34 +86,6 @@ export default function ProcessingPage() {
               <ProcessingParties kind="supplier" items={data?.supplier || []} />
             </TabsContent>
           </Tabs>
-          <details>
-            <summary className="cursor-pointer text-sm font-medium">Impor berkas data Drive</summary>
-            <div className="pt-3">
-              <Input
-                type="file"
-                accept=".json,application/json"
-                aria-label="Berkas data Processing"
-                disabled={busy}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  setBusy(true)
-                  setError('')
-                  try {
-                    if (file.size > 2_000_000) throw new Error('Berkas maksimal 2 MB')
-                    await save(JSON.parse(await file.text()))
-                  } catch (err) {
-                    setError(getApiError(err))
-                  } finally {
-                    setBusy(false)
-                  }
-                }}
-              />
-              <p className="pt-2 text-xs text-muted-foreground">
-                Impor tidak menimpa data yang sudah tersimpan.
-              </p>
-            </div>
-          </details>
         </TabsContent>
         <TabsContent value="pemetaan" className="min-w-0">
           <ProcessingWorkflow catalog={data} />
