@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getProcessingPrices, saveProcessingPrice, type ProcessingPrice } from '@/api/processing'
@@ -15,7 +15,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Field } from './processingShared'
+import { Field, SelectField } from './processingShared'
 
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' }) {
   const qc = useQueryClient()
@@ -24,10 +24,24 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
   const [page, setPage] = useState(1)
+  const [category, setCategory] = useState('all')
+  const categoriesId = useId()
+  const categoryOf = (p: ProcessingPrice) => p.jenis?.trim() || ''
+  const categories = [
+    ...new Set(
+      (q.data?.items || [])
+        .filter((p) => p.kind === 'produksi')
+        .map(categoryOf)
+        .filter(Boolean),
+    ),
+  ].sort((a, b) => a.localeCompare(b, 'id'))
   const filtered = (q.data?.items || []).filter(
     (p) =>
       p.kind === selectedKind &&
-      [p.produk, p.sku, p.ukuran, p.catatan].join(' ').toLowerCase().includes(search.toLowerCase()),
+      (selectedKind !== 'produksi' ||
+        category === 'all' ||
+        (category === 'none' ? !categoryOf(p) : category === 'category:' + categoryOf(p))) &&
+      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis].join(' ').toLowerCase().includes(search.toLowerCase()),
   )
   const pages = Math.max(1, Math.ceil(filtered.length / 15))
   const current = Math.min(page, pages)
@@ -49,6 +63,18 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
         </div>
       ),
     },
+    ...(selectedKind === 'produksi'
+      ? [
+          {
+            kunci: 'jenis',
+            judul: 'Kategori',
+            nilai: (r: ProcessingPrice) => categoryOf(r),
+            sel: (r: ProcessingPrice) => (
+              <span className="text-sm text-muted-foreground">{categoryOf(r) || 'Belum dikategorikan'}</span>
+            ),
+          },
+        ]
+      : []),
     {
       kunci: 'harga',
       judul: 'Harga / unit',
@@ -132,17 +158,28 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 setPage(1)
               }}
             />
+            {kind === 'produksi' && (
+              <SelectField
+                aria-label="Filter kategori produk"
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value)
+                  setPage(1)
+                }}
+              >
+                <option value="all">Semua kategori</option>
+                <option value="none">Belum dikategorikan</option>
+                {categories.map((c) => (
+                  <option value={'category:' + c} key={c}>
+                    {c}
+                  </option>
+                ))}
+              </SelectField>
+            )}
             <div className="hidden md:block">
               <TabelLokal
                 label={`Harga ${kind}`}
-                items={(q.data?.items || []).filter(
-                  (p) =>
-                    p.kind === kind &&
-                    [p.produk, p.sku, p.ukuran, p.catatan]
-                      .join(' ')
-                      .toLowerCase()
-                      .includes(search.toLowerCase()),
-                )}
+                items={filtered}
                 kolom={columns}
                 idDari={(p) => p.id}
                 namaDari={(p) => p.produk}
@@ -154,6 +191,11 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 <div className="flex items-start justify-between gap-3 py-4" key={r.id}>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">{r.produk}</p>
+                    {kind === 'produksi' && (
+                      <p className="mt-1 text-xs font-medium text-primary">
+                        {categoryOf(r) || 'Belum dikategorikan'}
+                      </p>
+                    )}
                     <p className="mt-1 break-words text-xs text-muted-foreground">
                       {[r.ukuran, r.sku].filter(Boolean).join(' · ')}
                     </p>
@@ -232,6 +274,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   await saveProcessingPrice(edit)
                   await qc.invalidateQueries({ queryKey: ['processing-prices'] })
                   setEdit(null)
+                  setCategory('all')
+                  setSearch('')
+                  setPage(1)
                   toast.success('Harga tersimpan')
                 } catch (err) {
                   setError(getApiError(err))
@@ -248,6 +293,24 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   onChange={(e) => change('produk', e.target.value)}
                 />
               </Field>
+              {edit.kind === 'produksi' && (
+                <>
+                  <Field title="Kategori produk">
+                    <Input
+                      list={categoriesId}
+                      maxLength={200}
+                      value={edit.jenis ?? ''}
+                      placeholder="Pilih atau ketik kategori"
+                      onChange={(e) => change('jenis', e.target.value)}
+                    />
+                  </Field>
+                  <datalist id={categoriesId}>
+                    {categories.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Field title="Ukuran">
                   <Input

@@ -772,3 +772,4 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   text-align: left !important;
   text-justify: auto;
 }
+.financial-page [data-multiline-justify] { text-align: left !important; text-justify: auto; }
