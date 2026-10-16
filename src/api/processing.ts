@@ -3,6 +3,7 @@ export type ProcessingParty = {
   id: string
   nama: string
   alamat?: string
+  keahlian?: string
   no_wa?: string
   no_rekening?: string
   nama_bank?: string
@@ -37,10 +38,11 @@ export const importProcessingData = async (payload: unknown) =>
 
 export type ProcessingPrice = {
   id: string
-  kind: 'produksi' | 'pengecatan'
+  kind: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing'
   version: number
   jenis?: string
   warna?: string
+  packing_type?: 'biasa' | 'kayu'
   structure_model_id?: string
   category_id?: string
   product_id?: string
@@ -99,6 +101,12 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   seller_code?: string
   production_sku?: string
   manual_order_code?: string
+  catalog_mode?: 'manual' | 'otomatis'
+  supplier_product_id?: string
+  supplier_product_name?: string
+  supplier_sku?: string
+  supplier_reference?: SupplierCatalogProduct & { read_at: string }
+  refresh_catalog_price?: boolean
   events: { action: string; actor: string; at: string }[]
 }
 export type ProcessingJobEdit = Pick<
@@ -108,6 +116,11 @@ export type ProcessingJobEdit = Pick<
   | 'price_id'
   | 'production_price'
   | 'production_sku'
+  | 'catalog_mode'
+  | 'supplier_product_id'
+  | 'supplier_product_name'
+  | 'supplier_sku'
+  | 'refresh_catalog_price'
   | 'color'
   | 'paint_price_id'
   | 'paint_price'
@@ -117,7 +130,7 @@ export type ProcessingJobEdit = Pick<
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -127,7 +140,8 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       ukuran,
       harga,
       catatan,
-      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : { warna: warna ?? '' }),
+      ...(kind === 'packing' ? { packing_type: packing_type || 'biasa' } : {}),
+      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '' } : {}),
     })
   ).data
 }
@@ -165,6 +179,7 @@ export const saveProcessingParty = async (kind: 'tukang' | 'supplier', party: Pr
     await api.put(`/processing/parties/${kind}/${encodeURIComponent(party.id)}`, {
       version: party.version ?? 0,
       nama: party.nama,
+      keahlian: party.keahlian ?? '',
       alamat: party.alamat ?? '',
       no_wa: party.no_wa ?? '',
       no_rekening: party.no_rekening ?? '',
@@ -187,3 +202,10 @@ export const saveProductionStructure = async (node: ProductionStructureNode) => 
   const { id, ...body } = node
   return (await api.put(`/processing/production-structure/${encodeURIComponent(id)}`, body)).data
 }
+
+export type SupplierCatalogProduct = { id: string; sku: string; name: string; category_name: string; unit_of_measure: string; sell_price: string; qty_on_hand: number }
+export type SupplierCatalog = { unit_id: string; unit_name: string; read_at: string; items: SupplierCatalogProduct[] }
+export const getSupplierCatalogConnection = async () => (await api.get<{connected: boolean; unit_name?: string}>('/processing/supplier-catalog/connection')).data
+export const getSupplierCatalog = async () => (await api.get<SupplierCatalog>('/processing/supplier-catalog')).data
+export const connectSupplierCatalog = async (username: string, password: string) => (await api.post('/processing/supplier-catalog/connect', {username, password})).data
+export const disconnectSupplierCatalog = async () => (await api.delete('/processing/supplier-catalog/connection')).data

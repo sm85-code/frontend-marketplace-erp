@@ -19,7 +19,7 @@ import ProductionStructurePicker from './ProductionStructurePicker'
 import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
 
-export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' }) {
+export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing' }) {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
@@ -29,6 +29,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
   const categoriesId = useId()
+  const titleOf = (kind: string) => kind === 'produksi' ? 'Katalog Produk Kayu' : kind === 'non_kayu' ? 'Katalog Produk Manual' : kind === 'packing' ? 'Tarif Packing' : 'Tarif Pengecatan'
   const categoryOf = (p: ProcessingPrice) => p.jenis?.trim() || ''
   const categories = [
     ...new Set(
@@ -77,7 +78,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             ),
           },
         ]
-      : [{ kunci: 'warna', judul: 'Warna', nilai: (r: ProcessingPrice) => r.warna || '', sel: (r: ProcessingPrice) => <span>{r.warna || 'Belum ditentukan'}</span> }]),
+      : selectedKind === 'pengecatan' ? [{ kunci: 'warna', judul: 'Warna', nilai: (r: ProcessingPrice) => r.warna || '', sel: (r: ProcessingPrice) => <span>{r.warna || 'Belum ditentukan'}</span> }] : selectedKind === 'packing' ? [{ kunci: 'packing_type', judul: 'Jenis packing', nilai: (r: ProcessingPrice) => r.packing_type || 'biasa', sel: (r: ProcessingPrice) => r.packing_type === 'kayu' ? 'Kayu' : 'Biasa' }] : []),
     {
       kunci: 'harga',
       judul: 'Harga / unit',
@@ -124,7 +125,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
         <Card className="min-w-0" key={kind}>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle>Daftar Harga {kind === 'produksi' ? 'Produksi' : 'Pengecatan'}</CardTitle>
+              <CardTitle>{titleOf(kind)}</CardTitle>
               <Button
                 variant="default"
                 onClick={() => {
@@ -144,13 +145,13 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   })
                 }}
               >
-                Tambah harga {kind}
+                {kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
               {kind === 'produksi'
                 ? 'Perubahan harga tidak mengubah pemetaan order yang sudah tersimpan.'
-                : 'Tarif tagihan reseller, sudah termasuk jasa. Pengecatan internal tidak menimbulkan tagihan jasa karyawan.'}
+                : kind === 'packing' ? 'Tarif packing biasa dan kayu. Biaya pada pesanan bisa disesuaikan menurut ukuran.' : kind === 'non_kayu' ? 'Produk dan harga beli supplier yang dicatat manual.' : 'Tarif tagihan reseller, sudah termasuk jasa. Pengecatan internal tidak menimbulkan tagihan jasa karyawan.'}
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -191,7 +192,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             )}
             <div className="hidden md:block">
               <TabelLokal
-                label={`Harga ${kind}`}
+                label={titleOf(kind)}
                 items={filtered}
                 kolom={columns}
                 idDari={(p) => p.id}
@@ -271,9 +272,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       >
         <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left">
           <DialogHeader>
-            <DialogTitle>
-              {adding ? 'Tambah' : 'Edit'} harga {edit?.kind}
-            </DialogTitle>
+            <DialogTitle>{adding ? 'Tambah' : 'Edit'} {edit?.kind === 'non_kayu' ? 'produk manual' : edit?.kind === 'packing' ? 'tarif packing' : `harga ${edit?.kind}`}</DialogTitle>
             <DialogDescription>
               Harga disimpan untuk pilihan pemetaan berikutnya. Riwayat order tidak berubah.
             </DialogDescription>
@@ -336,8 +335,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   </datalist>
                 </>
               )}
+              {edit.kind === 'packing' && <Field title="Jenis packing"><SelectField value={edit.packing_type || 'biasa'} onChange={e => change('packing_type', e.target.value)}><option value="biasa">Biasa</option><option value="kayu">Kayu</option></SelectField></Field>}
               {edit.kind === 'pengecatan' && <ProcessingColorField value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={color => change('warna', color)} />}
-              <div className="grid grid-cols-2 gap-3">
+              <div className={edit.kind === 'packing' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
                 <Field title="Ukuran">
                   <Input
                     maxLength={100}
@@ -345,9 +345,11 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     onChange={(e) => change('ukuran', e.target.value)}
                   />
                 </Field>
-                <Field title="SKU Produksi (opsional)">
+                {edit.kind !== 'packing' && <>
+                <Field title={edit.kind === 'non_kayu' ? 'SKU supplier (opsional)' : 'SKU Produksi (opsional)'}>
                   <Input maxLength={200} value={edit.sku} onChange={(e) => change('sku', e.target.value)} />
                 </Field>
+                </>}
               </div>
               </>}
               <Field title="Harga per unit (Rp)">
