@@ -32,10 +32,11 @@ export default function ProcessingParties({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const filtered = items.filter((r) =>
-    [r.nama, r.alamat, r.no_wa, r.no_rekening, r.nama_bank, r.catatan].join(' ').toLowerCase().includes(search.toLowerCase()),
+    [r.nama, r.keahlian, r.alamat, r.no_wa, r.no_rekening, r.nama_bank, r.catatan].join(' ').toLowerCase().includes(search.toLowerCase()),
   )
   const columns: KolomTabel<ProcessingParty>[] = [
     { kunci: 'nama', judul: 'Nama', tetap: true, nilai: r => r.nama, sel: r => <span className="font-medium">{r.nama}</span> },
+    ...(kind === 'tukang' ? [{ kunci: 'keahlian', judul: 'Keahlian', nilai: (r: ProcessingParty) => r.keahlian || '', sel: (r: ProcessingParty) => <span className="block min-w-36 max-w-56 whitespace-normal break-words">{r.keahlian || '—'}</span> }] : []),
     { kunci: 'alamat', judul: 'Alamat', nilai: r => r.alamat || '', sel: r => <span className="block min-w-40 max-w-64 whitespace-normal break-words">{r.alamat || '—'}</span> },
     { kunci: 'no_wa', judul: 'No. WA', nilai: r => r.no_wa || '', sel: r => <span className="whitespace-nowrap tabular-nums">{r.no_wa || '—'}</span> },
     { kunci: 'no_rekening', judul: 'No. Rekening', nilai: r => r.no_rekening || '', sel: r => <span className="whitespace-nowrap tabular-nums">{r.no_rekening || '—'}</span> },
@@ -80,7 +81,7 @@ export default function ProcessingParties({
         </div>
       </div>
       <div className="p-4 sm:p-5">
-        <TabelLokal label={`Daftar ${title}`} items={filtered} kolom={columns} idDari={r => r.id} namaDari={r => r.nama} minWidth={900} />
+        <TabelLokal label={`Daftar ${title}`} items={filtered} kolom={columns} idDari={r => r.id} namaDari={r => r.nama} minWidth={kind === 'tukang' ? 1050 : 900} />
       </div>
       <Dialog
         open={!!edit}
@@ -123,6 +124,7 @@ export default function ProcessingParties({
                   onChange={(e) => setEdit((v) => (v ? { ...v, nama: e.target.value } : v))}
                 />
               </Field>
+              {kind === 'tukang' && <Field title="Keahlian"><Input maxLength={1000} value={edit.keahlian ?? ''} placeholder="Contoh: meja, lemari, rak" onChange={e => setEdit(v => v ? { ...v, keahlian: e.target.value } : v)} /></Field>}
               <Field title="Alamat">
                 <Input maxLength={1000} value={edit.alamat ?? ''} onChange={e => setEdit(v => v ? { ...v, alamat: e.target.value } : v)} />
               </Field>

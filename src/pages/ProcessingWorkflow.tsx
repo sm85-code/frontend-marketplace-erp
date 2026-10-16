@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SupplierCatalogPanel from './SupplierCatalogPanel'
 import ProcessingColorField from './ProcessingColorField'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -75,7 +76,7 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.ukuran, p.warna, p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
+          {[p.produk, p.ukuran, p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
         </option>
       ))}
     </>
@@ -95,6 +96,7 @@ function MappingEditor({
   catalog,
   prices,
   packingOnly,
+  catalogMode,
   onClose,
   onSaved,
 }: {
@@ -102,6 +104,7 @@ function MappingEditor({
   catalog: ProcessingCatalog | null | undefined
   prices: ProcessingPrice[]
   packingOnly: boolean
+  catalogMode?: 'manual' | 'otomatis'
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
@@ -111,12 +114,18 @@ function MappingEditor({
     price_id: job.price_id,
     production_price: job.production_price,
     production_sku: job.production_sku || '',
+    catalog_mode: catalogMode || job.catalog_mode || 'manual',
+    supplier_product_id: job.supplier_product_id || '',
+    supplier_product_name: job.supplier_product_name || job.produk,
+    supplier_sku: job.supplier_sku || '',
+    refresh_catalog_price: false,
     color: job.color,
     paint_price_id: job.paint_price_id,
     paint_price: job.paint_price,
     packing_type: job.packing_type,
     packing_price: job.packing_price,
   })
+  const [packingTariff, setPackingTariff] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const parties = job.route === 'tukang' ? catalog?.tukang : catalog?.supplier
@@ -146,7 +155,8 @@ function MappingEditor({
           edit.production_price !== null &&
           edit.production_price !== '' &&
           (edit.price_id || job.source !== 'erp' || job.route === 'supplier') &&
-          (job.route === 'supplier' || edit.color.trim()),
+          (job.route === 'supplier' || edit.color.trim()) &&
+          (job.route !== 'supplier' || edit.catalog_mode !== 'otomatis' || !!edit.supplier_product_id),
       )
   return (
     <Dialog
@@ -215,10 +225,26 @@ function MappingEditor({
                     ))}
                   </SelectField>
                 </Field>
+                {job.route === 'supplier' ? <div className="space-y-3">
+                  <Field title="Katalog produk"><SelectField value={edit.catalog_mode || 'manual'} onChange={e => setEdit(v => ({ ...v, catalog_mode: e.target.value as 'manual' | 'otomatis', price_id: '', supplier_product_id: '', refresh_catalog_price: false }))}>
+                    <option value="manual">Manual</option><option value="otomatis">Otomatis · Siabumdes</option>
+                  </SelectField></Field>
+                  {edit.catalog_mode === 'otomatis' ? <SupplierCatalogPanel selectedId={edit.supplier_product_id} onPick={p => setEdit(v => ({ ...v, supplier_product_id: p.id, supplier_product_name: p.name, supplier_sku: p.sku, production_sku: p.sku, production_price: p.sell_price, refresh_catalog_price: true, price_id: '' }))} /> : <>
+                    <Field title="Produk katalog manual"><SelectField value={edit.price_id} onChange={e => {
+                      pickPrice(e.target.value)
+                      const p = prices.find(p => p.id === e.target.value)
+                      setEdit(v => ({ ...v, supplier_product_name: p?.produk || v.supplier_product_name, supplier_sku: p?.sku || '', production_sku: p?.sku || '', production_price: p?.harga || v.production_price }))
+                    }}><option value="">Isi produk dan harga sendiri</option><PriceOptions prices={prices.filter(p => p.kind === 'non_kayu' || p.id === job.price_id)} /></SelectField></Field>
+                    <Field title="Nama produk supplier"><Input required maxLength={300} value={edit.supplier_product_name || ''} disabled={!!edit.price_id} onChange={e => set('supplier_product_name', e.target.value)} /></Field>
+                    <Field title="SKU supplier (opsional)"><Input maxLength={200} disabled={!!edit.price_id} value={edit.supplier_sku || ''} onChange={e => setEdit(v => ({ ...v, supplier_sku: e.target.value, production_sku: e.target.value }))} /></Field>
+                  </>}
+                  <Field title="Harga beli per unit (Rp)"><Input required type="number" min="0" step="0.01" disabled={edit.catalog_mode === 'otomatis' || !!edit.price_id} value={edit.production_price ?? ''} onChange={e => set('production_price', e.target.value)} /></Field>
+                  {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <p className="text-xs text-muted-foreground">Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini.</p>}
+                </div> : <>
                 <Field title="Produk pada daftar harga produksi">
                   <SelectField value={edit.price_id} onChange={(e) => pickPrice(e.target.value)}>
                     <option value="">
-                      {job.source !== 'erp' || job.route === 'supplier'
+                      {job.source !== 'erp'
                         ? 'Harga custom / harga beli manual'
                         : 'Pilih produk produksi'}
                     </option>
@@ -231,14 +257,15 @@ function MappingEditor({
                     min="0"
                     step="0.01"
                     required
-                    disabled={!!edit.price_id || (job.source === 'erp' && job.route !== 'supplier')}
+                    disabled={!!edit.price_id || job.source === 'erp'}
                     value={edit.production_price ?? ''}
                     onChange={(e) => set('production_price', e.target.value)}
                   />
                 </Field>
+                </>}
               </section>
               {job.source === 'reseller' && job.seller_code && <Field title="SKU produksi untuk kode pesanan">
-                <Input required maxLength={200} disabled={!!edit.price_id && !!prices.find(p => p.id === edit.price_id)?.sku} value={edit.production_sku || ''} onChange={e => set('production_sku', e.target.value)} placeholder="Pilih harga produksi atau isi SKU custom" />
+                <Input required maxLength={200} disabled={(job.route === 'supplier' && edit.catalog_mode === 'otomatis') || (!!edit.price_id && !!prices.find(p => p.id === edit.price_id)?.sku)} value={edit.production_sku || ''} onChange={e => set('production_sku', e.target.value)} placeholder="Pilih harga produksi atau isi SKU custom" />
               </Field>}
               {job.route === 'tukang' && (
                 <section className="space-y-3 border-t pt-4">
@@ -302,9 +329,15 @@ function MappingEditor({
             <h3 className="text-sm font-semibold">
               {packingOnly ? 'Packing' : job.route === 'tukang' ? '03 · Packing' : '02 · Packing'}
             </h3>
+            <Field title="Tarif packing"><SelectField value={packingTariff} onChange={e => {
+              setPackingTariff(e.target.value)
+              const p = prices.find(p => p.id === e.target.value)
+              if(p) setEdit(v => ({ ...v, packing_type: p.packing_type || 'biasa', packing_price: p.harga }))
+            }}><option value="">Manual / biaya fleksibel</option><PriceOptions prices={prices.filter(p => p.kind === 'packing')} /></SelectField></Field>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <Field title="Jenis packing">
-                <SelectField value={edit.packing_type} onChange={(e) => set('packing_type', e.target.value)}>
+                <SelectField value={edit.packing_type} onChange={(e) => { setPackingTariff(''); set('packing_type', e.target.value) }}>
                   <option value="biasa">Packing biasa</option>
                   <option value="kayu">Packing kayu</option>
                 </SelectField>
@@ -316,7 +349,7 @@ function MappingEditor({
                   step="0.01"
                   required
                   value={edit.packing_price}
-                  onChange={(e) => set('packing_price', e.target.value)}
+                  onChange={(e) => { setPackingTariff(''); set('packing_price', e.target.value) }}
                 />
               </Field>
             </div>
@@ -454,7 +487,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
-  const [editing, setEditing] = useState<{ job: ProcessingJob; packingOnly: boolean } | null>(null)
+  const [editing, setEditing] = useState<{ job: ProcessingJob; packingOnly: boolean; catalogMode?: 'manual' | 'otomatis' } | null>(null)
   const [detail, setDetail] = useState<ProcessingJob | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
@@ -609,6 +642,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           {[r.varian, r.color && r.color !== r.varian ? r.color : ''].filter(Boolean).join(' · ') ||
             'Spesifikasi belum diisi'}
         </p>
+        {r.supplier_product_name && <p className="mt-1 break-words text-xs text-muted-foreground">Katalog: {r.supplier_product_name}{r.supplier_sku ? ` · ${r.supplier_sku}` : ''}</p>}
         <p className="mt-1 text-xs text-muted-foreground">
           {r.qty} unit{table === 'packing' ? ` · Packing ${r.packing_type}` : ''}
         </p>
@@ -766,7 +800,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             <div className="hidden overflow-x-auto md:block">
               <Table
                 aria-label={table === 'tukang' ? 'Produksi Tukang Kayu' : meta.name}
-                style={{ minWidth: 940 }}
+                style={{ minWidth: table === 'supplier' ? 1180 : 940 }}
               >
                 <TableHeader className="bg-muted/40">
                   <TableRow>
@@ -774,6 +808,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                       'Produk',
                       'Pesanan',
                       'Pelaksana',
+                      ...(table === 'supplier' ? ['Katalog produk'] : []),
                       'Kirim sebelum',
                       'Biaya / unit',
                       'Status',
@@ -791,6 +826,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                       <TableCell className="text-sm">
                         {r.party_name || <span className="text-muted-foreground">Belum dipilih</span>}
                       </TableCell>
+                      {table === 'supplier' && <TableCell><SelectField aria-label={`Katalog produk ${r.produk}`} value={r.catalog_mode || 'manual'} disabled={r.order_cancelled || !['draft','supplier'].includes(r.stage)} onChange={e => setEditing({job:r, packingOnly:false, catalogMode:e.target.value as 'manual' | 'otomatis'})}><option value="manual">Manual</option><option value="otomatis">Otomatis</option></SelectField></TableCell>}
                       <TableCell className="whitespace-nowrap text-xs">
                         {workTime(r.deadline)}
                         {r.deadline && !r[meta.time] && new Date(r.deadline).getTime() < now && (
@@ -824,6 +860,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                       {r.qty} unit
                     </Badge>
                   </div>
+                  {table === 'supplier' && <Field title="Katalog produk"><SelectField aria-label={`Katalog produk ${r.produk}`} value={r.catalog_mode || 'manual'} disabled={r.order_cancelled || !['draft','supplier'].includes(r.stage)} onChange={e => setEditing({job:r, packingOnly:false, catalogMode:e.target.value as 'manual' | 'otomatis'})}><option value="manual">Manual</option><option value="otomatis">Otomatis</option></SelectField></Field>}
                   <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/35 p-3">
                     {order(r)}
                     <div>
