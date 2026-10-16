@@ -1,5 +1,15 @@
 import api from './client'
-export type ProcessingParty = { id: string; nama: string; catatan: string; sumber: string; version?: number }
+export type ProcessingParty = {
+  id: string
+  nama: string
+  alamat?: string
+  no_wa?: string
+  no_rekening?: string
+  nama_bank?: string
+  catatan: string
+  sumber: string
+  version?: number
+}
 export type ProductionPrice = {
   id: string
   nomor: number
@@ -144,6 +154,10 @@ export const saveProcessingParty = async (kind: 'tukang' | 'supplier', party: Pr
     await api.put(`/processing/parties/${kind}/${encodeURIComponent(party.id)}`, {
       version: party.version ?? 0,
       nama: party.nama,
+      alamat: party.alamat ?? '',
+      no_wa: party.no_wa ?? '',
+      no_rekening: party.no_rekening ?? '',
+      nama_bank: party.nama_bank ?? '',
       catatan: party.catatan,
     })
   ).data
