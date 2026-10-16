@@ -76,11 +76,34 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.ukuran, p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
+          {[p.produk, p.model || p.kode, p.ukuran, p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
         </option>
       ))}
     </>
   )
+}
+function ProductionPricePicker({ prices, value, onChange, manual }: {
+  prices: ProcessingPrice[]; value: string; onChange: (id: string) => void; manual: boolean
+}) {
+  const [search, setSearch] = useState('')
+  const production = prices.filter(p => p.kind === 'produksi')
+  const matches = production.filter(p => [p.produk, p.jenis, p.kode, p.model, p.model_kode, p.ukuran, p.sku].filter(Boolean).join(' ').toLocaleLowerCase('id').includes(search.trim().toLocaleLowerCase('id')))
+  const selected = production.find(p => p.id === value)
+  const visible = selected && !matches.some(p => p.id === value) ? [selected, ...matches] : matches
+  return <div className="space-y-2">
+    <Field title="Cari harga produksi"><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama, model, ukuran, atau SKU" /></Field>
+    <Field title="Produk pada daftar harga produksi">
+      <SelectField value={value} onChange={e => onChange(e.target.value)}>
+        <option value="">{manual ? 'Harga custom / harga beli manual' : 'Pilih produk produksi'}</option>
+        {[true, false].map(structured => {
+          const items = visible.filter(p => !!p.structure_model_id === structured)
+          return items.length ? <optgroup key={String(structured)} label={structured ? 'Sudah terstruktur' : 'Belum disusun struktur'}><PriceOptions prices={items} /></optgroup> : null
+        })}
+      </SelectField>
+    </Field>
+    <p className="text-xs text-muted-foreground">{matches.length} dari {production.length} produk. Produk yang belum disusun struktur tetap dapat dipilih.</p>
+    {!matches.length && search.trim() && <p role="status" className="text-xs text-muted-foreground">Tidak ada produk yang cocok. Coba nama, model, atau ukuran lainnya.</p>}
+  </div>
 }
 function Amount({ label, value }: { label: string; value: string }) {
   return (
@@ -241,16 +264,7 @@ function MappingEditor({
                   <Field title="Harga beli per unit (Rp)"><Input required type="number" min="0" step="0.01" disabled={edit.catalog_mode === 'otomatis' || !!edit.price_id} value={edit.production_price ?? ''} onChange={e => set('production_price', e.target.value)} /></Field>
                   {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <p className="text-xs text-muted-foreground">Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini.</p>}
                 </div> : <>
-                <Field title="Produk pada daftar harga produksi">
-                  <SelectField value={edit.price_id} onChange={(e) => pickPrice(e.target.value)}>
-                    <option value="">
-                      {job.source !== 'erp'
-                        ? 'Harga custom / harga beli manual'
-                        : 'Pilih produk produksi'}
-                    </option>
-                    <PriceOptions prices={prices.filter((p) => p.kind === 'produksi')} />
-                  </SelectField>
-                </Field>
+                <ProductionPricePicker prices={prices} value={edit.price_id} onChange={id => pickPrice(id)} manual={job.source !== 'erp'} />
                 <Field title="Harga produksi / beli per unit (Rp)">
                   <Input
                     type="number"
@@ -480,6 +494,11 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-jobs'], queryFn: getProcessingJobs })
   const prices = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
+  // Preserve imported legacy entries; saved edits override the same catalog ID.
+  const priceOptions = [...new Map<string, ProcessingPrice>([
+    ...(catalog?.harga_produksi || []).map(p => [p.id, { ...p, kind: 'produksi' as const, version: 0 }] as const),
+    ...(prices.data?.items || []).map(p => [p.id, p] as const),
+  ]).values()]
   const confirm = useConfirm()
   const [table, setTable] = useState<WorkTable>('tukang')
   const [picker, setPicker] = useState<'tukang' | 'supplier' | null>(null)
@@ -953,7 +972,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           key={`${editing.job.id}:${editing.job.version}`}
           {...editing}
           catalog={catalog}
-          prices={prices.data?.items || []}
+          prices={priceOptions}
           onClose={() => setEditing(null)}
           onSaved={refresh}
         />
