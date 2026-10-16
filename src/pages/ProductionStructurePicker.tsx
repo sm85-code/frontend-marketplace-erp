@@ -66,38 +66,52 @@ export default function ProductionStructurePicker({ value, onChange }: {
   return <div className="space-y-4">
     {q.error && <p role="alert" className="text-sm text-destructive">{getApiError(q.error)} <Button type="button" variant="outline" onClick={() => void q.refetch()}>Coba lagi</Button></p>}
     {q.isLoading && <p className="text-sm text-muted-foreground">Memuat struktur produk…</p>}
-    {levels.map(level => <div key={level.kind} className="space-y-1.5">
-      <Field title={level.label}>
-        <SelectField required disabled={level.disabled || busy || q.isLoading} value={level.selected} onChange={e => choose(level.kind, e.target.value)}>
-          <option value="">Pilih {level.label.toLowerCase()}</option>
-          {nodes.filter(n => n.kind === level.kind && n.parent_id === level.parent).sort((a,b) => a.code.localeCompare(b.code, 'id')).map(n => <option value={n.id} key={n.id}>{n.code} — {n.name}</option>)}
-        </SelectField>
-      </Field>
-      <div className="flex gap-2">
-        <Button type="button" variant="ghost" size="sm" disabled={level.disabled || busy || !!editor} onClick={() => {
-          setError('')
-          setEditor({ id: crypto.randomUUID(), version: 0, kind: level.kind, parent_id: level.parent, code: '', name: '' })
-        }}>+ Tambah {level.kind}</Button>
-        {level.selected && <Button type="button" variant="ghost" size="sm" disabled={busy || !!editor} onClick={() => {
-          setError('')
-          setEditor(nodes.find(n => n.id === level.selected) || null)
-        }}>Edit {level.kind}</Button>}
-      </div>
-    </div>)}
-    {editor && <fieldset className="space-y-3 rounded-xl border bg-muted/30 p-3" onKeyDown={e => {
-      if (e.key === 'Enter') { e.preventDefault(); void saveNode() }
-    }}>
-      <legend className="px-1 text-sm font-semibold">{editor.version ? 'Edit' : 'Tambah'} {editor.kind}</legend>
-      <Field title={editor.kind === 'produk' ? 'Kode / SKU induk' : 'Kode'}>
-        <Input maxLength={80} value={editor.code} placeholder={editor.kind === 'kategori' ? 'Contoh: AZF' : editor.kind === 'produk' ? 'Contoh: 1R.10' : 'Contoh: RPL'} onChange={e => setEditor({ ...editor, code: e.target.value.toUpperCase() })} />
-      </Field>
-      <Field title="Nama"><Input maxLength={200} value={editor.name} onChange={e => setEditor({ ...editor, name: e.target.value })} /></Field>
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" disabled={busy} onClick={() => void saveNode()}>{busy ? 'Menyimpan…' : `Simpan ${editor.kind}`}</Button>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => { setEditor(null); setError('') }}>Batal struktur</Button>
-      </div>
-    </fieldset>}
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    {levels.map((level, index) => {
+      const editing = editor?.kind === level.kind
+      const parent = nodes.find(n => n.id === level.parent)
+      const title = level.kind === 'kategori' ? 'Kategori' : level.kind === 'produk' ? 'Produk' : 'Model'
+      const hint = level.kind === 'kategori' ? 'Kelompok produk, misalnya Furniture (AZF).' : level.kind === 'produk' ? 'Nama produk dan SKU induknya, misalnya Rak (1R.10).' : 'Bentuk atau tipe produk, misalnya Rak Piring Lantai (RPL).'
+      return <section key={level.kind} aria-label={level.label} className={`min-w-0 space-y-3 rounded-xl border p-3 sm:p-4 ${editing ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card'}`}>
+        <div className="flex items-start gap-2.5">
+          <span aria-hidden="true" className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-semibold ${editing ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{index + 1}</span>
+          <div className="min-w-0"><p className="text-sm font-semibold">{level.label}</p><p className="mt-0.5 text-xs text-muted-foreground">{hint}</p></div>
+        </div>
+        {parent && <p className="break-words text-xs text-muted-foreground">{level.kind === 'produk' ? 'Dalam kategori' : 'Untuk produk'}: <span className="font-medium text-foreground">{parent.name} · {parent.code}</span></p>}
+        {!editing && <>
+          <Field title={`Pilih ${level.kind}`}>
+            <SelectField required disabled={level.disabled || busy || q.isLoading || !!editor} value={level.selected} onChange={e => choose(level.kind, e.target.value)}>
+              <option value="">Pilih {level.label.toLowerCase()}</option>
+              {nodes.filter(n => n.kind === level.kind && n.parent_id === level.parent).sort((a,b) => a.code.localeCompare(b.code, 'id')).map(n => <option value={n.id} key={n.id}>{n.code} — {n.name}</option>)}
+            </SelectField>
+          </Field>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={level.disabled || busy || !!editor} onClick={() => {
+              setError('')
+              setEditor({ id: crypto.randomUUID(), version: 0, kind: level.kind, parent_id: level.parent, code: '', name: '' })
+            }}>+ Tambah {level.kind}</Button>
+            {level.selected && <Button type="button" variant="ghost" size="sm" disabled={busy || !!editor} onClick={() => {
+              setError('')
+              setEditor(nodes.find(n => n.id === level.selected) || null)
+            }}>Edit {level.kind}</Button>}
+          </div>
+          {level.disabled && <p className="text-xs text-muted-foreground">Pilih {level.kind === 'produk' ? 'kategori' : 'produk'} terlebih dahulu.</p>}
+        </>}
+        {editing && editor && <fieldset className="min-w-0 space-y-3 border-t border-primary/20 pt-3" onKeyDown={e => {
+          if (e.key === 'Enter') { e.preventDefault(); void saveNode() }
+        }}>
+          <legend className="px-1 text-sm font-semibold text-primary">{editor.version ? 'Edit' : 'Tambah'} {level.kind} {editor.version ? '' : 'baru'}</legend>
+          <Field title={level.kind === 'produk' ? 'SKU induk produk' : `Kode ${level.kind}`}>
+            <Input autoFocus maxLength={80} value={editor.code} placeholder={level.kind === 'kategori' ? 'Contoh: AZF' : level.kind === 'produk' ? 'Contoh: 1R.10' : 'Contoh: RPL'} onChange={e => setEditor({ ...editor, code: e.target.value.toUpperCase() })} />
+          </Field>
+          <Field title={`Nama ${level.kind}`}><Input maxLength={200} placeholder={level.kind === 'kategori' ? 'Contoh: Furniture' : level.kind === 'produk' ? 'Contoh: Rak' : 'Contoh: Rak Piring Lantai'} value={editor.name} onChange={e => setEditor({ ...editor, name: e.target.value })} /></Field>
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" disabled={busy} onClick={() => void saveNode()}>{busy ? 'Menyimpan…' : `Simpan ${level.kind}`}</Button>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => { setEditor(null); setError('') }}>Batal {title.toLowerCase()}</Button>
+          </div>
+        </fieldset>}
+      </section>
+    })}
     <Field title="Ukuran"><Input required maxLength={100} placeholder="Contoh: 150x200" value={value.ukuran} onChange={e => onChange({ ukuran: e.target.value })} /></Field>
     <div className="rounded-xl border bg-muted/30 p-3">
       <p className="text-xs text-muted-foreground">SKU produksi otomatis</p>
