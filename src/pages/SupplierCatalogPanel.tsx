@@ -60,7 +60,7 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
           <option value="">Pilih produk Siabumdes</option>
           {catalog.data.items.map(p => <option key={p.id} value={p.id}>{p.sku} — {p.name} · {fmtRp(p.sell_price)} · stok {p.qty_on_hand} {p.unit_of_measure}</option>)}
         </SelectField></Field>
-        {selected && <div className="rounded-xl bg-muted/30 p-3 text-sm"><p>{selected.name} · {selected.sku}</p><p className="mt-1 font-medium">Harga terkini {fmtRp(selected.sell_price)} · Stok {selected.qty_on_hand} {selected.unit_of_measure}</p></div>}
+        {selected && <div className="rounded-xl bg-muted/30 p-3 text-sm"><p>{selected.name} · {selected.sku}</p><p className="mt-1 font-medium">Harga terkini {fmtRp(selected.sell_price)} · Stok {selected.qty_on_hand} {selected.unit_of_measure}</p><Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => onPick(selected)}>Gunakan harga terkini</Button></div>}
       </> : <>
         <Input aria-label="Cari katalog Siabumdes" placeholder="Cari nama, SKU, atau kategori" value={search} onChange={e => setSearch(e.target.value)} />
         <TabelLokal label="Katalog Produk Siabumdes" items={catalog.data.items.filter(p => [p.sku,p.name,p.category_name].join(' ').toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={p => p.id} namaDari={p => p.name} minWidth={800} />
