@@ -86,7 +86,7 @@ function ProductionPricePicker({ prices, value, onChange, manual }: {
   prices: ProcessingPrice[]; value: string; onChange: (id: string) => void; manual: boolean
 }) {
   const [search, setSearch] = useState('')
-  const production = prices.filter(p => p.kind === 'produksi')
+  const production = prices.filter(p => p.kind === 'produksi' && !!p.structure_model_id)
   const matches = production.filter(p => [p.produk, p.jenis, p.kode, p.model, p.model_kode, p.ukuran, p.sku].filter(Boolean).join(' ').toLocaleLowerCase('id').includes(search.trim().toLocaleLowerCase('id')))
   const selected = production.find(p => p.id === value)
   const visible = selected && !matches.some(p => p.id === value) ? [selected, ...matches] : matches
@@ -95,13 +95,11 @@ function ProductionPricePicker({ prices, value, onChange, manual }: {
     <Field title="Produk pada daftar harga produksi">
       <SelectField value={value} onChange={e => onChange(e.target.value)}>
         <option value="">{manual ? 'Harga custom / harga beli manual' : 'Pilih produk produksi'}</option>
-        {[true, false].map(structured => {
-          const items = visible.filter(p => !!p.structure_model_id === structured)
-          return items.length ? <optgroup key={String(structured)} label={structured ? 'Sudah terstruktur' : 'Belum disusun struktur'}><PriceOptions prices={items} /></optgroup> : null
-        })}
+        <PriceOptions prices={visible} />
       </SelectField>
     </Field>
-    <p className="text-xs text-muted-foreground">{matches.length} dari {production.length} produk. Produk yang belum disusun struktur tetap dapat dipilih.</p>
+    <p className="text-xs text-muted-foreground">{matches.length} dari {production.length} produk terstruktur.</p>
+    {value && !production.some(p => p.id === value) && <p className="text-xs text-muted-foreground">Pemetaan ini memakai harga lama yang tersimpan. Pilih produk terstruktur untuk menggantinya.</p>}
     {!matches.length && search.trim() && <p role="status" className="text-xs text-muted-foreground">Tidak ada produk yang cocok. Coba nama, model, atau ukuran lainnya.</p>}
   </div>
 }
