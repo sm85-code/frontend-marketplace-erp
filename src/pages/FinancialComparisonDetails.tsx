@@ -60,7 +60,7 @@ export default function FinancialComparisonDetails({ data }: { data: Comparison 
                   r.transaksi_at != null ? fmtDateTime(new Date(r.transaksi_at * 1000).toISOString()) : '—',
                   r.keterangan ?? 'Tersedia',
                 ]),
-                ['TOTAL', data.erp.saldo_toko == null ? 'Belum lengkap' : fmtRp(data.erp.saldo_toko), '', ''],
+                ['Total', data.erp.saldo_toko == null ? 'Belum lengkap' : fmtRp(data.erp.saldo_toko), '', ''],
               ]}
             />
           </div>
@@ -90,7 +90,7 @@ export default function FinancialComparisonDetails({ data }: { data: Comparison 
                   r.akun_ditemukan ? fmtRp(r.nominal) : 'Belum tersedia',
                 ]),
                 [
-                  data.erp.rincian_toko.some((r) => !r.akun_ditemukan) ? 'TOTAL DATA TERSEDIA' : 'TOTAL',
+                  data.erp.rincian_toko.some((r) => !r.akun_ditemukan) ? 'Total data tersedia' : 'Total',
                   data.erp.pesanan.length,
                   fmtRp(data.erp.piutang_pengiriman_bruto),
                 ],
@@ -112,7 +112,7 @@ export default function FinancialComparisonDetails({ data }: { data: Comparison 
                   r.jumlah_pesanan,
                   fmtRp(r.nominal),
                 ]),
-                ['TOTAL', data.erp.pesanan.length, fmtRp(data.erp.piutang_pengiriman_bruto)],
+                ['Total', data.erp.pesanan.length, fmtRp(data.erp.piutang_pengiriman_bruto)],
               ]}
             />
           </div>
