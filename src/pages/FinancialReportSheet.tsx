@@ -71,10 +71,10 @@ export function sheetSections(data: Overview): { title: string; rows: SheetRow[]
           return '0'
         },
       }))
-    : [{ label: 'Pemasukan Toko', value: result('pemasukan_toko') }]
+    : [{ label: 'Penarikan saldo toko', value: result('pemasukan_toko') }]
   if (shopNames.length && data.laporan.some((r) => !r.rincian_toko && Number(r.hasil.pemasukan_toko) !== 0)) {
     shopRows.push({
-      label: 'Pemasukan toko lainnya',
+      label: 'Penarikan toko lainnya',
       value: (r) => (r.rincian_toko ? '0' : r.hasil.pemasukan_toko),
     })
   }
@@ -91,45 +91,50 @@ export function sheetSections(data: Overview): { title: string; rows: SheetRow[]
     {
       title: 'A. PEMASUKAN',
       rows: [
+        group('Penarikan saldo toko'),
         ...shopRows,
-        row('Penjualan Produk Kayu', input('pendapatan_produk')),
-        row('Jasa Proses Pesanan', input('jasa_proses')),
-        row('Jasa Pengecatan & Packing', input('jasa_cat_packing')),
-        row('Jasa Pengecatan Saja', input('jasa_cat')),
-        row('Perubahan Piutang (lihat neraca)', result('perubahan_piutang')),
-        row('JUMLAH PEMASUKAN', result('pemasukan'), 'sum', true),
+        group('Penjualan dan jasa'),
+        row('Penjualan produk kayu', input('pendapatan_produk')),
+        row('Jasa proses pesanan', input('jasa_proses')),
+        row('Jasa pengecatan & packing', input('jasa_cat_packing')),
+        row('Jasa pengecatan saja', input('jasa_cat')),
+        group('Penyesuaian piutang'),
+        row('Perubahan piutang (lihat neraca)', result('perubahan_piutang')),
+        row('Jumlah pemasukan', result('pemasukan'), 'sum', true),
       ],
     },
     {
       title: 'B. PENGELUARAN',
       rows: [
-        row('HPP: Pembayaran Tukang Kayu', input('bayar_tukang')),
-        row('HPP: Pembelian Produk & Packing', input('pembelian')),
+        group('Harga pokok penjualan'),
+        row('Pembayaran tukang kayu', input('bayar_tukang')),
+        row('Pembelian produk & packing', input('pembelian')),
         ...(data.laporan.some((r) => Number(r.hasil.penyesuaian_stok) !== 0)
-          ? [row('Penyesuaian Persediaan', (r) => r.hasil.penyesuaian_stok)]
+          ? [row('Penyesuaian persediaan', (r) => r.hasil.penyesuaian_stok)]
           : []),
         ...(data.laporan.some((r) => Number(r.hasil.penyesuaian_utang) !== 0)
-          ? [row('Penyesuaian Utang Usaha', (r) => r.hasil.penyesuaian_utang)]
+          ? [row('Penyesuaian utang usaha', (r) => r.hasil.penyesuaian_utang)]
           : []),
-        row('OPS: Operasional', input('operasional')),
-        row('OPS: Biaya Langganan Rutin', input('langganan')),
-        row('OPS: Gaji Karyawan', input('gaji')),
-        row('OPS: Iklan', (r) => r.hasil.biaya_iklan),
-        row('JUMLAH PENGELUARAN', result('pengeluaran'), 'sum', true),
+        group('Beban operasional'),
+        row('Operasional', input('operasional')),
+        row('Langganan rutin', input('langganan')),
+        row('Gaji karyawan', input('gaji')),
+        row('Pemakaian iklan', (r) => r.hasil.biaya_iklan),
+        row('Jumlah pengeluaran', result('pengeluaran'), 'sum', true),
       ],
     },
     {
       title: 'C. LABA / RUGI',
       rows: [
-        row('PEMASUKAN', result('pemasukan')),
-        row('PENGELUARAN', result('pengeluaran')),
-        row('LABA BERSIH', result('laba'), 'sum', true),
+        row('Pemasukan', result('pemasukan')),
+        row('Pengeluaran', result('pengeluaran')),
+        row('Laba bersih', result('laba'), 'sum', true),
       ],
     },
     {
       title: 'D. ARUS KAS',
       rows: [
-        row('SALDO AWAL KAS UTAMA', before('kas_utama'), 'first', true),
+        row('Saldo awal kas utama', before('kas_utama'), 'first', true),
         group('Kas masuk'),
         row('Saldo toko', result('pemasukan_toko')),
         row('Penjualan produk + proses', (r) =>
@@ -138,44 +143,47 @@ export function sheetSections(data: Overview): { title: string; rows: SheetRow[]
         row('Jasa cat + packing', (r) =>
           sumAmounts([String(r.input.jasa_cat_packing ?? 0), String(r.input.jasa_cat ?? 0)]),
         ),
-        row('JUMLAH KAS MASUK', result('kas_masuk'), 'sum', true),
+        row('Jumlah kas masuk', result('kas_masuk'), 'sum', true),
         group('Kas keluar'),
         row('Bayar tukang kayu', input('bayar_tukang')),
         row('Pembelian produk', input('pembelian')),
         row('Operasional', input('operasional')),
         row('Langganan rutin', input('langganan')),
         row('Top-up iklan', input('topup_iklan')),
-        row('JUMLAH KAS KELUAR', result('kas_keluar'), 'sum', true),
+        row('Jumlah kas keluar', result('kas_keluar'), 'sum', true),
         group('Transfer antar kas'),
-        row('Transfer dari Kas Operasional (+)', input('transfer_kas_ops')),
-        row('Penyisihan ke Kas Gaji (−)', (r) => sumAmounts([`-${r.input.transfer_kas_gaji ?? '0'}`])),
+        row('Transfer dari kas operasional (+)', input('transfer_kas_ops')),
+        row('Penyisihan ke kas gaji (−)', (r) => sumAmounts([`-${r.input.transfer_kas_gaji ?? '0'}`])),
         ...(data.laporan.some((r) => Number(r.input.tambahan_modal) !== 0)
-          ? [row('Tambahan Modal', input('tambahan_modal'))]
+          ? [row('Tambahan modal', input('tambahan_modal'))]
           : []),
-        row('JUMLAH TRANSFER ANTAR KAS', result('transfer_antar_kas'), 'sum', true),
-        row('SALDO AKHIR KAS UTAMA', end('kas_utama'), 'last', true),
+        row('Jumlah transfer antar kas', result('transfer_antar_kas'), 'sum', true),
+        row('Saldo akhir kas utama', end('kas_utama'), 'last', true),
       ],
     },
     {
       title: 'E. POSISI KEUANGAN / NERACA',
       rows: [
-        row('Aset: Kas Utama', end('kas_utama'), 'last'),
-        row('Aset: Stok Produk', end('stok'), 'last'),
-        row('Aset: Kas Operasional', end('kas_operasional'), 'last'),
-        row('Aset: Saldo Iklan Prabayar', end('iklan_prabayar'), 'last'),
-        row('Aset: Piutang Pesanan dalam Pengiriman', end('piutang_pengiriman'), 'last'),
-        row('Aset: Saldo Tertahan Toko / Shopee', end('saldo_toko'), 'last'),
-        row('Aset: Kas Gaji (disisihkan)', end('kas_gaji'), 'last'),
-        row('JUMLAH ASET', (r) => r.hasil.neraca.aset, 'last', true),
-        row('Utang Gaji', end('utang_gaji'), 'last'),
-        row('Utang Usaha / Operasional Berjalan', end('utang_usaha'), 'last'),
-        row('JUMLAH KEWAJIBAN / UTANG', debt, 'last', true),
+        group('Aset'),
+        row('Kas utama', end('kas_utama'), 'last'),
+        row('Stok produk', end('stok'), 'last'),
+        row('Kas operasional', end('kas_operasional'), 'last'),
+        row('Saldo iklan prabayar', end('iklan_prabayar'), 'last'),
+        row('Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), 'last'),
+        row('Saldo tertahan toko / Shopee', end('saldo_toko'), 'last'),
+        row('Kas gaji (disisihkan)', end('kas_gaji'), 'last'),
+        row('Jumlah aset', (r) => r.hasil.neraca.aset, 'last', true),
+        group('Kewajiban'),
+        row('Utang gaji', end('utang_gaji'), 'last'),
+        row('Utang usaha / operasional berjalan', end('utang_usaha'), 'last'),
+        row('Jumlah kewajiban / utang', debt, 'last', true),
+        group('Ekuitas'),
         row('Modal', end('modal'), 'last'),
-        row('Saldo Laba/Rugi Periode Lalu', before('saldo_laba'), 'first'),
-        row('Laba/Rugi Periode Berjalan', result('laba'), 'sum'),
-        row('JUMLAH EKUITAS', equity, 'last', true),
-        row('JUMLAH KEWAJIBAN & EKUITAS', (r) => sumAmounts([debt(r), equity(r)]), 'last', true),
-        row('CEK SELISIH NERACA', (r) => r.hasil.neraca.selisih, 'last', true),
+        row('Saldo laba/rugi periode lalu', before('saldo_laba'), 'first'),
+        row('Laba/rugi periode berjalan', result('laba'), 'sum'),
+        row('Jumlah ekuitas', equity, 'last', true),
+        row('Jumlah kewajiban & ekuitas', (r) => sumAmounts([debt(r), equity(r)]), 'last', true),
+        row('Cek selisih neraca', (r) => r.hasil.neraca.selisih, 'last', true),
       ],
     },
   ]
