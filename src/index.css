@@ -828,26 +828,25 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   padding-bottom: 0.5rem;
 }
 
-/* Two unequal diagonal accents run from the bottom-left to the top-right of each navigation heading, clipped by its edges. */
-.sidebar-group-heading { position: relative; overflow: hidden; }
-.sidebar-group-heading::before,
-.sidebar-group-heading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  border-radius: 999px;
-  background: var(--primary);
-  transform: translateY(-50%) rotate(45deg);
-  pointer-events: none;
+/* Navigation group heading: theme-colored marker, label and a fading rule; every color derives from --primary. */
+.sidebar-group-heading {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: color-mix(in oklab, var(--primary) 70%, var(--foreground));
 }
 .sidebar-group-heading::before {
-  left: 12px;
-  width: 2px;
-  height: 36px;
-  opacity: .65;
+  content: '';
+  flex: none;
+  width: .375rem;
+  height: .375rem;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
 }
 .sidebar-group-heading::after {
-  left: 20px;
-  width: 3px;
-  height: 56px;
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, color-mix(in oklab, var(--primary) 35%, transparent), transparent);
 }

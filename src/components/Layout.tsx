@@ -87,8 +87,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div key={g.id} role="group" aria-labelledby={`grup-${g.id}`} className="mt-5 first:mt-1">
                 <div
                   id={`grup-${g.id}`}
-                  className="sidebar-group-heading mb-2 rounded-lg bg-primary/10 py-2 pr-3 pl-10 text-xs leading-5 font-bold tracking-wide uppercase"
-                  style={{ color: 'var(--text-primary)' }}
+                  className="sidebar-group-heading mb-1.5 px-2 py-1 text-[11px] leading-5 font-bold tracking-widest uppercase"
                 >
                   {g.label}
                 </div>
