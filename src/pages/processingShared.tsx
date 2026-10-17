@@ -1,10 +1,11 @@
+import { cn } from '@/lib/utils'
 import { cloneElement, useId, type SelectHTMLAttributes, type ReactElement } from 'react'
 export const POL0S = 'Polos / Tanpa Cat'
 export function SelectField({ children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`h-11 w-full min-w-36 rounded-2xl border border-input bg-background px-3 text-sm ${props.className || ''}`}
+      className={cn("h-11 w-full min-w-36 rounded-2xl border border-input bg-background px-3 text-sm", props.className)}
     >
       {children}
     </select>

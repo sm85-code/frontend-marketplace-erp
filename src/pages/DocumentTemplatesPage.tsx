@@ -469,15 +469,15 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           </div>
         </aside>
         <div className="min-w-0 space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
+          <div className="grid min-w-0 gap-2 text-xs text-muted-foreground sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-center">
+            <span data-testid="template-canvas-caption" className="min-w-0 whitespace-normal" style={{overflowWrap:'normal'}}>
               {preview
                 ? "Pratinjau dengan data contoh"
                 : "Kanvas A4 · geser elemen untuk mengatur posisi"}
             </span>
             <SelectField
               aria-label="Pembesaran kanvas"
-              className="h-9 w-28 min-w-0 shrink-0"
+              className="h-9 w-full min-w-0"
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
             >
@@ -725,8 +725,8 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Posisi dan ukuran dalam piksel A4. Gunakan tombol panah untuk
-            menggeser elemen; Shift + panah untuk 10 piksel.
+            <span className="sm:hidden">Ketuk elemen untuk memilih, lalu geser untuk memindahkan. Perbesar kanvas jika diperlukan.</span>
+            <span className="hidden sm:inline">Geser elemen atau gunakan tombol panah untuk memindahkan. Shift + panah menggeser lebih jauh.</span>
           </p>
         </div>
         <aside className={panel}>
