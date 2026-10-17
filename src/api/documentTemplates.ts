@@ -22,6 +22,7 @@ export type TemplateBlock = {
   align: "left" | "center" | "right";
   color: string;
   image_url: string;
+  name?: string; locked?: boolean; hidden?: boolean;
   columns?: TemplateColumn[];
   row_count?: number;
   show_totals?: boolean;
