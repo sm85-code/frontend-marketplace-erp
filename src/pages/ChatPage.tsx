@@ -481,7 +481,7 @@ export default function ChatPage() {
                 </p>
               )}
               {orderStart.data && orderId && (
-                <div className="my-3 rounded-lg border p-3">
+                <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
                   <ChatCardView card={orderStart.data.order} />
                 </div>
               )}
@@ -545,11 +545,13 @@ export default function ChatPage() {
                 ))}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
-              <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3">
+              <section aria-label="Form balas chat" className="mt-4 min-w-0 space-y-4 rounded-2xl border border-border bg-background p-3 sm:p-4">
+              <div><h3 className="text-sm font-semibold">Balas chat</h3><p className="mt-1 text-xs text-muted-foreground">Tulis pesan atau pilih lampiran untuk pembeli.</p></div>
+              <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Lampiran</p><div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
-              <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 rounded-xl px-2 py-2 text-xs" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-5"/>Galeri</Button>
-              <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 rounded-xl px-2 py-2 text-xs" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-5"/>Kamera</Button>
+              <Button type="button" variant="outline" className="min-h-11 gap-2 rounded-xl px-3 text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-5"/>Galeri</Button>
+              <Button type="button" variant="outline" className="min-h-11 gap-2 rounded-xl px-3 text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-5"/>Kamera</Button>
               <AttachmentPicker
                 data={context.data}
                 search={productSearch}
@@ -559,20 +561,20 @@ export default function ChatPage() {
                 choose={setAttachment}
                 disabled={send.isPending || upload.isPending || !!pending || !!attachment}
               />
-              </div>
+              </div></div>
               {upload.isPending && <p role="status" className="mt-2 text-sm">Mengunggah foto… Pesan belum dikirim.</p>}
               {photoError && <p role="alert" className="mt-2 text-sm text-destructive">{photoError}</p>}
               {attachment && (
-                <div className="my-3 rounded-lg border p-3">
-                  <p className="mb-2 text-xs font-medium">Lampiran yang akan dikirim</p>
+                <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
+                  <p className="text-xs font-semibold text-primary">Pratinjau lampiran</p>
                   {attachment.type === 'image' ? <img src={attachment.card.foto ?? ''} alt="Pratinjau foto yang akan dikirim" className="max-h-64 max-w-full rounded-xl object-contain" referrerPolicy="no-referrer"/> : <ChatCardView card={attachment.card}/> }
-                  <Button variant="outline" className="mt-2" disabled={send.isPending || !!pending} onClick={() => setAttachment(null)}>
+                  <Button variant="outline" className="gap-2" disabled={send.isPending || !!pending} onClick={() => setAttachment(null)}>
                     <X className="mr-2 size-4"/>Hapus lampiran
                   </Button>
                 </div>
               )}
               {delivery && (
-                <p role="status" className={delivery.status === 'terkirim' ? 'text-sm' : 'text-sm text-destructive'}>
+                <p role="status" className={delivery.status === 'terkirim' ? 'rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary' : 'rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive'}>
                   {delivery.status === 'terkirim' ? 'Pesan terkirim.' : delivery.error || 'Hasil kirim belum pasti; periksa riwayat.'}
                 </p>
               )}
@@ -591,9 +593,11 @@ export default function ChatPage() {
                   </Button>
                 </div>
               )}
-              <div className="mt-3 flex items-end gap-2 border-t bg-card pt-3"><Textarea
-                className="min-h-11 flex-1 resize-none"
-                rows={2}
+              <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3"><label htmlFor="chat-reply-text" className="text-sm font-medium">Pesan</label><span className="text-xs tabular-nums text-muted-foreground">{text.length}/1.000</span></div>
+              <Textarea id="chat-reply-text" style={{ minHeight: '7rem' }}
+                className="min-h-28 w-full resize-y rounded-xl bg-card px-3 py-3 text-base leading-relaxed sm:text-sm"
+                rows={4}
                 aria-label="Balasan Chat"
                 placeholder="Tulis balasan…"
                 maxLength={1000}
@@ -601,8 +605,11 @@ export default function ChatPage() {
                 onChange={(e) => setText(e.target.value)}
                 disabled={send.isPending || !!pending || !!attachment}
               />
+              {attachment && <p className="text-xs text-muted-foreground">Lampiran dikirim terpisah. Kirim atau hapus lampiran untuk menulis pesan.</p>}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 border-t pt-3">
               <Button
-                className="shrink-0"
+                className="min-h-11 min-w-36 shrink-0 gap-2 rounded-xl px-5"
                 aria-label={attachment ? "Kirim lampiran" : "Kirim balasan"}
                 onClick={() =>
                   send.mutate({
@@ -622,8 +629,9 @@ export default function ChatPage() {
                   (newConversation && !orderStart.data)
                 }
               >
-                {send.isPending ? 'Mengirim…' : <><Send className="size-4"/><span className="hidden sm:inline">Kirim</span></>}
+                {send.isPending ? 'Mengirim…' : <><Send className="size-4"/><span>{attachment ? 'Kirim lampiran' : 'Kirim pesan'}</span></>}
               </Button></div>
+              </section>
             </>
           )}
         </section>

@@ -55,8 +55,8 @@ export default function AttachmentPicker({
   const [tab, setTab] = useState<'item' | 'order'>('order')
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button type="button" variant="secondary" className="h-auto min-h-16 flex-col gap-1 whitespace-normal rounded-xl px-2 py-2 text-xs" disabled={disabled} onClick={() => setOpen(true)}><Paperclip className="size-5"/>Produk / Pesanan</Button>
-      <DialogContent><DialogHeader><DialogTitle>Lampirkan produk atau pesanan</DialogTitle><DialogDescription>Pilih kartu dari toko percakapan, lalu periksa sebelum dikirim.</DialogDescription></DialogHeader>
+      <Button type="button" variant="outline" className="col-span-2 min-h-11 gap-2 whitespace-normal rounded-xl px-3 text-sm" disabled={disabled} onClick={() => setOpen(true)}><Paperclip className="size-5"/>Produk / Pesanan</Button>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>Lampirkan produk atau pesanan</DialogTitle><DialogDescription>Pilih kartu dari toko percakapan, lalu periksa sebelum dikirim.</DialogDescription></DialogHeader>
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" className="h-auto min-h-11 whitespace-normal px-2 text-xs sm:text-sm" variant={tab === 'order' ? 'default' : 'outline'} onClick={() => setTab('order')}>
           <ReceiptText className="mr-2 size-4"/>Pesanan pembeli
