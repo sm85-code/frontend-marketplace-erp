@@ -28,7 +28,7 @@ describe('menu order follows the daily workflow', () => {
       harian: ['/dashboard', '/pesanan', '/chat'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       processing: ['/processing/pemetaan'],
-      'data-produksi': ['/processing/tukang-kayu', '/processing/produk-kayu', '/processing/supplier', '/processing/katalog-siabumdes', '/processing/katalog-manual', '/processing/tarif-pengecatan', '/processing/tarif-packing'],
+      'data-produksi': ['/processing/tukang-kayu', '/processing/produk-kayu', '/processing/supplier', '/processing/katalog-siabumdes', '/processing/katalog-manual', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
       keuangan: ['/laporan-keuangan', '/settlement', '/iklan'],
       'info-toko': ['/performa-toko', '/pengaturan-toko'],
       pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
