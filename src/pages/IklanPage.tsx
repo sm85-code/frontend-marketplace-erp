@@ -89,23 +89,23 @@ export default function IklanPage() {
           setTab(v)
           setParams(v === 'performa' ? {} : { tab: v }, { replace: true })
         }}>
-        <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
-          <TabsTrigger value="performa" className="px-3">Performa</TabsTrigger>
-          <TabsTrigger value="kampanye" className="px-3">Kampanye Shopee</TabsTrigger>
-          <TabsTrigger value="gmv" className="px-3">Shop GMV Max</TabsTrigger>
-          <TabsTrigger value="catatan" className="px-3">Catatan</TabsTrigger>
+        <TabsList className="section-tabs">
+          <TabsTrigger value="performa">Performa</TabsTrigger>
+          <TabsTrigger value="kampanye">Kampanye Shopee</TabsTrigger>
+          <TabsTrigger value="gmv">Shop GMV Max</TabsTrigger>
+          <TabsTrigger value="catatan">Catatan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="gmv"><GmvMax /></TabsContent>
-        <TabsContent value="performa" className="text-base">
+        <TabsContent value="performa">
           <PerformaShopee />
         </TabsContent>
 
-        <TabsContent value="kampanye" className="text-base">
+        <TabsContent value="kampanye">
           <KampanyeShopee />
         </TabsContent>
 
-        <TabsContent value="catatan" className="text-base">
+        <TabsContent value="catatan">
           <Card>
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-2">
