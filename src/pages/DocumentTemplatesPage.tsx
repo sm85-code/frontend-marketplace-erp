@@ -770,8 +770,8 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
                         bounds="parent"
                         minWidth={20}
                         minHeight={8}
-                        maxWidth={width - item.x}
-                        maxHeight={height - item.y}
+                        maxWidth={width}
+                        maxHeight={height}
                         dragGrid={snap ? [8, 8] : [1, 1]}
                         resizeGrid={snap ? [8, 8] : [1, 1]}
                         lockAspectRatio={item.kind === "logo"}
