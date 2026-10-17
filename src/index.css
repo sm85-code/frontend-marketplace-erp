@@ -841,13 +841,13 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   pointer-events: none;
 }
 .sidebar-group-heading::before {
-  left: 10px;
+  left: 12px;
   width: 2px;
   height: 36px;
   opacity: .65;
 }
 .sidebar-group-heading::after {
-  left: 18px;
+  left: 20px;
   width: 3px;
   height: 56px;
 }
