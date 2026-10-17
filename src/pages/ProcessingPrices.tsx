@@ -17,6 +17,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import ProductionStructurePicker from './ProductionStructurePicker'
+import BulkProductionStructure from './BulkProductionStructure'
+import { Checkbox } from '@/components/ui/checkbox'
 import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
 
@@ -26,6 +28,15 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const confirm = useConfirm()
   const [status, setStatus] = useState('active')
   const [changing, setChanging] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [bulk, setBulk] = useState<ProcessingPrice[] | null>(null)
+  const selectRow = (price: ProcessingPrice, checked: boolean) => setSelected(previous => {
+    const next = new Set(previous)
+    if (checked && next.size < 100 && price.active !== false) next.add(price.id)
+    else if (!checked) next.delete(price.id)
+    return next
+  })
+  const selection = (q.data?.items || []).filter(p => selected.has(p.id) && p.active !== false && p.kind === 'produksi')
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
@@ -175,6 +186,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </Button>
               </p>
             )}
+            {kind === 'produksi' && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-3">
+              <span className="mr-auto text-sm">{selection.length} produk dipilih · maksimal 100</span>
+              <Button variant="outline" size="sm" disabled={changing || !filtered.some(p => p.active !== false)} onClick={() => setSelected(new Set(filtered.filter(p => p.active !== false).slice(0,100).map(p => p.id)))}>Pilih hasil pencarian</Button>
+              <Button variant="ghost" size="sm" disabled={!selected.size} onClick={() => setSelected(new Set())}>Bersihkan pilihan</Button>
+              <Button size="sm" disabled={!selection.length || changing} onClick={() => setBulk(selection.map(p => ({...p})))}>Susun Struktur Massal</Button>
+            </div>}
             <Input
               aria-label={`Cari harga ${kind}`}
               placeholder={kind === 'pengecatan' ? 'Cari produk, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
@@ -207,6 +224,10 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               <TabelLokal
                 label={titleOf(kind)}
                 items={filtered}
+                pilihan={kind === 'produksi' ? {
+                  terpilih: id => selected.has(id), bisaDipilih: p => p.active !== false,
+                  onUbah: selectRow, semuaDipilih: false, adaYangBisaDipilih: true, onUbahSemua: () => {},
+                } : undefined}
                 kolom={columns}
                 idDari={(p) => p.id}
                 namaDari={(p) => p.produk}
@@ -216,7 +237,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             <div className="divide-y md:hidden">
               {filtered.slice((current - 1) * 15, current * 15).map((r) => (
                 <div className="flex items-start justify-between gap-3 py-4" key={r.id}>
-                  <div className="min-w-0">
+                  {kind === 'produksi' && r.active !== false && <Checkbox aria-label={`Pilih ${r.produk} ${r.ukuran}`} checked={selected.has(r.id)} onCheckedChange={checked => selectRow(r, checked === true)} />}
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{r.produk}</p>
                     {r.active === false && <span className="text-xs text-muted-foreground">Nonaktif</span>}
                     {kind === 'produksi' && (
@@ -267,6 +289,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
           </CardContent>
         </Card>
       ))}
+      {bulk && <BulkProductionStructure selected={bulk} catalog={q.data?.items || []} onClose={() => setBulk(null)} onSaved={() => {setBulk(null);setSelected(new Set())}} />}
       <Dialog
         open={!!edit}
         onOpenChange={(o) => {

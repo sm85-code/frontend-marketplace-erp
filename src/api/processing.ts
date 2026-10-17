@@ -158,6 +158,8 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
     })
   ).data
 }
+export const saveBulkProductionStructure = async (structure_model_id: string, items: { id: string; version: number; ukuran: string; harga: string }[]) =>
+  (await api.post<{ count: number }>('/processing/prices/bulk-structure', { structure_model_id, items })).data
 export const getProcessingJobs = async () =>
   (await api.get<{ items: ProcessingJob[] }>('/processing/jobs')).data
 export const getProcessingCandidates = async (q: string, page: number) =>
