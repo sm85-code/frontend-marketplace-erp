@@ -12,6 +12,7 @@ import ProcessingPrices from './ProcessingPrices'
 import ProcessingParties from './ProcessingParties'
 import ProcessingWorkflow from './ProcessingWorkflow'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Spinner from '@/components/Spinner'
 
 export default function ProcessingPage() {
@@ -52,11 +53,24 @@ export default function ProcessingPage() {
     'tukang-kayu': { title: 'Tukang Kayu', description: 'Kelola kontak, rekening, dan keahlian tukang kayu.', content: <ProcessingParties kind="tukang" items={data?.tukang || []} /> },
     'produk-kayu': { title: 'Katalog Produk Kayu', description: 'Kelola struktur produk, ukuran, dan harga produksi.', content: <ProcessingPrices kind="produksi" /> },
     supplier: { title: 'Supplier', description: 'Kelola kontak dan rekening supplier.', content: <ProcessingParties kind="supplier" items={data?.supplier || []} /> },
-    'katalog-siabumdes': { title: 'Katalog Siabumdes', description: 'Lihat harga jual dan stok produk dari Siabumdes.', content: <SupplierCatalogPanel /> },
-    'katalog-manual': { title: 'Katalog Supplier Manual', description: 'Kelola produk dan harga beli supplier secara manual.', content: <ProcessingPrices kind="non_kayu" /> },
+    'produk-non-kayu': {
+      title: 'Katalog Produk Non Kayu',
+      description: 'Lihat katalog otomatis dari Siabumdes atau kelola produk supplier secara manual.',
+      content: (
+        <Tabs defaultValue="otomatis">
+          <TabsList>
+            <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>
+            <TabsTrigger value="manual">Katalog Manual</TabsTrigger>
+          </TabsList>
+          <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>
+          <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>
+        </Tabs>
+      ),
+    },
     'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan produk, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
     'tarif-packing': { title: 'Tarif Packing', description: 'Kelola tarif packing biasa dan packing kayu.', content: <ProcessingPrices kind="packing" /> },
   }
+  if (page === 'katalog-siabumdes' || page === 'katalog-manual') return <Navigate to="/processing/produk-non-kayu" replace />
   const selected = pages[page as keyof typeof pages]
   if (!selected && !privateKey) return <Navigate to="/processing/pemetaan" replace />
   const current = selected || pages['produk-kayu']
