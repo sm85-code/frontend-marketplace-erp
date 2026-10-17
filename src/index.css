@@ -827,3 +827,28 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
+
+/* Unequal diagonal accents cross the left edge of each navigation heading. */
+.sidebar-group-heading { position: relative; }
+.sidebar-group-heading::before,
+.sidebar-group-heading::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--primary);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.sidebar-group-heading::before {
+  left: -4px;
+  top: 12px;
+  width: 2px;
+  height: 10px;
+  opacity: .65;
+}
+.sidebar-group-heading::after {
+  left: 3px;
+  top: 5px;
+  height: 22px;
+}
