@@ -25,6 +25,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
+  const [editingColor, setEditingColor] = useState(false)
   const [useHierarchy, setUseHierarchy] = useState(true)
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
@@ -282,6 +283,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               className="space-y-3"
               onSubmit={async (e) => {
                 e.preventDefault()
+                if (editingColor) return
                 setBusy(true)
                 setError('')
                 try {
@@ -309,6 +311,10 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <p>Harga ini memakai data lama. Susun kategori, produk, dan model untuk membuat SKU otomatis.</p>
                   <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setUseHierarchy(true)}>Susun struktur</Button>
                 </div>}
+              {edit.kind === 'pengecatan' ? <Field title="Nama produk"><SelectField required value={edit.production_price_id || ''} onChange={e => {
+                const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id)
+                setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
+              }}><option value="">Pilih produk terstruktur</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id).map(p => <option key={p.id} value={p.id}>{[p.produk,p.model,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
               <Field title="Nama produk">
                 <Input
                   required
@@ -317,6 +323,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   onChange={(e) => change('produk', e.target.value)}
                 />
               </Field>
+              )}
               {edit.kind === 'produksi' && (
                 <>
                   <Field title="Kategori produk">
@@ -336,8 +343,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </>
               )}
               {edit.kind === 'packing' && <Field title="Jenis packing"><SelectField value={edit.packing_type || 'biasa'} onChange={e => change('packing_type', e.target.value)}><option value="biasa">Biasa</option><option value="kayu">Kayu</option></SelectField></Field>}
-              {edit.kind === 'pengecatan' && <ProcessingColorField value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={color => change('warna', color)} />}
-              <div className={edit.kind === 'packing' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
+              {edit.kind === 'pengecatan' && <ProcessingColorField onEditingChange={setEditingColor} value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={(color, id) => setEdit(v => v ? {...v, warna:color, color_id:id} : v)} />}
+              {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly value={edit.ukuran}/></Field><Field title="SKU produksi"><Input readOnly value={edit.sku}/></Field></div> : <div className={edit.kind === 'packing' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
                 <Field title="Ukuran">
                   <Input
                     maxLength={100}
@@ -350,7 +357,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <Input maxLength={200} value={edit.sku} onChange={(e) => change('sku', e.target.value)} />
                 </Field>
                 </>}
-              </div>
+              </div>}
               </>}
               <Field title="Harga per unit (Rp)">
                 <Input
@@ -376,7 +383,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               )}
               <DialogFooter>
                 {edit.kind === 'produksi' && useHierarchy && <Button type="submit" variant="outline" data-next-size="true" disabled={busy}>Simpan & tambah ukuran</Button>}
-                <Button disabled={busy} type="submit">
+                <Button disabled={busy || editingColor} type="submit">
                   {busy ? 'Menyimpan…' : 'Simpan harga'}
                 </Button>
               </DialogFooter>

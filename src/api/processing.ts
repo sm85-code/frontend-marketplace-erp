@@ -43,6 +43,8 @@ export type ProcessingPrice = {
   jenis?: string
   kode?: string
   warna?: string
+  color_id?: string
+  production_price_id?: string
   packing_type?: 'biasa' | 'kayu'
   structure_model_id?: string
   category_id?: string
@@ -131,7 +133,7 @@ export type ProcessingJobEdit = Pick<
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type, color_id, production_price_id } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -142,7 +144,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       harga,
       catatan,
       ...(kind === 'packing' ? { packing_type: packing_type || 'biasa' } : {}),
-      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '' } : {}),
+      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '', ...(color_id ? { color_id } : {}), ...(production_price_id ? { production_price_id } : {}) } : {}),
     })
   ).data
 }
@@ -210,3 +212,7 @@ export const getSupplierCatalogConnection = async () => (await api.get<{connecte
 export const getSupplierCatalog = async () => (await api.get<SupplierCatalog>('/processing/supplier-catalog')).data
 export const connectSupplierCatalog = async (username: string, password: string) => (await api.post('/processing/supplier-catalog/connect', {username, password})).data
 export const disconnectSupplierCatalog = async () => (await api.delete('/processing/supplier-catalog/connection')).data
+
+export type PaintColor = { id: string; name: string; version: number }
+export const getPaintColors = async () => (await api.get<{ items: PaintColor[] }>('/processing/paint-colors')).data
+export const savePaintColor = async ({id, ...body}: PaintColor) => (await api.put(`/processing/paint-colors/${encodeURIComponent(id)}`, body)).data
