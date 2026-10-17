@@ -37,6 +37,8 @@ export const importProcessingData = async (payload: unknown) =>
   (await api.post('/processing/import', payload)).data
 
 export type ProcessingPrice = {
+  active?: boolean
+  in_use?: boolean
   id: string
   kind: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing'
   version: number
@@ -102,6 +104,8 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   order_cancelled: boolean
   reference?: string
   seller_code?: string
+  production_reference?: ProcessingPrice | null
+  painting_reference?: ProcessingPrice | null
   production_sku?: string
   manual_order_code?: string
   catalog_mode?: 'manual' | 'otomatis'
@@ -132,6 +136,12 @@ export type ProcessingJobEdit = Pick<
 >
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
+export const getProcessingCatalogPrices = async () =>
+  (await api.get<{ items: ProcessingPrice[] }>('/processing/prices', { params: { include_inactive: true } })).data
+export const retireProcessingPrice = async (price: ProcessingPrice) =>
+  (await api.delete<{ action: 'deleted' | 'deactivated' }>(`/processing/prices/${encodeURIComponent(price.id)}`, { params: { version: price.version } })).data
+export const activateProcessingPrice = async (price: ProcessingPrice) =>
+  (await api.post(`/processing/prices/${encodeURIComponent(price.id)}/activate`, null, { params: { version: price.version } })).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
   const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type, color_id, production_price_id } = price
   return (

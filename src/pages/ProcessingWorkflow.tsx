@@ -115,7 +115,7 @@ function Amount({ label, value }: { label: string; value: string }) {
 function MappingEditor({
   job,
   catalog,
-  prices,
+  prices: catalogPrices,
   packingOnly,
   catalogMode,
   onClose,
@@ -129,6 +129,10 @@ function MappingEditor({
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
+  const prices = [...new Map([
+    ...[job.production_reference, job.painting_reference].filter((p): p is ProcessingPrice => !!p).map(p => [p.id, p] as const),
+    ...catalogPrices.map(p => [p.id, p] as const),
+  ]).values()]
   const [edit, setEdit] = useState<ProcessingJobEdit>({
     version: job.version,
     party_id: job.party_id,
@@ -492,11 +496,8 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-jobs'], queryFn: getProcessingJobs })
   const prices = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
-  // Preserve imported legacy entries; saved edits override the same catalog ID.
-  const priceOptions = [...new Map<string, ProcessingPrice>([
-    ...(catalog?.harga_produksi || []).map(p => [p.id, { ...p, kind: 'produksi' as const, version: 0 }] as const),
-    ...(prices.data?.items || []).map(p => [p.id, p] as const),
-  ]).values()]
+  // The API includes imported rows and applies retirement overrides consistently.
+  const priceOptions = prices.data?.items || []
   const confirm = useConfirm()
   const [table, setTable] = useState<WorkTable>('tukang')
   const [picker, setPicker] = useState<'tukang' | 'supplier' | null>(null)

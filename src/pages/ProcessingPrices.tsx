@@ -1,11 +1,12 @@
 import { useId, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { getProcessingPrices, saveProcessingPrice, type ProcessingPrice } from '@/api/processing'
+import { getProcessingCatalogPrices, retireProcessingPrice, activateProcessingPrice, saveProcessingPrice, type ProcessingPrice } from '@/api/processing'
 import { fmtRp, getApiError } from '@/api/client'
 import { TabelLokal, type KolomTabel } from '@/components/daftar'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/components/ConfirmProvider'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -21,7 +22,10 @@ import { Field, SelectField } from './processingShared'
 
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing' }) {
   const qc = useQueryClient()
-  const q = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
+  const q = useQuery({ queryKey: ['processing-prices', 'catalog'], queryFn: getProcessingCatalogPrices })
+  const confirm = useConfirm()
+  const [status, setStatus] = useState('active')
+  const [changing, setChanging] = useState(false)
   const [edit, setEdit] = useState<ProcessingPrice | null>(null)
   const [search, setSearch] = useState('')
   const [adding, setAdding] = useState(false)
@@ -43,6 +47,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const filtered = (q.data?.items || []).filter(
     (p) =>
       p.kind === selectedKind &&
+      (status === 'all' || (status === 'inactive' ? p.active === false : p.active !== false)) &&
       (selectedKind !== 'produksi' ||
         category === 'all' ||
         (category === 'none' ? !categoryOf(p) : category === 'category:' + categoryOf(p))) &&
@@ -53,6 +58,24 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const change = (k: keyof ProcessingPrice, v: string) => setEdit((p) => (p ? { ...p, [k]: v } : p))
+  const catalogProduct = selectedKind === 'produksi' || selectedKind === 'non_kayu'
+  const changeStatus = async (price: ProcessingPrice) => {
+    const activate = price.active === false
+    const label = activate ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'
+    if (!await confirm({ title: `${label} produk?`, description: `${price.produk} · ${price.ukuran || price.sku || 'Tanpa ukuran'}\n${activate ? 'Produk akan tersedia untuk pemetaan baru.' : price.in_use ? 'Produk sudah dipakai dalam order atau tarif terkait. Produk disembunyikan dari pilihan baru; riwayat tetap utuh.' : 'Produk akan dihapus dari katalog. Jika ternyata sudah dipakai saat diproses, sistem akan menonaktifkannya agar riwayat tetap utuh.'}`, confirmLabel: label, destructive: !activate })) return
+    setChanging(true)
+    try {
+      if (activate) { await activateProcessingPrice(price); toast.success('Produk diaktifkan') }
+      else { const result = await retireProcessingPrice(price); toast.success(result.action === 'deleted' ? 'Produk dihapus' : 'Produk dinonaktifkan; riwayat tetap utuh') }
+    } catch (err) { toast.error(getApiError(err)) }
+    finally { await qc.invalidateQueries({queryKey: ['processing-prices']}); setChanging(false) }
+  }
+  const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
+    <Button variant="outline" size="sm" disabled={changing} onClick={() => {
+      setAdding(false); setUseHierarchy(!!price.structure_model_id); setError(''); setEdit(price)
+    }}>Edit</Button>
+    {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
+  </div>
   const baseColumns: KolomTabel<ProcessingPrice>[] = [
     {
       kunci: 'produk',
@@ -86,6 +109,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       nilai: (r) => Number(r.harga),
       sel: (r) => (
         <>
+          {r.active === false && <span className="mb-1 block text-xs text-muted-foreground">Nonaktif</span>}
           {fmtRp(r.harga)}
           {Number(r.harga) === 0 && (
             <span className="block text-xs text-destructive">Harga nol — periksa</span>
@@ -97,20 +121,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
     {
       kunci: 'aksi',
       judul: 'Aksi',
-      sel: (r) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            setAdding(false)
-            setUseHierarchy(!!r.structure_model_id)
-            setError('')
-            setEdit(r)
-          }}
-        >
-          Edit
-        </Button>
-      ),
+      sel: rowActions,
     },
   ]
   const columns: KolomTabel<ProcessingPrice>[] = selectedKind === 'produksi' ? [
@@ -173,6 +184,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 setPage(1)
               }}
             />
+            {catalogProduct && <SelectField aria-label="Status produk" value={status} onChange={e => {setStatus(e.target.value);setPage(1)}}><option value="active">Produk aktif</option><option value="inactive">Produk nonaktif</option><option value="all">Semua status</option></SelectField>}
             {kind === 'produksi' && (
               <SelectField
                 aria-label="Filter kategori produk"
@@ -206,6 +218,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 <div className="flex items-start justify-between gap-3 py-4" key={r.id}>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">{r.produk}</p>
+                    {r.active === false && <span className="text-xs text-muted-foreground">Nonaktif</span>}
                     {kind === 'produksi' && (
                       <p className="mt-1 text-xs font-medium text-primary">
                         {categoryOf(r) || 'Belum dikategorikan'}
@@ -221,18 +234,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     </p>
                     {Number(r.harga) === 0 && <p className="text-xs text-destructive">Harga nol — periksa</p>}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAdding(false)
-                      setUseHierarchy(!!r.structure_model_id)
-                      setError('')
-                      setEdit(r)
-                    }}
-                  >
-                    Edit
-                  </Button>
+                  {rowActions(r)}
                 </div>
               ))}
               {!filtered.length && (
@@ -312,9 +314,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setUseHierarchy(true)}>Susun struktur</Button>
                 </div>}
               {edit.kind === 'pengecatan' ? <Field title="Nama produk"><SelectField required value={edit.production_price_id || ''} onChange={e => {
-                const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id)
+                const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id))
                 setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-              }}><option value="">Pilih produk terstruktur</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id).map(p => <option key={p.id} value={p.id}>{[p.produk,p.model,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
+              }}><option value="">Pilih produk terstruktur</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.produk,p.model,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
               <Field title="Nama produk">
                 <Input
                   required
