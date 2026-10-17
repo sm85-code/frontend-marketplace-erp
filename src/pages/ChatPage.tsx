@@ -541,11 +541,11 @@ export default function ChatPage() {
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
               <section aria-label="Form balas chat" className="mt-4 min-w-0 space-y-4 rounded-2xl border border-border bg-background p-3 sm:p-4">
               <div><h3 className="text-sm font-semibold">Balas chat</h3><p className="mt-1 text-xs text-muted-foreground">Tulis pesan atau pilih lampiran untuk pembeli.</p></div>
-              <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Lampiran</p><div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              <div role="group" aria-label="Lampiran"><div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
-              <Button type="button" variant="outline" className="min-h-11 gap-2 rounded-xl px-3 text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-5"/>Galeri</Button>
-              <Button type="button" variant="outline" className="min-h-11 gap-2 rounded-xl px-3 text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-5"/>Kamera</Button>
+              <Button type="button" variant="outline" className="min-h-10 gap-1.5 rounded-xl px-2 text-xs sm:text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-4"/>Galeri</Button>
+              <Button type="button" variant="outline" className="min-h-10 gap-1.5 rounded-xl px-2 text-xs sm:text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-4"/>Kamera</Button>
               <AttachmentPicker
                 data={context.data}
                 search={productSearch}
