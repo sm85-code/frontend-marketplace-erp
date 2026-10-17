@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getProductionStructure, saveProductionStructure, type ProductionStructureNode, type ProcessingPrice } from '@/api/processing'
 import { getApiError } from '@/api/client'
@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Field, SelectField } from './processingShared'
 
-export default function ProductionStructurePicker({ value, onChange }: {
+export default function ProductionStructurePicker({ value, onChange, showVariant = true, onEditingChange }: {
   value: ProcessingPrice
+  showVariant?: boolean
+  onEditingChange?: (editing: boolean) => void
   onChange: (fields: Partial<ProcessingPrice>) => void
 }) {
   const qc = useQueryClient()
@@ -18,6 +20,8 @@ export default function ProductionStructurePicker({ value, onChange }: {
   const [editor, setEditor] = useState<ProductionStructureNode | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const isEditingStructure = !!editor
+  useEffect(() => { onEditingChange?.(isEditingStructure); return () => onEditingChange?.(false) }, [isEditingStructure, onEditingChange])
   const categoryNode = nodes.find(n => n.id === category)
   const productNode = nodes.find(n => n.id === product)
   const modelNode = nodes.find(n => n.id === value.structure_model_id)
@@ -112,10 +116,12 @@ export default function ProductionStructurePicker({ value, onChange }: {
         </fieldset>}
       </section>
     })}
+    {showVariant && <>
     <Field title="Ukuran"><Input required maxLength={100} placeholder="Contoh: 150x200" value={value.ukuran} onChange={e => onChange({ ukuran: e.target.value })} /></Field>
     <div className="rounded-xl border bg-muted/30 p-3 lg:col-span-2">
       <p className="text-xs text-muted-foreground">SKU produksi otomatis</p>
       <output aria-label="SKU produksi otomatis" className="mt-1 block break-all text-sm font-semibold">{sku || 'Pilih struktur dan isi ukuran'}</output>
     </div>
+    </>}
   </div>
 }
