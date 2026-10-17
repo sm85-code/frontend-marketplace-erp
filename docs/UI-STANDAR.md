@@ -107,4 +107,4 @@ sisanya lewat *Lainnya* (drawer yang sama). Urutan kiri ke kanan ditentukan `pos
 
 ## Tab
 
-Pakai `Tabs` dari `@/components/ui/tabs` untuk membagi satu halaman jadi beberapa bagian (contoh: Iklan = Performa, Kampanye Shopee, Catatan). Simpan tab aktif di URL (`?tab=`) supaya F5 dan tombol kembali tidak kehilangan posisi. Aksi yang mengubah data di luar ERP (Shopee) selalu lewat dialog konfirmasi yang menyebut akibatnya.
+Pakai `Tabs` dari `@/components/ui/tabs` untuk membagi satu halaman jadi beberapa bagian (contoh: Iklan = Performa, Kampanye Shopee, Catatan). Beri `TabsList` kelas `section-tabs` (pola Dana & Saldo Shopee, Iklan, Gudang, Katalog Produk Non Kayu). Simpan tab aktif di URL (`?tab=`) supaya F5 dan tombol kembali tidak kehilangan posisi. Aksi yang mengubah data di luar ERP (Shopee) selalu lewat dialog konfirmasi yang menyebut akibatnya.
