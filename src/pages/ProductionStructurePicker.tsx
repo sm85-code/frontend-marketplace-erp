@@ -63,9 +63,9 @@ export default function ProductionStructurePicker({ value, onChange }: {
     { kind: 'produk', label: 'Produk / SKU induk', parent: category, selected: product, disabled: !category },
     { kind: 'model', label: 'Model', parent: product, selected: value.structure_model_id || '', disabled: !product },
   ]
-  return <div className="space-y-4">
-    {q.error && <p role="alert" className="text-sm text-destructive">{getApiError(q.error)} <Button type="button" variant="outline" onClick={() => void q.refetch()}>Coba lagi</Button></p>}
-    {q.isLoading && <p className="text-sm text-muted-foreground">Memuat struktur produk…</p>}
+  return <div className="grid min-w-0 gap-4 lg:grid-cols-3">
+    {q.error && <p role="alert" className="text-sm text-destructive lg:col-span-3">{getApiError(q.error)} <Button type="button" variant="outline" onClick={() => void q.refetch()}>Coba lagi</Button></p>}
+    {q.isLoading && <p className="text-sm text-muted-foreground lg:col-span-3">Memuat struktur produk…</p>}
     {levels.map((level, index) => {
       const editing = editor?.kind === level.kind
       const parent = nodes.find(n => n.id === level.parent)
@@ -113,7 +113,7 @@ export default function ProductionStructurePicker({ value, onChange }: {
       </section>
     })}
     <Field title="Ukuran"><Input required maxLength={100} placeholder="Contoh: 150x200" value={value.ukuran} onChange={e => onChange({ ukuran: e.target.value })} /></Field>
-    <div className="rounded-xl border bg-muted/30 p-3">
+    <div className="rounded-xl border bg-muted/30 p-3 lg:col-span-2">
       <p className="text-xs text-muted-foreground">SKU produksi otomatis</p>
       <output aria-label="SKU produksi otomatis" className="mt-1 block break-all text-sm font-semibold">{sku || 'Pilih struktur dan isi ukuran'}</output>
     </div>

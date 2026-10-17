@@ -271,7 +271,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
           if (!busy && !o) setEdit(null)
         }}
       >
-        <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left">
+        <DialogContent className={`processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left ${edit?.kind === 'produksi' ? 'sm:max-w-6xl' : ''}`}>
           <DialogHeader>
             <DialogTitle>{adding ? 'Tambah' : 'Edit'} {edit?.kind === 'non_kayu' ? 'produk manual' : edit?.kind === 'packing' ? 'tarif packing' : `harga ${edit?.kind}`}</DialogTitle>
             <DialogDescription>
@@ -359,6 +359,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </>}
               </div>}
               </>}
+              <div className={edit.kind === 'produksi' ? 'grid gap-3 md:grid-cols-2' : 'space-y-3'}>
               <Field title="Harga per unit (Rp)">
                 <Input
                   type="number"
@@ -376,12 +377,13 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   onChange={(e) => change('catatan', e.target.value)}
                 />
               </Field>
+              </div>
               {error && (
                 <p role="alert" className="text-destructive">
                   {error}
                 </p>
               )}
-              <DialogFooter>
+              <DialogFooter className="sticky -bottom-6 z-10 border-t bg-background py-3">
                 {edit.kind === 'produksi' && useHierarchy && <Button type="submit" variant="outline" data-next-size="true" disabled={busy}>Simpan & tambah ukuran</Button>}
                 <Button disabled={busy || editingColor} type="submit">
                   {busy ? 'Menyimpan…' : 'Simpan harga'}
