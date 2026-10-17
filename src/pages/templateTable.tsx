@@ -44,6 +44,36 @@ export const productionColumns = () => [
     header_color: "#ffffff",
   })),
 ];
+export function sampleAmounts(item: TemplateBlock): Record<string, number> {
+  const columns = item.columns?.length ? item.columns : basicColumns();
+  const has = (field: string) => columns.some((c) => c.field === field);
+  const harga_barang = 500000,
+    biaya_pengecatan = has("biaya_pengecatan") ? 100000 : 0,
+    biaya_proses = has("biaya_proses") ? 10000 : 0;
+  return {
+    harga_barang,
+    biaya_pengecatan,
+    biaya_proses,
+    total: harga_barang + biaya_pengecatan + biaya_proses,
+    qty: 1,
+  };
+}
+export function previewAmounts(item: TemplateBlock): Record<string, string> {
+  const amounts = sampleAmounts(item),
+    rows = item.row_count || 3;
+  const values = Object.fromEntries(
+    Object.entries(amounts).map(([key, value]) => [
+      `total_${key}`,
+      (value * rows).toLocaleString("id-ID"),
+    ]),
+  );
+  return {
+    ...values,
+    total: values.total_total,
+    grand_total: values.total_total,
+    subtotal: values.total_harga_barang,
+  };
+}
 export function TemplateTable({
   item,
   preview,
@@ -54,13 +84,7 @@ export function TemplateTable({
   const columns = item.columns?.length ? item.columns : basicColumns(),
     rows = item.row_count || 3;
   const weight = columns.reduce((a, c) => a + c.width, 0);
-  const numeric: Record<string, number> = {
-    harga_barang: 500000,
-    biaya_pengecatan: 100000,
-    biaya_proses: 10000,
-    total: 610000,
-    qty: 1,
-  };
+  const numeric = sampleAmounts(item);
   const sample = (field: string, n: number) =>
     money.has(field)
       ? `Rp ${numeric[field].toLocaleString("id-ID")}`
