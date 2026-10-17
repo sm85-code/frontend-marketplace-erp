@@ -1,10 +1,11 @@
+import { DropdownMenu } from 'radix-ui'
 import Spinner from '@/components/Spinner'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
 import { useRef, useState } from 'react'
-import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight, MoreVertical, CheckCheck, History } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
 import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
@@ -473,6 +474,13 @@ export default function ChatPage() {
                   </span>
                   <span className="block text-xs text-muted-foreground">{active?.nama_toko}</span>
                 </h2>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild><Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label="Opsi percakapan"><MoreVertical className="size-5"/></Button></DropdownMenu.Trigger>
+                  <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={8} className="z-50 min-w-56 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg">
+                    <DropdownMenu.Item disabled={markRead.isPending || !selected?.conversation_id} onSelect={()=>markRead.mutate()} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted data-[disabled]:opacity-50"><CheckCheck className="size-4"/>Tandai sudah dibaca</DropdownMenu.Item>
+                    {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && <DropdownMenu.Item onSelect={()=>{setOlder(messages);setOffset(history.data!.page_result.next_offset!)}} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted"><History className="size-4"/>Pesan lebih lama</DropdownMenu.Item>}
+                  </DropdownMenu.Content></DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
               {newConversation && (
                 <p className="my-2 text-sm text-muted-foreground">
@@ -485,9 +493,6 @@ export default function ChatPage() {
                   <ChatCardView card={orderStart.data.order} />
                 </div>
               )}
-              <Button variant="outline" disabled={markRead.isPending || !selected?.conversation_id} onClick={() => markRead.mutate()}>
-                Tandai sudah dibaca
-              </Button>
               {readError && (
                 <p role="alert" className="text-sm text-destructive">
                   {readError}
@@ -495,17 +500,6 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <Spinner column label="Memuat pesan…" />}
-              {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setOlder(messages)
-                    setOffset(history.data!.page_result.next_offset!)
-                  }}
-                >
-                  Pesan lebih lama
-                </Button>
-              )}
               <div className="my-3 min-h-[32dvh] max-h-[55dvh] space-y-3 overflow-y-auto rounded-xl bg-muted/40 p-3" aria-live="polite">
                 {messages.filter(m => !chatClosedNotice(m.content, m.message_type)).map((m) => (
                   <div

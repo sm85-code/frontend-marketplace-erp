@@ -84,15 +84,15 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <nav aria-label="Menu utama" className="min-h-0 flex-1 overflow-y-auto px-3 pb-2">
             {grup.map(({ grup: g, items }) => (
-              <div key={g.id} role="group" aria-labelledby={`grup-${g.id}`} className="mt-3 first:mt-1">
+              <div key={g.id} role="group" aria-labelledby={`grup-${g.id}`} className="mt-5 first:mt-1">
                 <div
                   id={`grup-${g.id}`}
-                  className="px-2.5 pb-2 text-[11px] leading-4 font-semibold tracking-wider uppercase"
-                  style={{ color: 'var(--text-secondary)' }}
+                  className="mb-2 rounded-lg border-l-4 border-primary bg-primary/10 px-3 py-2 text-xs leading-5 font-bold tracking-wide uppercase"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   {g.label}
                 </div>
-                <div className="space-y-1">
+                <div className="ml-2 space-y-1 border-l border-border pl-2">
                   {items.map((n) => {
                     const Icon = n.icon
                     const active = isNavActive(location.pathname, n.to, allPaths)
