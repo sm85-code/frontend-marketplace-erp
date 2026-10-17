@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TemplateTable, TableSettings } from "./templateTable";
+import { TemplateTable, TableSettings, previewAmounts } from "./templateTable";
 import Spinner from "@/components/Spinner";
 import { Field, SelectField } from "./processingShared";
 
@@ -60,6 +60,10 @@ const fields = [
   "jatuh_tempo",
   "informasi_pembayaran",
   "rekening",
+  "total_harga_barang",
+  "total_biaya_pengecatan",
+  "total_biaya_proses",
+  "grand_total",
 ];
 function block(kind: TemplateBlock["kind"], x = 48, y = 80): TemplateBlock {
   const sizes = {
@@ -138,7 +142,11 @@ function defaults(kind: DocumentKind): TemplateBlock[] {
     text(500, 900, 246, 100, "Hormat kami,\n\n\n{{nama_usaha}}"),
   ];
 }
-function renderText(text: string, preview: boolean) {
+function renderText(
+  text: string,
+  preview: boolean,
+  overrides: Record<string, string> = {},
+) {
   if (!preview) return text;
   const sample: Record<string, string> = {
     nama_usaha: "Nama Usaha",
@@ -159,6 +167,7 @@ function renderText(text: string, preview: boolean) {
     informasi_pembayaran:
       "Pembayaran melalui transfer sesuai tanggal jatuh tempo.",
     rekening: "Rekening usaha",
+    ...overrides,
   };
   return text.replace(
     /\{\{(\w+)\}\}/g,
@@ -168,9 +177,11 @@ function renderText(text: string, preview: boolean) {
 function BlockContent({
   item,
   preview,
+  sample,
 }: {
   item: TemplateBlock;
   preview: boolean;
+  sample?: Record<string, string>;
 }) {
   if (item.kind === "line")
     return (
@@ -198,7 +209,7 @@ function BlockContent({
     return <TemplateTable item={item} preview={preview} />;
   return (
     <div className="h-full whitespace-pre-wrap break-words">
-      {renderText(item.text, preview)}
+      {renderText(item.text, preview, sample)}
     </div>
   );
 }
@@ -240,6 +251,8 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
     mode: "move" | "resize";
   } | null>(null);
   const current = blocks.find((b) => b.id === selected);
+  const firstTable = blocks.find((b) => b.kind === "table");
+  const sample = firstTable ? previewAmounts(firstTable) : {};
   const initialDesign = useRef(JSON.stringify(blocks));
   const dirty =
     JSON.stringify(blocks) !== saved || orientation !== savedOrientation;
@@ -664,7 +677,11 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
                         }
                       }}
                     >
-                      <BlockContent item={item} preview={preview} />
+                      <BlockContent
+                        item={item}
+                        preview={preview}
+                        sample={sample}
+                      />
                       {active && !busy && (
                         <span
                           aria-hidden="true"
