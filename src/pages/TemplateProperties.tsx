@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Lock, Unlock, Eye, EyeOff } from "lucide-react";
+import { ImagePlus, Lock, Unlock, Eye, EyeOff, Minus, Plus } from "lucide-react";
 import type { TemplateBlock } from "@/api/documentTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,45 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, SelectField } from "./processingShared";
 import { TableSettings } from "./templateTable";
 import { fields, elementName, labels } from "./templateDocumentModel";
+
+const MIN_FONT = 8;
+const MAX_FONT = 72;
+const clampFont = (n: number) => Math.max(MIN_FONT, Math.min(MAX_FONT, Math.round(n)));
+
+/** Keeps a draft string so multi-digit sizes can be typed (clamping per keystroke turned "1" into 8); commits valid values live and clamps on blur. */
+function FontSizeInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  const step = (d: number) => onChange(clampFont(value + d));
+  return (
+    <div className="flex items-center gap-1">
+      <Button type="button" variant="outline" size="icon" aria-label="Kecilkan teks" disabled={value <= MIN_FONT} onClick={() => step(-1)}>
+        <Minus className="size-4" />
+      </Button>
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={MIN_FONT}
+        max={MAX_FONT}
+        className="min-w-0 text-center"
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const n = Number(e.target.value);
+          if (e.target.value !== "" && n >= MIN_FONT && n <= MAX_FONT) onChange(Math.round(n));
+        }}
+        onBlur={() => {
+          const n = clampFont(Number(draft) || MIN_FONT);
+          setDraft(String(n));
+          onChange(n);
+        }}
+      />
+      <Button type="button" variant="outline" size="icon" aria-label="Besarkan teks" disabled={value >= MAX_FONT} onClick={() => step(1)}>
+        <Plus className="size-4" />
+      </Button>
+    </div>
+  );
+}
 
 async function readLogo(file: File) {
   if (!["image/png", "image/jpeg", "image/webp"].includes(file.type))
@@ -250,19 +289,9 @@ export default function TemplateProperties({
             <h4 className="text-xs font-semibold">Tampilan</h4>
             <div className="grid grid-cols-2 gap-2">
               <Field title="Ukuran teks">
-                <Input
-                  type="number"
-                  min={8}
-                  max={72}
+                <FontSizeInput
                   value={item.font_size}
-                  onChange={(e) =>
-                    update({
-                      font_size: Math.max(
-                        8,
-                        Math.min(72, Number(e.target.value) || 8),
-                      ),
-                    })
-                  }
+                  onChange={(font_size) => update({ font_size })}
                 />
               </Field>
               <Field title="Warna">
