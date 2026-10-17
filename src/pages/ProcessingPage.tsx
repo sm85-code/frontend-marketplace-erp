@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getProcessingData, importProcessingData } from '@/api/processing'
 import { getApiError } from '@/api/client'
@@ -14,6 +14,28 @@ import ProcessingWorkflow from './ProcessingWorkflow'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Spinner from '@/components/Spinner'
+
+function NonKayuTabs() {
+  const [params, setParams] = useSearchParams()
+  // Local state is the source of truth; the URL only follows so F5 and shared links keep the tab (same as Iklan).
+  const [tab, setTab] = useState(() => (params.get('tab') === 'manual' ? 'manual' : 'otomatis'))
+  return (
+    <Tabs
+      value={tab}
+      onValueChange={(v) => {
+        setTab(v)
+        setParams(v === 'otomatis' ? {} : { tab: v }, { replace: true })
+      }}
+    >
+      <TabsList className="h-11 max-w-full overflow-x-auto overflow-y-hidden">
+        <TabsTrigger value="otomatis" className="px-3">Katalog Otomatis</TabsTrigger>
+        <TabsTrigger value="manual" className="px-3">Katalog Manual</TabsTrigger>
+      </TabsList>
+      <TabsContent value="otomatis" className="text-base"><SupplierCatalogPanel /></TabsContent>
+      <TabsContent value="manual" className="text-base"><ProcessingPrices kind="non_kayu" /></TabsContent>
+    </Tabs>
+  )
+}
 
 export default function ProcessingPage() {
   const { user } = useAuth()
@@ -56,16 +78,7 @@ export default function ProcessingPage() {
     'produk-non-kayu': {
       title: 'Katalog Produk Non Kayu',
       description: 'Lihat katalog otomatis dari Siabumdes atau kelola produk supplier secara manual.',
-      content: (
-        <Tabs defaultValue="otomatis">
-          <TabsList>
-            <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>
-            <TabsTrigger value="manual">Katalog Manual</TabsTrigger>
-          </TabsList>
-          <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>
-          <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>
-        </Tabs>
-      ),
+      content: <NonKayuTabs />,
     },
     'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan produk, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
     'tarif-packing': { title: 'Tarif Packing', description: 'Kelola tarif packing biasa dan packing kayu.', content: <ProcessingPrices kind="packing" /> },
