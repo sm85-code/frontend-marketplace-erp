@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TemplateTable, TableSettings } from "./templateTable";
 import Spinner from "@/components/Spinner";
 import { Field, SelectField } from "./processingShared";
 
@@ -53,6 +54,12 @@ const fields = [
   "subtotal",
   "total",
   "catatan",
+  "periode_mulai",
+  "periode_akhir",
+  "minggu_ke",
+  "jatuh_tempo",
+  "informasi_pembayaran",
+  "rekening",
 ];
 function block(kind: TemplateBlock["kind"], x = 48, y = 80): TemplateBlock {
   const sizes = {
@@ -145,6 +152,13 @@ function renderText(text: string, preview: boolean) {
     subtotal: "1.500.000",
     total: "1.500.000",
     catatan: "Terima kasih atas kerja samanya.",
+    periode_mulai: "12/10/2026",
+    periode_akhir: "17/10/2026",
+    minggu_ke: "Minggu ke-3 Oktober",
+    jatuh_tempo: "20/10/2026",
+    informasi_pembayaran:
+      "Pembayaran melalui transfer sesuai tanggal jatuh tempo.",
+    rekening: "Rekening usaha",
   };
   return text.replace(
     /\{\{(\w+)\}\}/g,
@@ -181,41 +195,7 @@ function BlockContent({
       </div>
     );
   if (item.kind === "table")
-    return (
-      <table
-        className="w-full border-collapse text-left"
-        style={{ fontSize: item.font_size, color: item.color }}
-      >
-        <thead>
-          <tr style={{ background: "#f0f3f6" }}>
-            {["Produk / Keterangan", "Qty", "Harga", "Jumlah"].map((t) => (
-              <th
-                key={t}
-                className="border-b border-slate-300 px-3 py-3 font-semibold"
-              >
-                {t}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[1, 2, 3].map((n) => (
-            <tr key={n}>
-              {[
-                preview ? `Produk contoh ${n}` : `{{produk_${n}}}`,
-                preview ? "1" : "{{qty}}",
-                preview ? "500.000" : "{{harga}}",
-                preview ? "500.000" : "{{jumlah}}",
-              ].map((t, i) => (
-                <td key={i} className="border-b border-slate-200 px-3 py-3">
-                  {t}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    return <TemplateTable item={item} preview={preview} />;
   return (
     <div className="h-full whitespace-pre-wrap break-words">
       {renderText(item.text, preview)}
@@ -227,6 +207,14 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
   const [blocks, setBlocks] = useState<TemplateBlock[]>(
     () => initial.blocks ?? defaults(initial.kind),
   );
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
+    initial.orientation || "portrait",
+  );
+  const [savedOrientation, setSavedOrientation] = useState(
+    initial.orientation || "portrait",
+  );
+  const WIDTH = orientation === "landscape" ? 1123 : 794,
+    HEIGHT = orientation === "landscape" ? 794 : 1123;
   const [version, setVersion] = useState(initial.version);
   const [saved, setSaved] = useState(
     initial.blocks === null ? "" : JSON.stringify(initial.blocks),
@@ -253,9 +241,13 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
   } | null>(null);
   const current = blocks.find((b) => b.id === selected);
   const initialDesign = useRef(JSON.stringify(blocks));
-  const dirty = JSON.stringify(blocks) !== saved;
+  const dirty =
+    JSON.stringify(blocks) !== saved || orientation !== savedOrientation;
   const warnUnsaved =
-    dirty && (version > 0 || JSON.stringify(blocks) !== initialDesign.current);
+    dirty &&
+    (version > 0 ||
+      JSON.stringify(blocks) !== initialDesign.current ||
+      orientation !== savedOrientation);
   useEffect(() => {
     const el = viewport.current;
     if (!el) return;
@@ -265,7 +257,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [zoom]);
+  }, [zoom, WIDTH]);
   useEffect(() => {
     if (!warnUnsaved) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -296,6 +288,10 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
       Math.round(Math.max(0, x)),
       Math.round(Math.max(0, y)),
     );
+    item.width = Math.min(item.width, WIDTH);
+    item.height = Math.min(item.height, HEIGHT);
+    item.x = Math.max(0, Math.min(Math.round(x), WIDTH - item.width));
+    item.y = Math.max(0, Math.min(Math.round(y), HEIGHT - item.height));
     commit([...blocks, item]);
     setSelected(item.id);
     setPreview(false);
@@ -304,14 +300,21 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
     setBusy(true);
     setError("");
     try {
-      const result = await saveDocumentTemplate(initial.kind, version, blocks);
+      const result = await saveDocumentTemplate(
+        initial.kind,
+        version,
+        blocks,
+        orientation,
+      );
       setVersion(result.version);
       queryClient.setQueryData(["processing-document-template", initial.kind], {
         kind: initial.kind,
         version: result.version,
         blocks,
+        orientation,
       });
       setSaved(JSON.stringify(blocks));
+      setSavedOrientation(orientation);
       toast.success(`Template ${initial.kind} tersimpan`);
     } catch (e) {
       setError(getApiError(e));
@@ -336,6 +339,36 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <SelectField
+            aria-label="Orientasi kertas"
+            className="w-32 min-w-0"
+            value={orientation}
+            disabled={busy}
+            onChange={(e) => {
+              const next = e.target.value as "portrait" | "landscape";
+              const width = next === "landscape" ? 1123 : 794,
+                height = next === "landscape" ? 794 : 1123;
+              setOrientation(next);
+              setUndo([]);
+              setRedo([]);
+              setBlocks((old) =>
+                old.map((b) => {
+                  const w = Math.min(b.width, width),
+                    h = Math.min(b.height, height);
+                  return {
+                    ...b,
+                    width: w,
+                    height: h,
+                    x: Math.min(b.x, width - w),
+                    y: Math.min(b.y, height - h),
+                  };
+                }),
+              );
+            }}
+          >
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </SelectField>
           <Button
             variant="outline"
             size="icon"
@@ -493,6 +526,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
                     overflow: "hidden",
                     outline: active ? "2px solid #16a34a" : undefined,
                     outlineOffset: 2,
+                    border: item.border ? `1px solid ${item.color}` : undefined,
                     cursor: preview ? "default" : "move",
                     touchAction: preview ? "auto" : "none",
                     userSelect: "none",
@@ -706,6 +740,17 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
               <p className="text-xs font-medium text-primary">
                 {labels[current.kind]}
               </p>
+              {current.kind === "table" && (
+                <TableSettings item={current} onChange={update} />
+              )}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={!!current.border}
+                  onChange={(e) => update({ border: e.target.checked })}
+                />
+                Bingkai elemen
+              </label>
               {(current.kind === "text" || current.kind === "total") && (
                 <>
                   <Field title="Isi teks">
