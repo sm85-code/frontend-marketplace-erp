@@ -20,12 +20,12 @@ export default function KartuMetrik({
   className?: string
 }) {
   const isi = (
-    <CardContent className="flex h-full flex-col justify-center gap-0.5 px-3 py-2">
+    <CardContent className="flex h-full min-h-[4.5rem] flex-col justify-center gap-1 px-3.5 py-3">
       <p className="flex items-center gap-1.5 text-[0.6875rem] font-semibold uppercase leading-tight tracking-wide text-muted-foreground">
         <Icon className="size-3.5 shrink-0 text-primary" />
         <span className="min-w-0">{label}</span>
       </p>
-      <p className="font-heading text-base font-bold leading-tight tabular-nums [overflow-wrap:anywhere] sm:text-xl">{nilai}</p>
+      <p className="font-heading text-lg font-bold leading-tight tabular-nums [overflow-wrap:anywhere] sm:text-xl">{nilai}</p>
       {catatan && <p className="hidden text-xs text-muted-foreground sm:block">{catatan}</p>}
     </CardContent>
   )
