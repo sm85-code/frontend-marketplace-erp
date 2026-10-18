@@ -364,9 +364,6 @@ export default function FinancialReportSheet({
           <h2 className="text-lg font-semibold">
             Rekap {months[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {latest ? `Posisi laporan ${dateLabel(latest.tanggal)}` : 'Belum ada laporan tersimpan'}
-          </p>
         </div>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh laporan
