@@ -57,7 +57,6 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
         </Table>
       </div>
       {!data.toko.length && <p className="text-sm text-muted-foreground">Belum ada toko Shopee di ERP.</p>}
-      {!released && <p className="text-xs text-muted-foreground">{data.catatan}</p>}
     </>}
   </CardContent></Card>
 }
