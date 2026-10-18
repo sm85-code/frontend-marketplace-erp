@@ -421,51 +421,17 @@ export default function FinancialReportSheet({
         {sections.map((section, i) => (
           <TabsContent key={section.title} value={String(i)} className="min-w-0">
             {i === 0 ? (
-              <Tabs defaultValue="utama" className="min-w-0">
-                <div className="min-w-0 overflow-x-auto py-1">
-                  <TabsList className="h-auto w-max gap-1 bg-transparent p-0" aria-label="Rincian pemasukan">
-                    <TabsTrigger
-                      className="h-10 rounded-lg border border-transparent px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-none"
-                      value="utama"
-                    >
-                      Rekap pemasukan
-                    </TabsTrigger>
-                    <TabsTrigger
-                      className="h-10 rounded-lg border border-transparent px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-none"
-                      value="estimasi"
-                    >
-                      Estimasi Shopee
-                    </TabsTrigger>
-                    <TabsTrigger
-                      className="h-10 rounded-lg border border-transparent px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-none"
-                      value="cair"
-                    >
-                      Dana cair
-                    </TabsTrigger>
-                    <TabsTrigger
-                      className="h-10 rounded-lg border border-transparent px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-none"
-                      value="saldo"
-                    >
-                      Saldo penjual
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                <TabsContent value="utama">{renderTable(section)}</TabsContent>
-                <TabsContent value="estimasi">
-                  <FinancialShopeeIncome until={latest?.tanggal} month={month} columns={days.length} />
-                </TabsContent>
-                <TabsContent value="cair">
-                  <FinancialShopeeIncome
-                    until={latest?.tanggal}
-                    month={month}
-                    columns={days.length}
-                    released
-                  />
-                </TabsContent>
-                <TabsContent value="saldo">
-                  <FinancialSellerBalance month={month} columns={days.length} />
-                </TabsContent>
-              </Tabs>
+              <div className="min-w-0 space-y-5">
+                {renderTable(section)}
+                <FinancialShopeeIncome until={latest?.tanggal} month={month} columns={days.length} />
+                <FinancialShopeeIncome
+                  until={latest?.tanggal}
+                  month={month}
+                  columns={days.length}
+                  released
+                />
+                <FinancialSellerBalance month={month} columns={days.length} />
+              </div>
             ) : (
               renderTable(section)
             )}
