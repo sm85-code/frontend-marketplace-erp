@@ -46,6 +46,14 @@ const metrics = [
   },
 ] as const;
 
+const ALASAN: Record<string, string> = {
+  tanpa_pesanan: "Mutasi tanpa kode pesanan",
+  tanpa_tanggal_kirim: "Ada pesanan tanpa tanggal kirim",
+  belum_dikirim: "Ada pesanan yang belum dikirim",
+  dikirim_hari_minggu: "Ada pesanan dikirim hari Minggu",
+  beda_minggu_kirim: "Pesanan tersebar di beberapa minggu kirim",
+};
+
 export default function FinancialShippingReceivables({
   month,
   columns,
@@ -81,6 +89,7 @@ export default function FinancialShippingReceivables({
       return {
         ...shop,
         fast: results.some(result => result?.data?.dana_cepat),
+      diagnosa: results.flatMap((result) => result?.data?.mutasi_diagnosa ?? []),
       unmappedWallet: results.reduce((n, result) => n + (result?.data?.mutasi_tidak_terpetakan ?? 0), 0),
       loading: results.some((result) => result?.isPending),
         failed: results.some((result) => !!result?.error),
@@ -238,7 +247,20 @@ export default function FinancialShippingReceivables({
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
                               {shop.fast && <span className="mt-1 block text-xs text-muted-foreground">Dana Cepat · mutasi saldo</span>}
-                              {shop.unmappedWallet > 0 && <span className="mt-1 block text-xs text-muted-foreground">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan</span>}
+                              {shop.unmappedWallet > 0 && (
+                                <details className="mt-1 text-xs text-muted-foreground">
+                                  <summary className="cursor-pointer">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan</summary>
+                                  <ul className="mt-2 space-y-2">
+                                    {shop.diagnosa.map((d, n) => (
+                                      <li key={n} className="rounded-md border p-2">
+                                        <div className="font-medium text-foreground">{new Date(d.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {d.jenis} · {fmtRp(d.nominal)}</div>
+                                        <div>{ALASAN[d.alasan] ?? d.alasan}{d.pesanan.length > 0 && ` · ${d.pesanan.length} pesanan`}</div>
+                                        {d.rilis_terdekat.length > 0 && <div>Rilis terdekat: {d.rilis_terdekat.map((r) => `${r.order_sn} ${fmtRp(r.payout)} (${r.selisih_menit > 0 ? "+" : ""}${r.selisih_menit} mnt)`).join("; ")}</div>}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </details>
+                              )}
                               {shop.loading && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                   Memuat dana Shopee…
