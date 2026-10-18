@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
-import { SelectField } from './processingShared'
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
 export { sumAmounts } from '@/lib/financialAmounts'
@@ -61,6 +60,18 @@ const dateLabel = (date: string) =>
     month: '2-digit',
     year: 'numeric',
   })
+
+// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
+const weekNames = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+export function weekRange(month: string, index: number): string {
+  const first = new Date(`${month}-01T12:00:00Z`)
+  const monday = new Date(first)
+  monday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7) + index * 7)
+  const saturday = new Date(monday)
+  saturday.setUTCDate(monday.getUTCDate() + 5)
+  return `${shortDate(monday)}–${shortDate(saturday)}`
+}
 
 export function sheetSections(data: Overview): { title: string; rows: SheetRow[] }[] {
   const shopNames = [...new Set(data.laporan.flatMap((r) => (r.rincian_toko ?? []).map((s) => s.nama)))]
@@ -239,39 +250,41 @@ export default function FinancialReportSheet({
         ]),
       ]),
     ])
-  const [mobilePeriod, setMobilePeriod] = useState('total')
-  const selectedPeriod = days.includes(mobilePeriod) ? mobilePeriod : 'total'
   const latest = records.at(-1)
   const summaries = [
     {
       label: 'Pemasukan',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.pemasukan)) : null,
+      tone: 'var(--primary)',
       icon: ArrowDownLeft,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Pengeluaran',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.pengeluaran)) : null,
+      tone: 'var(--destructive)',
       icon: ArrowUpRight,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Laba / Rugi',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.laba)) : null,
+      tone: records.length && sumAmounts(records.map((r) => r.hasil.laba)).startsWith('-') ? 'var(--destructive)' : 'var(--primary)',
       icon: TrendingUp,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Kas utama',
       value: latest?.hasil.saldo_akhir.kas_utama ?? data.saldo_awal?.saldo.kas_utama ?? null,
+      tone: 'var(--foreground)',
       icon: Wallet,
       note: 'Posisi terakhir',
     },
   ]
   const renderTable = (section: ReturnType<typeof sheetSections>[number]) => (
-    <Card className="min-w-0 overflow-hidden">
+    <Card className="financial-card min-w-0 overflow-hidden">
       <CardHeader>
-        <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
+        <CardTitle className="font-heading text-lg">{sentenceCase(section.title.slice(3))}</CardTitle>
         <p className="text-xs text-muted-foreground">
           {records.length
             ? `${records.length} periode tersimpan · sampai ${dateLabel(latest!.tanggal)}`
@@ -297,10 +310,8 @@ export default function FinancialReportSheet({
                 <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
-                    <span className="block">
-                      {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]} · {months[Number(month.slice(5)) - 1]}
-                    </span>
-                    <span className="block text-xs font-normal">{dateLabel(d)}</span>
+                    <span className="block">Minggu {weekNames[i]}</span>
+                    <span className="block text-xs font-normal">{weekRange(month, i)}</span>
                   </TableHead>
                 ))}
                 <TableHead className="text-right">
@@ -336,45 +347,39 @@ export default function FinancialReportSheet({
             </TableBody>
           </Table>
         </div>
-        <div className="space-y-3 md:hidden">
-          <SelectField
-            aria-label={`Periode ${section.title.slice(3)}`}
-            value={selectedPeriod}
-            onChange={(e) => setMobilePeriod(e.target.value)}
-          >
-            <option value="total">
-              {section.title.startsWith('E.') ? 'Posisi terakhir' : 'Rekap seluruh periode'}
-            </option>
-            {days.map((d, i) => (
-              <option key={d} value={d}>
-                Minggu {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]} · {dateLabel(d)}
-              </option>
-            ))}
-          </SelectField>
-          <dl className="overflow-hidden rounded-xl border">
-            {section.rows.map((row) => {
-              if (row.group) return (
-                <div key={row.label} className="financial-row-group border-b px-3 py-2">
-                  <dt>{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
-                  <dd className="sr-only">Golongan transaksi</dd>
-                </div>
-              )
-              const report = records.find((r) => r.tanggal === selectedPeriod)
-              const amount =
-                selectedPeriod === 'total' ? columnTotal(row, records) : report ? row.value(report) : null
-              return (
-                <div
-                  key={row.label}
-                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b px-3 py-3 last:border-b-0 ${row.emphasis ? 'bg-primary/5 font-semibold' : ''}`}
-                >
-                  <dt className="text-xs leading-relaxed">{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
-                  <dd className="whitespace-nowrap text-xs tabular-nums">
-                    {amount === null ? '—' : fmtRp(amount)}
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
+        <div className="space-y-4 md:hidden">
+          {[...days.map((d, i) => ({ key: d, title: `Minggu ${weekNames[i]}`, range: weekRange(month, i), report: records.find((r) => r.tanggal === d) ?? null })),
+            { key: 'total', title: section.title.startsWith('E.') ? 'Posisi terakhir' : 'Jumlah', range: `${days.length} minggu`, report: null }].map((week) => (
+            <div key={week.key} className="overflow-hidden rounded-xl border bg-card shadow-xs">
+              <Table aria-label={`${section.title.slice(3)} ${week.title} ${week.range}`}>
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead className="py-2">
+                      <span className="block text-sm font-semibold">{week.title}</span>
+                      <span className="block text-xs font-normal text-muted-foreground">{week.range}</span>
+                    </TableHead>
+                    <TableHead className="text-right align-bottom text-xs font-normal text-muted-foreground">Nilai</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {section.rows.map((row) => {
+                    if (row.group) return (
+                      <TableRow key={row.label} className="financial-row-group">
+                        <TableHead colSpan={2} scope="rowgroup">{row.label}</TableHead>
+                      </TableRow>
+                    )
+                    const amount = week.key === 'total' ? columnTotal(row, records) : week.report ? row.value(week.report) : null
+                    return (
+                      <TableRow key={row.label} className={row.emphasis ? 'bg-primary/5 font-semibold' : undefined}>
+                        <TableCell className="whitespace-normal text-xs leading-relaxed">{row.emphasis ? sentenceCase(row.label) : row.label}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right text-xs tabular-nums">{amount === null ? '—' : fmtRp(amount)}</TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
@@ -383,12 +388,16 @@ export default function FinancialReportSheet({
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {summaries.map((s) => (
-          <div key={s.label} className="min-w-0 rounded-2xl border bg-card p-3 sm:p-4">
+          <div
+            key={s.label}
+            className="financial-summary-card min-w-0 rounded-2xl p-3 pl-4 sm:p-4 sm:pl-5"
+            style={{ '--tone': s.tone } as CSSProperties}
+          >
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
-              <s.icon className="h-4 w-4 text-primary" />
+              <span className="financial-chip"><s.icon className="h-4 w-4" /></span>
             </div>
-            <p className="break-words text-base font-semibold tabular-nums sm:text-xl">
+            <p className="financial-value break-words text-base font-semibold tabular-nums sm:text-xl">
               {s.value === null ? '—' : fmtRp(s.value)}
             </p>
             <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{s.note}</p>
