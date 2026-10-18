@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   shippingReceivables,
@@ -173,8 +173,12 @@ export default function FinancialShippingReceivables({
       ? sumAmounts([total, "-" + utangDanaCepat[i - 1]!.replace(/^-/, "")])
       : null,
   );
+  const [picked, setPicked] = useState<number | null>(null);
   const future = (i: number) =>
     !!data && data.minggu[i].hingga < data.minggu[i].mulai;
+  const lastShown = data ? data.minggu.reduce((n, _, i) => (future(i) ? n : i), 0) : 0;
+  const pick = picked ?? lastShown;
+  const phoneHide = (i: number) => (i === pick ? "" : "max-md:hidden");
   const amount = (
     cell: ShippingReceivableCell,
     metric: (typeof metrics)[number],
@@ -234,28 +238,38 @@ export default function FinancialShippingReceivables({
           </div>
         )}
         {data && (
+          <>
+          <div className="flex gap-2 overflow-x-auto pb-1 md:hidden" role="tablist" aria-label="Pilih periode">
+            {data.minggu.map((w, i) => (
+              <button key={w.mulai} type="button" role="tab" aria-selected={pick === i} onClick={() => setPicked(i)}
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-left text-xs ${pick === i ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>
+                <span className="block font-medium">Periode</span>
+                <span className="block opacity-80">{dateLabel(w.mulai)}–{dateLabel(w.akhir)}</span>
+              </button>
+            ))}
+          </div>
           <div className="relative max-h-[70dvh] max-w-full overflow-auto rounded-xl border">
             <Table
               aria-label="PESANAN DALAM PENGIRIMAN"
-              className="table-fixed"
-              style={{ minWidth: 250 + data.minggu.length * 175 }}
+              className="table-fixed md:min-w-[calc(250px+var(--n)*175px)]"
+              style={{ "--n": data.minggu.length } as React.CSSProperties}
             >
               <colgroup>
-                <col style={{ width: 250 }} />
-                {data.minggu.map((w) => (
-                  <col key={w.mulai} style={{ width: 175 }} />
+                <col className="max-md:w-[55%] md:w-[250px]" />
+                {data.minggu.map((w, i) => (
+                  <col key={w.mulai} className={`md:w-[175px] ${phoneHide(i)}`} />
                 ))}
               </colgroup>
               <TableHeader className="sticky top-0 z-20 bg-muted">
                 <TableRow>
-                  <TableHead className="sticky left-0 z-30 bg-muted">
+                  <TableHead className="bg-muted md:sticky md:left-0 md:z-30">
                     Toko / Jenis dana
                     <span className="mt-1 block text-xs font-normal">
                       Piutang estimasi · Pencairan riil
                     </span>
                   </TableHead>
                   {data.minggu.map((week) => (
-                    <TableHead key={week.mulai} className="text-right">
+                    <TableHead key={week.mulai} className={`text-right ${phoneHide(data.minggu.indexOf(week))}`}>
                       <span className="block">Periode</span>
                       <span className="block text-xs font-normal">
                         {dateLabel(week.mulai)}–{dateLabel(week.akhir)}
@@ -276,7 +290,7 @@ export default function FinancialShippingReceivables({
                             : "bg-card"
                         }
                       >
-                        <TableCell className="sticky left-0 z-10 whitespace-normal bg-card align-top">
+                        <TableCell className="whitespace-normal bg-card align-top md:sticky md:left-0 md:z-10">
                           {index === 0 && (
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
@@ -323,7 +337,7 @@ export default function FinancialShippingReceivables({
                         {shop.minggu.map((cell, i) => (
                           <TableCell
                             key={i}
-                            className="text-right align-bottom tabular-nums"
+                            className={`text-right align-bottom tabular-nums ${phoneHide(i)}`}
                           >
                             {amount(cell, metric, i)}
                           </TableCell>
@@ -337,7 +351,7 @@ export default function FinancialShippingReceivables({
                     key={"total-" + metric.key}
                     className="bg-muted/60 font-semibold"
                   >
-                    <TableCell className="sticky left-0 z-10 whitespace-normal bg-muted">
+                    <TableCell className="whitespace-normal bg-muted md:sticky md:left-0 md:z-10">
                       Total {metric.label.toLowerCase()}
                     </TableCell>
                     {data.minggu.map((week, i) => {
@@ -352,7 +366,7 @@ export default function FinancialShippingReceivables({
                       return (
                         <TableCell
                           key={week.mulai}
-                          className="text-right tabular-nums"
+                          className={`text-right tabular-nums ${phoneHide(i)}`}
                         >
                           {future(i) ? (
                             "—"
@@ -396,9 +410,9 @@ export default function FinancialShippingReceivables({
                     : []),
                 ].map((row) => (
                   <TableRow key={row.label} className="border-t-2 bg-muted/60 font-semibold">
-                    <TableCell className="sticky left-0 z-10 whitespace-normal bg-muted">{row.label}</TableCell>
+                    <TableCell className="whitespace-normal bg-muted md:sticky md:left-0 md:z-10">{row.label}</TableCell>
                     {data.minggu.map((week, i) => (
-                      <TableCell key={week.mulai} className="text-right tabular-nums">
+                      <TableCell key={week.mulai} className={`text-right tabular-nums ${phoneHide(i)}`}>
                         {future(i) || (row.change && i === 0) ? (
                           "—"
                         ) : row.values[i] !== null ? (
@@ -416,6 +430,7 @@ export default function FinancialShippingReceivables({
               </TableBody>
             </Table>
           </div>
+          </>
         )}
       </CardContent>
     </Card>

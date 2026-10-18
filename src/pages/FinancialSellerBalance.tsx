@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { sumAmounts } from '@/lib/financialAmounts'
+import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
 
 const shops = ['BUMI TANI IND', 'BUMI LESTARI INDONESIA', 'RESTU BUMI IND', 'MAJAPAHIT STORE IND', 'CAHAYA LANGIT IND', 'AZFA Furniture Official']
 const key = (value: string) => value.normalize('NFKC').toLocaleLowerCase('id-ID').trim().replace(/\s+/gu, ' ')
@@ -21,6 +22,7 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
   const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date())
   const today = ['year','month','day'].map(type=>parts.find(p=>p.type===type)?.value).join('-')
   const lastClosed = dates.findLastIndex(d=>d<today)
+  const phone = usePeriodPick(Math.max(lastClosed,0))
   const queries = useQueries({queries:selected.flatMap((account,index)=>dates.map(cutoff=>({
     queryKey:['financial-wallet-cutoff',account?.id??shops[index],cutoff],
     queryFn:()=>api.get<Balance>(`/laporan-keuangan/saldo-wallet-shopee/${account!.id}`,{params:{tanggal:cutoff}}).then(r=>r.data),
@@ -49,19 +51,20 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
     <p className="text-sm text-muted-foreground">Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off.</p>
   </CardHeader><CardContent className="space-y-3">
     {accounts.error && <p role="alert">{getApiError(accounts.error)}</p>}
-    <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed" style={{minWidth:220+(columns+1)*165}} aria-label="SALDO PENJUAL (SHOPEE)">
-      <colgroup><col style={{width:220}}/>{dates.map(d=><col key={d} style={{width:165}}/>)}<col style={{width:165}}/></colgroup>
-      <TableHeader className="bg-muted"><TableRow><TableHead className="sticky left-0 z-10 bg-muted">Toko</TableHead>
-        {dates.map((d)=><TableHead key={d} className="text-center"><span className="block">Periode</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
+    <PeriodPicker options={dates.map(d=>({key:d,label:'Periode',sub:`Minggu ${label(d)}`}))} pick={phone.pick} onPick={phone.setPick}/>
+    <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed md:min-w-[calc(220px+var(--n)*165px)]" style={{'--n':columns+1} as React.CSSProperties} aria-label="SALDO PENJUAL (SHOPEE)">
+      <colgroup><col className="max-md:w-[36%] md:w-[220px]"/>{dates.map((d,i)=><col key={d} className={`md:w-[165px] ${phone.hide(i)}`}/>)}<col className="md:w-[165px]"/></colgroup>
+      <TableHeader className="bg-muted"><TableRow><TableHead className="bg-muted md:sticky md:left-0 md:z-10">Toko</TableHead>
+        {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
         <TableHead className="text-right">Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
       </TableRow></TableHeader><TableBody>
-        {shops.map((name,i)=><TableRow key={name}><TableCell className="sticky left-0 z-10 bg-card">{name}
+        {shops.map((name,i)=><TableRow key={name}><TableCell className="bg-card md:sticky md:left-0 md:z-10">{name}
           {!accounts.isPending && !accounts.error && (!selected[i] || !selected[i]?.id_toko_eksternal) && <span className="block whitespace-normal text-xs text-muted-foreground">{matched[i].length>1?'Nama cocok dengan lebih dari satu akun ERP':selected[i]?'Toko belum terhubung':'Akun toko ERP belum ditemukan'}</span>}
-        </TableCell>{dates.map((d,w)=><TableCell key={d} className="text-right tabular-nums">{amount(i,w)}
+        </TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{amount(i,w)}
           {usable(i,w) && get(i,w)!.data!.transaksi_at != null && <span className="block whitespace-normal text-xs text-muted-foreground">Mutasi {fmtDateTime(new Date(get(i,w)!.data!.transaksi_at!*1000).toISOString())}</span>}
           {get(i,w)?.error && <span className="block whitespace-normal text-xs text-destructive">{getApiError(get(i,w)!.error)}</span>}
         </TableCell>)}<TableCell className="bg-muted/40 text-right tabular-nums">{amount(i,lastClosed)}</TableCell></TableRow>)}
-        <TableRow className="bg-muted/50 font-semibold"><TableCell className="sticky left-0 z-10 bg-muted">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className="text-right tabular-nums">{totals(w)}</TableCell>)}<TableCell className="text-right tabular-nums">{totals(lastClosed)}</TableCell></TableRow>
+        <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{totals(w)}</TableCell>)}<TableCell className="text-right tabular-nums">{totals(lastClosed)}</TableCell></TableRow>
       </TableBody>
     </Table></div>
     <p className="text-xs text-muted-foreground">Saldo berasal dari mutasi terakhir sampai Minggu 23.59 WIB, dengan pencarian 14 hari ke belakang dari tiap cut-off. Riwayat tidak tersedia ditandai, tanpa memakai saldo saat ini. Saldo mingguan tidak dijumlahkan; kolom terakhir memakai posisi minggu terakhir yang sudah tutup. Total antar toko dipisahkan menurut mata uang. Sumber belum memisahkan saldo tersedia untuk ditarik dan tertahan.</p>
