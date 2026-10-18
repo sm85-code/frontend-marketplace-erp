@@ -1,7 +1,8 @@
 import { Fragment } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   shippingReceivables,
+  pendingShippingReceivables,
   type ShippingReceivableCell,
 } from "@/api/financialReports";
 import { fmtRp, getApiError } from "@/api/client";
@@ -28,13 +29,13 @@ const metrics = [
   {
     key: "piutang",
     label: "Piutang baru",
-    basis: "Bruto · kiriman minggu ini",
+    basis: "Estimasi · kiriman minggu ini",
     unknown: "piutang_tidak_pasti",
   },
   {
     key: "piutang_lama",
     label: "Piutang lama belum cair",
-    basis: "Bruto · kiriman sebelum minggu ini",
+    basis: "Estimasi · kiriman sebelum minggu ini",
     unknown: "piutang_lama_tidak_pasti",
   },
   {
@@ -59,7 +60,68 @@ export default function FinancialShippingReceivables({
     queryFn: () => shippingReceivables(month, columns, until),
     enabled: columns > 0,
   });
-  const data = q.data;
+  const accounts = q.data?.toko.flatMap((shop) => shop.akun_ids ?? []) ?? [];
+  const pending = useQueries({
+    queries: accounts.map((account) => ({
+      queryKey: ["financial-pending-shipping", account, month, columns, until],
+      queryFn: () => pendingShippingReceivables(account, month, columns, until),
+      staleTime: 60_000,
+      retry: false,
+    })),
+  });
+  const fetching = q.isFetching || pending.some((result) => result.isFetching);
+  const data = q.data && {
+    ...q.data,
+    toko: q.data.toko.map((shop) => {
+      const results = (shop.akun_ids ?? []).map(
+        (id) => pending[accounts.indexOf(id)],
+      );
+      const loaded =
+        results.length > 0 && results.every((result) => !!result?.data);
+      return {
+        ...shop,
+        loading: results.some((result) => result?.isPending),
+        failed: results.some((result) => !!result?.error),
+        partial: results.some(
+          (result) => result?.data?.halaman_lengkap === false,
+        ),
+        unmapped: results.reduce(
+          (n, result) => n + (result?.data?.tanpa_tanggal_kirim ?? 0),
+          0,
+        ),
+        minggu: shop.minggu.map((_, i) => {
+          const cells = results.flatMap((result) =>
+            result?.data ? [result.data.minggu[i]] : [],
+          );
+          const cell: ShippingReceivableCell = {
+            piutang: null,
+            piutang_lama: null,
+            cair_minggu_lalu: null,
+            piutang_tidak_pasti: 0,
+            piutang_lama_tidak_pasti: 0,
+            cair_tidak_terpetakan: 0,
+          };
+          for (const metric of metrics) {
+            cell[metric.key] =
+              loaded && cells.every((c) => c[metric.key] !== null)
+                ? sumAmounts(cells.map((c) => c[metric.key]!))
+                : null;
+            cell[metric.unknown] = cells.reduce(
+              (n, c) => n + c[metric.unknown],
+              0,
+            );
+          }
+          return cell;
+        }),
+      };
+    }),
+  };
+  const refresh = () => {
+    void q.refetch();
+    pending.forEach((result) => {
+      void result.refetch();
+    });
+  };
   const future = (i: number) =>
     !!data && data.minggu[i].hingga < data.minggu[i].mulai;
   const amount = (
@@ -83,7 +145,14 @@ export default function FinancialShippingReceivables({
           : "Belum tersedia"}
       </span>
     ) : (
-      fmtRp(value)
+      <span>
+        {fmtRp(value)}
+        {cell[metric.unknown] > 0 && (
+          <span className="mt-1 block text-xs font-normal text-muted-foreground">
+            + {cell[metric.unknown]} belum terpetakan
+          </span>
+        )}
+      </span>
     );
   };
   return (
@@ -91,17 +160,13 @@ export default function FinancialShippingReceivables({
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Pesanan Dalam Pengiriman</CardTitle>
-          <Button
-            variant="outline"
-            disabled={q.isFetching}
-            onClick={() => void q.refetch()}
-          >
-            {q.isFetching ? "Memuat…" : "Perbarui data"}
+          <Button variant="outline" disabled={fetching} onClick={refresh}>
+            {fetching ? "Memuat…" : "Perbarui data"}
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          Piutang baru dan lama adalah dana yang belum cair. Pencairan
-          ditampilkan terpisah.
+          Sumber: Menunggu cair Shopee. Barang yang sudah diterima tetap menjadi
+          piutang sampai dana cair.
         </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
@@ -112,7 +177,7 @@ export default function FinancialShippingReceivables({
             className="flex flex-wrap items-center gap-2 text-sm"
           >
             <span>{getApiError(q.error)}</span>
-            <Button variant="outline" onClick={() => void q.refetch()}>
+            <Button variant="outline" onClick={refresh}>
               Coba lagi
             </Button>
           </div>
@@ -135,7 +200,7 @@ export default function FinancialShippingReceivables({
                   <TableHead className="sticky left-0 z-30 bg-muted">
                     Toko / Jenis dana
                     <span className="mt-1 block text-xs font-normal">
-                      Piutang bruto · Pencairan bersih
+                      Piutang estimasi · Pencairan riil
                     </span>
                   </TableHead>
                   {data.minggu.map((week, i) => (
@@ -170,6 +235,27 @@ export default function FinancialShippingReceivables({
                           {index === 0 && (
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
+                              {shop.loading && (
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  Memuat dana Shopee…
+                                </span>
+                              )}
+                              {shop.failed && (
+                                <span className="mt-1 block text-xs text-destructive">
+                                  Gagal membaca Shopee · klik Perbarui data
+                                </span>
+                              )}
+                              {shop.partial && (
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  Sebagian halaman belum terkonfirmasi
+                                </span>
+                              )}
+                              {shop.unmapped > 0 && (
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  {shop.unmapped} pesanan belum memiliki tanggal
+                                  kirim
+                                </span>
+                              )}
                               {!shop.akun_ditemukan && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                   Akun toko belum ditemukan
@@ -211,7 +297,11 @@ export default function FinancialShippingReceivables({
                       const cells = data.toko.map((shop) => shop.minggu[i]);
                       const complete =
                         cells.length > 0 &&
-                        cells.every((cell) => cell[metric.key] !== null);
+                        cells.every(
+                          (cell) =>
+                            cell[metric.key] !== null &&
+                            cell[metric.unknown] === 0,
+                        );
                       return (
                         <TableCell
                           key={week.mulai}
@@ -219,12 +309,24 @@ export default function FinancialShippingReceivables({
                         >
                           {future(i) ? (
                             "—"
-                          ) : complete ? (
-                            fmtRp(
-                              sumAmounts(
-                                cells.map((cell) => cell[metric.key]!),
-                              ),
-                            )
+                          ) : cells.some(
+                              (cell) => cell[metric.key] !== null,
+                            ) ? (
+                            <span>
+                              {fmtRp(
+                                sumAmounts(
+                                  cells.flatMap((cell) => cell[metric.key] === null ? [] : [cell[metric.key]!]),
+                                ),
+                              )}
+                              {(!complete ||
+                                data.toko.some(
+                                  (shop) => shop.partial || shop.unmapped,
+                                )) && (
+                                <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                                  Subtotal data terbaca
+                                </span>
+                              )}
+                            </span>
                           ) : (
                             <span className="text-xs font-normal text-muted-foreground">
                               Belum lengkap
