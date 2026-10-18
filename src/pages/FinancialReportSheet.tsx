@@ -384,7 +384,7 @@ export default function FinancialReportSheet({
   )
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {summaries.map((s) => (
           <KartuMetrik key={s.label} label={s.label} icon={s.icon} nilai={s.value === null ? '—' : fmtRp(s.value)} catatan={s.note} />
         ))}

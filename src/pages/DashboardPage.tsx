@@ -107,7 +107,7 @@ export default function DashboardPage() {
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>
-          <div className="grid grid-cols-2 items-stretch gap-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-5">
             <KartuMetrik icon={ShoppingBag} label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
             <KartuMetrik icon={Clock} label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
             <KartuMetrik icon={PackageCheck} label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
