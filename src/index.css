@@ -851,31 +851,3 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   background: linear-gradient(to right, color-mix(in oklab, var(--primary) 35%, transparent), transparent);
 }
 
-/* Laporan keuangan cards: a tone color (set per card) tints the surface, accent edge and icon chip. */
-.financial-summary-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--tone) 22%, var(--border));
-  background: linear-gradient(135deg, color-mix(in oklab, var(--tone) 11%, var(--card)), var(--card) 70%);
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--tone) 10%, transparent);
-}
-.financial-summary-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--tone);
-  opacity: .85;
-}
-.financial-summary-card .financial-chip {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: .75rem;
-  color: var(--tone);
-  background: color-mix(in oklab, var(--tone) 16%, transparent);
-}
-.financial-summary-card .financial-value { color: color-mix(in oklab, var(--tone) 78%, var(--foreground)); }
-.financial-card { border-color: color-mix(in oklab, var(--primary) 14%, var(--border)); box-shadow: 0 1px 3px color-mix(in oklab, var(--primary) 8%, transparent); }
-.financial-card [data-slot="card-header"] { background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 7%, transparent), transparent); }

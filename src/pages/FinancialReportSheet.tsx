@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
@@ -255,36 +255,32 @@ export default function FinancialReportSheet({
     {
       label: 'Pemasukan',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.pemasukan)) : null,
-      tone: 'var(--primary)',
       icon: ArrowDownLeft,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Pengeluaran',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.pengeluaran)) : null,
-      tone: 'var(--destructive)',
       icon: ArrowUpRight,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Laba / Rugi',
       value: records.length ? sumAmounts(records.map((r) => r.hasil.laba)) : null,
-      tone: records.length && sumAmounts(records.map((r) => r.hasil.laba)).startsWith('-') ? 'var(--destructive)' : 'var(--primary)',
       icon: TrendingUp,
       note: 'Akumulasi periode terisi',
     },
     {
       label: 'Kas utama',
       value: latest?.hasil.saldo_akhir.kas_utama ?? data.saldo_awal?.saldo.kas_utama ?? null,
-      tone: 'var(--foreground)',
       icon: Wallet,
       note: 'Posisi terakhir',
     },
   ]
   const renderTable = (section: ReturnType<typeof sheetSections>[number]) => (
-    <Card className="financial-card min-w-0 overflow-hidden">
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader>
-        <CardTitle className="font-heading text-lg">{sentenceCase(section.title.slice(3))}</CardTitle>
+        <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
         <p className="text-xs text-muted-foreground">
           {records.length
             ? `${records.length} periode tersimpan · sampai ${dateLabel(latest!.tanggal)}`
@@ -292,7 +288,7 @@ export default function FinancialReportSheet({
         </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
-        <div className="hidden max-w-full overflow-x-auto rounded-xl border md:block">
+        <div className="max-w-full overflow-x-auto rounded-lg border">
           <Table
             className="table-fixed"
             style={{ minWidth: 220 + (days.length + 1) * 142 }}
@@ -310,7 +306,7 @@ export default function FinancialReportSheet({
                 <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
-                    <span className="block">Minggu {weekNames[i]}</span>
+                    <span className="block">{weekNames[i]} · {months[Number(month.slice(5)) - 1]}</span>
                     <span className="block text-xs font-normal">{weekRange(month, i)}</span>
                   </TableHead>
                 ))}
@@ -347,40 +343,6 @@ export default function FinancialReportSheet({
             </TableBody>
           </Table>
         </div>
-        <div className="space-y-4 md:hidden">
-          {[...days.map((d, i) => ({ key: d, title: `Minggu ${weekNames[i]}`, range: weekRange(month, i), report: records.find((r) => r.tanggal === d) ?? null })),
-            { key: 'total', title: section.title.startsWith('E.') ? 'Posisi terakhir' : 'Jumlah', range: `${days.length} minggu`, report: null }].map((week) => (
-            <div key={week.key} className="overflow-hidden rounded-xl border bg-card shadow-xs">
-              <Table aria-label={`${section.title.slice(3)} ${week.title} ${week.range}`}>
-                <TableHeader className="bg-muted">
-                  <TableRow>
-                    <TableHead className="py-2">
-                      <span className="block text-sm font-semibold">{week.title}</span>
-                      <span className="block text-xs font-normal text-muted-foreground">{week.range}</span>
-                    </TableHead>
-                    <TableHead className="text-right align-bottom text-xs font-normal text-muted-foreground">Nilai</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {section.rows.map((row) => {
-                    if (row.group) return (
-                      <TableRow key={row.label} className="financial-row-group">
-                        <TableHead colSpan={2} scope="rowgroup">{row.label}</TableHead>
-                      </TableRow>
-                    )
-                    const amount = week.key === 'total' ? columnTotal(row, records) : week.report ? row.value(week.report) : null
-                    return (
-                      <TableRow key={row.label} className={row.emphasis ? 'bg-primary/5 font-semibold' : undefined}>
-                        <TableCell className="whitespace-normal text-xs leading-relaxed">{row.emphasis ? sentenceCase(row.label) : row.label}</TableCell>
-                        <TableCell className="whitespace-nowrap text-right text-xs tabular-nums">{amount === null ? '—' : fmtRp(amount)}</TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ))}
-        </div>
       </CardContent>
     </Card>
   )
@@ -388,20 +350,18 @@ export default function FinancialReportSheet({
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {summaries.map((s) => (
-          <div
-            key={s.label}
-            className="financial-summary-card min-w-0 rounded-2xl p-3 pl-4 sm:p-4 sm:pl-5"
-            style={{ '--tone': s.tone } as CSSProperties}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
-              <span className="financial-chip"><s.icon className="h-4 w-4" /></span>
-            </div>
-            <p className="financial-value break-words text-base font-semibold tabular-nums sm:text-xl">
-              {s.value === null ? '—' : fmtRp(s.value)}
-            </p>
-            <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{s.note}</p>
-          </div>
+          <Card key={s.label} className="min-w-0">
+            <CardContent className="p-3 sm:p-4">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--bg)', boxShadow: 'var(--shadow-inset)' }}>
+                <s.icon className="size-4.5" style={{ color: 'var(--primary-dark, var(--primary))' }} />
+              </div>
+              <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>{s.label}</p>
+              <p className="font-heading mt-1 text-lg font-bold tabular-nums [overflow-wrap:anywhere] sm:text-2xl">
+                {s.value === null ? '—' : fmtRp(s.value)}
+              </p>
+              <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{s.note}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
