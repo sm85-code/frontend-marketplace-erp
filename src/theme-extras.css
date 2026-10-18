@@ -395,9 +395,3 @@ tr[data-anak]:hover > .sel-tetap {
   .order-mobile-view { display: block; }
   .order-desktop-table { display: none; }
 }
-
-/* Phones: size every table to its content instead of the fixed desktop column widths set per page. */
-@media (max-width: 47.99rem) {
-  [data-slot="table"] { table-layout: auto !important; min-width: 0 !important; }
-  [data-slot="table"] col { width: auto !important; }
-}

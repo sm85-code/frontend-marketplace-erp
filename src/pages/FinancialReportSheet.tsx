@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
@@ -64,6 +64,48 @@ const dateLabel = (date: string) =>
 
 // Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
 const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+type SheetSection = ReturnType<typeof sheetSections>[number]
+
+/** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
+function PhoneSheet({ section, month, records, days }: { section: SheetSection; month: string; records: Report[]; days: string[] }) {
+  const [pick, setPick] = useState(0)
+  const total = pick >= days.length
+  const record = total ? undefined : records.find((r) => r.tanggal === days[pick])
+  const valueOf = (row: Exclude<SheetSection['rows'][number], { group: true }>) =>
+    total ? fmtRp(columnTotal(row, records)) : record ? fmtRp(row.value(record)) : '—'
+  const options = [...days.map((_, i) => ({ key: String(i), label: `Periode ${i + 1}`, sub: weekRange(month, i) })),
+    { key: 'total', label: section.title.startsWith('E.') ? 'Posisi terakhir' : 'Jumlah', sub: '' }]
+  return (
+    <div className="space-y-2 md:hidden">
+      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Pilih periode">
+        {options.map((o, i) => (
+          <button key={o.key} type="button" role="tab" aria-selected={pick === i} onClick={() => setPick(i)}
+            className={`shrink-0 rounded-lg border px-3 py-1.5 text-left text-xs ${pick === i ? 'border-primary bg-primary text-primary-foreground' : 'bg-card'}`}>
+            <span className="block font-medium">{o.label}</span>
+            {o.sub ? <span className="block opacity-80">{o.sub}</span> : null}
+          </button>
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-lg border">
+        <Table aria-label={section.title.slice(3)}>
+          <TableBody>
+            {section.rows.map((row) => row.group ? (
+              <TableRow key={row.label} className="financial-row-group">
+                <TableHead colSpan={2} scope="rowgroup">{row.label}</TableHead>
+              </TableRow>
+            ) : (
+              <TableRow key={row.label} className={row.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
+                <TableCell className="whitespace-normal">{row.emphasis ? sentenceCase(row.label) : row.label}</TableCell>
+                <TableCell className="text-right whitespace-nowrap tabular-nums">{valueOf(row)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
+
 export function weekRange(month: string, index: number): string {
   const first = new Date(`${month}-01T12:00:00Z`)
   const monday = new Date(first)
@@ -287,7 +329,8 @@ export default function FinancialReportSheet({
         <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
-        <div className="max-w-full overflow-x-auto rounded-lg border">
+        <PhoneSheet section={section} month={month} records={records} days={days} />
+        <div className="hidden max-w-full overflow-x-auto rounded-lg border md:block">
           <Table
             className="table-fixed min-w-[calc(140px+var(--n)*112px)] sm:min-w-[calc(220px+var(--n)*142px)]"
             style={{ '--n': days.length + 1 } as React.CSSProperties}
