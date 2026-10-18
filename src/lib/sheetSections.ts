@@ -23,6 +23,7 @@ const before = (key: keyof Report['hasil']['saldo_awal']) => (r: Report) => r.ha
 const G = (tabel: string, grup: string) => ({ group: `${tabel}|${grup}` })
 const cum = (row: string, sign: 1 | -1 = 1): Dep => ({ row, sign, mode: 'cum' })
 const prior = (row: string, sign: 1 | -1 = 1): Dep => ({ row, sign, mode: 'cumBefore' })
+const C = (tabel: string, grup: string): Dep => ({ custom: `${tabel}|${grup}` })
 
 /** The five report tables as row definitions; see sheetEngine for how `deps` keep totals and the balance sheet in step. */
 export function sheetSections(data: Overview): SectionDef[] {
@@ -43,7 +44,7 @@ export function sheetSections(data: Overview): SectionDef[] {
         key: string,
         label: string,
         base: RowDef['base'],
-        opt: { kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean } = {},
+        opt: { kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean; autoHide?: boolean } = {},
       ) {
         rows.push({
           key,
@@ -53,6 +54,7 @@ export function sheetSections(data: Overview): SectionDef[] {
           kind: opt.kind ?? 'input',
           total: opt.total ?? 'sum',
           emphasis: opt.emphasis,
+          autoHide: opt.autoHide,
           deps: opt.deps,
           base,
         })
@@ -101,11 +103,18 @@ export function sheetSections(data: Overview): SectionDef[] {
   c.row('laba', 'Laba bersih', result('laba'), { kind: 'calc', emphasis: true, deps: [{ row: 'c_masuk' }, { row: 'c_keluar', sign: -1 }] })
 
   const d = section('arus_kas', 'D. ARUS KAS')
-  d.row('awal', 'Saldo awal kas utama', before('kas_utama'), { kind: 'calc', total: 'first', emphasis: true, total_row: true })
+  d.row('awal', 'Saldo awal kas utama', before('kas_utama'), {
+    kind: 'calc',
+    total: 'first',
+    emphasis: true,
+    total_row: true,
+    deps: [prior('kas_masuk'), prior('kas_keluar', -1), prior('transfer')],
+  })
   d.group('Kas masuk')
   d.row('k_toko', 'Saldo toko', result('pemasukan_toko'), { kind: 'calc', deps: [G('pemasukan', 'Penarikan saldo toko')] })
   d.row('k_prod', 'Penjualan produk + proses', (r) => sumAmounts([String(r.input.pendapatan_produk ?? 0), String(r.input.jasa_proses ?? 0)]), { kind: 'calc', deps: [{ row: 'produk' }, { row: 'jasa_proses' }] })
   d.row('k_cat', 'Jasa cat + packing', (r) => sumAmounts([String(r.input.jasa_cat_packing ?? 0), String(r.input.jasa_cat ?? 0)]), { kind: 'calc', deps: [{ row: 'cat_packing' }, { row: 'cat' }] })
+  d.row('k_lain', 'Pemasukan lainnya (baris manual)', () => '0', { kind: 'calc', autoHide: true, deps: [C('pemasukan', 'Penjualan dan jasa')] })
   d.row('kas_masuk', 'Jumlah kas masuk', result('kas_masuk'), { ...calcTotal, deps: [G('arus_kas', 'Kas masuk')] })
   d.group('Kas keluar')
   d.row('k_tukang', 'Bayar tukang kayu', input('bayar_tukang'), { kind: 'calc', deps: [{ row: 'tukang' }] })
@@ -113,6 +122,11 @@ export function sheetSections(data: Overview): SectionDef[] {
   d.row('k_operasional', 'Operasional', input('operasional'), { kind: 'calc', deps: [{ row: 'operasional' }] })
   d.row('k_langganan', 'Langganan rutin', input('langganan'), { kind: 'calc', deps: [{ row: 'langganan' }] })
   d.row('k_topup', 'Top-up iklan', input('topup_iklan'))
+  d.row('k_lain_keluar', 'Pengeluaran lainnya (baris manual)', () => '0', {
+    kind: 'calc',
+    autoHide: true,
+    deps: [C('pengeluaran', 'Harga pokok penjualan'), C('pengeluaran', 'Beban operasional')],
+  })
   d.row('kas_keluar', 'Jumlah kas keluar', result('kas_keluar'), { ...calcTotal, deps: [G('arus_kas', 'Kas keluar')] })
   d.group('Transfer antar kas')
   d.row('tr_ops', 'Transfer dari kas operasional (+)', input('transfer_kas_ops'))
@@ -131,7 +145,7 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.row('n_stok', 'Stok produk', end('stok'), { total: 'last', deps: [cum('adj_stok', -1)] })
   e.row('n_kas_ops', 'Kas operasional', end('kas_operasional'), { total: 'last', deps: [cum('tr_ops', -1)] })
   e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last', deps: [cum('k_topup'), cum('iklan', -1)] })
-  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last', deps: [cum('piutang_chg')] })
+  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last', deps: [cum('piutang_chg'), { ...C('pemasukan', 'Penyesuaian piutang'), mode: 'cum' }] })
   e.row('n_saldo_toko', 'Saldo tertahan toko / Shopee', end('saldo_toko'), { total: 'last' })
   e.row('n_kas_gaji', 'Kas gaji (disisihkan)', end('kas_gaji'), { total: 'last', deps: [cum('tr_gaji', -1)] })
   e.row('jml_aset', 'Jumlah aset', (r) => r.hasil.neraca.aset, { ...calcTotal, total: 'last', deps: [G('neraca', 'Aset')] })
