@@ -84,6 +84,7 @@ export default function BulkProductionStructure({
     category && product && model
       ? [category.code, product.code, model.code].join(".")
       : "";
+  const originals = new Map(selected.map((p) => [p.id, p]));
   const ids = new Set(rows.map((r) => r.id));
   const others = catalog.filter((p) => !ids.has(p.id) && p.kind === "produksi");
   const skus = rows.map((row) =>
@@ -133,13 +134,21 @@ export default function BulkProductionStructure({
           <DialogTitle>Susun Struktur Massal</DialogTitle>
           <DialogDescription>
             {rows.length} produk dipilih. Pilih struktur sekali, lalu periksa
-            ukuran dan harga setiap baris. Riwayat order tetap utuh.
+            ukuran dan harga setiap baris. Keluarkan baris untuk melewatinya;
+            produk katalog tidak dihapus. Riwayat order tetap utuh.
           </DialogDescription>
         </DialogHeader>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            if (!prefix || busy || editing || errors.some(Boolean)) return;
+            if (
+              !rows.length ||
+              !prefix ||
+              busy ||
+              editing ||
+              errors.some(Boolean)
+            )
+              return;
             setBusy(true);
             setError("");
             try {
@@ -178,15 +187,41 @@ export default function BulkProductionStructure({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {!rows.length && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-muted-foreground"
+                      >
+                        Semua baris sudah dikeluarkan. Tutup form untuk memilih
+                        produk kembali.
+                      </TableCell>
+                    </TableRow>
+                  )}
                   {rows.map((row, i) => (
                     <TableRow key={row.id}>
                       <TableCell className="max-w-64 whitespace-normal">
                         <span className="font-medium">
-                          {selected[i].produk}
+                          {originals.get(row.id)?.produk}
                         </span>
                         <span className="mt-1 block break-all text-xs text-muted-foreground">
-                          {selected[i].sku || "Belum memiliki SKU"}
+                          {originals.get(row.id)?.sku || "Belum memiliki SKU"}
                         </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2"
+                          aria-label={`Keluarkan ${originals.get(row.id)?.produk} ${row.ukuran}`}
+                          onClick={() => {
+                            setRows((current) =>
+                              current.filter((r) => r.id !== row.id),
+                            );
+                            setError("");
+                          }}
+                        >
+                          Keluarkan
+                        </Button>
                       </TableCell>
                       <TableCell className="min-w-40">
                         <Input
@@ -253,7 +288,13 @@ export default function BulkProductionStructure({
             </Button>
             <Button
               type="submit"
-              disabled={busy || editing || !prefix || errors.some(Boolean)}
+              disabled={
+                !rows.length ||
+                busy ||
+                editing ||
+                !prefix ||
+                errors.some(Boolean)
+              }
             >
               {busy ? "Menyimpan…" : "Simpan Semua"}
             </Button>
