@@ -281,11 +281,6 @@ export default function FinancialReportSheet({
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {records.length
-            ? `${records.length} periode tersimpan · sampai ${dateLabel(latest!.tanggal)}`
-            : 'Belum ada laporan tersimpan'}
-        </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
         <div className="max-w-full overflow-x-auto rounded-lg border">
