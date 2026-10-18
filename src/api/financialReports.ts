@@ -67,6 +67,8 @@ export type ShippingReceivableCell = {
   piutang_lama_tidak_pasti: number
   cair_tidak_terpetakan: number
   dana_cair?: string | null
+  utang_dana_cepat?: string | null
+  biaya_dana_cepat?: string | null
 }
 export type ShippingReceivables = {
   periode: string
@@ -77,15 +79,9 @@ export type ShippingReceivables = {
 export const shippingReceivables = async (periode: string, jumlah_kolom: number, sampai?: string) =>
   (await api.get<ShippingReceivables>('/laporan-keuangan/piutang-pengiriman-shopee', { params: { periode, jumlah_kolom, sampai } })).data
 
-export type MutasiDiagnosa = {
-  waktu: string; jenis: string; nominal: string; pesanan: string[]; alasan: string
-  rilis_terdekat?: { order_sn: string; payout: string; selisih_menit: number }[]
-  kandidat?: { dari: string; sampai: string; jumlah: number; diharapkan: string; cocok: boolean; minggu_kirim: Record<string, number>; pesanan_3_hari?: { order_sn: string; nilai: string; sumber: string; waktu: string; minggu: number | null }[] }
-}
 export type PendingShippingReceivables = {
   akun_id: string; nama: string; minggu: ShippingReceivableCell[]
-  halaman_lengkap: boolean; tanpa_tanggal_kirim: number; sumber: string; dibaca_at: string; dana_cepat?: boolean; mutasi_tidak_terpetakan?: number
-  mutasi_diagnosa?: MutasiDiagnosa[]
+  halaman_lengkap: boolean; tanpa_tanggal_kirim: number; sumber: string; dibaca_at: string; dana_cepat?: boolean
 }
 export const pendingShippingReceivables = async (akun: string, periode: string, jumlah_kolom: number, sampai?: string) =>
   (await api.get<PendingShippingReceivables>(`/laporan-keuangan/piutang-pengiriman-shopee/${encodeURIComponent(akun)}`, { params: { periode, jumlah_kolom, sampai } })).data
