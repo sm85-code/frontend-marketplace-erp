@@ -266,20 +266,7 @@ export default function FinancialShippingReceivables({
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
                               {shop.fast && <span className="mt-1 block text-xs text-muted-foreground">Dana Cepat · mutasi saldo</span>}
-                              {shop.unmappedWallet > 0 && (
-                                <details className="mt-1 text-xs text-muted-foreground">
-                                  <summary className="cursor-pointer">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan</summary>
-                                  <ul className="mt-2 space-y-2">
-                                    {shop.diagnosa.map((d, n) => (
-                                      <li key={n} className="rounded-md border p-2">
-                                        <div className="font-medium text-foreground">{new Date(d.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {d.jenis} · {fmtRp(d.nominal)}</div>
-                                        <div>{ALASAN[d.alasan] ?? d.alasan}{d.pesanan.length > 0 && ` · ${d.pesanan.length} pesanan`}</div>
-                                        {d.rilis_terdekat.length > 0 && <div>Rilis terdekat: {d.rilis_terdekat.map((r) => `${r.order_sn} ${fmtRp(r.payout)} (${r.selisih_menit > 0 ? "+" : ""}${r.selisih_menit} mnt)`).join("; ")}</div>}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </details>
-                              )}
+                              {shop.unmappedWallet > 0 && <span className="mt-1 block text-xs text-muted-foreground">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan · rincian di bawah tabel</span>}
                               {shop.loading && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                   Memuat dana Shopee…
@@ -367,7 +354,7 @@ export default function FinancialShippingReceivables({
                                 data.toko.some(
                                   (shop) => shop.partial || shop.unmapped || shop.unmappedWallet,
                                 )) && (
-                                <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                                <span className="mt-1 block whitespace-normal text-xs font-normal text-muted-foreground">
                                   Subtotal data terbaca
                                 </span>
                               )}
@@ -403,6 +390,25 @@ export default function FinancialShippingReceivables({
                 ))}
               </TableBody>
             </Table>
+          </div>
+        )}
+        {data && data.toko.some((shop) => shop.diagnosa.length > 0) && (
+          <div className="mt-4 space-y-3">
+            {data.toko.filter((shop) => shop.diagnosa.length > 0).map((shop) => (
+              <details key={shop.id} className="rounded-xl border p-3 text-sm">
+                <summary className="cursor-pointer font-medium">{shop.nama}: {shop.unmappedWallet} mutasi belum terpetakan ke pesanan</summary>
+                <ul className="mt-3 space-y-2">
+                  {shop.diagnosa.map((d, n) => (
+                    <li key={n} className="rounded-lg border p-3 text-xs text-muted-foreground">
+                      <div className="font-medium text-foreground">{new Date(d.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {d.jenis} · {fmtRp(d.nominal)}</div>
+                      <div>{ALASAN[d.alasan] ?? d.alasan}{d.pesanan.length > 0 && ` · ${d.pesanan.length} pesanan`}</div>
+                      {d.kandidat && <div>Pesanan dikirim sejak batch sebelumnya: {d.kandidat.jumlah} · estimasi sisa {fmtRp(d.kandidat.estimasi_pending)} · rasio advance {d.kandidat.rasio ?? "—"} · minggu kirim {Object.entries(d.kandidat.minggu_kirim).map(([w, c]) => `${labels[Number(w)] ?? w}: ${c}`).join(", ") || "—"}</div>}
+                      {d.rilis_terdekat && d.rilis_terdekat.length > 0 && <div>Rilis terdekat: {d.rilis_terdekat.map((r) => `${r.order_sn} ${fmtRp(r.payout)} (${r.selisih_menit > 0 ? "+" : ""}${r.selisih_menit} mnt)`).join("; ")}</div>}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ))}
           </div>
         )}
       </CardContent>
