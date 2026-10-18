@@ -850,3 +850,7 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   height: 1px;
   background: linear-gradient(to right, color-mix(in oklab, var(--primary) 35%, transparent), transparent);
 }
+
+/* Laporan keuangan: one table per week on every screen; the label column is narrower on phones. */
+.financial-sheet col:first-child { width: 150px; }
+@media (min-width: 768px) { .financial-sheet col:first-child { width: 220px; } }

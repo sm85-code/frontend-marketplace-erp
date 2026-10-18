@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
-import { SelectField } from './processingShared'
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
 export { sumAmounts } from '@/lib/financialAmounts'
@@ -61,6 +60,17 @@ const dateLabel = (date: string) =>
     month: '2-digit',
     year: 'numeric',
   })
+
+// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
+const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+export function weekRange(month: string, index: number): string {
+  const first = new Date(`${month}-01T12:00:00Z`)
+  const monday = new Date(first)
+  monday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7) + index * 7)
+  const saturday = new Date(monday)
+  saturday.setUTCDate(monday.getUTCDate() + 5)
+  return `${shortDate(monday)}–${shortDate(saturday)}`
+}
 
 export function sheetSections(data: Overview): { title: string; rows: SheetRow[] }[] {
   const shopNames = [...new Set(data.laporan.flatMap((r) => (r.rincian_toko ?? []).map((s) => s.nama)))]
@@ -239,8 +249,6 @@ export default function FinancialReportSheet({
         ]),
       ]),
     ])
-  const [mobilePeriod, setMobilePeriod] = useState('total')
-  const selectedPeriod = days.includes(mobilePeriod) ? mobilePeriod : 'total'
   const latest = records.at(-1)
   const summaries = [
     {
@@ -279,14 +287,14 @@ export default function FinancialReportSheet({
         </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
-        <div className="hidden max-w-full overflow-x-auto rounded-xl border md:block">
+        <div className="max-w-full overflow-x-auto rounded-xl border">
           <Table
-            className="table-fixed"
+            className="financial-sheet table-fixed"
             style={{ minWidth: 220 + (days.length + 1) * 142 }}
             aria-label={section.title.slice(3)}
           >
             <colgroup>
-              <col style={{ width: 220 }} />
+              <col />
               {days.map((d) => (
                 <col key={d} style={{ width: 142 }} />
               ))}
@@ -297,10 +305,8 @@ export default function FinancialReportSheet({
                 <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
-                    <span className="block">
-                      {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]} · {months[Number(month.slice(5)) - 1]}
-                    </span>
-                    <span className="block text-xs font-normal">{dateLabel(d)}</span>
+                    <span className="block">Minggu {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]}</span>
+                    <span className="block text-xs font-normal">{weekRange(month, i)}</span>
                   </TableHead>
                 ))}
                 <TableHead className="text-right">
@@ -335,46 +341,6 @@ export default function FinancialReportSheet({
               ))}
             </TableBody>
           </Table>
-        </div>
-        <div className="space-y-3 md:hidden">
-          <SelectField
-            aria-label={`Periode ${section.title.slice(3)}`}
-            value={selectedPeriod}
-            onChange={(e) => setMobilePeriod(e.target.value)}
-          >
-            <option value="total">
-              {section.title.startsWith('E.') ? 'Posisi terakhir' : 'Rekap seluruh periode'}
-            </option>
-            {days.map((d, i) => (
-              <option key={d} value={d}>
-                Minggu {['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][i]} · {dateLabel(d)}
-              </option>
-            ))}
-          </SelectField>
-          <dl className="overflow-hidden rounded-xl border">
-            {section.rows.map((row) => {
-              if (row.group) return (
-                <div key={row.label} className="financial-row-group border-b px-3 py-2">
-                  <dt>{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
-                  <dd className="sr-only">Golongan transaksi</dd>
-                </div>
-              )
-              const report = records.find((r) => r.tanggal === selectedPeriod)
-              const amount =
-                selectedPeriod === 'total' ? columnTotal(row, records) : report ? row.value(report) : null
-              return (
-                <div
-                  key={row.label}
-                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b px-3 py-3 last:border-b-0 ${row.emphasis ? 'bg-primary/5 font-semibold' : ''}`}
-                >
-                  <dt className="text-xs leading-relaxed">{row.emphasis ? sentenceCase(row.label) : row.label}</dt>
-                  <dd className="whitespace-nowrap text-xs tabular-nums">
-                    {amount === null ? '—' : fmtRp(amount)}
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
         </div>
       </CardContent>
     </Card>
