@@ -62,7 +62,6 @@ const dateLabel = (date: string) =>
   })
 
 // Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
-const weekNames = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 export function weekRange(month: string, index: number): string {
   const first = new Date(`${month}-01T12:00:00Z`)
@@ -301,7 +300,7 @@ export default function FinancialReportSheet({
                 <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
-                    <span className="block">{weekNames[i]} · {months[Number(month.slice(5)) - 1]}</span>
+                    <span className="block">Periode</span>
                     <span className="block text-xs font-normal">{weekRange(month, i)}</span>
                   </TableHead>
                 ))}
