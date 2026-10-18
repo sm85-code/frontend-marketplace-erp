@@ -136,7 +136,6 @@ export default function DashboardPage() {
               urutAwal={{ kunci: 'omzet', arah: 'desc' }}
               minWidth={1050}
               footer={<TotalToko d={d} />}
-              footerKartu={<TotalTokoKartu d={d} />}
             />
           </Bagian>
 
@@ -163,31 +162,6 @@ export default function DashboardPage() {
 }
 
 /** Totals row under the per-shop table. */
-function TotalTokoKartu({ d }: { d: Dashboard }) {
-  const jumlah = (k: 'belum_bayar' | 'perlu_diproses' | 'menunggu_kurir' | 'dikirim' | 'selesai' | 'dibatalkan' | 'pesanan') =>
-    d.per_toko.reduce((a, t) => a + t[k], 0).toLocaleString('id-ID')
-  const baris: [string, string][] = [
-    ['Pesanan', jumlah('pesanan')],
-    ['Nilai Pesanan', fmtRp(d.per_toko.reduce((a, t) => a + Number(t.omzet), 0))],
-    ['Belum Bayar', jumlah('belum_bayar')],
-    ['Perlu Diproses', jumlah('perlu_diproses')],
-    ['Menunggu Penyerahan', jumlah('menunggu_kurir')],
-    ['Dikirim', jumlah('dikirim')],
-    ['Selesai', jumlah('selesai')],
-    ['Dibatalkan', jumlah('dibatalkan')],
-  ]
-  return (
-    <article className="min-w-0 space-y-1.5 rounded-xl border bg-muted/50 p-3 text-left">
-      <div className="text-sm font-semibold">Total</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-        {baris.map(([judul, nilai]) => (
-          <div key={judul} className="min-w-0"><dt className="text-[0.6875rem] text-muted-foreground">{judul}</dt><dd className="font-semibold tabular-nums">{nilai}</dd></div>
-        ))}
-      </dl>
-    </article>
-  )
-}
-
 function TotalToko({ d }: { d: Dashboard }) {
   const jumlah = (k: 'belum_bayar' | 'perlu_diproses' | 'menunggu_kurir' | 'dikirim' | 'selesai' | 'dibatalkan' | 'pesanan') =>
     d.per_toko.reduce((a, t) => a + t[k], 0).toLocaleString('id-ID')
