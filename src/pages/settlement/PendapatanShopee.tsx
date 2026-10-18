@@ -11,6 +11,7 @@ import Spinner from '@/components/Spinner'
 import { TabelData, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { TableCell, TableRow } from '@/components/ui/table'
 
 const field = 'w-full rounded-lg border bg-background p-2'
 const shippingLabels: Record<string, string> = {
@@ -52,6 +53,7 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
   const [start] = useState(() => wibDate(new Date(Date.now() - 13 * 86400000)))
   const [end] = useState(() => wibDate(new Date()))
   const [pages, setPages] = useState<Record<string, string | null>[]>([{}])
+  const [statuses, setStatuses] = useState<string[]>([])
   const current = pages[pages.length - 1]
   const sources = shops.flatMap(shop => ([2] as const).map(status => ({ shop, status, key: `${shop.id}:${status}` })))
   const incomeOptions = (index: number, ready = true) => {
@@ -116,7 +118,15 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
     { kunci: 'received', judul: 'Tanggal Diterima', sel: r => time(r.received), nilai: r => r.received, kelas: 'whitespace-nowrap' },
     { kunci: 'payout', judul: 'Estimasi Tgl. Pencairan', sel: r => time(r.payout), nilai: r => r.payout, kelas: 'whitespace-nowrap' },
   ]
-  const { hasil, urut, ubah } = useUrutLokal(rows, (row, key) => columns.find(c => c.kunci === key)?.nilai?.(row))
+  const unknownStatus = 'Status belum diketahui'
+  const statusesOf = (r: Row) => r.shipping ? r.shipping.split(' · ') : [unknownStatus]
+  const statusCounts = new Map<string, number>()
+  for (const r of rows) for (const label of new Set(statusesOf(r))) statusCounts.set(label, (statusCounts.get(label) ?? 0) + 1)
+  const shown = statuses.length ? rows.filter(r => statusesOf(r).some(label => statuses.includes(label))) : rows
+  const totals = new Map<string, number>()
+  for (const r of shown) if (r.amount != null) totals.set(r.currency ?? 'IDR', (totals.get(r.currency ?? 'IDR') ?? 0) + r.amount)
+  const withoutAmount = shown.filter(r => r.amount == null).length
+  const { hasil, urut, ubah } = useUrutLokal(shown, (row, key) => columns.find(c => c.kunci === key)?.nilai?.(row))
   const sortedColumns = columns.map(c => c.nilai ? { ...c, urut: { kunci: c.kunci } } : { ...c, sel: (r: Row) => hasil.findIndex(x => x.key === r.key) + 1 })
   const trackingFailure = tracking.find(t => t.error)
   return <div className="space-y-4">
@@ -127,8 +137,25 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
     {q.data && <>
       {[...(q.data.warnings ?? []).filter(w => !w.includes('Shopee tidak menyertakan informasi halaman berikutnya.')), ...details.flatMap(r => r.data?.warnings ?? [])].map(w => <p key={w} role="status" className="rounded-lg bg-muted p-3 text-sm">{w}</p>)}
       {(q.isFetching || details.some(r => r.isFetching) || tracking.some(t => t.isFetching)) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian produk dan pengiriman…</p>}
-      <TabelData label="Pesanan menunggu pencairan" items={hasil} kolom={sortedColumns} idDari={r => r.key} namaDari={r => r.number} urut={urut} onUrut={ubah} minWidth={1900} />
+      {statusCounts.size > 0 && <div role="group" aria-label="Filter status pengiriman" className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-medium">Status pengiriman</span>
+        {[...statusCounts].sort(([a], [b]) => a.localeCompare(b, 'id-ID')).map(([label, count]) => {
+          const active = statuses.includes(label)
+          return <Button key={label} type="button" size="sm" variant={active ? 'default' : 'outline'} aria-pressed={active}
+            onClick={() => setStatuses(current => active ? current.filter(v => v !== label) : [...current, label])}>
+            {label} <span className="text-xs opacity-75">({count})</span>
+          </Button>
+        })}
+        {statuses.length > 0 && <Button type="button" size="sm" variant="ghost" onClick={() => setStatuses([])}>Reset</Button>}
+      </div>}
+      <TabelData label="Pesanan menunggu pencairan" items={hasil} kolom={sortedColumns} idDari={r => r.key} namaDari={r => r.number} urut={urut} onUrut={ubah} minWidth={1900}
+        footer={<TableRow className="font-semibold">
+          <TableCell colSpan={6}>Total {shown.length} pesanan{pages.length > 1 || q.data.ada_lagi ? ' (halaman yang dimuat)' : ''}{withoutAmount > 0 && <span className="block text-xs font-normal text-muted-foreground">{withoutAmount} pesanan belum ada estimasi dana</span>}</TableCell>
+          <TableCell className="text-right whitespace-nowrap">{totals.size ? [...totals].map(([currency, total]) => <div key={currency}>{fmtMoney(total, currency)}</div>) : '—'}</TableCell>
+          <TableCell colSpan={3} />
+        </TableRow>} />
       {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan menunggu pencairan pada permintaan ini.</p>}
+      {rows.length > 0 && !shown.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan dengan status pengiriman yang dipilih.</p>}
       {(pages.length > 1 || q.data.ada_lagi) && <div className="paginasi">
         <Button variant="outline" disabled={q.isFetching || pages.length === 1} onClick={() => setPages(p => p.slice(0, -1))}>Sebelumnya</Button>
         <span className="text-sm text-muted-foreground">Halaman {pages.length}</span>
