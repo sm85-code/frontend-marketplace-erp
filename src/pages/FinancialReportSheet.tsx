@@ -62,7 +62,6 @@ const dateLabel = (date: string) =>
   })
 
 // Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
-const weekNames = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 export function weekRange(month: string, index: number): string {
   const first = new Date(`${month}-01T12:00:00Z`)
@@ -281,11 +280,6 @@ export default function FinancialReportSheet({
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle>{sentenceCase(section.title.slice(3))}</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {records.length
-            ? `${records.length} periode tersimpan · sampai ${dateLabel(latest!.tanggal)}`
-            : 'Belum ada laporan tersimpan'}
-        </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
         <div className="max-w-full overflow-x-auto rounded-lg border">
@@ -306,7 +300,7 @@ export default function FinancialReportSheet({
                 <TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
-                    <span className="block">{weekNames[i]} · {months[Number(month.slice(5)) - 1]}</span>
+                    <span className="block">Periode</span>
                     <span className="block text-xs font-normal">{weekRange(month, i)}</span>
                   </TableHead>
                 ))}
@@ -369,9 +363,6 @@ export default function FinancialReportSheet({
           <h2 className="text-lg font-semibold">
             Rekap {months[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {latest ? `Posisi laporan ${dateLabel(latest.tanggal)}` : 'Belum ada laporan tersimpan'}
-          </p>
         </div>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh laporan

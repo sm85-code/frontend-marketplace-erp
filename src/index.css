@@ -851,3 +851,7 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   background: linear-gradient(to right, color-mix(in oklab, var(--primary) 35%, transparent), transparent);
 }
 
+
+/* The global header rule (z-index 2, unlayered) beat the utility z-20, so frozen first-column body cells (z-10) covered the
+   first header cell. Keep the sticky header above frozen body cells in every financial table. */
+.financial-page [data-slot="table-header"] { z-index: 30; }

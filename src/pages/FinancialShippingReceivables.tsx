@@ -19,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/Spinner";
 
-const labels = ["I", "II", "III", "IV", "V", "VI", "VII"];
 const dateLabel = (date: string) =>
   new Date(date + "T12:00:00+07:00").toLocaleDateString("id-ID", {
     day: "numeric",
@@ -247,9 +246,9 @@ export default function FinancialShippingReceivables({
                       Piutang estimasi · Pencairan riil
                     </span>
                   </TableHead>
-                  {data.minggu.map((week, i) => (
+                  {data.minggu.map((week) => (
                     <TableHead key={week.mulai} className="text-right">
-                      <span className="block">Minggu {labels[i]}</span>
+                      <span className="block">Periode</span>
                       <span className="block text-xs font-normal">
                         {dateLabel(week.mulai)}–{dateLabel(week.akhir)}
                       </span>

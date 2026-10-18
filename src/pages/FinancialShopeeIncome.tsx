@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import Spinner from '@/components/Spinner'
 import { sumAmounts } from '@/lib/financialAmounts'
 
-const labels = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 const dateLabel = (value: string) => new Date(value+'T12:00:00+07:00').toLocaleDateString('id-ID', {day:'numeric',month:'short'})
 function aggregate(cells: ShopeeIncomeCell[]): ShopeeIncomeCell {
   const estimasi = cells.some(c=>c.jumlah === null) ? null : sumAmounts(cells.map(c=>c.jumlah!))
@@ -30,7 +29,6 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
     const amount = future ? '0' : known ? sumAmounts(fast.map(result=>result.data!.minggu[i].dana_cair!)) : null
     return {...cell,riil:amount ?? '0',jumlah:amount}
   })})}
-  const monthLabel = new Date(month+'-01T12:00:00+07:00').toLocaleDateString('id-ID',{month:'long'})
   return <Card className="mt-4"><CardHeader><CardTitle>{released ? 'Dana cair (Shopee)' : 'Estimasi dana akan cair (Shopee)'}</CardTitle><p className="text-sm text-muted-foreground">{released ? 'Dana pesanan yang sudah cair, dikelompokkan sesuai tanggal cair.' : 'Estimasi pesanan dalam pengiriman dan diterima tetapi belum selesai, dikelompokkan sesuai tanggal dikirim.'}</p></CardHeader><CardContent className="space-y-3">
     {q.isLoading && <Spinner label={released?'Memuat dana cair Shopee…':'Memuat pemasukan Shopee…'} />}
     {released && fast.some(result=>result.error) && <div role="alert" className="flex items-center gap-2 text-sm"><span>Dana Cepat BUMI TANI IND belum terbaca.</span><Button variant="outline" onClick={()=>fast.forEach(result=>{void result.refetch()})}>Coba lagi</Button></div>}
@@ -41,7 +39,7 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
         <Table className="table-fixed" style={{minWidth:220+(columns+1)*142}} aria-label={title}>
           <colgroup><col style={{width:220}}/>{data.minggu.map(w=><col key={w.mulai} style={{width:142}}/>)}<col style={{width:142}}/></colgroup>
           <TableHeader className="bg-muted"><TableRow><TableHead className="sticky left-0 z-10 bg-muted">Uraian</TableHead>
-            {data.minggu.map((w,i)=><TableHead key={w.mulai} className="text-center"><span className="block">{labels[i]} · {monthLabel}</span><span className="block text-xs font-normal">{dateLabel(w.mulai)}–{dateLabel(w.akhir)}</span></TableHead>)}
+            {data.minggu.map((w)=><TableHead key={w.mulai} className="text-center"><span className="block">Periode</span><span className="block text-xs font-normal">{dateLabel(w.mulai)}–{dateLabel(w.akhir)}</span></TableHead>)}
             <TableHead className="text-right">Jumlah</TableHead>
           </TableRow></TableHeader>
           <TableBody>

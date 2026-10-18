@@ -52,7 +52,7 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
     <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed" style={{minWidth:220+(columns+1)*165}} aria-label="SALDO PENJUAL (SHOPEE)">
       <colgroup><col style={{width:220}}/>{dates.map(d=><col key={d} style={{width:165}}/>)}<col style={{width:165}}/></colgroup>
       <TableHeader className="bg-muted"><TableRow><TableHead className="sticky left-0 z-10 bg-muted">Toko</TableHead>
-        {dates.map((d,i)=><TableHead key={d} className="text-center"><span className="block">{['I','II','III','IV','V','VI','VII'][i]} · {new Date(month+'-01T12:00:00Z').toLocaleDateString('id-ID',{month:'long'})}</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
+        {dates.map((d)=><TableHead key={d} className="text-center"><span className="block">Periode</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
         <TableHead className="text-right">Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
       </TableRow></TableHeader><TableBody>
         {shops.map((name,i)=><TableRow key={name}><TableCell className="sticky left-0 z-10 bg-card">{name}
