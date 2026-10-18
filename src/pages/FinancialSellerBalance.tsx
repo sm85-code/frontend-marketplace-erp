@@ -67,6 +67,5 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
         <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{totals(w)}</TableCell>)}<TableCell className={`text-right tabular-nums ${phone.hide(dates.length)}`}>{totals(lastClosed)}</TableCell></TableRow>
       </TableBody>
     </Table></div>
-    <p className="text-xs text-muted-foreground">Saldo berasal dari mutasi terakhir sampai Minggu 23.59 WIB, dengan pencarian 14 hari ke belakang dari tiap cut-off. Riwayat tidak tersedia ditandai, tanpa memakai saldo saat ini. Saldo mingguan tidak dijumlahkan; kolom terakhir memakai posisi minggu terakhir yang sudah tutup. Total antar toko dipisahkan menurut mata uang. Sumber belum memisahkan saldo tersedia untuk ditarik dan tertahan.</p>
   </CardContent></Card>
 }
