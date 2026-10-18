@@ -1,4 +1,4 @@
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -24,15 +24,29 @@ export function BarFilter({ utama, aktif = 0, children }: { utama?: ReactNode; a
   }
   return (
     <div className="bar-filter">
-      {utama}
-      {/* Phones: the search stays visible and the other filters fold behind one button (data comes first).
-          md and up: everything is shown in the same grid (display: contents). */}
-      <div className="md:hidden" style={{ gridColumn: '1 / -1' }}>
-        <Button ref={trigger} variant="outline" onClick={() => setBuka((b) => !b)} aria-expanded={buka} aria-controls={panelId}>
-          <SlidersHorizontal className="size-4" aria-hidden="true" />
-          Filter &amp; urutan{aktif > 0 ? ` (${aktif} aktif)` : ''}
-          <ChevronDown className={`ml-auto size-4 transition-transform ${buka ? 'rotate-180' : ''}`} aria-hidden="true" />
-        </Button>
+      {/* Phones: search and one filter button share a single row (data comes first); the other filters fold open
+          below it. md and up: everything is shown in the same grid (display: contents). */}
+      <div className="bar-filter-baris">
+        {utama}
+        <div className="md:hidden">
+          <Button
+            ref={trigger}
+            variant={buka || aktif > 0 ? 'secondary' : 'outline'}
+            onClick={() => setBuka((b) => !b)}
+            aria-expanded={buka}
+            aria-controls={panelId}
+            aria-label={`Filter dan urutan${aktif > 0 ? `, ${aktif} aktif` : ''}`}
+            className="relative shrink-0"
+            style={{ width: '2.75rem', paddingInline: 0 }}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            {aktif > 0 && (
+              <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[0.6875rem] font-semibold text-primary-foreground">
+                {aktif}
+              </span>
+            )}
+          </Button>
+        </div>
       </div>
       <div id={panelId} className={buka ? 'contents' : 'hidden md:contents'}>
         <TutupFilter.Provider value={tutup}>{children}</TutupFilter.Provider>

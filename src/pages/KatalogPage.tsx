@@ -7,7 +7,7 @@ import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { LayoutGrid, List } from 'lucide-react'
+import { LayoutGrid, List, Settings2 } from 'lucide-react'
 import { useCallback, useMemo, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -64,7 +64,13 @@ export default function KatalogPage() {
   const navigate = useNavigate()
   useEffect(() => { const id=urlParams.get('detail'); if(id) navigate(`/katalog/${encodeURIComponent(id)}`,{replace:true}) }, [urlParams,navigate])
   function setDetailId(id: string | null) { if(id) navigate(`/katalog/${encodeURIComponent(id)}`) }
-  const [tampilan, setTampilan] = useState<Tampilan>(() => (bacaSimpan(KUNCI_TAMPILAN) === 'grid' ? 'grid' : 'list'))
+  const [aturBuka, setAturBuka] = useState(false)
+  // Phones open on the grid (a wide table needs sideways scrolling there); a saved choice always wins.
+  const [tampilan, setTampilan] = useState<Tampilan>(() => {
+    const simpan = bacaSimpan(KUNCI_TAMPILAN)
+    if (simpan === 'grid' || simpan === 'list') return simpan
+    return window.matchMedia('(max-width: 767px)').matches ? 'grid' : 'list'
+  })
 
   // Variants are shown as sub-rows under each product (price, weight, size, pre-order per variant). `rinci` is the
   // default for every product; a click on a product flips just that one.
@@ -182,9 +188,21 @@ export default function KatalogPage() {
         )}
       </BarFilter>
 
-      <details className="rounded-xl border bg-card">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Pengaturan tampilan</summary>
-        <div className="grid grid-cols-1 items-end gap-4 border-t p-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="flex items-center justify-between gap-2">
+        {items.length > 0 ? (
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Checkbox checked={semuaHalamanDipilih} onCheckedChange={(v) => pilih.ubahBanyak(items, v === true)} />
+            Pilih semua
+          </label>
+        ) : (
+          <span />
+        )}
+        <Button variant="outline" className="min-h-11" aria-expanded={aturBuka} aria-controls="katalog-pengaturan" onClick={() => setAturBuka((b) => !b)}>
+          <Settings2 className="size-4" aria-hidden="true" /> Tampilan
+        </Button>
+      </div>
+      {aturBuka && <div id="katalog-pengaturan" className="rounded-xl border bg-card">
+        <div className="grid grid-cols-1 items-end gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
         <PilihTampilan
           id="katalog-tampilan"
           nilai={tampilan}
@@ -227,11 +245,7 @@ export default function KatalogPage() {
             }
           }} />}
         </div>
-      </details>
-      {items.length > 0 && <label className="flex items-center gap-2 text-sm">
-        <Checkbox checked={semuaHalamanDipilih} onCheckedChange={(v) => pilih.ubahBanyak(items, v === true)} />
-        Pilih semua di halaman ini
-      </label>}
+      </div>}
 
       {isLoading ? (
         <Spinner column label="Memuat katalog…" />
