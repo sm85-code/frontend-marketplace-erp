@@ -251,6 +251,10 @@ export default function FinancialReportSheet({
       ]),
     ])
   const latest = records.at(-1)
+  // The weekly Shopee tables follow the calendar (shipping Monday-Saturday, balance cut-off Sunday 23:59), not the date of the
+  // last saved report: in the current month they read up to today, in other months the whole month.
+  const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+  const reportUntil = todayWib.startsWith(month) ? todayWib : undefined
   const summaries = [
     {
       label: 'Pemasukan',
@@ -385,10 +389,10 @@ export default function FinancialReportSheet({
             {i === 0 ? (
               <div className="min-w-0 space-y-5">
                 {renderTable(section)}
-                <FinancialShippingReceivables until={latest?.tanggal} month={month} columns={days.length} />
+                <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
                 <FinancialShopeeIncome
-                  until={latest?.tanggal}
+                  until={reportUntil}
                   month={month}
                   columns={days.length}
                   released
