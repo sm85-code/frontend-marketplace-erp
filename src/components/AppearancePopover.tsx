@@ -134,7 +134,7 @@ export default function AppearancePopover({
         </div>
         <div>
           <label className="label" htmlFor="huruf-switcher">
-            Ukuran huruf data
+            Ukuran huruf
           </label>
           <select
             id="huruf-switcher"
