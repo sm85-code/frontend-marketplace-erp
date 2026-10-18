@@ -395,3 +395,8 @@ tr[data-anak]:hover > .sel-tetap {
   .order-mobile-view { display: block; }
   .order-desktop-table { display: none; }
 }
+
+/* Phones: the first (label) column of any fixed-layout table takes at most 40% of the screen, so values stay in view. */
+@media (max-width: 47.99rem) {
+  [data-slot="table"] > colgroup > col:first-child { width: 40vw !important; }
+}
