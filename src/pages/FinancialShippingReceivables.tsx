@@ -80,7 +80,9 @@ export default function FinancialShippingReceivables({
         results.length > 0 && results.every((result) => !!result?.data);
       return {
         ...shop,
-        loading: results.some((result) => result?.isPending),
+        fast: results.some(result => result?.data?.dana_cepat),
+      unmappedWallet: results.reduce((n, result) => n + (result?.data?.mutasi_tidak_terpetakan ?? 0), 0),
+      loading: results.some((result) => result?.isPending),
         failed: results.some((result) => !!result?.error),
         partial: results.some(
           (result) => result?.data?.halaman_lengkap === false,
@@ -235,6 +237,8 @@ export default function FinancialShippingReceivables({
                           {index === 0 && (
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
+                              {shop.fast && <span className="mt-1 block text-xs text-muted-foreground">Dana Cepat · mutasi saldo</span>}
+                              {shop.unmappedWallet > 0 && <span className="mt-1 block text-xs text-muted-foreground">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan</span>}
                               {shop.loading && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                   Memuat dana Shopee…
@@ -320,7 +324,7 @@ export default function FinancialShippingReceivables({
                               )}
                               {(!complete ||
                                 data.toko.some(
-                                  (shop) => shop.partial || shop.unmapped,
+                                  (shop) => shop.partial || shop.unmapped || shop.unmappedWallet,
                                 )) && (
                                 <span className="mt-1 block text-xs font-normal text-muted-foreground">
                                   Subtotal data terbaca
