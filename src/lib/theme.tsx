@@ -47,6 +47,7 @@ export const WALLPAPERS = [
 ] as const
 
 export const HURUF = [
+  { id: 'sangat-kecil', label: 'Sangat kecil (data terpadat)' },
   { id: 'kecil', label: 'Kecil (lebih banyak data)' },
   { id: 'sedang', label: 'Sedang (bawaan)' },
   { id: 'besar', label: 'Besar' },

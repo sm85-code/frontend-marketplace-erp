@@ -320,6 +320,10 @@
   }
 }
 
+:root[data-huruf='sangat-kecil'] {
+  --skala-huruf: 0.8;
+}
+
 :root[data-huruf='kecil'] {
   --skala-huruf: 0.92;
 }
