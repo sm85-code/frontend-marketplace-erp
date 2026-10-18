@@ -11,6 +11,7 @@ import FinancialPendingReconciliation from './FinancialPendingReconciliation'
 import { fmtRp } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { Button } from '@/components/ui/button'
+import KartuMetrik from '@/components/KartuMetrik'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -383,20 +384,9 @@ export default function FinancialReportSheet({
   )
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {summaries.map((s) => (
-          <Card key={s.label} className="min-w-0">
-            <CardContent className="p-3 sm:p-4">
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: 'var(--bg)', boxShadow: 'var(--shadow-inset)' }}>
-                <s.icon className="size-4.5" style={{ color: 'var(--primary-dark, var(--primary))' }} />
-              </div>
-              <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>{s.label}</p>
-              <p className="font-heading mt-1 text-lg font-bold tabular-nums [overflow-wrap:anywhere] sm:text-2xl">
-                {s.value === null ? '—' : fmtRp(s.value)}
-              </p>
-              <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{s.note}</p>
-            </CardContent>
-          </Card>
+          <KartuMetrik key={s.label} label={s.label} icon={s.icon} nilai={s.value === null ? '—' : fmtRp(s.value)} catatan={s.note} />
         ))}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">

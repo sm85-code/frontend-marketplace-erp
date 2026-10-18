@@ -12,6 +12,8 @@ import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/componen
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import KartuMetrik from '@/components/KartuMetrik'
+import { Ban, Clock, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
@@ -22,18 +24,6 @@ const PRESET_DASHBOARD: PresetTanggal[] = ['7', '14', '30', '90', 'bulan_ini']
 const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
   <span className={n === 0 ? 'text-muted-foreground' : tebal ? 'font-semibold' : ''}>{n.toLocaleString('id-ID')}</span>
 )
-
-function Kartu({ label, nilai, catatan, href }: { label: string; nilai: string; catatan?: string; href?: string }) {
-  return (
-    <Card>
-      <CardContent className="flex h-full flex-col justify-between gap-2 p-3 md:p-4 xl:p-5">
-        <div className="teks-kecil text-muted-foreground md:min-h-10 xl:min-h-0">{label}</div>
-        <div className="text-xl font-bold tabular-nums md:text-3xl">{href ? <Link className="text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={href}>{nilai}</Link> : nilai}</div>
-        {catatan && <div className="teks-kecil mt-0.5 text-muted-foreground">{catatan}</div>}
-      </CardContent>
-    </Card>
-  )
-}
 
 function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: string; children: React.ReactNode }) {
   return (
@@ -117,12 +107,12 @@ export default function DashboardPage() {
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>
-          <div className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 xl:grid-cols-5">
-            <Kartu label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
-            <Kartu label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
-            <Kartu label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
-            <Kartu label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
-            <Kartu label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
+          <div className="grid grid-cols-2 items-stretch gap-3 lg:grid-cols-5">
+            <KartuMetrik icon={ShoppingBag} label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
+            <KartuMetrik icon={Clock} label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
+            <KartuMetrik icon={PackageCheck} label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
+            <KartuMetrik icon={Truck} label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
+            <KartuMetrik icon={Ban} className="col-span-2 lg:col-span-1" label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
           </div>
 
           <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button></section>
@@ -136,7 +126,6 @@ export default function DashboardPage() {
               urutAwal={{ kunci: 'omzet', arah: 'desc' }}
               minWidth={1050}
               footer={<TotalToko d={d} />}
-              footerKartu={<TotalTokoKartu d={d} />}
             />
           </Bagian>
 
@@ -163,31 +152,6 @@ export default function DashboardPage() {
 }
 
 /** Totals row under the per-shop table. */
-function TotalTokoKartu({ d }: { d: Dashboard }) {
-  const jumlah = (k: 'belum_bayar' | 'perlu_diproses' | 'menunggu_kurir' | 'dikirim' | 'selesai' | 'dibatalkan' | 'pesanan') =>
-    d.per_toko.reduce((a, t) => a + t[k], 0).toLocaleString('id-ID')
-  const baris: [string, string][] = [
-    ['Pesanan', jumlah('pesanan')],
-    ['Nilai Pesanan', fmtRp(d.per_toko.reduce((a, t) => a + Number(t.omzet), 0))],
-    ['Belum Bayar', jumlah('belum_bayar')],
-    ['Perlu Diproses', jumlah('perlu_diproses')],
-    ['Menunggu Penyerahan', jumlah('menunggu_kurir')],
-    ['Dikirim', jumlah('dikirim')],
-    ['Selesai', jumlah('selesai')],
-    ['Dibatalkan', jumlah('dibatalkan')],
-  ]
-  return (
-    <article className="min-w-0 space-y-2 rounded-xl border bg-muted/50 p-4">
-      <div className="font-semibold">Total</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-        {baris.map(([judul, nilai]) => (
-          <div key={judul} className="min-w-0"><dt className="text-xs text-muted-foreground">{judul}</dt><dd className="font-semibold tabular-nums">{nilai}</dd></div>
-        ))}
-      </dl>
-    </article>
-  )
-}
-
 function TotalToko({ d }: { d: Dashboard }) {
   const jumlah = (k: 'belum_bayar' | 'perlu_diproses' | 'menunggu_kurir' | 'dikirim' | 'selesai' | 'dibatalkan' | 'pesanan') =>
     d.per_toko.reduce((a, t) => a + t[k], 0).toLocaleString('id-ID')
