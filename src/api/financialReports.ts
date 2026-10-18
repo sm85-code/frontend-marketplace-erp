@@ -85,3 +85,9 @@ export type PendingShippingReceivables = {
 }
 export const pendingShippingReceivables = async (akun: string, periode: string, jumlah_kolom: number, sampai?: string) =>
   (await api.get<PendingShippingReceivables>(`/laporan-keuangan/piutang-pengiriman-shopee/${encodeURIComponent(akun)}`, { params: { periode, jumlah_kolom, sampai } })).data
+
+export type LembarManual = { sel: Record<string, string>; baris: { id: string; tabel: string; grup: string; label: string }[]; hapus: string[] }
+export type LembarManualResponse = { version: number; lembar: LembarManual }
+export const lembarManual = async (periode: string) => (await api.get<LembarManualResponse>('/laporan-keuangan/lembar-manual', { params: { periode } })).data
+export const saveLembarManual = async (periode: string, version: number, lembar: LembarManual) =>
+  (await api.put<LembarManualResponse>('/laporan-keuangan/lembar-manual', { version, lembar }, { params: { periode } })).data

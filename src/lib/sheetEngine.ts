@@ -8,7 +8,8 @@ import type { Report } from '@/api/financialReports'
  * rows with dependencies, and they stay in step with whatever is typed.
  */
 export type Mode = 'week' | 'cum' | 'cumBefore'
-export type Dep = { row?: string; group?: string; sign?: 1 | -1; mode?: Mode }
+/** `group` = every row of "table|group"; `custom` = only the rows added by hand in that group. */
+export type Dep = { row?: string; group?: string; custom?: string; sign?: 1 | -1; mode?: Mode }
 export type RowDef = {
   key: string
   label: string
@@ -18,6 +19,8 @@ export type RowDef = {
   kind: 'input' | 'calc'
   total: 'sum' | 'first' | 'last'
   emphasis?: boolean
+  /** Link row that only shows once it has an amount. */
+  autoHide?: boolean
   deps?: Dep[]
   base: (r: Report) => string
 }
@@ -29,7 +32,7 @@ export type Lembar = {
   hapus: string[]
 }
 export const emptyLembar = (): Lembar => ({ sel: {}, baris: [], hapus: [] })
-export const isGroup = (row: RowDef | GroupDef): row is GroupDef => 'group' in row
+export const isGroup = (row: RowDef | GroupDef | Line): row is GroupDef => 'group' in row
 export const cellKey = (row: string, day: string) => `${row}|${day}`
 
 export type Cell = { value: number | null; manual: boolean }
@@ -95,7 +98,9 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
   const depDelta = (dep: Dep, w: number): number => {
     const keys = dep.row
       ? [dep.row]
-      : [...all.values()].filter((r) => `${r.tabel}|${r.grup}` === dep.group).map((r) => r.key)
+      : [...all.values()]
+          .filter((r) => `${r.tabel}|${r.grup}` === (dep.group ?? dep.custom) && (dep.group || custom.has(r.key)))
+          .map((r) => r.key)
     const sign = dep.sign ?? 1
     const mode = dep.mode ?? 'week'
     const upto = mode === 'week' ? w : mode === 'cum' ? w : w - 1
@@ -123,7 +128,8 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
           : row.total === 'last'
             ? present.at(-1)!
             : round(present.reduce((a, b) => a + b, 0))
-      return { def: row, custom: custom.has(row.key), hidden: isHidden, cells, total }
+      const empty = !!row.autoHide && cells.every((c) => !c.value)
+      return { def: row, custom: custom.has(row.key), hidden: isHidden || empty, cells, total }
     }),
   }))
 }
