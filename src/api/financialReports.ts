@@ -79,7 +79,8 @@ export const shippingReceivables = async (periode: string, jumlah_kolom: number,
 
 export type MutasiDiagnosa = {
   waktu: string; jenis: string; nominal: string; pesanan: string[]; alasan: string
-  rilis_terdekat: { order_sn: string; payout: string; selisih_menit: number }[]
+  rilis_terdekat?: { order_sn: string; payout: string; selisih_menit: number }[]
+  kandidat?: { dari: string; jumlah: number; estimasi_pending: string; rasio: string | null; minggu_kirim: Record<string, number> }
 }
 export type PendingShippingReceivables = {
   akun_id: string; nama: string; minggu: ShippingReceivableCell[]
