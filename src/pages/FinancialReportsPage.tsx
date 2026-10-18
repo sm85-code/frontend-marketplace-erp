@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import MoneyInput from '@/components/MoneyInput'
 import BarHalaman from '@/components/daftar/BarHalaman'
 import FinancialReportSheet from './FinancialReportSheet'
-import FinancialComparisonDetails from './FinancialComparisonDetails'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 
@@ -93,16 +92,6 @@ export default function FinancialReportsPage() {
               ) : undefined
             }
           />
-          <details className="rounded-2xl border bg-card p-4">
-            <summary className="cursor-pointer text-sm font-medium">Periode laporan</summary>
-            <div className="space-y-2 pt-2 text-sm">
-              <p>
-                Mingguan Senin–Minggu, disajikan Selasa. Bulanan ditutup{' '}
-                {dateLabel(overview.data.akhir_bulan)} pukul 23:59 WIB dan disajikan{' '}
-                {dateLabel(overview.data.jadwal_bulanan)}.
-              </p>
-            </div>
-          </details>
           <details
             className="rounded-2xl border bg-card p-4 sm:p-5"
             onToggle={(e) => setManageOpen(e.currentTarget.open)}
@@ -867,21 +856,6 @@ function ReportComparison({ date }: { date: string }) {
               </div>
             </CardContent>
           </Card>
-          <FinancialComparisonDetails data={q.data} />
-          <details className="rounded-2xl border bg-card p-4">
-            <summary className="cursor-pointer text-sm font-medium">Catatan pembandingan</summary>
-            <div className="space-y-2 pt-3 text-xs leading-relaxed text-muted-foreground">
-              <p>{q.data.catatan}</p>
-              {q.data.erp.catatan_dana_cepat && <p>{q.data.erp.catatan_dana_cepat}</p>}
-              <p>
-                Periksa kesamaan cakupan tanggal dan kelengkapan sinkronisasi sebelum membandingkan nilai.
-              </p>
-              <p>
-                Diperbarui {new Date(q.data.dibaca_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}{' '}
-                WIB.
-              </p>
-            </div>
-          </details>
         </>
       )}
     </div>
