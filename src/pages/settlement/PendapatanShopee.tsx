@@ -4,7 +4,6 @@ import * as api from '@/api/commerce'
 import { listAkun } from '@/api/endpoints'
 import { fmtDateTime, fmtMoney } from '@/api/client'
 import type { AkunMarketplace } from '@/api/types'
-import Bantuan from '@/components/Bantuan'
 import { useUrutLokal } from '@/lib/urut'
 import QueryError from '@/components/QueryError'
 import { ErrorDetails } from '@/pages/katalog/ShopeeEngagement'
@@ -121,11 +120,7 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
   const { hasil, urut, ubah } = useUrutLokal(rows, (row, key) => columns.find(c => c.kunci === key)?.nilai?.(row))
   const sortedColumns = columns.map(c => c.nilai ? { ...c, urut: { kunci: c.kunci } } : { ...c, sel: (r: Row) => hasil.findIndex(x => x.key === r.key) + 1 })
   const trackingFailure = tracking.find(t => t.error)
-  const paginationUnknown = sources.some((source, i) => current[source.key] !== null && queries[i].data?.pagination_known === false)
   return <div className="space-y-4">
-    <Bantuan>Dana pesanan yang belum dilepas ke saldo penjual, baik masih dalam pengiriman maupun sudah diterima pembeli. Shopee mengembalikan kondisi belum cair terkini. Dana yang sudah dirilis tersedia di tab Dana Dilepas setelah sinkronisasi. Sortir berlaku pada halaman ini; estimasi tanggal yang tidak tersedia ditampilkan —.
-      {paginationUnknown && <p className="mt-2">Shopee belum memberikan token halaman berikutnya untuk sebagian hasil. Data yang tampil tetap dapat digunakan, tetapi belum dapat dinyatakan sebagai daftar lengkap.</p>}
-    </Bantuan>
     {q.isPending && <Spinner column />}
     {sources.map((source, i) => current[source.key] !== null && queries[i].error ? <div key={source.key}><p className="text-sm font-medium">{source.shop.nama_toko} · Menunggu pencairan</p><ErrorDetails error={queries[i].error}/><Button variant="outline" onClick={() => void queries[i].refetch()}>Coba lagi</Button></div> : null)}
     {details.filter(r => r.error).map((r, i) => <QueryError key={i} error={r.error} retry={r.refetch} />)}

@@ -1,7 +1,6 @@
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 import { useTokoAktif } from '@/lib/tokoAktif'
-import Bantuan from '@/components/Bantuan'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -97,11 +96,6 @@ export default function TransaksiDana() {
   return (
     <section className="rounded-lg border bg-card p-4 space-y-3">
       <h2 className="font-semibold">Transaksi Saldo Penjual Shopee</h2>
-      <Bantuan><p className="text-sm text-muted-foreground">
-        Mutasi saldo, biaya dan penarikan langsung dari Shopee. Nominal memakai mata uang toko; API transaksi tidak menyertakan kode mata
-        uang. Mutasi saldo bukan total pendapatan pesanan. Penarikan dibuat/selesai bukan dua pendapatan berbeda. Tampilan ini tidak
-        mengubah pencatatan settlement ERP.
-      </p></Bantuan>
       <form
         className="grid gap-3 sm:grid-cols-4"
         onSubmit={(e) => {
