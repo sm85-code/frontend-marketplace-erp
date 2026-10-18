@@ -5,7 +5,6 @@ import { TabelData, type KolomTabel } from '@/components/daftar'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import QueryError from '@/components/QueryError'
-import Bantuan from '@/components/Bantuan'
 
 interface Saldo {
   akun_id: string
@@ -104,13 +103,6 @@ export default function SaldoToko() {
           Sinkronisasi seluruh toko
         </Button>
       </div>
-
-      <Bantuan>
-        Saldo berasal dari transaksi terbaru dalam 14 hari terakhir. API yang
-        didokumentasikan belum menyediakan saldo tersedia/tertahan. Total
-        dipisahkan menurut mata uang dan tidak memasukkan toko yang datanya
-        belum tersedia.
-      </Bantuan>
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
       {rows.filter(r => r.query.error).map(r => <div key={r.shop.id} className="space-y-1"><p className="text-sm font-medium">{r.shop.nama_toko}</p><QueryError error={r.query.error} retry={r.query.refetch}/></div>)}
       <TabelData
