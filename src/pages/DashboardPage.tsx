@@ -177,11 +177,11 @@ function TotalTokoKartu({ d }: { d: Dashboard }) {
     ['Dibatalkan', jumlah('dibatalkan')],
   ]
   return (
-    <article className="min-w-0 space-y-2 rounded-xl border bg-muted/50 p-4">
-      <div className="font-semibold">Total</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+    <article className="min-w-0 space-y-1.5 rounded-xl border bg-muted/50 p-3 text-left">
+      <div className="text-sm font-semibold">Total</div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
         {baris.map(([judul, nilai]) => (
-          <div key={judul} className="min-w-0"><dt className="text-xs text-muted-foreground">{judul}</dt><dd className="font-semibold tabular-nums">{nilai}</dd></div>
+          <div key={judul} className="min-w-0"><dt className="text-[0.6875rem] text-muted-foreground">{judul}</dt><dd className="font-semibold tabular-nums">{nilai}</dd></div>
         ))}
       </dl>
     </article>

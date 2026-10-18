@@ -62,17 +62,17 @@ export default function TabelLokal<T>({
   // No custom card: build one from the columns (first column = title, the rest = label/value pairs).
   const otomatis = !kartu && !rest.pilihan && (!rest.footer || !!footerKartu)
   const kartuAkhir = kartu ?? (otomatis ? (item: T) => (
-    <article className="min-w-0 space-y-2 rounded-xl border bg-card p-4">
-      <div className="break-words font-semibold">{kolom[0]?.sel(item)}</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+    <article className="min-w-0 space-y-1.5 rounded-xl border bg-card p-3 text-left">
+      <div className="break-words text-sm font-semibold">{kolom[0]?.sel(item)}</div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
         {kolom.slice(1).map((k) => (
           <div key={k.kunci} className="min-w-0">
-            <dt className="text-xs text-muted-foreground">{k.judul}</dt>
-            <dd className="break-words tabular-nums">{k.sel(item)}</dd>
+            <dt className="text-[0.6875rem] text-muted-foreground">{k.judul}</dt>
+            <dd className="break-words text-left font-medium tabular-nums">{k.sel(item)}</dd>
           </div>
         ))}
       </dl>
-      {rest.aksi && <div className="flex justify-end border-t pt-3">{rest.aksi(item)}</div>}
+      {rest.aksi && <div className="flex justify-end border-t pt-2">{rest.aksi(item)}</div>}
     </article>
   ) : undefined)
   return (
