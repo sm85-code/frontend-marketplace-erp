@@ -33,7 +33,6 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
     {q.isLoading && <Spinner label={released?'Memuat dana cair Shopee…':'Memuat pemasukan Shopee…'} />}
     {released && fast.some(result=>result.error) && <div role="alert" className="flex items-center gap-2 text-sm"><span>Dana Cepat BUMI TANI IND belum terbaca.</span><Button variant="outline" onClick={()=>fast.forEach(result=>{void result.refetch()})}>Coba lagi</Button></div>}
     {q.error && <div role="alert"><p>{getApiError(q.error)}</p><Button variant="outline" onClick={()=>void q.refetch()}>Coba lagi</Button></div>}
-    {until && <p className="text-sm text-muted-foreground">Data sampai {dateLabel(until)} {until.slice(0,4)}, mengikuti laporan terisi.</p>}
     {data && <>
       <div className="max-w-full overflow-x-auto rounded-lg border">
         <Table className="table-fixed" style={{minWidth:220+(columns+1)*142}} aria-label={title}>

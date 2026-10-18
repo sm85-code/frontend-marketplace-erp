@@ -252,12 +252,6 @@ export default function FinancialShippingReceivables({
                       <span className="block text-xs font-normal">
                         {dateLabel(week.mulai)}–{dateLabel(week.akhir)}
                       </span>
-                      {week.hingga >= week.mulai &&
-                        week.hingga < week.akhir && (
-                          <span className="block text-xs font-normal">
-                            s.d. {dateLabel(week.hingga)}
-                          </span>
-                        )}
                     </TableHead>
                   ))}
                 </TableRow>
