@@ -13,7 +13,6 @@ export default function TabelLokal<T>({
   kolom,
   urutAwal = null,
   kartu,
-  footerKartu,
   ...rest
 }: {
   label: string
@@ -30,8 +29,6 @@ export default function TabelLokal<T>({
   footer?: ReactNode
   /** Phone cards share the table sorting and pagination. */
   kartu?: (item: T) => ReactNode
-  /** Totals for the phone cards. A table with a `footer` stays a table on phones unless this is given. */
-  footerKartu?: ReactNode
 }) {
   const [page, setPage] = useState(1)
   const nilaiDari = (item: T, kunci: string) =>
@@ -59,25 +56,9 @@ export default function TabelLokal<T>({
           eligible.forEach((item) => rest.pilihan!.onUbah(item, selected)),
       }
     : undefined
-  // No custom card: build one from the columns (first column = title, the rest = label/value pairs).
-  const otomatis = !kartu && !rest.pilihan && (!rest.footer || !!footerKartu)
-  const kartuAkhir = kartu ?? (otomatis ? (item: T) => (
-    <article className="min-w-0 space-y-1.5 rounded-xl border bg-card p-3 text-left">
-      <div className="break-words text-sm font-semibold">{kolom[0]?.sel(item)}</div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-        {kolom.slice(1).map((k) => (
-          <div key={k.kunci} className="min-w-0">
-            <dt className="text-[0.6875rem] text-muted-foreground">{k.judul}</dt>
-            <dd className="break-words text-left font-medium tabular-nums">{k.sel(item)}</dd>
-          </div>
-        ))}
-      </dl>
-      {rest.aksi && <div className="flex justify-end border-t pt-2">{rest.aksi(item)}</div>}
-    </article>
-  ) : undefined)
   return (
     <div className="space-y-3">
-      <div className={kartuAkhir ? "hidden lg:block" : undefined}><TabelData
+      <div className={kartu ? "hidden lg:block" : undefined}><TabelData
         {...rest}
         pilihan={selection}
         items={visible}
@@ -85,8 +66,7 @@ export default function TabelLokal<T>({
         urut={urut}
         onUrut={ubah}
       /></div>
-      {kartuAkhir && <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{visible.map(item => <div key={rest.idDari(item)} className="min-w-0">{kartuAkhir(item)}</div>)}</div>}
-      {kartuAkhir && footerKartu && <div className="lg:hidden">{footerKartu}</div>}
+      {kartu && <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{visible.map(item => <div key={rest.idDari(item)} className="min-w-0">{kartu(item)}</div>)}</div>}
       {pages > 1 && (
         <p className="text-xs text-center text-muted-foreground">
           {(current - 1) * 10 + 1}–{Math.min(current * 10, hasil.length)} dari{' '}
