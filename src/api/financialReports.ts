@@ -81,7 +81,7 @@ export const shippingReceivables = async (periode: string, jumlah_kolom: number,
 
 export type PendingShippingReceivables = {
   akun_id: string; nama: string; minggu: ShippingReceivableCell[]
-  halaman_lengkap: boolean; tanpa_tanggal_kirim: number; sumber: string; dibaca_at: string; dana_cepat?: boolean
+  halaman_lengkap: boolean; catatan_halaman?: string; tanpa_tanggal_kirim: number; sumber: string; dibaca_at: string; dana_cepat?: boolean
 }
 export const pendingShippingReceivables = async (akun: string, periode: string, jumlah_kolom: number, sampai?: string) =>
   (await api.get<PendingShippingReceivables>(`/laporan-keuangan/piutang-pengiriman-shopee/${encodeURIComponent(akun)}`, { params: { periode, jumlah_kolom, sampai } })).data

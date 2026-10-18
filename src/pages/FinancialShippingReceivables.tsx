@@ -85,6 +85,7 @@ export default function FinancialShippingReceivables({
         partial: results.some(
           (result) => result?.data?.halaman_lengkap === false,
         ),
+        partialNote: results.map((result) => result?.data?.catatan_halaman).find(Boolean),
         unmapped: results.reduce(
           (n, result) => n + (result?.data?.tanpa_tanggal_kirim ?? 0),
           0,
@@ -136,7 +137,7 @@ export default function FinancialShippingReceivables({
       const why = (reason: string) => ({ value: null, reason: `${shop.nama}: ${reason}` });
       if (shop.loading) return why("masih memuat");
       if (shop.failed) return why("gagal dibaca");
-      if (shop.partial) return why("halaman Shopee belum lengkap");
+      if (shop.partial) return why(`halaman Shopee belum lengkap${shop.partialNote ? ` (${shop.partialNote})` : ""}`);
       if (shop.unmapped) return why(`${shop.unmapped} pesanan belum punya tanggal kirim`);
       if (cell.piutang === null || cell.piutang_lama === null) return why("data minggu ini belum tersedia");
       if (cell.piutang_tidak_pasti || cell.piutang_lama_tidak_pasti)
