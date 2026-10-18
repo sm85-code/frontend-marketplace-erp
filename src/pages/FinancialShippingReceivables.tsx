@@ -402,7 +402,7 @@ export default function FinancialShippingReceivables({
                     <li key={n} className="rounded-lg border p-3 text-xs text-muted-foreground">
                       <div className="font-medium text-foreground">{new Date(d.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {d.jenis} · {fmtRp(d.nominal)}</div>
                       <div>{ALASAN[d.alasan] ?? d.alasan}{d.pesanan.length > 0 && ` · ${d.pesanan.length} pesanan`}</div>
-                      {d.kandidat && <div>Pesanan dikirim sejak batch sebelumnya: {d.kandidat.jumlah} · estimasi sisa {fmtRp(d.kandidat.estimasi_pending)} · rasio advance {d.kandidat.rasio ?? "—"} · minggu kirim {Object.entries(d.kandidat.minggu_kirim).map(([w, c]) => `${labels[Number(w)] ?? w}: ${c}`).join(", ") || "—"}</div>}
+                      {d.kandidat && <div>Resi terkonfirmasi 16.00 kemarin–16.00 hari itu: {d.kandidat.jumlah} · estimasi sisa {fmtRp(d.kandidat.estimasi_pending)} · rasio advance {d.kandidat.rasio ?? "—"} · minggu kirim {Object.entries(d.kandidat.minggu_kirim).map(([w, c]) => `${labels[Number(w)] ?? w}: ${c}`).join(", ") || "—"}</div>}
                       {d.rilis_terdekat && d.rilis_terdekat.length > 0 && <div>Rilis terdekat: {d.rilis_terdekat.map((r) => `${r.order_sn} ${fmtRp(r.payout)} (${r.selisih_menit > 0 ? "+" : ""}${r.selisih_menit} mnt)`).join("; ")}</div>}
                     </li>
                   ))}
