@@ -26,6 +26,12 @@ const types: Record<string, string> = {
   '402': 'Penyesuaian keluar',
   '450': 'Biaya iklan',
   '451': 'Refund iklan',
+  '452': 'Dana Cepat · pencairan awal',
+  FAST_ESCROW_DISBURSE: 'Dana Cepat · pencairan awal',
+  '459': 'Dana Cepat · pencairan sisa',
+  FAST_ESCROW_DISBURSE_REMAIN: 'Dana Cepat · pencairan sisa',
+  '458': 'Dana Cepat · pengurangan retur/refund',
+  FAST_ESCROW_DEDUCT: 'Dana Cepat · pengurangan retur/refund',
 }
 const money = (v: string | null) => (v === null ? '—' : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 8 }))
 const columns: KolomTabel<WalletTransaction>[] = [
