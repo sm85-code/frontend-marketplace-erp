@@ -133,6 +133,25 @@ export default function FinancialShippingReceivables({
       void result.refetch();
     });
   };
+  // Separate figures for neraca / pemasukan: total receivable at each Saturday cutoff and its change from the previous
+  // week. Only shown when every shop's new + old receivable cells are known and certain; never a partial subtotal.
+  const totalPiutang = (data?.minggu ?? []).map((week, i) => {
+    if (!data || week.hingga < week.mulai || data.toko.length === 0) return null;
+    const values: string[] = [];
+    for (const shop of data.toko) {
+      const cell = shop.minggu[i];
+      if (shop.loading || shop.failed || shop.partial || shop.unmapped) return null;
+      if (cell.piutang === null || cell.piutang_lama === null) return null;
+      if (cell.piutang_tidak_pasti || cell.piutang_lama_tidak_pasti) return null;
+      values.push(cell.piutang, cell.piutang_lama);
+    }
+    return sumAmounts(values);
+  });
+  const changePiutang = totalPiutang.map((total, i) =>
+    total !== null && i > 0 && totalPiutang[i - 1] !== null
+      ? sumAmounts([total, "-" + totalPiutang[i - 1]!.replace(/^-/, "")])
+      : null,
+  );
   const future = (i: number) =>
     !!data && data.minggu[i].hingga < data.minggu[i].mulai;
   const amount = (
@@ -361,6 +380,25 @@ export default function FinancialShippingReceivables({
                         </TableCell>
                       );
                     })}
+                  </TableRow>
+                ))}
+                {[
+                  { label: "Total piutang (untuk neraca)", values: totalPiutang },
+                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang },
+                ].map((row) => (
+                  <TableRow key={row.label} className="border-t-2 bg-muted/60 font-semibold">
+                    <TableCell className="sticky left-0 z-10 whitespace-normal bg-muted">{row.label}</TableCell>
+                    {data.minggu.map((week, i) => (
+                      <TableCell key={week.mulai} className="text-right tabular-nums">
+                        {future(i) || (row.values === changePiutang && i === 0) ? (
+                          "—"
+                        ) : row.values[i] !== null ? (
+                          fmtRp(row.values[i]!)
+                        ) : (
+                          <span className="text-xs font-normal text-muted-foreground">Belum lengkap</span>
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
