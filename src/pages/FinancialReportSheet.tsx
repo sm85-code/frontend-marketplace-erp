@@ -289,16 +289,16 @@ export default function FinancialReportSheet({
       <CardContent className="min-w-0 space-y-3">
         <div className="max-w-full overflow-x-auto rounded-lg border">
           <Table
-            className="table-fixed"
-            style={{ minWidth: 220 + (days.length + 1) * 142 }}
+            className="table-fixed min-w-[calc(140px+var(--n)*112px)] sm:min-w-[calc(220px+var(--n)*142px)]"
+            style={{ '--n': days.length + 1 } as React.CSSProperties}
             aria-label={section.title.slice(3)}
           >
             <colgroup>
-              <col style={{ width: 220 }} />
+              <col className="w-[140px] sm:w-[220px]" />
               {days.map((d) => (
-                <col key={d} style={{ width: 142 }} />
+                <col key={d} className="w-[112px] sm:w-[142px]" />
               ))}
-              <col style={{ width: 142 }} />
+              <col className="w-[112px] sm:w-[142px]" />
             </colgroup>
             <TableHeader className="bg-muted">
               <TableRow>
@@ -317,7 +317,7 @@ export default function FinancialReportSheet({
             <TableBody>
               {section.rows.map((row) => row.group ? (
                 <TableRow key={row.label} className="financial-row-group">
-                  <TableHead colSpan={days.length + 2} scope="rowgroup">{row.label}</TableHead>
+                  <TableHead colSpan={days.length + 2} scope="rowgroup"><span className="sticky left-0 inline-block">{row.label}</span></TableHead>
                 </TableRow>
               ) : (
                 <TableRow key={row.label} className={row.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
