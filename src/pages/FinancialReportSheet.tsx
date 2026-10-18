@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
@@ -68,24 +69,16 @@ type SheetSection = ReturnType<typeof sheetSections>[number]
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
 function PhoneSheet({ section, month, records, days }: { section: SheetSection; month: string; records: Report[]; days: string[] }) {
-  const [pick, setPick] = useState(0)
+  const { pick, setPick } = usePeriodPick(0)
   const total = pick >= days.length
   const record = total ? undefined : records.find((r) => r.tanggal === days[pick])
   const valueOf = (row: Exclude<SheetSection['rows'][number], { group: true }>) =>
     total ? fmtRp(columnTotal(row, records)) : record ? fmtRp(row.value(record)) : '—'
-  const options = [...days.map((_, i) => ({ key: String(i), label: `Periode ${i + 1}`, sub: weekRange(month, i) })),
+  const options = [...days.map((_, i) => ({ key: String(i), label: 'Periode', sub: weekRange(month, i) })),
     { key: 'total', label: section.title.startsWith('E.') ? 'Posisi terakhir' : 'Jumlah', sub: '' }]
   return (
     <div className="space-y-2 md:hidden">
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Pilih periode">
-        {options.map((o, i) => (
-          <button key={o.key} type="button" role="tab" aria-selected={pick === i} onClick={() => setPick(i)}
-            className={`shrink-0 rounded-lg border px-3 py-1.5 text-left text-xs ${pick === i ? 'border-primary bg-primary text-primary-foreground' : 'bg-card'}`}>
-            <span className="block font-medium">{o.label}</span>
-            {o.sub ? <span className="block opacity-80">{o.sub}</span> : null}
-          </button>
-        ))}
-      </div>
+      <PeriodPicker options={options} pick={pick} onPick={setPick} />
       <div className="overflow-hidden rounded-lg border">
         <Table aria-label={section.title.slice(3)}>
           <TableBody>

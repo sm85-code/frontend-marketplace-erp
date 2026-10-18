@@ -51,20 +51,20 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
     <p className="text-sm text-muted-foreground">Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off.</p>
   </CardHeader><CardContent className="space-y-3">
     {accounts.error && <p role="alert">{getApiError(accounts.error)}</p>}
-    <PeriodPicker options={dates.map(d=>({key:d,label:'Periode',sub:`Minggu ${label(d)}`}))} pick={phone.pick} onPick={phone.setPick}/>
+    <PeriodPicker options={[...dates.map(d=>({key:d,label:'Periode',sub:`Minggu ${label(d)}`})),{key:'total',label:'Saldo terakhir'}]} pick={phone.pick} onPick={phone.setPick}/>
     <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed md:min-w-[calc(220px+var(--n)*165px)]" style={{'--n':columns+1} as React.CSSProperties} aria-label="SALDO PENJUAL (SHOPEE)">
-      <colgroup><col className="max-md:w-[36%] md:w-[220px]"/>{dates.map((d,i)=><col key={d} className={`md:w-[165px] ${phone.hide(i)}`}/>)}<col className="md:w-[165px]"/></colgroup>
+      <colgroup><col className="max-md:w-[55%] md:w-[220px]"/>{dates.map((d,i)=><col key={d} className={`md:w-[165px] ${phone.hide(i)}`}/>)}<col className={`md:w-[165px] ${phone.hide(dates.length)}`}/></colgroup>
       <TableHeader className="bg-muted"><TableRow><TableHead className="bg-muted md:sticky md:left-0 md:z-10">Toko</TableHead>
         {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
-        <TableHead className="text-right">Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
+        <TableHead className={`text-right ${phone.hide(dates.length)}`}>Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
       </TableRow></TableHeader><TableBody>
         {shops.map((name,i)=><TableRow key={name}><TableCell className="bg-card md:sticky md:left-0 md:z-10">{name}
           {!accounts.isPending && !accounts.error && (!selected[i] || !selected[i]?.id_toko_eksternal) && <span className="block whitespace-normal text-xs text-muted-foreground">{matched[i].length>1?'Nama cocok dengan lebih dari satu akun ERP':selected[i]?'Toko belum terhubung':'Akun toko ERP belum ditemukan'}</span>}
         </TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{amount(i,w)}
           {usable(i,w) && get(i,w)!.data!.transaksi_at != null && <span className="block whitespace-normal text-xs text-muted-foreground">Mutasi {fmtDateTime(new Date(get(i,w)!.data!.transaksi_at!*1000).toISOString())}</span>}
           {get(i,w)?.error && <span className="block whitespace-normal text-xs text-destructive">{getApiError(get(i,w)!.error)}</span>}
-        </TableCell>)}<TableCell className="bg-muted/40 text-right tabular-nums">{amount(i,lastClosed)}</TableCell></TableRow>)}
-        <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{totals(w)}</TableCell>)}<TableCell className="text-right tabular-nums">{totals(lastClosed)}</TableCell></TableRow>
+        </TableCell>)}<TableCell className={`bg-muted/40 text-right tabular-nums ${phone.hide(dates.length)}`}>{amount(i,lastClosed)}</TableCell></TableRow>)}
+        <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{totals(w)}</TableCell>)}<TableCell className={`text-right tabular-nums ${phone.hide(dates.length)}`}>{totals(lastClosed)}</TableCell></TableRow>
       </TableBody>
     </Table></div>
     <p className="text-xs text-muted-foreground">Saldo berasal dari mutasi terakhir sampai Minggu 23.59 WIB, dengan pencarian 14 hari ke belakang dari tiap cut-off. Riwayat tidak tersedia ditandai, tanpa memakai saldo saat ini. Saldo mingguan tidak dijumlahkan; kolom terakhir memakai posisi minggu terakhir yang sudah tutup. Total antar toko dipisahkan menurut mata uang. Sumber belum memisahkan saldo tersedia untuk ditarik dan tertahan.</p>

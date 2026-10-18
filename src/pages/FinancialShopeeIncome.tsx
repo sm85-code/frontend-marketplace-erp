@@ -36,22 +36,22 @@ export default function FinancialShopeeIncome({month,columns,released=false,unti
     {released && fast.some(result=>result.error) && <div role="alert" className="flex items-center gap-2 text-sm"><span>Dana Cepat BUMI TANI IND belum terbaca.</span><Button variant="outline" onClick={()=>fast.forEach(result=>{void result.refetch()})}>Coba lagi</Button></div>}
     {q.error && <div role="alert"><p>{getApiError(q.error)}</p><Button variant="outline" onClick={()=>void q.refetch()}>Coba lagi</Button></div>}
     {data && <>
-      <PeriodPicker options={data.minggu.map(w=>({key:w.mulai,label:'Periode',sub:`${dateLabel(w.mulai)}–${dateLabel(w.akhir)}`}))} pick={phone.pick} onPick={phone.setPick}/>
+      <PeriodPicker options={[...data.minggu.map(w=>({key:w.mulai,label:'Periode',sub:`${dateLabel(w.mulai)}–${dateLabel(w.akhir)}`})),{key:'total',label:'Jumlah'}]} pick={phone.pick} onPick={phone.setPick}/>
       <div className="max-w-full overflow-x-auto rounded-lg border">
         <Table className="table-fixed md:min-w-[calc(220px+var(--n)*142px)]" style={{'--n':columns+1} as React.CSSProperties} aria-label={title}>
-          <colgroup><col className="max-md:w-[36%] md:w-[220px]"/>{data.minggu.map((w,i)=><col key={w.mulai} className={`md:w-[142px] ${phone.hide(i)}`}/>)}<col className="md:w-[142px]"/></colgroup>
+          <colgroup><col className="max-md:w-[55%] md:w-[220px]"/>{data.minggu.map((w,i)=><col key={w.mulai} className={`md:w-[142px] ${phone.hide(i)}`}/>)}<col className={`md:w-[142px] ${phone.hide(data.minggu.length)}`}/></colgroup>
           <TableHeader className="bg-muted"><TableRow><TableHead className="bg-muted md:sticky md:left-0 md:z-10">Uraian</TableHead>
             {data.minggu.map((w,i)=><TableHead key={w.mulai} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">{dateLabel(w.mulai)}–{dateLabel(w.akhir)}</span></TableHead>)}
-            <TableHead className="text-right">Jumlah</TableHead>
+            <TableHead className={`text-right ${phone.hide(data.minggu.length)}`}>Jumlah</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {data.toko.map(shop=><TableRow key={shop.id}><TableCell className="bg-card md:sticky md:left-0 md:z-10">{shop.nama}{released && shop.nama==='BUMI TANI IND' && <span className="block whitespace-normal text-xs text-muted-foreground">Dana Cepat · mutasi saldo aktual{fast.some(result=>result.isPending)?' · memuat…':fast.some(result=>result.error)?' · gagal membaca data':''}</span>}{!released && shop.nama==='BUMI TANI IND' && <span className="block whitespace-normal text-xs text-muted-foreground">Dana Cepat · estimasi tidak masuk laporan utama</span>}{shop.akun_ditemukan === false && <span className="block whitespace-normal text-xs text-muted-foreground">Akun toko ERP belum ditemukan</span>}</TableCell>
               {shop.minggu.map((c,i)=><TableCell key={i} className={`text-right tabular-nums ${phone.hide(i)}`}>{until && data!.minggu[i].mulai>until ? "—" : <Amount cell={c}/>}</TableCell>)}
-              <TableCell className="bg-muted/40 text-right tabular-nums"><Amount cell={aggregate(shop.minggu)}/></TableCell>
+              <TableCell className={`bg-muted/40 text-right tabular-nums ${phone.hide(data.minggu.length)}`}><Amount cell={aggregate(shop.minggu)}/></TableCell>
             </TableRow>)}
             <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>
               {data.minggu.map((w,i)=><TableCell key={w.mulai} className={`text-right tabular-nums ${phone.hide(i)}`}>{until && w.mulai>until ? "—" : <Amount cell={aggregate(data!.toko.map(s=>s.minggu[i]))}/>}</TableCell>)}
-              <TableCell className="text-right tabular-nums"><Amount cell={aggregate(data.toko.flatMap(s=>s.minggu))}/></TableCell>
+              <TableCell className={`text-right tabular-nums ${phone.hide(data.minggu.length)}`}><Amount cell={aggregate(data.toko.flatMap(s=>s.minggu))}/></TableCell>
             </TableRow>
           </TableBody>
         </Table>
