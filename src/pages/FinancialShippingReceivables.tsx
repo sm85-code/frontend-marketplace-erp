@@ -128,18 +128,25 @@ export default function FinancialShippingReceivables({
   };
   // Separate figures for neraca / pemasukan: total receivable at each Saturday cutoff and its change from the previous
   // week. Only shown when every shop's new + old receivable cells are known and certain; never a partial subtotal.
-  const totalPiutang = (data?.minggu ?? []).map((week, i) => {
-    if (!data || week.hingga < week.mulai || data.toko.length === 0) return null;
+  const totalDetail = (data?.minggu ?? []).map((week, i): { value: string | null; reason: string | null } => {
+    if (!data || week.hingga < week.mulai || data.toko.length === 0) return { value: null, reason: null };
     const values: string[] = [];
     for (const shop of data.toko) {
       const cell = shop.minggu[i];
-      if (shop.loading || shop.failed || shop.partial || shop.unmapped) return null;
-      if (cell.piutang === null || cell.piutang_lama === null) return null;
-      if (cell.piutang_tidak_pasti || cell.piutang_lama_tidak_pasti) return null;
+      const why = (reason: string) => ({ value: null, reason: `${shop.nama}: ${reason}` });
+      if (shop.loading) return why("masih memuat");
+      if (shop.failed) return why("gagal dibaca");
+      if (shop.partial) return why("halaman Shopee belum lengkap");
+      if (shop.unmapped) return why(`${shop.unmapped} pesanan belum punya tanggal kirim`);
+      if (cell.piutang === null || cell.piutang_lama === null) return why("data minggu ini belum tersedia");
+      if (cell.piutang_tidak_pasti || cell.piutang_lama_tidak_pasti)
+        return why(`${cell.piutang_tidak_pasti + cell.piutang_lama_tidak_pasti} pesanan belum pasti nilainya`);
       values.push(cell.piutang, cell.piutang_lama);
     }
-    return sumAmounts(values);
+    return { value: sumAmounts(values), reason: null };
   });
+  const totalPiutang = totalDetail.map((d) => d.value);
+  const totalReasons = totalDetail.map((d) => d.reason);
   const changePiutang = totalPiutang.map((total, i) =>
     total !== null && i > 0 && totalPiutang[i - 1] !== null
       ? sumAmounts([total, "-" + totalPiutang[i - 1]!.replace(/^-/, "")])
@@ -377,8 +384,8 @@ export default function FinancialShippingReceivables({
                   </TableRow>
                 ))}
                 {[
-                  { label: "Total piutang (untuk neraca)", values: totalPiutang, change: false },
-                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang, change: true },
+                  { label: "Total piutang (untuk neraca)", values: totalPiutang, change: false, reasons: totalReasons },
+                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang, change: true, reasons: totalReasons.map((r, i) => r ?? (i > 0 ? totalReasons[i - 1] : null)) },
                   ...(fastShops.length > 0
                     ? [
                         { label: "Utang Dana Cepat (untuk neraca)", values: utangDanaCepat, change: false },
@@ -396,7 +403,10 @@ export default function FinancialShippingReceivables({
                         ) : row.values[i] !== null ? (
                           fmtRp(row.values[i]!)
                         ) : (
-                          <span className="text-xs font-normal text-muted-foreground">Belum lengkap</span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            Belum lengkap
+                            {"reasons" in row && row.reasons?.[i] ? <span className="block whitespace-normal">{row.reasons[i]}</span> : null}
+                          </span>
                         )}
                       </TableCell>
                     ))}
