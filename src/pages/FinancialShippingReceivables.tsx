@@ -248,7 +248,7 @@ export default function FinancialShippingReceivables({
               </button>
             ))}
           </div>
-          <div className="relative max-h-[70dvh] max-w-full overflow-auto rounded-xl border">
+          <div className="relative max-w-full overflow-x-auto rounded-xl border">
             <Table
               aria-label="PESANAN DALAM PENGIRIMAN"
               className="table-fixed md:min-w-[calc(250px+var(--n)*175px)]"
@@ -260,7 +260,7 @@ export default function FinancialShippingReceivables({
                   <col key={w.mulai} className={`md:w-[175px] ${phoneHide(i)}`} />
                 ))}
               </colgroup>
-              <TableHeader className="sticky top-0 z-20 bg-muted">
+              <TableHeader className="bg-muted">
                 <TableRow>
                   <TableHead className="bg-muted md:sticky md:left-0 md:z-30">
                     Toko / Jenis dana
