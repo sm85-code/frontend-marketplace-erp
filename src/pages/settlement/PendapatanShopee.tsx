@@ -36,14 +36,14 @@ interface Row {
 }
 
 export default function PendapatanShopee() {
-  const [shop, setShop] = useState('')
+  const [shop, setShop] = useState('all')
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => listAkun() })
   const available = (shops.data ?? []).filter(a => a.platform === 'shopee' && a.id_toko_eksternal)
-  const selected = available.find(a => a.id === shop)
+  const selected = shop === 'all' ? available : available.filter(a => a.id === shop)
   return <div className="space-y-4">
-    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="" disabled>Pilih toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
+    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="all">Semua toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
-    {selected && <Income key={selected.id} shops={[selected]} />}
+    {selected.length > 0 && <Income key={shop} shops={selected} />}
     {!shops.isPending && !available.length && <p className="text-sm text-muted-foreground">Belum ada toko Shopee terhubung.</p>}
   </div>
 }
@@ -62,8 +62,7 @@ function Income({ shops }: { shops: AkunMarketplace[] }) {
       enabled: ready && !!start && !!end && current[source.key] !== null, retry: false, staleTime: 60000,
     }
   }
-  const pendingQuery = useQuery(incomeOptions(0))
-  const queries = [pendingQuery]
+  const queries = useQueries({ queries: sources.map((_, index) => incomeOptions(index)) })
   const incomeBusy = sources.some((source, i) => current[source.key] !== null && (queries[i].isFetching || queries[i].isPending))
 
   const loaded = sources.flatMap((source, index) => {
