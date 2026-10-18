@@ -303,18 +303,19 @@
    ------------------------------------------------------------------------------------------------ */
 :root {
   --skala-huruf: 1;
-  --teks-data: calc(0.875rem * var(--skala-huruf)); /* 13px: table cells, card values */
-  --teks-kecil: calc(0.75rem * var(--skala-huruf)); /* 12px: second lines, hints */
-  --teks-judul: calc(0.6875rem * var(--skala-huruf)); /* 11px: column headings */
+  font-size: calc(100% * var(--skala-huruf)); /* every rem-based size follows the chosen font size */
+  --teks-data: 0.875rem; /* 13px: table cells, card values */
+  --teks-kecil: 0.75rem; /* 12px: second lines, hints */
+  --teks-judul: 0.6875rem; /* 11px: column headings */
   --pad-sel-x: 1rem;
   --pad-sel-y: .75rem;
 }
 
 @media (max-width: 47.99rem) {
   :root {
-    --teks-data: calc(0.875rem * var(--skala-huruf)); /* 14px */
-    --teks-kecil: calc(0.75rem * var(--skala-huruf)); /* 12px */
-    --teks-judul: calc(0.75rem * var(--skala-huruf)); /* 12px */
+    --teks-data: 0.875rem; /* 14px */
+    --teks-kecil: 0.75rem; /* 12px */
+    --teks-judul: 0.75rem; /* 12px */
     --pad-sel-x: .5rem;
     --pad-sel-y: .625rem;
   }
