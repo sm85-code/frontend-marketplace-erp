@@ -6,6 +6,7 @@ import { sumAmounts } from '@/lib/financialAmounts'
 export { sumAmounts } from '@/lib/financialAmounts'
 import FinancialShopeeIncome from './FinancialShopeeIncome'
 import FinancialSellerBalance from './FinancialSellerBalance'
+import FinancialShippingReceivables from './FinancialShippingReceivables'
 import { fmtRp } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { Button } from '@/components/ui/button'
@@ -423,7 +424,7 @@ export default function FinancialReportSheet({
             {i === 0 ? (
               <div className="min-w-0 space-y-5">
                 {renderTable(section)}
-                <FinancialShopeeIncome until={latest?.tanggal} month={month} columns={days.length} />
+                <FinancialShippingReceivables until={latest?.tanggal} month={month} columns={days.length} />
                 <FinancialShopeeIncome
                   until={latest?.tanggal}
                   month={month}

@@ -58,3 +58,20 @@ export type ShopeeIncome = { periode: string; minggu: { mulai: string; akhir: st
 export const shopeeIncome = async (periode: string, jumlah_kolom: number, sampai?: string) => (await api.get<ShopeeIncome>('/laporan-keuangan/pemasukan-shopee', { params: { periode, jumlah_kolom, sampai } })).data
 
 export const shopeeReleasedFunds = async (periode: string, jumlah_kolom: number, sampai?: string) => (await api.get<ShopeeIncome>('/laporan-keuangan/saldo-penjual-shopee', { params: { periode, jumlah_kolom, sampai } })).data
+
+export type ShippingReceivableCell = {
+  piutang: string | null
+  piutang_lama: string | null
+  cair_minggu_lalu: string | null
+  piutang_tidak_pasti: number
+  piutang_lama_tidak_pasti: number
+  cair_tidak_terpetakan: number
+}
+export type ShippingReceivables = {
+  periode: string
+  sampai: string
+  minggu: { mulai: string; akhir: string; hingga: string; cutoff: string }[]
+  toko: { id: string; nama: string; akun_ditemukan: boolean; minggu: ShippingReceivableCell[] }[]
+}
+export const shippingReceivables = async (periode: string, jumlah_kolom: number, sampai?: string) =>
+  (await api.get<ShippingReceivables>('/laporan-keuangan/piutang-pengiriman-shopee', { params: { periode, jumlah_kolom, sampai } })).data
