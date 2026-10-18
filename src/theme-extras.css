@@ -260,6 +260,33 @@
   border-radius: 1rem;
 }
 
+/* Search + filter button of BarFilter: one row on phones, plain grid cells from md up. */
+.bar-filter-baris {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+}
+.bar-filter-baris > .span-2 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+@media (max-width: 47.99rem) {
+  .bar-filter-baris > .span-2 > label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+@media (min-width: 48rem) {
+  .bar-filter-baris {
+    display: contents;
+  }
+}
+
 /* A plain control (checkbox + text) that must line up with the inputs next to it. */
 .bar-filter .kontrol {
   display: flex;
