@@ -46,14 +46,6 @@ const metrics = [
   },
 ] as const;
 
-const ALASAN: Record<string, string> = {
-  tanpa_pesanan: "Mutasi tanpa kode pesanan",
-  tanpa_tanggal_kirim: "Ada pesanan tanpa tanggal kirim",
-  belum_dikirim: "Ada pesanan yang belum dikirim",
-  dikirim_hari_minggu: "Ada pesanan dikirim hari Minggu",
-  beda_minggu_kirim: "Pesanan tersebar di beberapa minggu kirim",
-};
-
 export default function FinancialShippingReceivables({
   month,
   columns,
@@ -89,8 +81,6 @@ export default function FinancialShippingReceivables({
       return {
         ...shop,
         fast: results.some(result => result?.data?.dana_cepat),
-      diagnosa: results.flatMap((result) => result?.data?.mutasi_diagnosa ?? []),
-      unmappedWallet: results.reduce((n, result) => n + (result?.data?.mutasi_tidak_terpetakan ?? 0), 0),
       loading: results.some((result) => result?.isPending),
         failed: results.some((result) => !!result?.error),
         partial: results.some(
@@ -112,6 +102,10 @@ export default function FinancialShippingReceivables({
             piutang_lama_tidak_pasti: 0,
             cair_tidak_terpetakan: 0,
           };
+          for (const key of ["utang_dana_cepat", "biaya_dana_cepat"] as const) {
+            if (cells.some((c) => c[key] != null))
+              cell[key] = loaded && cells.every((c) => c[key] != null) ? sumAmounts(cells.map((c) => c[key]!)) : null;
+          }
           for (const metric of metrics) {
             cell[metric.key] =
               loaded && cells.every((c) => c[metric.key] !== null)
@@ -150,6 +144,26 @@ export default function FinancialShippingReceivables({
   const changePiutang = totalPiutang.map((total, i) =>
     total !== null && i > 0 && totalPiutang[i - 1] !== null
       ? sumAmounts([total, "-" + totalPiutang[i - 1]!.replace(/^-/, "")])
+      : null,
+  );
+  // Dana Cepat is a loan: its payable goes to the neraca (liabilities), its change reduces pemasukan, the fee is an expense.
+  const fastShops = data?.toko.filter((shop) => shop.fast) ?? [];
+  const fastSum = (key: "utang_dana_cepat" | "biaya_dana_cepat") =>
+    (data?.minggu ?? []).map((week, i) => {
+      if (week.hingga < week.mulai || fastShops.length === 0) return null;
+      const values: string[] = [];
+      for (const shop of fastShops) {
+        const value = shop.minggu[i][key];
+        if (shop.loading || shop.failed || value == null) return null;
+        values.push(value);
+      }
+      return sumAmounts(values);
+    });
+  const utangDanaCepat = fastSum("utang_dana_cepat");
+  const biayaDanaCepat = fastSum("biaya_dana_cepat");
+  const changeUtang = utangDanaCepat.map((total, i) =>
+    total !== null && i > 0 && utangDanaCepat[i - 1] !== null
+      ? sumAmounts([total, "-" + utangDanaCepat[i - 1]!.replace(/^-/, "")])
       : null,
   );
   const future = (i: number) =>
@@ -266,7 +280,7 @@ export default function FinancialShippingReceivables({
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
                               {shop.fast && <span className="mt-1 block text-xs text-muted-foreground">Dana Cepat · mutasi saldo</span>}
-                              {shop.unmappedWallet > 0 && <span className="mt-1 block text-xs text-muted-foreground">{shop.unmappedWallet} mutasi belum terpetakan ke pesanan · rincian di bawah tabel</span>}
+                              
                               {shop.loading && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
                                   Memuat dana Shopee…
@@ -352,7 +366,7 @@ export default function FinancialShippingReceivables({
                               )}
                               {(!complete ||
                                 data.toko.some(
-                                  (shop) => shop.partial || shop.unmapped || shop.unmappedWallet,
+                                  (shop) => shop.partial || shop.unmapped,
                                 )) && (
                                 <span className="mt-1 block whitespace-normal text-xs font-normal text-muted-foreground">
                                   Subtotal data terbaca
@@ -370,14 +384,21 @@ export default function FinancialShippingReceivables({
                   </TableRow>
                 ))}
                 {[
-                  { label: "Total piutang (untuk neraca)", values: totalPiutang },
-                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang },
+                  { label: "Total piutang (untuk neraca)", values: totalPiutang, change: false },
+                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang, change: true },
+                  ...(fastShops.length > 0
+                    ? [
+                        { label: "Utang Dana Cepat (untuk neraca)", values: utangDanaCepat, change: false },
+                        { label: "Perubahan utang Dana Cepat (untuk pemasukan, dikurangkan)", values: changeUtang, change: true },
+                        { label: "Biaya Dana Cepat 0,5% (beban)", values: biayaDanaCepat, change: false },
+                      ]
+                    : []),
                 ].map((row) => (
                   <TableRow key={row.label} className="border-t-2 bg-muted/60 font-semibold">
                     <TableCell className="sticky left-0 z-10 whitespace-normal bg-muted">{row.label}</TableCell>
                     {data.minggu.map((week, i) => (
                       <TableCell key={week.mulai} className="text-right tabular-nums">
-                        {future(i) || (row.values === changePiutang && i === 0) ? (
+                        {future(i) || (row.change && i === 0) ? (
                           "—"
                         ) : row.values[i] !== null ? (
                           fmtRp(row.values[i]!)
@@ -390,37 +411,6 @@ export default function FinancialShippingReceivables({
                 ))}
               </TableBody>
             </Table>
-          </div>
-        )}
-        {data && data.toko.some((shop) => shop.diagnosa.length > 0) && (
-          <div className="mt-4 space-y-3">
-            {data.toko.filter((shop) => shop.diagnosa.length > 0).map((shop) => (
-              <details key={shop.id} className="rounded-xl border p-3 text-sm">
-                <summary className="cursor-pointer font-medium">{shop.nama}: {shop.unmappedWallet} mutasi belum terpetakan ke pesanan</summary>
-                <ul className="mt-3 space-y-2">
-                  {shop.diagnosa.map((d, n) => (
-                    <li key={n} className="rounded-lg border p-3 text-xs text-muted-foreground">
-                      <div className="font-medium text-foreground">{new Date(d.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {d.jenis} · {fmtRp(d.nominal)}</div>
-                      <div>{ALASAN[d.alasan] ?? d.alasan}{d.pesanan.length > 0 && ` · ${d.pesanan.length} pesanan`}</div>
-                      {d.kandidat && <div>Resi terkonfirmasi 16.00 kemarin–16.00 hari itu: {d.kandidat.jumlah} pesanan · total sisa estimasi/cair pesanan tsb {fmtRp(d.kandidat.diharapkan)} · {d.kandidat.cocok ? "ada kombinasi pesanan yang cocok" : "tidak ada kombinasi yang cocok"} · minggu kirim {Object.entries(d.kandidat.minggu_kirim).map(([w, c]) => `${labels[Number(w)] ?? w}: ${c}`).join(", ") || "—"}</div>}
-                      {d.kandidat?.pesanan_3_hari && d.kandidat.pesanan_3_hari.length > 0 && (
-                        <details className="mt-1">
-                          <summary className="cursor-pointer">Pesanan dengan resi 3 hari terakhir ({d.kandidat.pesanan_3_hari.length})</summary>
-                          <ul className="mt-1 space-y-0.5">
-                            {d.kandidat.pesanan_3_hari.map((o) => (
-                              <li key={o.order_sn} className="break-all">
-                                {o.order_sn} · {fmtRp(o.nilai)} · {o.sumber} · {o.minggu === null ? "Minggu (dikecualikan)" : `minggu ${labels[o.minggu] ?? o.minggu}`} · {new Date(o.waktu).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                              </li>
-                            ))}
-                          </ul>
-                        </details>
-                      )}
-                      {d.rilis_terdekat && d.rilis_terdekat.length > 0 && <div>Rilis terdekat: {d.rilis_terdekat.map((r) => `${r.order_sn} ${fmtRp(r.payout)} (${r.selisih_menit > 0 ? "+" : ""}${r.selisih_menit} mnt)`).join("; ")}</div>}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ))}
           </div>
         )}
       </CardContent>
