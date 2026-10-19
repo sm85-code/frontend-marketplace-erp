@@ -2,6 +2,7 @@ import * as api from '@/api/commerce'
 import { daftarPesanan } from '@/api/endpoints'
 import type { AkunMarketplace } from '@/api/types'
 import { putusan, ringkasanKosong, type Ringkasan } from '@/lib/menungguPencairan'
+import { labelStatus } from '@/lib/pesanan'
 
 export interface BarisCair {
   shopId: string
@@ -15,6 +16,16 @@ export interface BarisCair {
   currency?: string
   payoutTime: number | null
   detail: api.IncomeOrderDetail | undefined
+  /** Status in the Pesanan menu (null: the order is not in the menu). */
+  statusErp: string | null
+}
+
+export interface TidakDihitung {
+  shopName: string
+  number: string
+  alasan: keyof Ringkasan
+  dalamDaftarShopee: boolean
+  statusErp: string | null
 }
 
 const wibDate = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(date)
@@ -38,11 +49,11 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       cursor = result.next_cursor
     }
   }
-  const erp = new Map<string, string>()
+  const erp = new Map<string, { id: string; status: string }>()
   const ids = new Set(shops.map((s) => s.id))
   for (let halaman = 1; halaman <= 20; halaman++) {
     const page = await daftarPesanan({ tahap: 'dikirim', akun_id: semuaToko ? undefined : shops[0]?.id, halaman, per_halaman: 100 })
-    for (const o of page.items) if (o.akun_id && ids.has(o.akun_id)) erp.set(`${o.akun_id}:${o.id_eksternal}`, o.id)
+    for (const o of page.items) if (o.akun_id && ids.has(o.akun_id)) erp.set(`${o.akun_id}:${o.id_eksternal}`, { id: o.id, status: labelStatus(o) })
     if (halaman * page.per_halaman >= page.total) break
   }
   const kunci = [...new Set([...daftar.keys(), ...erp.keys()])]
@@ -55,6 +66,7 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
     }
   }
   const dikecualikan: Ringkasan = ringkasanKosong()
+  const tidakDihitung: TidakDihitung[] = []
   const baris: BarisCair[] = []
   const nama = new Map(shops.map((s) => [s.id, s.nama_toko]))
   for (const k of kunci) {
@@ -64,6 +76,7 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
     const keputusan = putusan({ detail: d, dalamDaftarShopee: daftar.has(k) })
     if (!keputusan.baris) {
       dikecualikan[keputusan.alasan]++
+      tidakDihitung.push({ shopName: nama.get(shopId) ?? shopId, number, alasan: keputusan.alasan, dalamDaftarShopee: daftar.has(k), statusErp: erp.get(k)?.status ?? null })
       continue
     }
     const row = daftar.get(k)
@@ -71,13 +84,33 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       shopId,
       shopName: nama.get(shopId) ?? shopId,
       number,
-      erpId: erp.get(k) ?? null,
+      erpId: erp.get(k)?.id ?? null,
       dariDaftar: keputusan.dariDaftar,
       amount: row?.estimated_escrow_amount == null ? null : Number(row.estimated_escrow_amount),
       currency: row?.currency,
       payoutTime: row?.estimated_payout_time ?? null,
       detail: d,
+      statusErp: erp.get(k)?.status ?? null,
     })
+  }
+  // Orders the Pesanan menu does not list as Dikirim: look up their status there, to compare both sides.
+  const kunciErp = (shopId: string, number: string) => `${shopId}:${number}`
+  const belumDiketahui = [
+    ...baris.filter((b) => b.statusErp == null).map((b) => ({ shopId: b.shopId, number: b.number, set: (s: string | null) => { b.statusErp = s } })),
+    ...tidakDihitung.filter((t) => t.statusErp == null).map((t) => ({ shopId: [...nama].find(([, n]) => n === t.shopName)?.[0] ?? '', number: t.number, set: (s: string | null) => { t.statusErp = s } })),
+  ].filter((x) => x.shopId && !erp.has(kunciErp(x.shopId, x.number)))
+  for (let i = 0; i < belumDiketahui.length; i += 4) {
+    await Promise.all(
+      belumDiketahui.slice(i, i + 4).map(async (x) => {
+        try {
+          const page = await daftarPesanan({ q: x.number, akun_id: x.shopId, halaman: 1, per_halaman: 5 })
+          const ketemu = page.items.find((o) => o.id_eksternal === x.number)
+          x.set(ketemu ? labelStatus(ketemu) : null)
+        } catch {
+          x.set(null)
+        }
+      }),
+    )
   }
   // Shipped but not in Shopee's list: the estimated payout lives in the order's escrow detail.
   const tanpaDaftar = baris.filter((b) => !b.dariDaftar && b.erpId)
@@ -95,5 +128,5 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       }),
     )
   }
-  return { baris, dikecualikan }
+  return { baris, dikecualikan, tidakDihitung }
 }

@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { TableCell, TableRow } from '@/components/ui/table'
 
 const field = 'w-full rounded-lg border bg-background p-2'
+const ALASAN_TIDAK_DIHITUNG = { menunggu_kurir: 'Masih menunggu kurir (belum dikirim)', batal_retur: 'Dibatalkan / retur', sudah_cair: 'Sudah selesai dan dana sudah cair', tidak_diketahui: 'Rincian tidak bisa dibaca dari Shopee' } as const
 const shippingLabels: Record<string, string> = {
   LOGISTICS_NOT_START: 'Belum dikirim', LOGISTICS_REQUEST_CREATED: 'Menunggu kurir',
   LOGISTICS_PICKUP_DONE: 'Dalam pengiriman', LOGISTICS_DELIVERY_DONE: 'Diterima',
@@ -32,7 +33,7 @@ const eventTime = (data: api.Tracking | undefined, codes: string[]) => {
 interface Row {
   key: string; shop: string; number: string; products: string[]; variants: string[]
   shipping: string | null; amount: number | null; currency?: string
-  shipped: number | null; received: number | null; payout: number | null; dariDaftar: boolean
+  shipped: number | null; received: number | null; payout: number | null; dariDaftar: boolean; statusErp: string | null
 }
 
 export default function PendapatanShopee() {
@@ -68,7 +69,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
       amount: b.amount, currency: b.currency, dariDaftar: b.dariDaftar,
       shipped: stamp(b.detail?.pickup_done_time) ?? (shipped.length ? Math.min(...shipped) : null),
       received: received.length && received.every((v): v is number => v != null) ? Math.max(...received) : null,
-      payout: stamp(b.payoutTime) }
+      payout: stamp(b.payoutTime), statusErp: b.statusErp }
   })
   const names = (values: string[]) => values.length ? <div className="space-y-2">{values.map((v, i) => <div key={i}>{v}</div>)}</div> : '—'
   const columns: KolomTabel<Row>[] = [
@@ -77,6 +78,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
     { kunci: 'products', judul: 'Nama Produk', sel: r => names(r.products), nilai: r => r.products.join(' · '), kelas: 'min-w-60' },
     { kunci: 'variants', judul: 'Varian', sel: r => names(r.variants), nilai: r => r.variants.join(' · '), kelas: 'min-w-36' },
     { kunci: 'shipping', judul: 'Status Pengiriman', sel: r => r.shipping ?? '—', nilai: r => r.shipping },
+    { kunci: 'erp', judul: 'Status di Menu Pesanan', sel: r => r.statusErp ?? 'Tidak ada di menu Pesanan', nilai: r => r.statusErp, kelas: 'whitespace-nowrap' },
     { kunci: 'amount', judul: 'Estimasi Dana Cair', sel: r => <>{r.amount == null ? '—' : fmtMoney(r.amount, r.currency)}{!r.dariDaftar && <span className="block text-xs font-normal text-muted-foreground">belum tampil di daftar Shopee</span>}</>, nilai: r => r.amount, rata: 'kanan', kelas: 'whitespace-nowrap' },
     { kunci: 'shipped', judul: 'Tanggal Dikirim', sel: r => time(r.shipped), nilai: r => r.shipped, kelas: 'whitespace-nowrap' },
     { kunci: 'received', judul: 'Tanggal Diterima', sel: r => time(r.received), nilai: r => r.received, kelas: 'whitespace-nowrap' },
@@ -115,7 +117,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
       </div>}
       <TabelLokal label="Pesanan menunggu pencairan" items={shown} kolom={columns} idDari={r => r.key} namaDari={r => r.number} minWidth={1800}
         footer={<TableRow className="font-semibold">
-          <TableCell colSpan={5}>Total {shown.length} pesanan{withoutAmount > 0 && <span className="block text-xs font-normal text-muted-foreground">{withoutAmount} pesanan belum ada estimasi dana</span>}</TableCell>
+          <TableCell colSpan={6}>Total {shown.length} pesanan{withoutAmount > 0 && <span className="block text-xs font-normal text-muted-foreground">{withoutAmount} pesanan belum ada estimasi dana</span>}</TableCell>
           <TableCell className="text-right whitespace-nowrap">{totals.size ? [...totals].map(([currency, total]) => <div key={currency}>{fmtMoney(total, currency)}</div>) : '—'}</TableCell>
           <TableCell colSpan={3} />
         </TableRow>} />
@@ -124,6 +126,18 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
       {out && (out.menunggu_kurir + out.batal_retur + out.tidak_diketahui) > 0 && <p className="text-xs text-muted-foreground">
         Tidak dihitung: {[out.menunggu_kurir && `${out.menunggu_kurir} menunggu kurir`, out.batal_retur && `${out.batal_retur} dibatalkan/retur`, out.tidak_diketahui && `${out.tidak_diketahui} tidak bisa diverifikasi`].filter(Boolean).join(' · ')}.
       </p>}
+      {q.data.tidakDihitung.length > 0 && <details className="rounded-xl border bg-card p-3 text-sm">
+        <summary className="cursor-pointer font-medium">Pesanan yang tidak dihitung ({q.data.tidakDihitung.length}) · dibandingkan dengan menu Pesanan</summary>
+        <div className="mt-3 max-w-full overflow-x-auto rounded-lg border">
+          <table className="w-full text-left" aria-label="Pesanan yang tidak dihitung sebagai menunggu pencairan">
+            <thead className="bg-muted"><tr>{['Kode pesanan', 'Toko', 'Alasan tidak dihitung', 'Status di menu Pesanan', 'Di daftar Shopee'].map(h => <th key={h} className="whitespace-nowrap p-2 font-medium">{h}</th>)}</tr></thead>
+            <tbody>{q.data.tidakDihitung.map(t => <tr key={`${t.shopName}:${t.number}`} className="border-t">
+              <td className="whitespace-nowrap p-2 font-mono">{t.number}</td><td className="p-2">{t.shopName}</td>
+              <td className="p-2">{ALASAN_TIDAK_DIHITUNG[t.alasan]}</td><td className="whitespace-nowrap p-2">{t.statusErp ?? 'Tidak ada di menu Pesanan'}</td>
+              <td className="p-2">{t.dalamDaftarShopee ? 'Ya' : 'Tidak'}</td></tr>)}</tbody>
+          </table>
+        </div>
+      </details>}
       <div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? 'Memuat…' : 'Perbarui'}</Button></div>
     </>}
   </div>
