@@ -350,7 +350,7 @@ function MappingEditor({
             <Field title="Tarif packing"><SelectField value={packingTariff} onChange={e => {
               setPackingTariff(e.target.value)
               const p = prices.find(p => p.id === e.target.value)
-              if(p) setEdit(v => ({ ...v, packing_type: p.packing_type || 'biasa', packing_price: p.harga }))
+              if(p) setEdit(v => ({ ...v, packing_type: p.packing_type || 'biasa', packing_price: p.harga ?? '' }))
             }}><option value="">Manual / biaya fleksibel</option><PriceOptions prices={prices.filter(p => p.kind === 'packing')} /></SelectField></Field>
 
             <div className="grid gap-3 sm:grid-cols-2">
