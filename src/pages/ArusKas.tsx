@@ -1,20 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ArrowDownLeft, ArrowUpRight, Download, Wallet } from 'lucide-react'
+import { Download } from 'lucide-react'
 import * as reports from '@/api/financialReports'
-import { fmtRp, getApiError } from '@/api/client'
+import { getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { exportCsv } from '@/lib/exportData'
-import { applyRinci, BARIS_RINCI, GRUP_BARU, hidden, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, SELISIH } from '@/lib/arusKasRinci'
-import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from '@/lib/sheetEngine'
+import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, SELISIH, splitsOf } from '@/lib/arusKasRinci'
+import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { sheetSections } from '@/lib/sheetSections'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import BarHalaman from '@/components/daftar/BarHalaman'
-import KartuMetrik from '@/components/KartuMetrik'
 import Spinner from '@/components/Spinner'
 import FinancialSheetTable from './FinancialSheetTable'
 import { AddRowDialog } from './FinancialSheetDialogs'
@@ -70,38 +69,38 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
     [data, lembar, days.join('|')],
   )
   const block = useMemo(() => applyRinci(plain, days, lembar), [plain, lembar, days])
-  const lineOf = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)
-  const originalLabel = (base: string) => lineOf(base)?.def.label ?? base
+  const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
+  const splitIds = new Set(splitsOf(lembar).map((b) => b.id))
+  const anyHidden = lembar.baris.some((b) => b.id.startsWith('c:hide-'))
 
   const [target, setTarget] = useState<(RinciTarget & { week: number }) | null>(null)
-  const [addTo, setAddTo] = useState(false)
-  const isOriginal = (line: Line) => (BARIS_RINCI as readonly string[]).includes(line.def.key)
+  const [addTo, setAddTo] = useState<GroupDef | null>(null)
   const openEdit = (line: Line, week: number) => {
-    if (line.def.key.endsWith(':selisih') || !(isOriginal(line) || line.custom)) return
+    if (line.def.key.endsWith(':selisih')) return
     setTarget({
       key: line.def.key,
-      base: isOriginal(line) ? line.def.key : '',
       label: line.def.label,
       period: weekRange(month, week),
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
-      split: !isOriginal(line),
+      split: splitIds.has(line.def.key),
+      total: !!line.def.emphasis,
       week,
     })
   }
-  const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.base)}|${days[t.week]}`)
+  const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.key)}|${days[t.week]}`)
   const commit = (next: Lembar) => {
     save.mutate(next)
     setTarget(null)
   }
-  const withName = (base: string, label: string): Lembar['baris'] => {
-    const rest = lembar.baris.filter((b) => b.id !== keyNama(base))
-    return label === originalLabel(base) ? rest : [...rest, { id: keyNama(base), tabel: RINCI_TABEL, grup: base, label }]
+  const withName = (key: string, label: string): Lembar['baris'] => {
+    const rest = lembar.baris.filter((b) => b.id !== keyNama(key))
+    return label === originalLabel(key) ? rest : [...rest, { id: keyNama(key), tabel: RINCI_TABEL, grup: 'nama', label }]
   }
   const onSave = (label: string, value: string) => {
     if (!target) return
-    const sel = { ...lembar.sel, [cellId(target)]: value }
-    const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.base, label)
+    const sel = target.total ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
     commit({ ...lembar, sel, baris })
   }
   const onClearValue = () => {
@@ -111,9 +110,9 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
     commit({ ...lembar, sel })
   }
   const onDeleteRow = () => {
-    if (!target) return
+    if (!target || target.total) return
     if (!target.split) {
-      commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.base), tabel: RINCI_TABEL, grup: target.base, label: 'sembunyi' }] })
+      commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
       return
     }
     commit({
@@ -124,17 +123,11 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
   }
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
-    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: GRUP_BARU, label }] })
-    setAddTo(false)
+    if (!addTo) return
+    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: addTo.label, label }] })
+    setAddTo(null)
   }
 
-  const total = (key: string) => lineOf(key)?.total ?? null
-  const cards = [
-    { label: 'Kas masuk', value: total('kas_masuk'), icon: ArrowDownLeft, note: 'Akumulasi periode terisi' },
-    { label: 'Kas keluar', value: total('kas_keluar'), icon: ArrowUpRight, note: 'Akumulasi periode terisi' },
-    { label: 'Transfer antar kas', value: total('transfer'), icon: Wallet, note: 'Akumulasi periode terisi' },
-    { label: 'Saldo akhir kas utama', value: total('akhir') ?? data.saldo_awal?.saldo.kas_utama ?? null, icon: Wallet, note: 'Posisi terakhir' },
-  ]
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
@@ -143,20 +136,23 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {cards.map((c) => (
-          <KartuMetrik key={c.label} label={c.label} icon={c.icon} nilai={c.value === null ? '—' : fmtRp(c.value)} catatan={c.note} />
-        ))}
-      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Baris penjualan dan jasa di Kas masuk bebas diubah: ganti nama dan nilai, gabungkan, hapus, atau pecah menjadi baris sebanyak apa pun. Jumlah kas masuk tetap sama; yang belum terbagi tampil sebagai “{SELISIH}”.{(BARIS_RINCI as readonly string[]).some((k) => hidden(lembar, k)) && (<> <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={restore}>Tampilkan baris asli</button></>)}
+          Semua baris bisa diganti namanya; baris rincian juga bisa diubah nilainya, dihapus, atau dipecah menjadi baris sebanyak apa pun (tombol “+ Baris” di tiap kelompok). Jumlah kas masuk, kas keluar, dan transfer antar kas tetap sama; yang belum terbagi tampil sebagai “{SELISIH}”.
+          {anyHidden && (
+            <>
+              {' '}
+              <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={restore}>
+                Tampilkan baris yang dihapus
+              </button>
+            </>
+          )}
         </p>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={() => undefined} tanpaTambah />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
@@ -164,11 +160,16 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
         onClearValue={onClearValue}
         onDeleteRow={onDeleteRow}
         onAddSplit={() => {
+          let group: GroupDef | null = null
+          for (const l of block.lines) {
+            if (isGroup(l)) group = l
+            else if (l.def.key === target?.key) break
+          }
           setTarget(null)
-          setAddTo(true)
+          setAddTo(group)
         }}
       />
-      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: `${originalLabel(BARIS_RINCI[0])} / ${originalLabel(BARIS_RINCI[1])}` } : null} onClose={() => setAddTo(false)} onAdd={onAdd} />
+      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: addTo.label } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
     </section>
   )
 }

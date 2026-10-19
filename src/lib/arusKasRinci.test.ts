@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
-import { applyRinci, GRUP_BARU, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL } from './arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL } from './arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
 
@@ -22,35 +22,50 @@ const build = (lembar = emptyLembar()) => {
 const line = (b: ReturnType<typeof build>, key: string) => b.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)
 
 describe('arus kas breakdown', () => {
-  it('leaves the table untouched without a breakdown', () => {
+  it('keeps every figure when nothing is changed', () => {
     const b = build()
     expect(line(b, 'k_prod')!.cells[0].value).toBe(600)
     expect(line(b, 'k_cat')!.cells[0].value).toBe(50)
-    expect(line(b, `${GRUP_BARU}:selisih`)).toBeUndefined()
+    expect(line(b, 'Kas masuk:selisih')).toBeUndefined()
   })
 
-  it('lets the two rows be merged and split into any number of rows with the total unchanged', () => {
+  it('lets rows be merged and split into any number of rows with the total unchanged', () => {
     const lembar = emptyLembar()
     const d = '2026-10-04'
     lembar.sel[`${keyNilaiDasar('k_prod')}|${d}`] = '0'
     lembar.sel[`${keyNilaiDasar('k_cat')}|${d}`] = '0'
     for (const [i, v] of [100, 200, 150, 100, 100].entries()) {
-      lembar.baris.push({ id: `c:r${i}`, tabel: RINCI_TABEL, grup: GRUP_BARU, label: `Baris ${i}` })
+      lembar.baris.push({ id: `c:r${i}`, tabel: RINCI_TABEL, grup: 'Kas masuk', label: `Baris ${i}` })
       lembar.sel[`c:r${i}|${d}`] = String(v)
     }
     const b = build(lembar)
     expect([0, 1, 2, 3, 4].map((i) => line(b, `c:r${i}`)!.cells[0].value)).toEqual([100, 200, 150, 100, 100])
-    expect(line(b, `${GRUP_BARU}:selisih`)).toBeUndefined()
+    expect(line(b, 'Kas masuk:selisih')).toBeUndefined()
     expect(line(b, 'kas_masuk')!.cells[0].value).toBe(650)
   })
 
-  it('shows what is not yet divided, and can rename or remove an original row', () => {
+  it('works in the cash-out and transfer groups too and shows what is not yet divided', () => {
     const lembar = emptyLembar()
-    lembar.baris.push({ id: keyNama('k_cat'), tabel: RINCI_TABEL, grup: 'k_cat', label: 'Cat saja' })
-    lembar.baris.push({ id: keySembunyi('k_prod'), tabel: RINCI_TABEL, grup: 'k_prod', label: 'sembunyi' })
+    lembar.baris.push({ id: 'c:t1', tabel: RINCI_TABEL, grup: 'Transfer antar kas', label: 'Transfer lain' })
+    lembar.sel['c:t1|2026-10-04'] = '75'
+    lembar.sel[`${keyNilaiDasar('k_operasional')}|2026-10-04`] = '30'
+    const b = build(lembar)
+    expect(line(b, 'c:t1')!.cells[0].value).toBe(75)
+    expect(line(b, 'transfer')!.cells[0].value).toBe(0)
+    expect(line(b, 'Transfer antar kas:selisih')!.cells[0].value).toBe(-75)
+    expect(line(b, 'Kas keluar:selisih')!.cells[0].value).toBe(-30)
+    expect(line(b, 'kas_keluar')!.cells[0].value).toBe(0)
+  })
+
+  it('renames any row, totals included, and can remove a detail row', () => {
+    const lembar = emptyLembar()
+    lembar.baris.push({ id: keyNama('k_cat'), tabel: RINCI_TABEL, grup: 'nama', label: 'Cat saja' })
+    lembar.baris.push({ id: keyNama('kas_masuk'), tabel: RINCI_TABEL, grup: 'nama', label: 'Total masuk' })
+    lembar.baris.push({ id: keySembunyi('k_prod'), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' })
     const b = build(lembar)
     expect(line(b, 'k_cat')!.def.label).toBe('Cat saja')
+    expect(line(b, 'kas_masuk')!.def.label).toBe('Total masuk')
     expect(line(b, 'k_prod')).toBeUndefined()
-    expect(line(b, `${GRUP_BARU}:selisih`)!.cells[0].value).toBe(600)
+    expect(line(b, 'Kas masuk:selisih')!.cells[0].value).toBe(600)
   })
 })
