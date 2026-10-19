@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
@@ -54,11 +54,9 @@ export function weekRange(month: string, index: number): string {
 export default function FinancialReportSheet({
   data,
   month,
-  comparison,
 }: {
   data: Overview
   month: string
-  comparison?: ReactNode
 }) {
   const records = [...data.laporan].sort((a, b) => a.tanggal.localeCompare(b.tanggal))
   const days = records.map((r) => r.tanggal)
@@ -184,7 +182,6 @@ export default function FinancialReportSheet({
                 {label}
               </TabsTrigger>
             ))}
-            {comparison && <TabsTrigger value="comparison">Pembanding ERP</TabsTrigger>}
           </TabsList>
         </div>
         {blocks.map((block, i) => (
@@ -201,11 +198,6 @@ export default function FinancialReportSheet({
             )}
           </TabsContent>
         ))}
-        {comparison && (
-          <TabsContent value="comparison" className="min-w-0">
-            {comparison}
-          </TabsContent>
-        )}
       </Tabs>
       <EditCellDialog
         target={target}
