@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label'
 import { TableCell, TableRow } from '@/components/ui/table'
 
 const field = 'w-full rounded-lg border bg-background p-2'
-const ALASAN_TIDAK_DIHITUNG = { menunggu_kurir: 'Masih menunggu kurir (belum dikirim)', batal_retur: 'Dibatalkan / retur', sudah_cair: 'Sudah selesai dan dana sudah cair', tidak_diketahui: 'Rincian tidak bisa dibaca dari Shopee' } as const
 const shippingLabels: Record<string, string> = {
   LOGISTICS_NOT_START: 'Belum dikirim', LOGISTICS_REQUEST_CREATED: 'Menunggu kurir',
   LOGISTICS_PICKUP_DONE: 'Dalam pengiriman', LOGISTICS_DELIVERY_DONE: 'Diterima',
@@ -92,28 +91,22 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
   const totals = new Map<string, number>()
   for (const r of shown) if (r.amount != null) totals.set(r.currency ?? 'IDR', (totals.get(r.currency ?? 'IDR') ?? 0) + r.amount)
   const withoutAmount = shown.filter(r => r.amount == null).length
-  const out = q.data?.dikecualikan
-  const dariDaftar = baris.filter(b => b.dariDaftar).length
-  const selesaiBelumCair = baris.filter(b => b.detail?.order_status === 'COMPLETED').length
   const trackingFailure = tracking.find(t => t.error)
   return <div className="space-y-4">
     {q.isPending && <Spinner column label="Memuat pesanan menunggu pencairan…" />}
     {q.error && <QueryError error={q.error} retry={q.refetch} />}
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
-      <p className="text-sm text-muted-foreground">Pesanan yang sudah dikirim dan belum dicairkan Shopee. Pesanan yang masih menunggu kurir belum dihitung.</p>
-      {rows.length > 0 && <p className="text-xs text-muted-foreground">{rows.length} pesanan: {dariDaftar} dari daftar pencairan Shopee{rows.length - dariDaftar > 0 && <> + {rows.length - dariDaftar} berstatus Dikirim di menu Pesanan yang belum tampil di daftar Shopee</>}. Termasuk {selesaiBelumCair} pesanan yang sudah selesai tetapi dananya belum dirilis Shopee (di menu Pesanan statusnya Selesai, bukan Dikirim).</p>}
       {tracking.some(t => t.isFetching) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian pengiriman…</p>}
-      {statusCounts.size > 0 && <div role="group" aria-label="Filter status pengiriman" className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-medium">Status pengiriman</span>
-        {[...statusCounts].sort(([a], [b]) => a.localeCompare(b, 'id-ID')).map(([label, count]) => {
-          const active = statuses.includes(label)
-          return <Button key={label} type="button" size="sm" variant={active ? 'default' : 'outline'} aria-pressed={active}
-            onClick={() => setStatuses(current => active ? current.filter(v => v !== label) : [...current, label])}>
-            {label} <span className="text-xs opacity-75">({count})</span>
+      {statusCounts.size > 0 && <div role="group" aria-label="Filter status pengiriman" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
+        {[['', rows.length] as const, ...[...statusCounts].sort(([a], [b]) => a.localeCompare(b, 'id-ID'))].map(([label, count]) => {
+          const all = label === ''
+          const active = all ? statuses.length === 0 : statuses.includes(label)
+          return <Button key={label || 'semua'} type="button" size="sm" variant={active ? 'default' : 'outline'} aria-pressed={active} className="shrink-0 rounded-full whitespace-nowrap"
+            onClick={() => setStatuses(current => all ? [] : active ? current.filter(v => v !== label) : [...current, label])}>
+            {all ? 'Semua' : label} <span className="text-xs opacity-75">({count})</span>
           </Button>
         })}
-        {statuses.length > 0 && <Button type="button" size="sm" variant="ghost" onClick={() => setStatuses([])}>Reset</Button>}
       </div>}
       <TabelLokal label="Pesanan menunggu pencairan" items={shown} kolom={columns} idDari={r => r.key} namaDari={r => r.number} minWidth={1800}
         footer={<TableRow className="font-semibold">
@@ -123,21 +116,6 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
         </TableRow>} />
       {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan yang sedang menunggu pencairan.</p>}
       {rows.length > 0 && !shown.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan dengan status pengiriman yang dipilih.</p>}
-      {out && (out.menunggu_kurir + out.batal_retur + out.tidak_diketahui) > 0 && <p className="text-xs text-muted-foreground">
-        Tidak dihitung: {[out.menunggu_kurir && `${out.menunggu_kurir} menunggu kurir`, out.batal_retur && `${out.batal_retur} dibatalkan/retur`, out.tidak_diketahui && `${out.tidak_diketahui} tidak bisa diverifikasi`].filter(Boolean).join(' · ')}.
-      </p>}
-      {q.data.tidakDihitung.length > 0 && <details className="rounded-xl border bg-card p-3 text-sm">
-        <summary className="cursor-pointer font-medium">Pesanan yang tidak dihitung ({q.data.tidakDihitung.length}) · dibandingkan dengan menu Pesanan</summary>
-        <div className="mt-3 max-w-full overflow-x-auto rounded-lg border">
-          <table className="w-full text-left" aria-label="Pesanan yang tidak dihitung sebagai menunggu pencairan">
-            <thead className="bg-muted"><tr>{['Kode pesanan', 'Toko', 'Alasan tidak dihitung', 'Status di menu Pesanan', 'Di daftar Shopee'].map(h => <th key={h} className="whitespace-nowrap p-2 font-medium">{h}</th>)}</tr></thead>
-            <tbody>{q.data.tidakDihitung.map(t => <tr key={`${t.shopName}:${t.number}`} className="border-t">
-              <td className="whitespace-nowrap p-2 font-mono">{t.number}</td><td className="p-2">{t.shopName}</td>
-              <td className="p-2">{ALASAN_TIDAK_DIHITUNG[t.alasan]}</td><td className="whitespace-nowrap p-2">{t.statusErp ?? 'Tidak ada di menu Pesanan'}</td>
-              <td className="p-2">{t.dalamDaftarShopee ? 'Ya' : 'Tidak'}</td></tr>)}</tbody>
-          </table>
-        </div>
-      </details>}
       <div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? 'Memuat…' : 'Perbarui'}</Button></div>
     </>}
   </div>
