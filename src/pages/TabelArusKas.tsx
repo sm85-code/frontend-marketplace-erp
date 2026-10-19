@@ -19,7 +19,7 @@ import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
-export default function TabelArusKas({ data, month, tanpaUnduh }: { data: reports.Overview; month: string; tanpaUnduh?: boolean }) {
+export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean }) {
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => reports.lembarManual(month) })
@@ -141,7 +141,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh }: { data: report
           </Button>
         )}
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor bisaCentang={bisaCentang} onCentang={onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
