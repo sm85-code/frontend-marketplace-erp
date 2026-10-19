@@ -65,7 +65,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
     const labels = (states.length === traces.length && states.length ? states : fallback.length ? fallback : [b.detail?.order_status]).filter((v): v is string => !!v).map(v => shippingLabels[v] ?? v)
     return { key: `${b.shopId}:${b.number}`, shop: b.shopName, number: b.number,
       products: b.detail?.items.map(i => i.name || '—') ?? [], variants: b.detail?.items.map(i => i.variant || '—') ?? [],
-      shipping: [...new Set(labels)].join(' · ') || null,
+      shipping: b.detail?.order_status === 'COMPLETED' ? 'Selesai, dana belum cair' : [...new Set(labels)].join(' · ') || null,
       amount: b.amount, currency: b.currency, dariDaftar: b.dariDaftar,
       shipped: stamp(b.detail?.pickup_done_time) ?? (shipped.length ? Math.min(...shipped) : null),
       received: received.length && received.every((v): v is number => v != null) ? Math.max(...received) : null,
