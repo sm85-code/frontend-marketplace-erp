@@ -91,6 +91,8 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
   for (const r of shown) if (r.amount != null) totals.set(r.currency ?? 'IDR', (totals.get(r.currency ?? 'IDR') ?? 0) + r.amount)
   const withoutAmount = shown.filter(r => r.amount == null).length
   const out = q.data?.dikecualikan
+  const dariDaftar = baris.filter(b => b.dariDaftar).length
+  const selesaiBelumCair = baris.filter(b => b.detail?.order_status === 'COMPLETED').length
   const trackingFailure = tracking.find(t => t.error)
   return <div className="space-y-4">
     {q.isPending && <Spinner column label="Memuat pesanan menunggu pencairan…" />}
@@ -98,6 +100,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
       <p className="text-sm text-muted-foreground">Pesanan yang sudah dikirim dan belum dicairkan Shopee. Pesanan yang masih menunggu kurir belum dihitung.</p>
+      {rows.length > 0 && <p className="text-xs text-muted-foreground">{rows.length} pesanan: {dariDaftar} dari daftar pencairan Shopee{rows.length - dariDaftar > 0 && <> + {rows.length - dariDaftar} berstatus Dikirim di menu Pesanan yang belum tampil di daftar Shopee</>}. Termasuk {selesaiBelumCair} pesanan yang sudah selesai tetapi dananya belum dirilis Shopee (di menu Pesanan statusnya Selesai, bukan Dikirim).</p>}
       {tracking.some(t => t.isFetching) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian pengiriman…</p>}
       {statusCounts.size > 0 && <div role="group" aria-label="Filter status pengiriman" className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium">Status pengiriman</span>
