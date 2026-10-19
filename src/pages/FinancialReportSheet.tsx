@@ -9,12 +9,13 @@ import FinancialSellerBalance from './FinancialSellerBalance'
 import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
 import FinancialSheetTable from './FinancialSheetTable'
-import { AddRowDialog, EditCellDialog, type EditTarget } from './FinancialSheetDialogs'
+import { AddRowDialog, EditCellDialog, RenameDialog, type EditTarget } from './FinancialSheetDialogs'
 import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
 import { sheetDays } from '@/lib/sheetDays'
+import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -72,11 +73,13 @@ export default function FinancialReportSheet({
       void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
     },
   })
-  const blocks = useMemo(
+  const plain = useMemo(
     () => computeSheet(sheetSections(data), records, days, lembar),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, lembar, days.join('|')],
   )
+  const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
+  const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
 
   const [target, setTarget] = useState<(EditTarget & { week: number }) | null>(null)
@@ -89,6 +92,7 @@ export default function FinancialReportSheet({
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
       custom: line.custom,
+      renamable: bisaDiganti(line.def.key),
       week,
     })
   const commit = (next: Lembar) => {
@@ -100,8 +104,16 @@ export default function FinancialReportSheet({
     baris: lembar.baris.filter((b) => b.id !== id),
     sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${id}|`))),
   })
-  const onSave = (value: string) =>
-    target && commit({ ...lembar, sel: { ...lembar.sel, [cellKey(target.key, days[target.week])]: value } })
+  const onSave = (value: string, label: string) => {
+    if (!target) return
+    const named = target.renamable ? setNamaBaris(lembar, target.key, originalLabel(target.key), label) : lembar
+    commit({ ...named, sel: { ...named.sel, [cellKey(target.key, days[target.week])]: value } })
+  }
+  const [ren, setRen] = useState<{ title: string; label: string; save: (label: string) => Lembar } | null>(null)
+  const renameRow = (line: Line) =>
+    setRen({ title: 'Ubah nama baris', label: line.def.label, save: (label) => setNamaBaris(lembar, line.def.key, originalLabel(line.def.key), label) })
+  const renameGroup = (group: GroupDef) =>
+    setRen({ title: 'Ubah judul kelompok', label: group.tampil ?? group.label, save: (label) => setNamaGrup(lembar, group.tabel, group.label, label) })
   const onClear = () => {
     if (!target) return
     const sel = { ...lembar.sel }
@@ -175,13 +187,13 @@ export default function FinancialReportSheet({
           <TabsContent key={block.title} value={String(i)} className="min-w-0">
             {i === 0 ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli />
                 <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : (
-              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} />
+              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli />
             )}
           </TabsContent>
         ))}
@@ -191,8 +203,16 @@ export default function FinancialReportSheet({
         onClose={() => setTarget(null)}
         onSave={onSave}
         onClear={onClear}
-        onDelete={() => (target?.custom ? onClear() : onSave('0'))}
+        onDelete={() => (target?.custom ? onClear() : onSave('0', target?.label ?? ''))}
         onDeleteRow={() => target && commit(withoutRow(target.key))}
+      />
+      <RenameDialog
+        target={ren}
+        onClose={() => setRen(null)}
+        onSave={(label) => {
+          if (ren) save.mutate(ren.save(label))
+          setRen(null)
+        }}
       />
       <AddRowDialog group={addTo ? { tabel: addTo.tabel, grup: addTo.label } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
     </section>
