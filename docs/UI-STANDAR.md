@@ -73,7 +73,7 @@ sebagai `kolom:asc|desc` dan kuncinya harus dikenal API (`urut.kunci` pada kolom
 
 `src/config/nav.ts`: **urutan array `NAV` adalah urutan menu** (sidebar, drawer, bilah bawah).
 Grup: Harian (Dashboard, Pesanan) → Produk (Katalog Shopee, Produk, Listing, Gudang & Stok) →
-Keuangan & Iklan (Settlement, Iklan) → Pengaturan (Toko, Staff, Profil Saya).
+Keuangan (Settlement, Iklan) → Pengaturan (Toko, Staff, Profil Saya).
 Bilah bawah HP: 4 menu `bawah` berprioritas tertinggi yang boleh dilihat peran itu, ditampilkan menurut urutan alur;
 sisanya lewat *Lainnya* (drawer yang sama). Urutan kiri ke kanan ditentukan `posisiBawah`. Pemilik: Dashboard, Produk, Katalog, Pesanan, Lainnya. Filter status Pesanan bawaannya *Perlu diproses*. Staf: Dashboard, Pesanan, Toko, Profil.
 
