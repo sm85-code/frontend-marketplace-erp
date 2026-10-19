@@ -37,12 +37,6 @@ const metrics = [
     basis: "Estimasi · kiriman sebelum minggu ini",
     unknown: "piutang_lama_tidak_pasti",
   },
-  {
-    key: "cair_minggu_lalu",
-    label: "Kiriman minggu lalu cair",
-    basis: "Bersih · cair pada minggu ini",
-    unknown: "cair_tidak_terpetakan",
-  },
 ] as const;
 
 export default function FinancialShippingReceivables({
