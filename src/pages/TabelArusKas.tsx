@@ -19,7 +19,7 @@ import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
-export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean }) {
+export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean }) {
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => reports.lembarManual(month) })
@@ -56,7 +56,6 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: 
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
       split: splitIds.has(line.def.key),
-      locked: !!line.cells[week]?.locked,
       total: !!line.def.emphasis,
       week,
     })
@@ -72,18 +71,18 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: 
   }
   const onSave = (label: string, value: string) => {
     if (!target) return
-    const sel = target.total || target.locked ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const sel = target.total ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
     commit({ ...lembar, sel, baris })
   }
   const onClearValue = () => {
-    if (!target || target.locked) return
+    if (!target) return
     const sel = { ...lembar.sel }
     delete sel[cellId(target)]
     commit({ ...lembar, sel })
   }
   const onDeleteRow = () => {
-    if (!target || target.total || target.locked) return
+    if (!target || target.total) return
     if (!target.split) {
       commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
       return
@@ -94,19 +93,16 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: 
       sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${target.key}|`))),
     })
   }
-  /** Tick = the cash transaction of that period was done: its figure is frozen until the tick is removed. */
+  /** Tick = the cash transaction of that period was done. Only a marker; ticks made while ticking also froze the figure, which unticking still releases. */
   const onCentang = (line: Line, week: number, checked: boolean) => {
     const day = days[week]
     const valueKey = splitIds.has(line.def.key) ? `${line.def.key}|${day}` : `${keyNilaiDasar(line.def.key)}|${day}`
     const flag = keySelesai(line.def.key, day)
     const sel = { ...lembar.sel }
     if (checked) {
-      const cell = line.cells[week]
-      // "2" = the figure was frozen by this tick (automatic before), so unticking gives it back to the report.
-      sel[flag] = cell?.manual ? '1' : '2'
-      if (!cell?.manual) sel[valueKey] = String(cell?.value ?? 0)
+      sel[flag] = '1'
     } else {
-      if (sel[flag] === '2') delete sel[valueKey]
+      if (sel[flag] === '2') delete sel[valueKey] // older ticks froze the figure; unticking gives it back
       delete sel[flag]
     }
     save.mutate({ ...lembar, sel })
@@ -129,7 +125,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: 
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          {anyHidden && (
+          {anyHidden && !hanyaLihat && (
             <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
               Tampilkan baris yang dihapus
             </button>
@@ -141,7 +137,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang }: 
           </Button>
         )}
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}

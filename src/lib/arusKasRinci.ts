@@ -76,7 +76,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       added.custom = true
       shown.push(added)
     }
-    for (const l of shown) l.cells = l.cells.map((c, w) => (lembar.sel[keySelesai(l.def.key, days[w])] !== undefined ? { ...c, locked: true } : c))
+    for (const l of shown) l.cells = l.cells.map((c, w) => (lembar.sel[keySelesai(l.def.key, days[w])] !== undefined ? { ...c, selesai: true } : c))
     if (total) {
       const rest = days.map((_, w): Cell => {
         const whole = total.cells[w].value
