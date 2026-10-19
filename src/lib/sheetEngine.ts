@@ -40,7 +40,7 @@ export const emptyLembar = (): Lembar => ({ sel: {}, baris: [], hapus: [] })
 export const isGroup = (row: RowDef | GroupDef | Line): row is GroupDef => 'group' in row
 export const cellKey = (row: string, day: string) => `${row}|${day}`
 
-export type Cell = { value: number | null; manual: boolean }
+export type Cell = { value: number | null; manual: boolean; /** Marked as done on the Arus Kas page: the figure is frozen. */ locked?: boolean }
 export type Line = { def: RowDef; custom: boolean; hidden: boolean; cells: Cell[]; total: number | null }
 export type Block = { title: string; tabel: string; lines: (Line | GroupDef)[] }
 
@@ -52,7 +52,7 @@ const round = (n: number) => Math.round(n * 100) / 100
 
 export function computeSheet(sections: SectionDef[], records: Report[], days: string[], lembar: Lembar): Block[] {
   const recordOf = days.map((d) => records.find((r) => r.tanggal === d))
-  const hasData = days.map((d, w) => !!recordOf[w] || Object.keys(lembar.sel).some((k) => k.endsWith(`|${d}`)))
+  const hasData = days.map((d, w) => !!recordOf[w] || Object.keys(lembar.sel).some((k) => !k.startsWith('ok:') && k.endsWith(`|${d}`)))
   const hidden = new Set(lembar.hapus)
 
   // Rows incl. the ones added by hand, inserted at the end of their group.

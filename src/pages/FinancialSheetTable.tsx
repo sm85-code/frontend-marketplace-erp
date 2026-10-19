@@ -1,4 +1,4 @@
-import { Pencil, Plus } from 'lucide-react'
+import { Lock, Pencil, Plus } from 'lucide-react'
 import { fmtRp } from '@/api/client'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,6 +22,9 @@ type Props = {
   hurufAsli?: boolean
   /** Period shown first on phones (default: the last one). */
   periodeAwal?: number
+  /** Rows that get a "done" checkbox next to each period's figure, and what happens when it is ticked. */
+  bisaCentang?: (line: Line) => boolean
+  onCentang?: (line: Line, week: number, checked: boolean) => void
   /** Rename a total / calculated row (rows that can be typed over rename in their edit pop-up). */
   onRenameRow?: (line: Line) => void
   onRenameGroup?: (group: GroupDef) => void
@@ -59,15 +62,30 @@ function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { g
   )
 }
 
-const Amount = ({ value, manual }: { value: number | null; manual: boolean }) => (
+const Amount = ({ value, manual, locked }: { value: number | null; manual: boolean; locked?: boolean }) => (
   <span className={manual ? 'font-medium text-primary' : undefined}>
+    {locked && <Lock aria-label="terkunci" className="mr-1 inline size-3 align-[-1px] text-muted-foreground" />}
     {value === null ? '—' : fmtRp(value)}
     {manual && <span aria-label="diisi manual" className="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" />}
   </span>
 )
 
+function Centang({ line, week, checked, onCentang }: { line: Line; week: number; checked: boolean; onCentang: (line: Line, week: number, checked: boolean) => void }) {
+  return (
+    <input
+      type="checkbox"
+      className="size-4 shrink-0 cursor-pointer accent-primary"
+      checked={checked}
+      aria-label={`${line.def.label} sudah dilakukan`}
+      title={checked ? "Sudah dilakukan. Hapus centang untuk mengubah angkanya." : "Tandai sudah dilakukan (mengunci angka)"}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => onCentang(line, week, e.target.checked)}
+    />
+  )
+}
+
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const options = [
@@ -94,7 +112,10 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                 >
                   <TableCell className="whitespace-normal">{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    <Amount value={cell?.value ?? null} manual={!!cell?.manual} />
+                    <span className="inline-flex items-center justify-end gap-3">
+                      <Amount value={cell?.value ?? null} manual={!!cell?.manual} locked={!!cell?.locked} />
+                      {!total && onCentang && bisaCentang?.(line) && <Centang line={line} week={pick} checked={!!cell?.locked} onCentang={onCentang} />}
+                    </span>
                   </TableCell>
                 </TableRow>
               )
@@ -107,7 +128,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang } = props
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
@@ -157,7 +178,10 @@ export default function FinancialSheetTable(props: Props) {
                         className={`whitespace-nowrap text-right tabular-nums ${can ? 'cursor-pointer hover:bg-muted/60' : ''}`}
                         onClick={can ? () => onEdit(line, w) : undefined}
                       >
-                        <Amount value={cell.value} manual={cell.manual} />
+                        <span className="inline-flex items-center justify-end gap-3">
+                          <Amount value={cell.value} manual={cell.manual} locked={cell.locked} />
+                          {onCentang && bisaCentang?.(line) && <Centang line={line} week={w} checked={!!cell.locked} onCentang={onCentang} />}
+                        </span>
                       </TableCell>
                     ))}
                     <TableCell className="whitespace-nowrap bg-muted/40 text-right tabular-nums">

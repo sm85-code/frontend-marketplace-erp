@@ -8,6 +8,7 @@ export const SELISIH = 'Belum dirinci'
 const safe = (key: string) => key.replace(/[^\w-]/g, '_')
 export const keyNama = (key: string) => `c:nm-${safe(key)}`
 export const keyNilaiDasar = (key: string) => `rb:${key}`
+export const keySelesai = (key: string, day: string) => `ok:${key}|${day}`
 export const keySembunyi = (key: string) => `c:hide-${safe(key)}`
 /** Rows added before groups existed were kept in a shared pool; they belong to the cash-in group. */
 const LEGACY_GRUP = ['pool', 'k_prod', 'k_cat']
@@ -75,6 +76,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       added.custom = true
       shown.push(added)
     }
+    for (const l of shown) l.cells = l.cells.map((c, w) => (lembar.sel[keySelesai(l.def.key, days[w])] !== undefined ? { ...c, locked: true } : c))
     if (total) {
       const rest = days.map((_, w): Cell => {
         const whole = total.cells[w].value

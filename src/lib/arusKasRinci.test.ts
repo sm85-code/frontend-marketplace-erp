@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
-import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL } from './arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL } from './arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
 
@@ -67,5 +67,24 @@ describe('arus kas breakdown', () => {
     expect(line(b, 'kas_masuk')!.def.label).toBe('Total masuk')
     expect(line(b, 'k_prod')).toBeUndefined()
     expect(line(b, 'Kas masuk:selisih')!.cells[0].value).toBe(600)
+  })
+
+  it('marks a period as done: the cell is locked and keeps its frozen figure', () => {
+    const lembar = emptyLembar()
+    const d = '2026-10-04'
+    lembar.sel[keySelesai('k_prod', d)] = '2'
+    lembar.sel[`${keyNilaiDasar('k_prod')}|${d}`] = '600'
+    const b = build(lembar)
+    expect(line(b, 'k_prod')!.cells[0]).toMatchObject({ value: 600, manual: true, locked: true })
+    expect(line(b, 'k_prod')!.cells[1].locked).toBeUndefined()
+    expect(line(b, 'kas_masuk')!.cells[0].value).toBe(650)
+  })
+
+  it('a done flag alone does not make an empty period look filled', () => {
+    const lembar = emptyLembar()
+    lembar.sel[keySelesai('k_prod', '2026-10-11')] = '1'
+    const b = build(lembar)
+    expect(line(b, 'jml_pemasukan')).toBeUndefined()
+    expect(line(b, 'kas_masuk')!.cells[1].value).toBeNull()
   })
 })
