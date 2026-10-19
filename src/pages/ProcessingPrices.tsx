@@ -119,12 +119,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
     {
       kunci: 'harga',
       judul: 'Harga / unit',
-      nilai: (r) => Number(r.harga),
+      nilai: (r) => Number(r.harga ?? -1),
       sel: (r) => (
         <>
           {r.active === false && <span className="mb-1 block text-xs text-muted-foreground">Nonaktif</span>}
-          {fmtRp(r.harga)}
-          {Number(r.harga) === 0 && (
+          {r.harga ? fmtRp(r.harga) : <span className="text-muted-foreground">Belum ada harga</span>}
+          {r.harga && Number(r.harga) === 0 && (
             <span className="block text-xs text-destructive">Harga nol — periksa</span>
           )}
         </>
@@ -165,7 +165,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     sku: '',
                     ukuran: '',
                     ...(kind === 'non_kayu' ? { varian: [] } : {}),
-                    harga: '0',
+                    harga: kind === 'non_kayu' ? '' : '0',
                     catatan: '',
                     warna: '',
                   })
@@ -254,10 +254,10 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                       {[r.model_kode, r.ukuran, r.sku].filter(Boolean).join(' · ')}
                     </p>
                     <p className="mt-2 text-sm font-semibold tabular-nums">
-                      {fmtRp(r.harga)}{' '}
-                      <span className="text-xs font-normal text-muted-foreground">/ unit</span>
+                      {r.harga ? <>{fmtRp(r.harga)}{' '}
+                      <span className="text-xs font-normal text-muted-foreground">/ unit</span></> : <span className="font-normal text-muted-foreground">Belum ada harga</span>}
                     </p>
-                    {Number(r.harga) === 0 && <p className="text-xs text-destructive">Harga nol — periksa</p>}
+                    {r.harga && Number(r.harga) === 0 && <p className="text-xs text-destructive">Harga nol — periksa</p>}
                   </div>
                   {rowActions(r)}
                 </div>
@@ -390,13 +390,13 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               </div>}
               </>}
               <div className={edit.kind === 'produksi' ? 'grid gap-3 md:grid-cols-2' : 'space-y-3'}>
-              <Field title="Harga per unit (Rp)">
+              <Field title={edit.kind === 'non_kayu' ? 'Harga per unit (Rp) — boleh dikosongkan, harga menyusul' : 'Harga per unit (Rp)'}>
                 <Input
                   type="number"
                   min="0"
                   step="0.01"
-                  required
-                  value={edit.harga}
+                  required={edit.kind !== 'non_kayu'}
+                  value={edit.harga ?? ''}
                   onChange={(e) => change('harga', e.target.value)}
                 />
               </Field>
