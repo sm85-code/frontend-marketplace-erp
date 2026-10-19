@@ -73,7 +73,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
     { key: 'total', label: block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah', sub: '' },
   ]
   return (
-    <div className="space-y-2 md:hidden">
+    <div className="space-y-3 md:hidden">
       <PeriodPicker options={options} pick={pick} onPick={setPick} />
       <div className="overflow-hidden rounded-lg border">
         <Table aria-label={block.title.slice(3)}>
