@@ -3,6 +3,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   shippingReceivables,
   pendingShippingReceivables,
+  type DanaCepatRincian,
   type ShippingReceivableCell,
 } from "@/api/financialReports";
 import { fmtRp, getApiError } from "@/api/client";
@@ -100,6 +101,18 @@ export default function FinancialShippingReceivables({
             if (cells.some((c) => c[key] != null))
               cell[key] = loaded && cells.every((c) => c[key] != null) ? sumAmounts(cells.map((c) => c[key]!)) : null;
           }
+          const parts = cells.map((c) => c.rincian_dana_cepat);
+          if (loaded && parts.length > 0 && parts.every((p) => p != null)) {
+            const sum = (key: "pencairan" | "pencairan_lanjutan" | "pelunasan" | "retur" | "utang_sebelum_nol") => sumAmounts(parts.map((p) => p![key]));
+            cell.rincian_dana_cepat = {
+              pencairan: sum("pencairan"),
+              pencairan_lanjutan: sum("pencairan_lanjutan"),
+              pelunasan: sum("pelunasan"),
+              retur: sum("retur"),
+              utang_sebelum_nol: sum("utang_sebelum_nol"),
+              paling_awal: parts.map((p) => p!.paling_awal).filter((d): d is string => !!d).sort()[0] ?? null,
+            };
+          }
           for (const metric of metrics) {
             cell[metric.key] =
               loaded && cells.every((c) => c[metric.key] !== null)
@@ -160,6 +173,26 @@ export default function FinancialShippingReceivables({
       }
       return sumAmounts(values);
     });
+  const rincianSum = (key: keyof DanaCepatRincian) =>
+    (data?.minggu ?? []).map((week, i) => {
+      if (week.hingga < week.mulai || fastShops.length === 0) return null;
+      const values: string[] = [];
+      for (const shop of fastShops) {
+        const value = shop.minggu[i].rincian_dana_cepat?.[key]
+        if (shop.loading || shop.failed || value == null) return null;
+        values.push(value);
+      }
+      return sumAmounts(values);
+    });
+  const earliestMovement = (data?.minggu ?? []).map((_, i) =>
+    fastShops.map((shop) => shop.minggu[i].rincian_dana_cepat?.paling_awal).filter((d): d is string => !!d).sort()[0] ?? null,
+  );
+  const ignoredMovements = Object.entries(
+    pending.reduce<Record<string, number>>((all, result) => {
+      for (const [label, n] of Object.entries(result.data?.mutasi_lain ?? {})) all[label] = (all[label] ?? 0) + n;
+      return all;
+    }, {}),
+  );
   const utangDanaCepat = fastSum("utang_dana_cepat");
   const biayaDanaCepat = fastSum("biaya_dana_cepat");
   const changeUtang = utangDanaCepat.map((total, i) =>
@@ -167,6 +200,13 @@ export default function FinancialShippingReceivables({
       ? sumAmounts([total, "-" + utangDanaCepat[i - 1]!.replace(/^-/, "")])
       : null,
   );
+  const danaCepatRincian = [
+    { label: "↳ Pencairan Dana Cepat (kumulatif)", values: rincianSum("pencairan") },
+    { label: "↳ Pencairan lanjutan (kumulatif)", values: rincianSum("pencairan_lanjutan") },
+    { label: "↳ Pelunasan (kumulatif)", values: rincianSum("pelunasan") },
+    { label: "↳ Retur dipotong (kumulatif)", values: rincianSum("retur") },
+    { label: "↳ Utang sebelum dipotong ke nol", values: rincianSum("utang_sebelum_nol") },
+  ].map((row) => ({ ...row, change: false, detail: true }));
   const [picked, setPicked] = useState<number | null>(null);
   const future = (i: number) =>
     !!data && data.minggu[i].hingga < data.minggu[i].mulai;
@@ -400,11 +440,12 @@ export default function FinancialShippingReceivables({
                         { label: "Utang Dana Cepat (untuk neraca)", values: utangDanaCepat, change: false },
                         { label: "Perubahan utang Dana Cepat (untuk pemasukan, dikurangkan)", values: changeUtang, change: true },
                         { label: "Biaya Dana Cepat 0,5% (beban)", values: biayaDanaCepat, change: false },
+                        ...danaCepatRincian,
                       ]
                     : []),
                 ].map((row) => (
-                  <TableRow key={row.label} className="border-t-2 bg-muted/60 font-semibold">
-                    <TableCell className="whitespace-normal bg-muted md:sticky md:left-0 md:z-10">{row.label}</TableCell>
+                  <TableRow key={row.label} className={"detail" in row ? "text-sm text-muted-foreground" : "border-t-2 bg-muted/60 font-semibold"}>
+                    <TableCell className={`whitespace-normal md:sticky md:left-0 md:z-10 ${"detail" in row ? "bg-card pl-6" : "bg-muted"}`}>{row.label}</TableCell>
                     {data.minggu.map((week, i) => (
                       <TableCell key={week.mulai} className={`text-right tabular-nums ${phoneHide(i)}`}>
                         {future(i) || (row.change && i === 0) ? (
@@ -424,6 +465,12 @@ export default function FinancialShippingReceivables({
               </TableBody>
             </Table>
           </div>
+          {fastShops.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Rincian Dana Cepat: mutasi dompet dibaca sejak {earliestMovement.find((d) => d) ?? "—"}.
+              {ignoredMovements.length > 0 && ` Mutasi lain yang diabaikan (jenis/tab × jumlah): ${ignoredMovements.map(([label, n]) => `${label} × ${n}`).join(", ")}.`}
+            </p>
+          )}
           </>
         )}
       </CardContent>
