@@ -15,15 +15,17 @@ type Props = {
   weekLabel: (index: number) => string
   onEdit: (line: Line, week: number) => void
   onAddRow: (group: GroupDef) => void
+  /** Hide the per-group "+ Baris" button. */
+  tanpaTambah?: boolean
 }
 
-function GroupHead({ group, colSpan, onAddRow }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void }) {
+function GroupHead({ group, colSpan, onAddRow, tanpaTambah }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean }) {
   return (
     <TableRow className="financial-row-group">
       <TableHead colSpan={colSpan} scope="rowgroup">
         <span className="sticky left-0 inline-flex w-full items-center justify-between gap-2 pr-3 md:w-auto md:gap-4">
           {group.label}
-          {ADDABLE.has(group.tabel) && (
+          {ADDABLE.has(group.tabel) && !tanpaTambah && (
             <button
               type="button"
               onClick={() => onAddRow(group)}
@@ -47,7 +49,7 @@ const Amount = ({ value, manual }: { value: number | null; manual: boolean }) =>
 )
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah }: Props) {
   const { pick, setPick } = usePeriodPick(Math.max(days.length - 1, 0))
   const total = pick >= days.length
   const options = [
@@ -61,7 +63,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow }: Props) {
         <Table aria-label={block.title.slice(3)}>
           <TableBody>
             {block.lines.map((line) => {
-              if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={2} onAddRow={onAddRow} />
+              if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={2} onAddRow={onAddRow} tanpaTambah={tanpaTambah} />
               if (line.hidden) return null
               const can = editable(line) && !total
               const cell = total ? { value: line.total, manual: false } : line.cells[pick]
@@ -86,7 +88,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow }: Props) {
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah } = props
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
@@ -117,7 +119,7 @@ export default function FinancialSheetTable(props: Props) {
             </TableHeader>
             <TableBody>
               {block.lines.map((line) => {
-                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + 2} onAddRow={onAddRow} />
+                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + 2} onAddRow={onAddRow} tanpaTambah={tanpaTambah} />
                 if (line.hidden) return null
                 const can = editable(line)
                 const lastWithData = Math.max(0, line.cells.map((c) => c.value !== null).lastIndexOf(true))

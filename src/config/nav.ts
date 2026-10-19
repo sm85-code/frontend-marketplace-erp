@@ -15,6 +15,7 @@ import {
   Users,
   Warehouse,
   Hammer,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
 import type { Role } from '@/api/types'
@@ -68,6 +69,7 @@ export const NAV: NavItem[] = [
   { to: '/processing/tarif-packing', label: 'Tarif Packing', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
   { to: '/processing/template', label: 'Template', icon: FilePenLine, roles: ROLES_ADMIN_ONLY, grup: 'data-produksi' },
   { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
+  { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, roles: ROLES_ADMIN_ONLY, grup: 'keuangan' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, roles: ROLES_ADMIN_ONLY, grup: 'info-toko' },

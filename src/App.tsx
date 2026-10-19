@@ -33,6 +33,7 @@ const PromosiPage = lazy(() => import('@/pages/PromosiPage'))
 const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const DocumentTemplatesPage = lazy(() => import('@/pages/DocumentTemplatesPage'))
 const ProcessingPage = lazy(() => import('@/pages/ProcessingPage'))
+const ArusKas = lazy(() => import('@/pages/ArusKas'))
 const FinancialReportsPage = lazy(() => import('@/pages/FinancialReportsPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
 const IklanPage = lazy(() => import('@/pages/IklanPage'))
@@ -92,6 +93,7 @@ export default function App() {
               <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/processing/template" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ProcessingPage /></LazyPage></Protected>} />
+              <Route path="/arus-kas" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
