@@ -1,3 +1,4 @@
+import { labelVarian, namaDenganVarian } from '@/lib/varianProduk'
 import { useState } from 'react'
 import SupplierCatalogPanel from './SupplierCatalogPanel'
 import ProcessingColorField from './ProcessingColorField'
@@ -76,7 +77,7 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.model || p.kode, p.ukuran, p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
+          {[p.produk, p.model || p.kode, labelVarian(p), p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {fmtRp(p.harga)}
         </option>
       ))}
     </>
@@ -258,7 +259,7 @@ function MappingEditor({
                     <Field title="Produk katalog manual"><SelectField value={edit.price_id} onChange={e => {
                       pickPrice(e.target.value)
                       const p = prices.find(p => p.id === e.target.value)
-                      setEdit(v => ({ ...v, supplier_product_name: p?.produk || v.supplier_product_name, supplier_sku: p?.sku || '', production_sku: p?.sku || '', production_price: p?.harga || v.production_price }))
+                      setEdit(v => ({ ...v, supplier_product_name: p ? namaDenganVarian(p) : v.supplier_product_name, supplier_sku: p?.sku || '', production_sku: p?.sku || '', production_price: p?.harga || v.production_price }))
                     }}><option value="">Isi produk dan harga sendiri</option><PriceOptions prices={prices.filter(p => p.kind === 'non_kayu' || p.id === job.price_id)} /></SelectField></Field>
                     <Field title="Nama produk supplier"><Input required maxLength={300} value={edit.supplier_product_name || ''} disabled={!!edit.price_id} onChange={e => set('supplier_product_name', e.target.value)} /></Field>
                     <Field title="SKU supplier (opsional)"><Input maxLength={200} disabled={!!edit.price_id} value={edit.supplier_sku || ''} onChange={e => setEdit(v => ({ ...v, supplier_sku: e.target.value, production_sku: e.target.value }))} /></Field>

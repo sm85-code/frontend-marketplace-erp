@@ -58,6 +58,8 @@ export type ProcessingPrice = {
   produk: string
   sku: string
   ukuran: string
+  /** Manual products: any variants (name + value); `ukuran` is their one-line summary. */
+  varian?: { nama: string; nilai: string }[]
   harga: string
   catatan: string
   sumber?: string
@@ -143,7 +145,7 @@ export const retireProcessingPrice = async (price: ProcessingPrice) =>
 export const activateProcessingPrice = async (price: ProcessingPrice) =>
   (await api.post(`/processing/prices/${encodeURIComponent(price.id)}/activate`, null, { params: { version: price.version } })).data
 export const saveProcessingPrice = async (price: ProcessingPrice) => {
-  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type, color_id, production_price_id } = price
+  const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type, color_id, production_price_id, varian } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
       version,
@@ -154,6 +156,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       harga,
       catatan,
       ...(kind === 'packing' ? { packing_type: packing_type || 'biasa' } : {}),
+      ...(kind === 'non_kayu' ? { varian: varian ?? [] } : {}),
       ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '', ...(color_id ? { color_id } : {}), ...(production_price_id ? { production_price_id } : {}) } : {}),
     })
   ).data

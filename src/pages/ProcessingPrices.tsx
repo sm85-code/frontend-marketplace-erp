@@ -21,6 +21,8 @@ import BulkProductionStructure from './BulkProductionStructure'
 import { Checkbox } from '@/components/ui/checkbox'
 import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
+import ProcessingVarian from './ProcessingVarian'
+import { bersihkanVarian, labelVarian, masalahVarian, ringkasanVarian, varianDari } from '@/lib/varianProduk'
 
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing' }) {
   const qc = useQueryClient()
@@ -62,7 +64,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       (selectedKind !== 'produksi' ||
         category === 'all' ||
         (category === 'none' ? !categoryOf(p) : category === 'category:' + categoryOf(p))) &&
-      [p.produk, p.sku, p.ukuran, p.catatan, p.jenis, p.warna, p.model, p.model_kode, p.sku_induk, p.kategori_kode].join(' ').toLowerCase().includes(search.toLowerCase()),
+      [p.produk, p.sku, p.ukuran, labelVarian(p), p.catatan, p.jenis, p.warna, p.model, p.model_kode, p.sku_induk, p.kategori_kode].join(' ').toLowerCase().includes(search.toLowerCase()),
   )
   const pages = Math.max(1, Math.ceil(filtered.length / 15))
   const current = Math.min(page, pages)
@@ -73,7 +75,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const changeStatus = async (price: ProcessingPrice) => {
     const activate = price.active === false
     const label = activate ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'
-    if (!await confirm({ title: `${label} produk?`, description: `${price.produk} · ${price.ukuran || price.sku || 'Tanpa ukuran'}\n${activate ? 'Produk akan tersedia untuk pemetaan baru.' : price.in_use ? 'Produk sudah dipakai dalam order atau tarif terkait. Produk disembunyikan dari pilihan baru; riwayat tetap utuh.' : 'Produk akan dihapus dari katalog. Jika ternyata sudah dipakai saat diproses, sistem akan menonaktifkannya agar riwayat tetap utuh.'}`, confirmLabel: label, destructive: !activate })) return
+    if (!await confirm({ title: `${label} produk?`, description: `${price.produk} · ${labelVarian(price) || price.sku || (price.kind === 'non_kayu' ? 'Tanpa varian' : 'Tanpa ukuran')}\n${activate ? 'Produk akan tersedia untuk pemetaan baru.' : price.in_use ? 'Produk sudah dipakai dalam order atau tarif terkait. Produk disembunyikan dari pilihan baru; riwayat tetap utuh.' : 'Produk akan dihapus dari katalog. Jika ternyata sudah dipakai saat diproses, sistem akan menonaktifkannya agar riwayat tetap utuh.'}`, confirmLabel: label, destructive: !activate })) return
     setChanging(true)
     try {
       if (activate) { await activateProcessingPrice(price); toast.success('Produk diaktifkan') }
@@ -83,21 +85,21 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   }
   const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
-      setAdding(false); setUseHierarchy(!!price.structure_model_id); setError(''); setEdit(price)
+      setAdding(false); setUseHierarchy(!!price.structure_model_id); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price)
     }}>Edit</Button>
     {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
   </div>
   const baseColumns: KolomTabel<ProcessingPrice>[] = [
     {
       kunci: 'produk',
-      judul: 'Produk / Ukuran',
+      judul: selectedKind === 'non_kayu' ? 'Produk / Varian' : 'Produk / Ukuran',
       tetap: true,
       nilai: (r) => r.produk,
       sel: (r) => (
         <div>
           <p className="font-medium">{r.produk}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {[r.ukuran, r.sku].filter(Boolean).join(' · ') || '—'}
+            {[labelVarian(r), r.sku].filter(Boolean).join(' · ') || '—'}
           </p>
         </div>
       ),
@@ -162,6 +164,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     produk: '',
                     sku: '',
                     ukuran: '',
+                    ...(kind === 'non_kayu' ? { varian: [] } : {}),
                     harga: '0',
                     catatan: '',
                     warna: '',
@@ -309,10 +312,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               onSubmit={async (e) => {
                 e.preventDefault()
                 if (editingColor) return
+                const masalah = edit.kind === 'non_kayu' ? masalahVarian(edit.varian ?? []) : null
+                if (masalah) { setError(masalah); return }
                 setBusy(true)
                 setError('')
                 try {
-                  await saveProcessingPrice(edit)
+                  await saveProcessingPrice(edit.kind === 'non_kayu' ? { ...edit, varian: bersihkanVarian(edit.varian ?? []), ukuran: ringkasanVarian(edit.varian ?? []) } : edit)
                   await qc.invalidateQueries({ queryKey: ['processing-prices'] })
                   if ((e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-next-size') === 'true') {
                     setAdding(true)
@@ -369,14 +374,14 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               )}
               {edit.kind === 'packing' && <Field title="Jenis packing"><SelectField value={edit.packing_type || 'biasa'} onChange={e => change('packing_type', e.target.value)}><option value="biasa">Biasa</option><option value="kayu">Kayu</option></SelectField></Field>}
               {edit.kind === 'pengecatan' && <ProcessingColorField onEditingChange={setEditingColor} value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={(color, id) => setEdit(v => v ? {...v, warna:color, color_id:id} : v)} />}
-              {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly value={edit.ukuran}/></Field><Field title="SKU produksi"><Input readOnly value={edit.sku}/></Field></div> : <div className={edit.kind === 'packing' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
-                <Field title="Ukuran">
+              {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly value={edit.ukuran}/></Field><Field title="SKU produksi"><Input readOnly value={edit.sku}/></Field></div> : <div className={edit.kind === 'packing' || edit.kind === 'non_kayu' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
+                {edit.kind === 'non_kayu' ? <div className="col-span-2"><ProcessingVarian value={edit.varian ?? []} onChange={varian => setEdit(v => v ? { ...v, varian } : v)} /></div> : <Field title="Ukuran">
                   <Input
                     maxLength={100}
                     value={edit.ukuran}
                     onChange={(e) => change('ukuran', e.target.value)}
                   />
-                </Field>
+                </Field>}
                 {edit.kind !== 'packing' && <>
                 <Field title={edit.kind === 'non_kayu' ? 'SKU supplier (opsional)' : 'SKU Produksi (opsional)'}>
                   <Input maxLength={200} value={edit.sku} onChange={(e) => change('sku', e.target.value)} />
