@@ -8,6 +8,7 @@ import { useUrutLokal } from '@/lib/urut'
 import QueryError from '@/components/QueryError'
 import { ErrorDetails } from '@/pages/katalog/ShopeeEngagement'
 import Spinner from '@/components/Spinner'
+import SelisihPesanan from './SelisihPesanan'
 import { TabelData, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -45,6 +46,7 @@ export default function PendapatanShopee() {
     <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="all">Semua toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     {selected.length > 0 && <Income key={shop} shops={selected} />}
+    {selected.length > 0 && <SelisihPesanan shops={selected} semuaToko={shop === 'all'} />}
     {!shops.isPending && !available.length && <p className="text-sm text-muted-foreground">Belum ada toko Shopee terhubung.</p>}
   </div>
 }
