@@ -8,6 +8,7 @@ import {
 } from "@/api/financialReports";
 import { fmtRp, getApiError } from "@/api/client";
 import { sumAmounts } from "@/lib/financialAmounts";
+import { rentang } from "@/lib/tanggal";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -20,11 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/Spinner";
 
-const dateLabel = (date: string) =>
-  new Date(date + "T12:00:00+07:00").toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-  });
 const metrics = [
   {
     key: "piutang",
@@ -276,9 +272,9 @@ export default function FinancialShippingReceivables({
           <div className="flex gap-2 overflow-x-auto pb-1 md:hidden" role="tablist" aria-label="Pilih periode">
             {data.minggu.map((w, i) => (
               <button key={w.mulai} type="button" role="tab" aria-selected={pick === i} onClick={() => setPicked(i)}
-                className={`shrink-0 rounded-lg border px-3 py-1.5 text-left text-xs ${pick === i ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>
+                className={`shrink-0 rounded-lg border px-3 py-1.5 text-center text-xs ${pick === i ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>
                 <span className="block font-medium">Periode</span>
-                <span className="block opacity-80">{dateLabel(w.mulai)}–{dateLabel(w.akhir)}</span>
+                <span className="block opacity-80">{rentang(w.mulai, w.akhir)}</span>
               </button>
             ))}
           </div>
@@ -303,10 +299,10 @@ export default function FinancialShippingReceivables({
                     </span>
                   </TableHead>
                   {data.minggu.map((week) => (
-                    <TableHead key={week.mulai} className={`text-right ${phoneHide(data.minggu.indexOf(week))}`}>
+                    <TableHead key={week.mulai} className={`text-center ${phoneHide(data.minggu.indexOf(week))}`}>
                       <span className="block">Periode</span>
                       <span className="block text-xs font-normal">
-                        {dateLabel(week.mulai)}–{dateLabel(week.akhir)}
+                        {rentang(week.mulai, week.akhir)}
                       </span>
                     </TableHead>
                   ))}

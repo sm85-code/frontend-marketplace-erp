@@ -15,6 +15,7 @@ import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
 import { sheetDays } from '@/lib/sheetDays'
+import { rentang } from '@/lib/tanggal'
 import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
@@ -41,16 +42,14 @@ const dateLabel = (date: string) =>
     year: 'numeric',
   })
 
-// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28 Sep–3 Okt".
-const shortDate = (date: Date) => date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' })
-
+// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28/09 - 03/10".
 export function weekRange(month: string, index: number): string {
   const first = new Date(`${month}-01T12:00:00Z`)
   const monday = new Date(first)
   monday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7) + index * 7)
   const saturday = new Date(monday)
   saturday.setUTCDate(monday.getUTCDate() + 5)
-  return `${shortDate(monday)}–${shortDate(saturday)}`
+  return rentang(monday.toISOString().slice(0, 10), saturday.toISOString().slice(0, 10))
 }
 
 export default function FinancialReportSheet({
