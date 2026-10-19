@@ -77,6 +77,7 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
       className="size-4 shrink-0 cursor-pointer accent-primary"
       checked={checked}
       aria-label={`${line.def.label} sudah dilakukan`}
+      title={checked ? "Sudah dilakukan. Hapus centang untuk mengubah angkanya." : "Tandai sudah dilakukan (mengunci angka)"}
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => onCentang(line, week, e.target.checked)}
     />
