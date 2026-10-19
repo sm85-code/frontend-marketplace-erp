@@ -87,7 +87,7 @@ describe('sheet engine', () => {
     const two = computeSheet(sheetSections(data), [record], ['2026-10-04', '2026-10-11'], emptyLembar())
     const row = (key: string) => two.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
     expect(row('awal').cells[1].value).toBe(1300)
-    expect(row('n_laba_lalu').cells[1].value).toBe(300)
+    expect(row('n_laba_lalu').cells[1].value).toBeNull()
     expect(row('akhir').cells[1].value).toBeNull()
     const typed = computeSheet(sheetSections(data), [record], ['2026-10-04', '2026-10-11'], { ...emptyLembar(), sel: { 'produk|2026-10-11': '200' } })
     const typedRow = (key: string) => typed.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
