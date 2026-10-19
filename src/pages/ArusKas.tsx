@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { exportCsv } from '@/lib/exportData'
-import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
@@ -59,6 +59,8 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
   const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
   const save = useMutation({
     mutationFn: (next: Lembar) => reports.saveLembarManual(month, manual.data?.version ?? 0, next),
+    // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
+    onMutate: (next: Lembar) => qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old)),
     onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),
     onError: (error) => {
       toast.error(getApiError(error))
@@ -87,6 +89,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
       split: splitIds.has(line.def.key),
+      locked: !!line.cells[week]?.locked,
       total: !!line.def.emphasis,
       week,
     })
@@ -102,18 +105,18 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
   }
   const onSave = (label: string, value: string) => {
     if (!target) return
-    const sel = target.total ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const sel = target.total || target.locked ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
     commit({ ...lembar, sel, baris })
   }
   const onClearValue = () => {
-    if (!target) return
+    if (!target || target.locked) return
     const sel = { ...lembar.sel }
     delete sel[cellId(target)]
     commit({ ...lembar, sel })
   }
   const onDeleteRow = () => {
-    if (!target || target.total) return
+    if (!target || target.total || target.locked) return
     if (!target.split) {
       commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
       return
@@ -124,6 +127,24 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
       sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${target.key}|`))),
     })
   }
+  /** Tick = the cash transaction of that period was done: its figure is frozen until the tick is removed. */
+  const onCentang = (line: Line, week: number, checked: boolean) => {
+    const day = days[week]
+    const valueKey = splitIds.has(line.def.key) ? `${line.def.key}|${day}` : `${keyNilaiDasar(line.def.key)}|${day}`
+    const flag = keySelesai(line.def.key, day)
+    const sel = { ...lembar.sel }
+    if (checked) {
+      const cell = line.cells[week]
+      // "2" = the figure was frozen by this tick (automatic before), so unticking gives it back to the report.
+      sel[flag] = cell?.manual ? '1' : '2'
+      if (!cell?.manual) sel[valueKey] = String(cell?.value ?? 0)
+    } else {
+      if (sel[flag] === '2') delete sel[valueKey]
+      delete sel[flag]
+    }
+    save.mutate({ ...lembar, sel })
+  }
+  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input'
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
     if (!addTo) return
@@ -151,7 +172,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bisaCentang={bisaCentang} onCentang={onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
