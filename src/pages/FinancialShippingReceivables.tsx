@@ -269,7 +269,7 @@ export default function FinancialShippingReceivables({
         )}
         {data && (
           <>
-          <div className="flex gap-2 overflow-x-auto pb-1 md:hidden" role="tablist" aria-label="Pilih periode">
+          <div className="flex gap-2 overflow-x-auto pb-3 md:hidden" role="tablist" aria-label="Pilih periode">
             {data.minggu.map((w, i) => (
               <button key={w.mulai} type="button" role="tab" aria-selected={pick === i} onClick={() => setPicked(i)}
                 className={`shrink-0 rounded-lg border px-3 py-1.5 text-center text-xs ${pick === i ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>
