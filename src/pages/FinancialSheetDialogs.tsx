@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export type EditTarget = { key: string; label: string; period: string; current: number | null; manual: boolean; custom: boolean }
+export type EditTarget = { key: string; label: string; period: string; current: number | null; manual: boolean; custom: boolean; renamable?: boolean }
 
 /** Pop-up for one figure of the report sheet: type an amount (thousand separators), save it or delete the typed value. */
 export function EditCellDialog({
@@ -19,7 +19,7 @@ export function EditCellDialog({
 }: {
   target: EditTarget | null
   onClose: () => void
-  onSave: (value: string) => void
+  onSave: (value: string, label: string) => void
   /** Back to the closed-books figure. */
   onClear: () => void
   /** Delete the figure: zero for a closed-books row, nothing for a row added by hand. */
@@ -35,15 +35,16 @@ export function EditCellDialog({
   )
 }
 
-function EditForm({ target, onSave, onClear, onDelete, onDeleteRow }: { target: EditTarget; onSave: (v: string) => void; onClear: () => void; onDelete: () => void; onDeleteRow: () => void }) {
+function EditForm({ target, onSave, onClear, onDelete, onDeleteRow }: { target: EditTarget; onSave: (v: string, l: string) => void; onClear: () => void; onDelete: () => void; onDeleteRow: () => void }) {
   const [value, setValue] = useState(target.current === null ? '' : String(target.current))
-  const valid = /^-?\d+(\.\d+)?$/.test(value)
+  const [label, setLabel] = useState(target.label)
+  const valid = /^-?\d+(\.\d+)?$/.test(value) && !!label.trim()
   return (
     <form
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault()
-        if (valid) onSave(value)
+        if (valid) onSave(value, label.trim())
       }}
     >
       <DialogHeader>
@@ -53,6 +54,12 @@ function EditForm({ target, onSave, onClear, onDelete, onDeleteRow }: { target: 
           {target.manual ? ' · angka ini diisi manual' : ' · angka dari tutup buku'}
         </DialogDescription>
       </DialogHeader>
+      {target.renamable && (
+        <div className="space-y-2">
+          <Label htmlFor="sheet-name">Nama baris</Label>
+          <Input id="sheet-name" maxLength={120} value={label} onChange={(e) => setLabel(e.target.value)} />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="sheet-amount">Nilai (Rp)</Label>
         <MoneyInput id="sheet-amount" autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
@@ -111,6 +118,40 @@ export function AddRowDialog({ group, onClose, onAdd }: { group: { tabel: string
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/** Rename a row or a group title (nothing else about it changes). */
+export function RenameDialog({ target, onClose, onSave }: { target: { title: string; label: string } | null; onClose: () => void; onSave: (label: string) => void }) {
+  const [label, setLabel] = useState('')
+  return (
+    <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-sm">
+        {target && (
+          <form
+            key={target.label}
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const next = (label || target.label).trim()
+              if (next) onSave(next)
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>{target.title}</DialogTitle>
+              <DialogDescription>Hanya mengubah nama yang ditampilkan; angka dan perhitungan tidak berubah.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="rename-input">Nama</Label>
+              <Input id="rename-input" autoFocus maxLength={120} defaultValue={target.label} onChange={(e) => setLabel(e.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Simpan</Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   )

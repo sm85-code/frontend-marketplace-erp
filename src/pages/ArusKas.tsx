@@ -9,6 +9,7 @@ import { exportCsv } from '@/lib/exportData'
 import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, SELISIH, splitsOf } from '@/lib/arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
+import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { sheetSections } from '@/lib/sheetSections'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,7 +17,7 @@ import { Label } from '@/components/ui/label'
 import BarHalaman from '@/components/daftar/BarHalaman'
 import Spinner from '@/components/Spinner'
 import FinancialSheetTable from './FinancialSheetTable'
-import { AddRowDialog } from './FinancialSheetDialogs'
+import { AddRowDialog, RenameDialog } from './FinancialSheetDialogs'
 import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
 import { weekRange } from './FinancialReportSheet'
 
@@ -68,7 +69,8 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, lembar, days.join('|')],
   )
-  const block = useMemo(() => applyRinci(plain, days, lembar), [plain, lembar, days])
+  const block = useMemo(() => namai([applyRinci(plain, days, lembar)], lembar)[0], [plain, days, lembar])
+  const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const splitIds = new Set(splitsOf(lembar).map((b) => b.id))
   const anyHidden = lembar.baris.some((b) => b.id.startsWith('c:hide-'))
@@ -152,7 +154,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
@@ -167,6 +169,14 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
           }
           setTarget(null)
           setAddTo(group)
+        }}
+      />
+      <RenameDialog
+        target={ren && { title: 'Ubah judul kelompok', label: ren.label }}
+        onClose={() => setRen(null)}
+        onSave={(label) => {
+          if (ren) save.mutate(setNamaGrup(lembar, ren.group.tabel, ren.group.label, label))
+          setRen(null)
         }}
       />
       <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: addTo.label } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
