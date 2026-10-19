@@ -5,12 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { sumAmounts } from '@/lib/financialAmounts'
+import { ddmm, hariSebelum, rentang } from '@/lib/tanggal'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
 
 const shops = ['BUMI TANI IND', 'BUMI LESTARI INDONESIA', 'RESTU BUMI IND', 'MAJAPAHIT STORE IND', 'CAHAYA LANGIT IND', 'AZFA Furniture Official']
 const key = (value: string) => value.normalize('NFKC').toLocaleLowerCase('id-ID').trim().replace(/\s+/gu, ' ')
 type Balance = { saldo_terakhir: string | null; transaksi_at: number | null; diperiksa_at: string; currency: string | null; cutoff: string }
-const label = (date: string) => new Date(date+'T12:00:00+07:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'})
+const label = ddmm
+const weekOf = (sunday: string) => rentang(hariSebelum(sunday, 6), sunday)
 
 export default function FinancialSellerBalance({month,columns}:{month:string;columns:number}) {
   const accounts = useQuery({queryKey:['akun'],queryFn:()=>listAkun()})
@@ -51,11 +53,11 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
     <p className="text-sm text-muted-foreground">Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off.</p>
   </CardHeader><CardContent className="space-y-3">
     {accounts.error && <p role="alert">{getApiError(accounts.error)}</p>}
-    <PeriodPicker options={[...dates.map(d=>({key:d,label:'Periode',sub:`Minggu ${label(d)}`})),{key:'total',label:'Saldo terakhir'}]} pick={phone.pick} onPick={phone.setPick}/>
+    <PeriodPicker options={[...dates.map(d=>({key:d,label:'Periode',sub:weekOf(d)})),{key:'total',label:'Saldo terakhir'}]} pick={phone.pick} onPick={phone.setPick}/>
     <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed md:min-w-[calc(220px+var(--n)*165px)]" style={{'--n':columns+1} as React.CSSProperties} aria-label="SALDO PENJUAL (SHOPEE)">
       <colgroup><col className="max-md:w-[55%] md:w-[220px]"/>{dates.map((d,i)=><col key={d} className={`md:w-[165px] ${phone.hide(i)}`}/>)}<col className={`md:w-[165px] ${phone.hide(dates.length)}`}/></colgroup>
       <TableHeader className="bg-muted"><TableRow><TableHead className="bg-muted md:sticky md:left-0 md:z-10">Toko</TableHead>
-        {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">Minggu {label(d)} · 23.59</span></TableHead>)}
+        {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">{weekOf(d)}</span></TableHead>)}
         <TableHead className={`text-right ${phone.hide(dates.length)}`}>Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
       </TableRow></TableHeader><TableBody>
         {shops.map((name,i)=><TableRow key={name}><TableCell className="bg-card md:sticky md:left-0 md:z-10">{name}
