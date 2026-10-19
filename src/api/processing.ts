@@ -222,8 +222,8 @@ export const saveProductionStructure = async (node: ProductionStructureNode) => 
 }
 
 export type SupplierCatalogProduct = { id: string; sku: string; name: string; category_name: string; unit_of_measure: string; sell_price: string; qty_on_hand: number }
-export type SupplierCatalog = { unit_id: string; unit_name: string; read_at: string; items: SupplierCatalogProduct[] }
-export const getSupplierCatalogConnection = async () => (await api.get<{connected: boolean; unit_name?: string}>('/processing/supplier-catalog/connection')).data
+export type SupplierCatalog = { read_at: string; items: SupplierCatalogProduct[] }
+export const getSupplierCatalogConnection = async () => (await api.get<{connected: boolean}>('/processing/supplier-catalog/connection')).data
 export const getSupplierCatalog = async () => (await api.get<SupplierCatalog>('/processing/supplier-catalog')).data
 export const connectSupplierCatalog = async (username: string, password: string) => (await api.post('/processing/supplier-catalog/connect', {username, password})).data
 export const disconnectSupplierCatalog = async () => (await api.delete('/processing/supplier-catalog/connection')).data

@@ -253,7 +253,7 @@ function MappingEditor({
                 </Field>
                 {job.route === 'supplier' ? <div className="space-y-3">
                   <Field title="Katalog produk"><SelectField value={edit.catalog_mode || 'manual'} onChange={e => setEdit(v => ({ ...v, catalog_mode: e.target.value as 'manual' | 'otomatis', price_id: '', supplier_product_id: '', refresh_catalog_price: false }))}>
-                    <option value="manual">Manual</option><option value="otomatis">Otomatis · Siabumdes</option>
+                    <option value="manual">Manual</option><option value="otomatis">Otomatis</option>
                   </SelectField></Field>
                   {edit.catalog_mode === 'otomatis' ? <SupplierCatalogPanel selectedId={edit.supplier_product_id} onPick={p => setEdit(v => ({ ...v, supplier_product_id: p.id, supplier_product_name: p.name, supplier_sku: p.sku, production_sku: p.sku, production_price: p.sell_price, refresh_catalog_price: true, price_id: '' }))} /> : <>
                     <Field title="Produk katalog manual"><SelectField value={edit.price_id} onChange={e => {
