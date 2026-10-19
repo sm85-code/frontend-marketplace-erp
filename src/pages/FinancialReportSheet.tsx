@@ -1,11 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
 import * as reports from '@/api/financialReports'
 import type { Overview } from '@/api/financialReports'
 export { sumAmounts } from '@/lib/financialAmounts'
-import FinancialShopeeIncome from './FinancialShopeeIncome'
 import FinancialSellerBalance from './FinancialSellerBalance'
 import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
@@ -55,11 +54,9 @@ export function weekRange(month: string, index: number): string {
 export default function FinancialReportSheet({
   data,
   month,
-  comparison,
 }: {
   data: Overview
   month: string
-  comparison?: ReactNode
 }) {
   const records = [...data.laporan].sort((a, b) => a.tanggal.localeCompare(b.tanggal))
   const days = records.map((r) => r.tanggal)
@@ -185,7 +182,6 @@ export default function FinancialReportSheet({
                 {label}
               </TabsTrigger>
             ))}
-            {comparison && <TabsTrigger value="comparison">Pembanding ERP</TabsTrigger>}
           </TabsList>
         </div>
         {blocks.map((block, i) => (
@@ -195,7 +191,6 @@ export default function FinancialReportSheet({
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} />
                 <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
-                <FinancialShopeeIncome until={reportUntil} month={month} columns={days.length} released />
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : (
@@ -203,11 +198,6 @@ export default function FinancialReportSheet({
             )}
           </TabsContent>
         ))}
-        {comparison && (
-          <TabsContent value="comparison" className="min-w-0">
-            {comparison}
-          </TabsContent>
-        )}
       </Tabs>
       <EditCellDialog
         target={target}
