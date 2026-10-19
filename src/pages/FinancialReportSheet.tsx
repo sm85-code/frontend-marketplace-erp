@@ -166,10 +166,11 @@ export default function FinancialReportSheet({
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
       </div>
-      <Tabs defaultValue="0" className="min-w-0">
+      <Tabs defaultValue="3" className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
-            {['Pemasukan', 'Pengeluaran', 'Laba/Rugi', 'Arus Kas', 'Neraca'].map((label, i) => (
+            {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
+            {[['Arus Kas', 3], ['Pemasukan', 0], ['Pengeluaran', 1], ['Laba/Rugi', 2], ['Neraca', 4]].map(([label, i]) => (
               <TabsTrigger key={label} value={String(i)}>
                 {label}
               </TabsTrigger>
@@ -186,7 +187,7 @@ export default function FinancialReportSheet({
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : block.tabel === 'arus_kas' ? (
-              <TabelArusKas data={data} month={month} tanpaUnduh />
+              <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
             )}
