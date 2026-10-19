@@ -10,6 +10,7 @@ import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, splitsOf 
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
+import { periodeBerjalan } from '@/lib/tanggal'
 import { sheetSections } from '@/lib/sheetSections'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -150,7 +151,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}

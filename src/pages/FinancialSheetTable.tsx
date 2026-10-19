@@ -20,6 +20,8 @@ type Props = {
   tanpaTambah?: boolean
   /** Show row names exactly as written instead of sentence-casing the total rows. */
   hurufAsli?: boolean
+  /** Period shown first on phones (default: the last one). */
+  periodeAwal?: number
   /** Rename a total / calculated row (rows that can be typed over rename in their edit pop-up). */
   onRenameRow?: (line: Line) => void
   onRenameGroup?: (group: GroupDef) => void
@@ -65,8 +67,8 @@ const Amount = ({ value, manual }: { value: number | null; manual: boolean }) =>
 )
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup }: Props) {
-  const { pick, setPick } = usePeriodPick(Math.max(days.length - 1, 0))
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal }: Props) {
+  const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const options = [
     ...days.map((_, i) => ({ key: String(i), label: 'Periode', sub: weekLabel(i) })),
