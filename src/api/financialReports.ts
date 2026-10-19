@@ -57,7 +57,7 @@ export const shopeeIncome = async (periode: string, jumlah_kolom: number, sampai
 
 export const shopeeReleasedFunds = async (periode: string, jumlah_kolom: number, sampai?: string) => (await api.get<ShopeeIncome>('/laporan-keuangan/saldo-penjual-shopee', { params: { periode, jumlah_kolom, sampai } })).data
 
-export type DanaCepatRincian = { pencairan: string; pencairan_lanjutan: string; pelunasan: string; retur: string; utang_sebelum_nol: string; paling_awal: string | null }
+export type DanaCepatRincian = { pencairan: string; pencairan_lanjutan: string; pelunasan: string; retur: string; utang_sebelum_nol: string; tanpa_pencairan: string; paling_awal: string | null }
 export type ShippingReceivableCell = {
   piutang: string | null
   piutang_lama: string | null
