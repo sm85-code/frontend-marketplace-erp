@@ -131,7 +131,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className="whitespace-normal">{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
-                      <Amount value={cell?.value ?? null} manual={!!cell?.manual} />
+                      <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} />
                       {!total && onCentang && bisaCentang?.(line) && <Centang line={line} week={pick} checked={!!cell?.selesai} onCentang={onCentang} />}
                     </span>
                   </TableCell>
@@ -202,7 +202,7 @@ export default function FinancialSheetTable(props: Props) {
                         onClick={can ? () => onEdit(line, w) : undefined}
                       >
                         <span className="inline-flex items-center justify-end gap-3">
-                          <Amount value={cell.value} manual={cell.manual} />
+                          <Amount value={cell.value} manual={!hanyaLihat && cell.manual} />
                           {onCentang && bisaCentang?.(line) && <Centang line={line} week={w} checked={!!cell.selesai} onCentang={onCentang} />}
                         </span>
                       </TableCell>
