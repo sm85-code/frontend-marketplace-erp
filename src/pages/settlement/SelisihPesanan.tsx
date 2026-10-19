@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import * as api from '@/api/commerce'
 import { daftarPesanan } from '@/api/endpoints'
-import { getApiError } from '@/api/client'
+import { fmtRp, getApiError } from '@/api/client'
 import type { AkunMarketplace } from '@/api/types'
 import Spinner from '@/components/Spinner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -12,10 +12,10 @@ const wibDate = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'As
 
 async function muat(shops: AkunMarketplace[], semuaToko: boolean) {
   // 1. Every order the Pesanan menu lists as "Dikirim" (all dates, like the menu's default).
-  const dikirim: { nomor: string; akunId: string | null }[] = []
+  const dikirim: { id: string; nomor: string; akunId: string | null }[] = []
   for (let halaman = 1; halaman <= 20; halaman++) {
     const page = await daftarPesanan({ tahap: 'dikirim', akun_id: semuaToko ? undefined : shops[0]?.id, halaman, per_halaman: 100 })
-    dikirim.push(...page.items.map((o) => ({ nomor: o.id_eksternal, akunId: o.akun_id })))
+    dikirim.push(...page.items.map((o) => ({ id: o.id, nomor: o.id_eksternal, akunId: o.akun_id })))
     if (halaman * page.per_halaman >= page.total) break
   }
   // 2. Every pending-income order of the shops in the Menunggu Pencairan table (all pages).
@@ -43,7 +43,26 @@ async function muat(shops: AkunMarketplace[], semuaToko: boolean) {
       for (const item of detail.items) status.set(`${shop.id}:${item.order_sn}`, item.order_status)
     }
   }
-  return { jumlahDikirim: dikirim.length, ...bandingkan(dikirim, menunggu, status) }
+  // 4. A parcel that is on its way has an estimated payout in Shopee (get_escrow_detail): read it for the running orders.
+  const estimasi = new Map<string, number | null>()
+  const berjalan = tanpaDaftar.filter((o) => {
+    const s = status.get(`${o.akunId}:${o.nomor}`)
+    return !!o.akunId && menunggu.has(o.akunId) && !!s && !['COMPLETED', 'CANCELLED', 'IN_CANCEL', 'TO_RETURN'].includes(s)
+  })
+  for (let i = 0; i < berjalan.length; i += 4) {
+    await Promise.all(
+      berjalan.slice(i, i + 4).map(async (o) => {
+        try {
+          const detail = (await api.orderIncome(o.id)).order_income
+          const jumlah = Number(detail.escrow_amount_after_adjustment ?? detail.escrow_amount)
+          estimasi.set(`${o.akunId}:${o.nomor}`, Number.isFinite(jumlah) ? jumlah : null)
+        } catch {
+          estimasi.set(`${o.akunId}:${o.nomor}`, null)
+        }
+      }),
+    )
+  }
+  return { jumlahDikirim: dikirim.length, ...bandingkan(dikirim, menunggu, status, estimasi) }
 }
 
 /** Read-only check: which "Dikirim" orders of the Pesanan menu are missing from Menunggu Pencairan, and why. */
@@ -72,6 +91,12 @@ export default function SelisihPesanan({ shops, semuaToko }: { shops: AkunMarket
               tetapi tidak menunggu cair: <strong>{q.data.selisih.length}</strong>
               {q.data.menungguTanpaDikirim > 0 && <> · Menunggu cair tetapi tidak berstatus Dikirim: <strong>{q.data.menungguTanpaDikirim}</strong></>}
             </p>
+            {q.data.estimasiTidakTampil.jumlah > 0 && (
+              <p>
+                Estimasi pencairan yang belum tampil di daftar Menunggu Pencairan: <strong>{fmtRp(q.data.estimasiTidakTampil.total)}</strong> dari{' '}
+                <strong>{q.data.estimasiTidakTampil.jumlah}</strong> pesanan.
+              </p>
+            )}
             {q.data.selisih.length === 0 ? (
               <p className="text-muted-foreground">Semua pesanan Dikirim ada di daftar Menunggu Pencairan.</p>
             ) : (
@@ -99,7 +124,7 @@ export default function SelisihPesanan({ shops, semuaToko }: { shops: AkunMarket
                           <TableCell>{(b.akunId && nama.get(b.akunId)) || '—'}</TableCell>
                           <TableCell className="whitespace-normal" title={b.statusShopee ? `Status di Shopee: ${STATUS_SHOPEE_LABEL[b.statusShopee] ?? b.statusShopee}` : undefined}>
                             {ALASAN_SINGKAT[b.alasan]}
-                            {b.alasan === 'belum_ada' && b.statusShopee ? ` (${STATUS_SHOPEE_LABEL[b.statusShopee] ?? b.statusShopee})` : ''}
+                            {b.alasan === 'ada_estimasi' && b.estimasi != null ? ` · ${fmtRp(b.estimasi)}` : ''}
                           </TableCell>
                         </TableRow>
                       ))}
