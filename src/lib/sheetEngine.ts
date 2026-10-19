@@ -40,7 +40,7 @@ export const emptyLembar = (): Lembar => ({ sel: {}, baris: [], hapus: [] })
 export const isGroup = (row: RowDef | GroupDef | Line): row is GroupDef => 'group' in row
 export const cellKey = (row: string, day: string) => `${row}|${day}`
 
-export type Cell = { value: number | null; manual: boolean; /** Marked as done on the Arus Kas page: the figure is frozen. */ locked?: boolean }
+export type Cell = { value: number | null; manual: boolean; /** Ticked as done on the Arus Kas page (only a marker; the figure stays editable in Laporan Keuangan). */ selesai?: boolean }
 export type Line = { def: RowDef; custom: boolean; hidden: boolean; cells: Cell[]; total: number | null }
 export type Block = { title: string; tabel: string; lines: (Line | GroupDef)[] }
 

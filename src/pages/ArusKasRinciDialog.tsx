@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export type RinciTarget = { key: string; label: string; total: boolean; locked?: boolean; period: string; current: number | null; manual: boolean; split: boolean }
+export type RinciTarget = { key: string; label: string; total: boolean; period: string; current: number | null; manual: boolean; split: boolean }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -49,7 +49,7 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
         <DialogTitle>{target.total ? 'Ubah nama baris' : target.split ? 'Baris rincian' : 'Ubah baris'}</DialogTitle>
         <DialogDescription>
           Periode {target.period}
-          {target.locked ? ' · sudah dilakukan, angka terkunci (hapus centang untuk mengubah)' : target.manual ? ' · angka ini diisi manual' : ' · angka otomatis dari laporan keuangan'}
+          {target.manual ? ' · angka ini diisi manual' : ' · angka otomatis dari laporan keuangan'}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
@@ -58,9 +58,9 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
       </div>
       {!target.total && <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
-        <MoneyInput id="rinci-amount" disabled={target.locked} value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
+        <MoneyInput id="rinci-amount" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
         {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kas masuk tidak berubah; yang belum terbagi tampil di baris “Belum dirinci”.</p>}
-        {target.manual && !target.locked && (
+        {target.manual && (
           <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={onClearValue}>
             Kembalikan ke angka otomatis
           </button>
@@ -73,7 +73,7 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
               <Button type="button" variant="outline" onClick={onAddSplit}>
                 Tambah baris rincian
               </Button>
-              <Button type="button" variant="outline" disabled={target.locked} onClick={onDeleteRow}>
+              <Button type="button" variant="outline" onClick={onDeleteRow}>
                 Hapus baris
               </Button>
             </>

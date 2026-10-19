@@ -69,14 +69,13 @@ describe('arus kas breakdown', () => {
     expect(line(b, 'Kas masuk:selisih')!.cells[0].value).toBe(600)
   })
 
-  it('marks a period as done: the cell is locked and keeps its frozen figure', () => {
+  it('marks a period as done without touching its figure', () => {
     const lembar = emptyLembar()
     const d = '2026-10-04'
-    lembar.sel[keySelesai('k_prod', d)] = '2'
-    lembar.sel[`${keyNilaiDasar('k_prod')}|${d}`] = '600'
+    lembar.sel[keySelesai('k_prod', d)] = '1'
     const b = build(lembar)
-    expect(line(b, 'k_prod')!.cells[0]).toMatchObject({ value: 600, manual: true, locked: true })
-    expect(line(b, 'k_prod')!.cells[1].locked).toBeUndefined()
+    expect(line(b, 'k_prod')!.cells[0]).toMatchObject({ value: 600, manual: false, selesai: true })
+    expect(line(b, 'k_prod')!.cells[1].selesai).toBeUndefined()
     expect(line(b, 'kas_masuk')!.cells[0].value).toBe(650)
   })
 
