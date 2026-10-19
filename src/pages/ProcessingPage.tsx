@@ -65,7 +65,7 @@ export default function ProcessingPage() {
     supplier: { title: 'Supplier', description: 'Kelola kontak dan rekening supplier.', content: <ProcessingParties kind="supplier" items={data?.supplier || []} /> },
     'produk-non-kayu': {
       title: 'Katalog Produk Non Kayu',
-      description: 'Lihat katalog otomatis dari Siabumdes atau kelola produk supplier secara manual.',
+      description: 'Lihat katalog otomatis atau kelola produk supplier secara manual.',
       content: <NonKayuTabs />,
     },
     'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan produk, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
