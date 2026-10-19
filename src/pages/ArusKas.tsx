@@ -152,7 +152,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} />
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
