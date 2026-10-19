@@ -41,7 +41,7 @@ export const GRUP_NAV: { id: GrupNav; label: string }[] = [
   { id: 'produk', label: 'Produk' },
   { id: 'processing', label: 'Processing' },
   { id: 'data-produksi', label: 'Data Produksi' },
-  { id: 'keuangan', label: 'Keuangan & Iklan' },
+  { id: 'keuangan', label: 'Keuangan' },
   { id: 'info-toko', label: 'Info Toko' },
   { id: 'pengaturan', label: 'Pengaturan' },
 ]
