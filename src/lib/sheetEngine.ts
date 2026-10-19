@@ -21,6 +21,10 @@ export type RowDef = {
   emphasis?: boolean
   /** Link row that only shows once it has an amount. */
   autoHide?: boolean
+  /** In a week without a closed report this row starts from the previous week's closed-books values of these rows (default: itself for balances, `total: 'last'`). */
+  carry?: string[]
+  /** Opening balance: shown in a week without a closed report too, taken from the previous week. */
+  showCarried?: boolean
   deps?: Dep[]
   base: (r: Report) => string
 }
@@ -69,7 +73,16 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
   const custom = new Set(lembar.baris.map((c) => c.id))
   for (const { rows } of blocks) for (const row of rows) if (!isGroup(row)) all.set(row.key, row)
 
-  const baseAt = (row: RowDef, w: number) => (recordOf[w] ? num(row.base(recordOf[w]!)) : 0)
+  const baseAt = (row: RowDef, w: number): number => {
+    if (recordOf[w]) return num(row.base(recordOf[w]!))
+    if (w === 0) return 0
+    const from = row.carry ?? (row.total === 'last' ? [row.key] : [])
+    return from.reduce((sum, key) => {
+      const source = all.get(key)
+      return source ? sum + baseAt(source, w - 1) : sum
+    }, 0)
+  }
+  const anyBefore = days.map((_, w) => recordOf.slice(0, w).some(Boolean))
   const shown = new Map<string, (number | undefined)[]>()
   const visiting = new Set<string>()
 
@@ -117,7 +130,7 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
       if (isGroup(row)) return row
       const isHidden = hidden.has(row.key)
       const cells: Cell[] = days.map((d, w) => ({
-        value: hasData[w] ? round(shownAt(row.key, w)) : null,
+        value: hasData[w] || (row.showCarried && anyBefore[w]) ? round(shownAt(row.key, w)) : null,
         manual: lembar.sel[cellKey(row.key, d)] !== undefined && row.kind === 'input',
       }))
       const present = cells.map((c) => c.value).filter((v): v is number => v !== null)

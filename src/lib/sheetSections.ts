@@ -44,7 +44,7 @@ export function sheetSections(data: Overview): SectionDef[] {
         key: string,
         label: string,
         base: RowDef['base'],
-        opt: { kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean; autoHide?: boolean } = {},
+        opt: { kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean; autoHide?: boolean; carry?: string[]; showCarried?: boolean } = {},
       ) {
         rows.push({
           key,
@@ -55,6 +55,8 @@ export function sheetSections(data: Overview): SectionDef[] {
           total: opt.total ?? 'sum',
           emphasis: opt.emphasis,
           autoHide: opt.autoHide,
+          carry: opt.carry,
+          showCarried: opt.showCarried,
           deps: opt.deps,
           base,
         })
@@ -108,6 +110,8 @@ export function sheetSections(data: Overview): SectionDef[] {
     total: 'first',
     emphasis: true,
     total_row: true,
+    carry: ['akhir'],
+    showCarried: true,
     deps: [prior('kas_masuk'), prior('kas_keluar', -1), prior('transfer')],
   })
   d.group('Kas masuk')
@@ -155,7 +159,12 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.row('jml_utang', 'Jumlah kewajiban / utang', (r) => r.hasil.neraca.utang, { ...calcTotal, total: 'last', deps: [G('neraca', 'Kewajiban')] })
   e.group('Ekuitas')
   e.row('n_modal', 'Modal', end('modal'), { total: 'last', deps: [cum('tr_modal')] })
-  e.row('n_laba_lalu', 'Saldo laba/rugi periode lalu', before('saldo_laba'), { total: 'first', deps: [prior('laba')] })
+  e.row('n_laba_lalu', 'Saldo laba/rugi periode lalu', before('saldo_laba'), {
+    total: 'first',
+    carry: ['n_laba_lalu', 'n_laba_ini'],
+    showCarried: true,
+    deps: [prior('laba')],
+  })
   e.row('n_laba_ini', 'Laba/rugi periode berjalan', result('laba'), { kind: 'calc', deps: [{ row: 'laba' }] })
   e.row('jml_ekuitas', 'Jumlah ekuitas', (r) => r.hasil.neraca.ekuitas, { ...calcTotal, total: 'last', deps: [G('neraca', 'Ekuitas')] })
   e.row('jml_kew_ekuitas', 'Jumlah kewajiban & ekuitas', (r) => sumAmounts([r.hasil.neraca.utang, r.hasil.neraca.ekuitas]), {

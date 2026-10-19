@@ -83,6 +83,19 @@ describe('sheet engine', () => {
     expect(total(cost, 'selisih')).toBe(0)
   })
 
+  it('fills the opening cash of a week that has no closed report from the previous closing cash', () => {
+    const two = computeSheet(sheetSections(data), [record], ['2026-10-04', '2026-10-11'], emptyLembar())
+    const row = (key: string) => two.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
+    expect(row('awal').cells[1].value).toBe(1300)
+    expect(row('n_laba_lalu').cells[1].value).toBe(300)
+    expect(row('akhir').cells[1].value).toBeNull()
+    const typed = computeSheet(sheetSections(data), [record], ['2026-10-04', '2026-10-11'], { ...emptyLembar(), sel: { 'produk|2026-10-11': '200' } })
+    const typedRow = (key: string) => typed.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
+    expect(typedRow('awal').cells[1].value).toBe(1300)
+    expect(typedRow('akhir').cells[1].value).toBe(1500)
+    expect(typedRow('selisih').cells[1].value).toBe(0)
+  })
+
   it('lets a typed value replace a closed-books figure and reports it as manual', () => {
     const b = run({ ...emptyLembar(), sel: { 'produk|2026-10-04': '0' } })
     const line = b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'produk')!
