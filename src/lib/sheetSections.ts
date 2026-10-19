@@ -162,7 +162,6 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.row('n_laba_lalu', 'Saldo laba/rugi periode lalu', before('saldo_laba'), {
     total: 'first',
     carry: ['n_laba_lalu', 'n_laba_ini'],
-    showCarried: true,
     deps: [prior('laba')],
   })
   e.row('n_laba_ini', 'Laba/rugi periode berjalan', result('laba'), { kind: 'calc', deps: [{ row: 'laba' }] })
