@@ -1,22 +1,21 @@
 import type { Block, Cell, GroupDef, Line, Lembar } from '@/lib/sheetEngine'
 import { isGroup } from '@/lib/sheetEngine'
 
-/**
- * Breakdown of the two cash-in rows that can be split by hand. The report totals never change: the typed lines
- * only divide the period's figure of the row, and whatever is left shows as "Belum dirinci".
- */
 export const RINCI_TABEL = 'arus_rinci'
 export const BARIS_RINCI = ['k_prod', 'k_cat'] as const
 export const SELISIH = 'Belum dirinci'
+export const GRUP_BARU = 'pool'
 
 export const keyNama = (base: string) => `c:nm-${base}`
 export const keyNilaiDasar = (base: string) => `rb:${base}`
-export const keySplit = (id: string) => id
+export const keySembunyi = (base: string) => `c:hide-${base}`
 
 const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 
-export const splitsOf = (lembar: Lembar, base: string) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup === base && b.id !== keyNama(base))
+const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-')
+export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id))
+export const hidden = (lembar: Lembar, base: string) => lembar.baris.some((b) => b.id === keySembunyi(base))
 export const nameOf = (lembar: Lembar, base: string, fallback: string) => lembar.baris.find((b) => b.id === keyNama(base))?.label ?? fallback
 
 const line = (key: string, label: string, cells: Cell[], extra: Partial<Line['def']> = {}): Line => {
@@ -30,54 +29,47 @@ const line = (key: string, label: string, cells: Cell[], extra: Partial<Line['de
   }
 }
 
-/** Cash-flow block with the renamed and split lines of `lembar` applied under the two rows. */
+/**
+ * The two cash-in rows "Penjualan produk + proses" and "Jasa cat + packing" form one pool. Any line of the pool (the
+ * two originals or rows added by hand) can be renamed, typed over, removed or added freely; the cash-in total of a
+ * period never changes: whatever the lines do not add up to shows as "Belum dirinci".
+ */
 export function applyRinci(block: Block, days: string[], lembar: Lembar): Block {
+  const originals = BARIS_RINCI.map((key) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)).filter((l): l is Line => !!l)
+  if (originals.length !== BARIS_RINCI.length) return block
+  const whole = days.map((_, w) => (originals.some((o) => o.cells[w].value !== null) ? round(originals.reduce((s, o) => s + (o.cells[w].value ?? 0), 0)) : null))
+  const typed = (key: string, d: string) => lembar.sel[`${key}|${d}`]
+
+  const pool: Line[] = []
+  for (const o of originals) {
+    if (hidden(lembar, o.def.key)) continue
+    const label = nameOf(lembar, o.def.key, o.def.label)
+    const cells = o.cells.map((c, w): Cell => {
+      const t = typed(keyNilaiDasar(o.def.key), days[w])
+      return t !== undefined ? { value: num(t), manual: true } : c
+    })
+    pool.push({ ...line(o.def.key, label, cells), def: { ...o.def, kind: 'input', label } })
+  }
+  for (const r of splitsOf(lembar)) {
+    const cells = days.map((d, w): Cell => {
+      const t = typed(r.id, d)
+      if (t !== undefined) return { value: num(t), manual: true }
+      return { value: whole[w] === null ? null : 0, manual: false }
+    })
+    const added = line(r.id, r.label, cells, { grup: GRUP_BARU })
+    added.custom = true
+    pool.push(added)
+  }
+  const rest = days.map((_, w): Cell => {
+    if (whole[w] === null) return { value: null, manual: false }
+    return { value: round(whole[w]! - pool.reduce((s, l) => s + (l.cells[w].value ?? 0), 0)), manual: false }
+  })
+  if (rest.some((c) => c.value)) pool.push(line(`${GRUP_BARU}:selisih`, SELISIH, rest, { kind: 'calc' }))
+
   const lines: (Line | GroupDef)[] = []
   for (const l of block.lines) {
-    if (isGroup(l) || !(BARIS_RINCI as readonly string[]).includes(l.def.key)) {
-      lines.push(l)
-      continue
-    }
-    const base = l.def.key
-    const splits = splitsOf(lembar, base)
-    const typedSplit = (id: string, d: string) => lembar.sel[`${id}|${d}`]
-    const baseCells: Cell[] = l.cells.map((c, w) => {
-      const d = days[w]
-      const typed = lembar.sel[`${keyNilaiDasar(base)}|${d}`]
-      if (typed !== undefined) return { value: num(typed), manual: true }
-      if (c.value === null) return c
-      const taken = splits.reduce((s, r) => s + num(typedSplit(r.id, d)), 0)
-      return { value: round(c.value - taken), manual: taken !== 0 }
-    })
-    lines.push({
-      ...line(base, nameOf(lembar, base, l.def.label), baseCells, { kind: 'input' }),
-      def: { ...l.def, kind: 'input', label: nameOf(lembar, base, l.def.label) },
-    })
-    const rows = splits.map((r) =>
-      line(
-        r.id,
-        r.label,
-        days.map((d, w) => {
-          const typed = typedSplit(r.id, d)
-          if (typed !== undefined) return { value: num(typed), manual: true }
-          return { value: l.cells[w].value === null ? null : 0, manual: false }
-        }),
-        { grup: base },
-      ),
-    )
-    rows.forEach((r) => (r.custom = true))
-    lines.push(...rows)
-    const rest = days.map((_, w): Cell => {
-      const whole = l.cells[w].value
-      if (whole === null) return { value: null, manual: false }
-      const shown = baseCells[w].value ?? 0
-      const parts = rows.reduce((s, r) => s + (r.cells[w].value ?? 0), 0)
-      return { value: round(whole - shown - parts), manual: false }
-    })
-    if (rest.some((c) => c.value)) {
-      const extra = line(`${base}:selisih`, SELISIH, rest, { kind: 'calc' })
-      lines.push(extra)
-    }
+    if (isGroup(l) || !(BARIS_RINCI as readonly string[]).includes(l.def.key)) lines.push(l)
+    else if (l.def.key === BARIS_RINCI[0]) lines.push(...pool)
   }
   return { ...block, lines }
 }
