@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { exportCsv } from '@/lib/exportData'
-import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, SELISIH, splitsOf } from '@/lib/arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
@@ -139,17 +139,13 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Semua baris bisa diganti namanya; baris rincian juga bisa diubah nilainya, dihapus, atau dipecah menjadi baris sebanyak apa pun (tombol “+ Baris” di tiap kelompok). Jumlah kas masuk, kas keluar, dan transfer antar kas tetap sama; yang belum terbagi tampil sebagai “{SELISIH}”.
+        <div>
           {anyHidden && (
-            <>
-              {' '}
-              <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={restore}>
-                Tampilkan baris yang dihapus
-              </button>
-            </>
+            <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
+              Tampilkan baris yang dihapus
+            </button>
           )}
-        </p>
+        </div>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh arus kas
         </Button>
