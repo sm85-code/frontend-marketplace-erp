@@ -59,7 +59,7 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
       <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
         <MoneyInput id="rinci-amount" autoFocus value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
-        {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kas masuk periode ini tidak berubah; selisihnya tampil di baris “Belum dirinci”.</p>}
+        {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kas masuk tidak berubah; yang belum terbagi tampil di baris “Belum dirinci”.</p>}
         {target.manual && (
           <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={onClearValue}>
             Kembalikan ke angka otomatis
@@ -71,11 +71,9 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
           <Button type="button" variant="outline" onClick={onAddSplit}>
             Tambah baris rincian
           </Button>
-          {target.split && (
-            <Button type="button" variant="outline" onClick={onDeleteRow}>
-              Hapus baris
-            </Button>
-          )}
+          <Button type="button" variant="outline" onClick={onDeleteRow}>
+            Hapus baris
+          </Button>
         </div>
         <Button type="submit" disabled={!valid}>
           Simpan

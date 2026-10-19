@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { fmtRp, getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
 import { exportCsv } from '@/lib/exportData'
-import { applyRinci, BARIS_RINCI, keyNama, keyNilaiDasar, RINCI_TABEL, SELISIH } from '@/lib/arusKasRinci'
+import { applyRinci, BARIS_RINCI, GRUP_BARU, hidden, keyNama, keyNilaiDasar, keySembunyi, RINCI_TABEL, SELISIH } from '@/lib/arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { sheetSections } from '@/lib/sheetSections'
@@ -74,21 +74,18 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
   const originalLabel = (base: string) => lineOf(base)?.def.label ?? base
 
   const [target, setTarget] = useState<(RinciTarget & { week: number }) | null>(null)
-  const [addTo, setAddTo] = useState<string | null>(null)
-  const baseOf = (line: Line) => ((BARIS_RINCI as readonly string[]).includes(line.def.key) ? line.def.key : line.def.grup)
+  const [addTo, setAddTo] = useState(false)
+  const isOriginal = (line: Line) => (BARIS_RINCI as readonly string[]).includes(line.def.key)
   const openEdit = (line: Line, week: number) => {
-    if (line.def.key.endsWith(':selisih')) return
-    const split = line.custom
-    const base = baseOf(line)
-    if (!(BARIS_RINCI as readonly string[]).includes(base)) return
+    if (line.def.key.endsWith(':selisih') || !(isOriginal(line) || line.custom)) return
     setTarget({
       key: line.def.key,
-      base,
+      base: isOriginal(line) ? line.def.key : '',
       label: line.def.label,
       period: weekRange(month, week),
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
-      split,
+      split: !isOriginal(line),
       week,
     })
   }
@@ -114,17 +111,21 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
     commit({ ...lembar, sel })
   }
   const onDeleteRow = () => {
-    if (!target?.split) return
+    if (!target) return
+    if (!target.split) {
+      commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.base), tabel: RINCI_TABEL, grup: target.base, label: 'sembunyi' }] })
+      return
+    }
     commit({
       ...lembar,
       baris: lembar.baris.filter((b) => b.id !== target.key),
       sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${target.key}|`))),
     })
   }
+  const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
-    if (!addTo) return
-    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: addTo, label }] })
-    setAddTo(null)
+    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: GRUP_BARU, label }] })
+    setAddTo(false)
   }
 
   const total = (key: string) => lineOf(key)?.total ?? null
@@ -149,7 +150,7 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Klik “Penjualan produk + proses” atau “Jasa cat + packing” untuk mengubah nama, nilainya, atau memecahnya menjadi beberapa baris. Jumlah kas masuk tetap sama; sisanya tampil sebagai “{SELISIH}”.
+          Baris penjualan dan jasa di Kas masuk bebas diubah: ganti nama dan nilai, gabungkan, hapus, atau pecah menjadi baris sebanyak apa pun. Jumlah kas masuk tetap sama; yang belum terbagi tampil sebagai “{SELISIH}”.{(BARIS_RINCI as readonly string[]).some((k) => hidden(lembar, k)) && (<> <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={restore}>Tampilkan baris asli</button></>)}
         </p>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh arus kas
@@ -163,12 +164,11 @@ function ArusKasSheet({ data, month }: { data: reports.Overview; month: string }
         onClearValue={onClearValue}
         onDeleteRow={onDeleteRow}
         onAddSplit={() => {
-          const base = target?.base ?? null
           setTarget(null)
-          setAddTo(base)
+          setAddTo(true)
         }}
       />
-      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: originalLabel(addTo) } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
+      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: `${originalLabel(BARIS_RINCI[0])} / ${originalLabel(BARIS_RINCI[1])}` } : null} onClose={() => setAddTo(false)} onAdd={onAdd} />
     </section>
   )
 }
