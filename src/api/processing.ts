@@ -60,7 +60,8 @@ export type ProcessingPrice = {
   ukuran: string
   /** Manual products: any variants (name + value); `ukuran` is their one-line summary. */
   varian?: { nama: string; nilai: string }[]
-  harga: string
+  /** Empty only for manual products whose price is still to come. */
+  harga?: string
   catatan: string
   sumber?: string
 }
@@ -153,7 +154,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       produk,
       sku,
       ukuran,
-      harga,
+      ...(kind === 'non_kayu' && !harga ? {} : { harga }),
       catatan,
       ...(kind === 'packing' ? { packing_type: packing_type || 'biasa' } : {}),
       ...(kind === 'non_kayu' ? { varian: varian ?? [] } : {}),

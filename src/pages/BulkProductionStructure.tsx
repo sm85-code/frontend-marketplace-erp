@@ -70,7 +70,7 @@ export default function BulkProductionStructure({
       id: p.id,
       version: p.version,
       ukuran: p.ukuran,
-      harga: p.harga,
+      harga: p.harga ?? "",
     })),
   );
   const [busy, setBusy] = useState(false);
