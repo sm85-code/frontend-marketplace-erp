@@ -100,13 +100,14 @@ export default function FinancialShippingReceivables({
           }
           const parts = cells.map((c) => c.rincian_dana_cepat);
           if (loaded && parts.length > 0 && parts.every((p) => p != null)) {
-            const sum = (key: "pencairan" | "pencairan_lanjutan" | "pelunasan" | "retur" | "utang_sebelum_nol") => sumAmounts(parts.map((p) => p![key]));
+            const sum = (key: "pencairan" | "pencairan_lanjutan" | "pelunasan" | "retur" | "utang_sebelum_nol" | "tanpa_pencairan") => sumAmounts(parts.map((p) => p![key]));
             cell.rincian_dana_cepat = {
               pencairan: sum("pencairan"),
               pencairan_lanjutan: sum("pencairan_lanjutan"),
               pelunasan: sum("pelunasan"),
               retur: sum("retur"),
               utang_sebelum_nol: sum("utang_sebelum_nol"),
+              tanpa_pencairan: sum("tanpa_pencairan"),
               paling_awal: parts.map((p) => p!.paling_awal).filter((d): d is string => !!d).sort()[0] ?? null,
             };
           }
@@ -201,8 +202,9 @@ export default function FinancialShippingReceivables({
     { label: "↳ Pencairan Dana Cepat (kumulatif)", values: rincianSum("pencairan") },
     { label: "↳ Pencairan lanjutan (kumulatif)", values: rincianSum("pencairan_lanjutan") },
     { label: "↳ Pelunasan (kumulatif)", values: rincianSum("pelunasan") },
-    { label: "↳ Retur dipotong (kumulatif)", values: rincianSum("retur") },
-    { label: "↳ Utang sebelum dipotong ke nol", values: rincianSum("utang_sebelum_nol") },
+    { label: "↳ Potongan Dana Cepat (kumulatif)", values: rincianSum("retur") },
+    { label: "↳ Potongan tanpa pencairan terbaca (diabaikan)", values: rincianSum("tanpa_pencairan") },
+    { label: "↳ Utang per pesanan, sebelum dikoreksi", values: rincianSum("utang_sebelum_nol") },
   ].map((row) => ({ ...row, change: false, detail: true }));
   const [picked, setPicked] = useState<number | null>(null);
   const future = (i: number) =>
