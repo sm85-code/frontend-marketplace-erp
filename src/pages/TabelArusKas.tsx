@@ -1,0 +1,172 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { Download } from 'lucide-react'
+import * as reports from '@/api/financialReports'
+import { getApiError } from '@/api/client'
+import { exportCsv } from '@/lib/exportData'
+import { applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
+import { sheetDays } from '@/lib/sheetDays'
+import { namai, setNamaGrup } from '@/lib/namaBaris'
+import { periodeBerjalan, weekRange } from '@/lib/tanggal'
+import { sheetSections } from '@/lib/sheetSections'
+import { Button } from '@/components/ui/button'
+import FinancialSheetTable from './FinancialSheetTable'
+import { AddRowDialog, RenameDialog } from './FinancialSheetDialogs'
+import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
+
+const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+/** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
+export default function TabelArusKas({ data, month, tanpaUnduh }: { data: reports.Overview; month: string; tanpaUnduh?: boolean }) {
+  const { records, days } = sheetDays(data, month)
+  const qc = useQueryClient()
+  const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => reports.lembarManual(month) })
+  const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
+  const save = useMutation({
+    mutationFn: (next: Lembar) => reports.saveLembarManual(month, manual.data?.version ?? 0, next),
+    // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
+    onMutate: (next: Lembar) => qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old)),
+    onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),
+    onError: (error) => {
+      toast.error(getApiError(error))
+      void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
+    },
+  })
+  const plain = useMemo(
+    () => computeSheet(sheetSections(data), records, days, lembar).find((b) => b.tabel === 'arus_kas')!,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lembar, days.join('|')],
+  )
+  const block = useMemo(() => namai([applyRinci(plain, days, lembar)], lembar)[0], [plain, days, lembar])
+  const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
+  const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
+  const splitIds = new Set(splitsOf(lembar).map((b) => b.id))
+  const anyHidden = lembar.baris.some((b) => b.id.startsWith('c:hide-'))
+
+  const [target, setTarget] = useState<(RinciTarget & { week: number }) | null>(null)
+  const [addTo, setAddTo] = useState<GroupDef | null>(null)
+  const openEdit = (line: Line, week: number) => {
+    if (line.def.key.endsWith(':selisih')) return
+    setTarget({
+      key: line.def.key,
+      label: line.def.label,
+      period: weekRange(month, week),
+      current: line.cells[week]?.value ?? null,
+      manual: line.cells[week]?.manual ?? false,
+      split: splitIds.has(line.def.key),
+      locked: !!line.cells[week]?.locked,
+      total: !!line.def.emphasis,
+      week,
+    })
+  }
+  const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.key)}|${days[t.week]}`)
+  const commit = (next: Lembar) => {
+    save.mutate(next)
+    setTarget(null)
+  }
+  const withName = (key: string, label: string): Lembar['baris'] => {
+    const rest = lembar.baris.filter((b) => b.id !== keyNama(key))
+    return label === originalLabel(key) ? rest : [...rest, { id: keyNama(key), tabel: RINCI_TABEL, grup: 'nama', label }]
+  }
+  const onSave = (label: string, value: string) => {
+    if (!target) return
+    const sel = target.total || target.locked ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
+    commit({ ...lembar, sel, baris })
+  }
+  const onClearValue = () => {
+    if (!target || target.locked) return
+    const sel = { ...lembar.sel }
+    delete sel[cellId(target)]
+    commit({ ...lembar, sel })
+  }
+  const onDeleteRow = () => {
+    if (!target || target.total || target.locked) return
+    if (!target.split) {
+      commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
+      return
+    }
+    commit({
+      ...lembar,
+      baris: lembar.baris.filter((b) => b.id !== target.key),
+      sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${target.key}|`))),
+    })
+  }
+  /** Tick = the cash transaction of that period was done: its figure is frozen until the tick is removed. */
+  const onCentang = (line: Line, week: number, checked: boolean) => {
+    const day = days[week]
+    const valueKey = splitIds.has(line.def.key) ? `${line.def.key}|${day}` : `${keyNilaiDasar(line.def.key)}|${day}`
+    const flag = keySelesai(line.def.key, day)
+    const sel = { ...lembar.sel }
+    if (checked) {
+      const cell = line.cells[week]
+      // "2" = the figure was frozen by this tick (automatic before), so unticking gives it back to the report.
+      sel[flag] = cell?.manual ? '1' : '2'
+      if (!cell?.manual) sel[valueKey] = String(cell?.value ?? 0)
+    } else {
+      if (sel[flag] === '2') delete sel[valueKey]
+      delete sel[flag]
+    }
+    save.mutate({ ...lembar, sel })
+  }
+  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input'
+  const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
+  const onAdd = (label: string) => {
+    if (!addTo) return
+    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: addTo.label, label }] })
+    setAddTo(null)
+  }
+
+  const exportReport = () =>
+    exportCsv(`arus-kas-${month}.csv`, [
+      ['ARUS KAS'],
+      ['Uraian', ...days.map(dateLabel), 'JUMLAH / POSISI TERAKHIR'],
+      ...block.lines.filter((l) => isGroup(l) || !l.hidden).map((line) => (isGroup(line) ? [line.label] : [line.def.label, ...line.cells.map((c) => c.value), line.total])),
+    ])
+  return (
+    <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          {anyHidden && (
+            <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
+              Tampilkan baris yang dihapus
+            </button>
+          )}
+        </div>
+        {!tanpaUnduh && (
+          <Button variant="outline" onClick={exportReport} disabled={!records.length}>
+            <Download className="h-4 w-4" /> Unduh arus kas
+          </Button>
+        )}
+      </div>
+      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor bisaCentang={bisaCentang} onCentang={onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={(group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <ArusKasRinciDialog
+        target={target}
+        onClose={() => setTarget(null)}
+        onSave={onSave}
+        onClearValue={onClearValue}
+        onDeleteRow={onDeleteRow}
+        onAddSplit={() => {
+          let group: GroupDef | null = null
+          for (const l of block.lines) {
+            if (isGroup(l)) group = l
+            else if (l.def.key === target?.key) break
+          }
+          setTarget(null)
+          setAddTo(group)
+        }}
+      />
+      <RenameDialog
+        target={ren && { title: 'Ubah judul kelompok', label: ren.label }}
+        onClose={() => setRen(null)}
+        onSave={(label) => {
+          if (ren) save.mutate(setNamaGrup(lembar, ren.group.tabel, ren.group.label, label))
+          setRen(null)
+        }}
+      />
+      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: addTo.label } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
+    </section>
+  )
+}

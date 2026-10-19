@@ -9,13 +9,14 @@ import FinancialSellerBalance from './FinancialSellerBalance'
 import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
 import FinancialSheetTable from './FinancialSheetTable'
+import TabelArusKas from './TabelArusKas'
 import { AddRowDialog, EditCellDialog, RenameDialog, type EditTarget } from './FinancialSheetDialogs'
 import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
 import { sheetDays } from '@/lib/sheetDays'
-import { periodeBerjalan, rentang } from '@/lib/tanggal'
+import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
@@ -42,15 +43,7 @@ const dateLabel = (date: string) =>
     year: 'numeric',
   })
 
-// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28/09 - 03/10".
-export function weekRange(month: string, index: number): string {
-  const first = new Date(`${month}-01T12:00:00Z`)
-  const monday = new Date(first)
-  monday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7) + index * 7)
-  const saturday = new Date(monday)
-  saturday.setUTCDate(monday.getUTCDate() + 5)
-  return rentang(monday.toISOString().slice(0, 10), saturday.toISOString().slice(0, 10))
-}
+export { weekRange }
 
 export default function FinancialReportSheet({
   data,
@@ -192,6 +185,8 @@ export default function FinancialReportSheet({
                 <FinancialPendingReconciliation month={month} />
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
+            ) : block.tabel === 'arus_kas' ? (
+              <TabelArusKas data={data} month={month} tanpaUnduh />
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
             )}
