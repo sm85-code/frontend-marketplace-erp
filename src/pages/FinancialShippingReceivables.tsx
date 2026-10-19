@@ -8,7 +8,7 @@ import {
 } from "@/api/financialReports";
 import { fmtRp, getApiError } from "@/api/client";
 import { sumAmounts } from "@/lib/financialAmounts";
-import { rentang } from "@/lib/tanggal";
+import { hariIniWib, rentang, tambahHari } from "@/lib/tanggal";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Spinner from "@/components/Spinner";
+import { useScrollKeAktif } from "@/components/PeriodPicker";
 
 const metrics = [
   {
@@ -207,7 +208,10 @@ export default function FinancialShippingReceivables({
   const future = (i: number) =>
     !!data && data.minggu[i].hingga < data.minggu[i].mulai;
   const lastShown = data ? data.minggu.reduce((n, _, i) => (future(i) ? n : i), 0) : 0;
-  const pick = picked ?? lastShown;
+  const today = hariIniWib();
+  const currentWeek = data ? data.minggu.findIndex((w) => w.mulai <= today && today <= tambahHari(w.mulai, 6)) : -1;
+  const pick = picked ?? (currentWeek >= 0 && !future(currentWeek) ? currentWeek : lastShown);
+  const pillRow = useScrollKeAktif(pick);
   const phoneHide = (i: number) => (i === pick ? "" : "max-md:hidden");
   const amount = (
     cell: ShippingReceivableCell,
@@ -269,7 +273,7 @@ export default function FinancialShippingReceivables({
         )}
         {data && (
           <>
-          <div className="flex gap-2 overflow-x-auto pb-3 md:hidden" role="tablist" aria-label="Pilih periode">
+          <div ref={pillRow} className="relative flex gap-2 overflow-x-auto pb-3 md:hidden" role="tablist" aria-label="Pilih periode">
             {data.minggu.map((w, i) => (
               <button key={w.mulai} type="button" role="tab" aria-selected={pick === i} onClick={() => setPicked(i)}
                 className={`shrink-0 rounded-lg border px-3 py-1.5 text-center text-xs ${pick === i ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}>

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { sumAmounts } from '@/lib/financialAmounts'
-import { ddmm, hariSebelum, rentang } from '@/lib/tanggal'
+import { ddmm, hariSebelum, periodeBerjalan, rentang } from '@/lib/tanggal'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
 
 const shops = ['BUMI TANI IND', 'BUMI LESTARI INDONESIA', 'RESTU BUMI IND', 'MAJAPAHIT STORE IND', 'CAHAYA LANGIT IND', 'AZFA Furniture Official']
@@ -24,7 +24,7 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
   const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date())
   const today = ['year','month','day'].map(type=>parts.find(p=>p.type===type)?.value).join('-')
   const lastClosed = dates.findLastIndex(d=>d<today)
-  const phone = usePeriodPick(Math.max(lastClosed,0))
+  const phone = usePeriodPick(periodeBerjalan(month, dates.length, today))
   const queries = useQueries({queries:selected.flatMap((account,index)=>dates.map(cutoff=>({
     queryKey:['financial-wallet-cutoff',account?.id??shops[index],cutoff],
     queryFn:()=>api.get<Balance>(`/laporan-keuangan/saldo-wallet-shopee/${account!.id}`,{params:{tanggal:cutoff}}).then(r=>r.data),

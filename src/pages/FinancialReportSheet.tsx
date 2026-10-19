@@ -15,7 +15,7 @@ import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
 import { sheetDays } from '@/lib/sheetDays'
-import { rentang } from '@/lib/tanggal'
+import { periodeBerjalan, rentang } from '@/lib/tanggal'
 import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
@@ -155,6 +155,7 @@ export default function FinancialReportSheet({
     },
   ]
   const weekLabel = (i: number) => weekRange(month, i)
+  const periodeAwal = periodeBerjalan(month, days.length)
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -186,13 +187,13 @@ export default function FinancialReportSheet({
           <TabsContent key={block.title} value={String(i)} className="min-w-0">
             {i === 0 ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
                 <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : (
-              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli />
+              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
             )}
           </TabsContent>
         ))}
