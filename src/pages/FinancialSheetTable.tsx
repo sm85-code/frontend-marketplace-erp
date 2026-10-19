@@ -17,6 +17,8 @@ type Props = {
   onAddRow: (group: GroupDef) => void
   /** Hide the per-group "+ Baris" button. */
   tanpaTambah?: boolean
+  /** Show row names exactly as written instead of sentence-casing the total rows. */
+  hurufAsli?: boolean
 }
 
 function GroupHead({ group, colSpan, onAddRow, tanpaTambah }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean }) {
@@ -49,7 +51,7 @@ const Amount = ({ value, manual }: { value: number | null; manual: boolean }) =>
 )
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli }: Props) {
   const { pick, setPick } = usePeriodPick(Math.max(days.length - 1, 0))
   const total = pick >= days.length
   const options = [
@@ -73,7 +75,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah }: P
                   className={`${line.def.emphasis ? 'bg-muted/50 font-semibold' : ''} ${can ? 'cursor-pointer active:bg-muted/60' : ''}`}
                   onClick={can ? () => onEdit(line, pick) : undefined}
                 >
-                  <TableCell className="whitespace-normal">{line.def.emphasis ? sentenceCase(line.def.label) : line.def.label}</TableCell>
+                  <TableCell className="whitespace-normal">{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
                     <Amount value={cell?.value ?? null} manual={!!cell?.manual} />
                   </TableCell>
@@ -88,7 +90,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah }: P
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli } = props
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
@@ -129,7 +131,7 @@ export default function FinancialSheetTable(props: Props) {
                       className={`sticky left-0 z-10 ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : undefined}
                     >
-                      {line.def.emphasis ? sentenceCase(line.def.label) : line.def.label}
+                      {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
                     </TableCell>
                     {line.cells.map((cell, w) => (
                       <TableCell
