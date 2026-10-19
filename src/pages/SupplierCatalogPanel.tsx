@@ -27,7 +27,7 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
   ]
   return <div className="min-w-0 space-y-3 rounded-xl border p-3 sm:p-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <p className="text-sm font-semibold">Katalog Otomatis</p>
+      <p className="text-sm font-semibold">Katalog Otomatis {connection.data?.unit_name ? `· ${connection.data.unit_name}` : ''}</p>
       <div className="flex gap-2">
         {connection.data?.connected && <Button type="button" size="sm" variant="outline" disabled={catalog.isFetching} onClick={() => void catalog.refetch()}>{catalog.isFetching ? 'Memuat…' : 'Perbarui stok'}</Button>}
         <Button type="button" size="sm" variant="outline" onClick={() => setLogin(v => !v)}>{connection.data?.connected ? 'Hubungkan ulang' : 'Hubungkan katalog'}</Button>
