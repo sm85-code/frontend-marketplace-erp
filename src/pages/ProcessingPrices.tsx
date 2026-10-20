@@ -24,6 +24,9 @@ import { Field, SelectField } from './processingShared'
 import ProcessingVarian from './ProcessingVarian'
 import { bersihkanVarian, labelVarian, masalahVarian, ringkasanVarian, varianDari } from '@/lib/varianProduk'
 
+/** A manual paint tariff may have no model; the catalog still needs a name, so it is stored (and shown) as this. */
+const TANPA_MODEL = 'Tanpa model'
+
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing' }) {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-prices', 'catalog'], queryFn: getProcessingCatalogPrices })
@@ -89,7 +92,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   }
   const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
-      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price)
+      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
     }}>Edit</Button>
     {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
   </div>
@@ -322,7 +325,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 setBusy(true)
                 setError('')
                 try {
-                  await saveProcessingPrice(edit.kind === 'non_kayu' ? { ...edit, varian: bersihkanVarian(edit.varian ?? []), ukuran: ringkasanVarian(edit.varian ?? []) } : edit)
+                  await saveProcessingPrice(edit.kind === 'non_kayu' ? { ...edit, varian: bersihkanVarian(edit.varian ?? []), ukuran: ringkasanVarian(edit.varian ?? []) } : edit.kind === 'pengecatan' && modeCat === 'manual' && !edit.produk.trim() ? { ...edit, produk: TANPA_MODEL } : edit)
                   await qc.invalidateQueries({ queryKey: ['processing-prices'] })
                   if ((e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-next-size') === 'true') {
                     setAdding(true)
@@ -357,7 +360,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 {modeCat === 'otomatis' ? <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
                 const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id))
                 setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : <Field title="Model"><Input required maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
+              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : <Field title="Model (boleh dikosongkan)"><Input maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
               </> : (
               <Field title="Nama produk">
                 <Input
