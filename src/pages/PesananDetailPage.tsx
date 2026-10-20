@@ -169,7 +169,7 @@ export default function PesananDetailPage() {
     mutationFn: () => endpoints.deletePesanan(id!),
     onSuccess: () => {
       toast.success('Pesanan dihapus')
-      navigate('/pesanan')
+      navigate('/pesanan', { replace: true })
     },
     onError: (e) => toast.error(getApiError(e)),
   })
