@@ -19,6 +19,7 @@ import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
+import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -157,16 +158,14 @@ export default function FinancialReportSheet({
           <KartuMetrik key={s.label} label={s.label} icon={s.icon} nilai={s.value === null ? '—' : fmtRp(s.value)} catatan={s.note} />
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Rekap {months[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
-          </h2>
-        </div>
+      <h2 className="text-lg font-semibold">
+        Rekap {months[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
+      </h2>
+      <AksiHalaman>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
-      </div>
+      </AksiHalaman>
       <Tabs defaultValue="3" className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">

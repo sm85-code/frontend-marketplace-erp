@@ -49,6 +49,7 @@ export default function AkunPage() {
   const { user } = useAuth()
   const qc = useQueryClient()
   const confirm = useConfirm()
+  const [tab, setTab] = useState('toko')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AkunMarketplace | null>(null)
   const [form, setForm] = useState({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
@@ -248,14 +249,15 @@ export default function AkunPage() {
     <div className="space-y-4">
       {connections.error && <QueryError error={connections.error} retry={connections.refetch}/>}
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Kelola Toko" />
-      <Tabs defaultValue="toko">
+      <BarHalaman judul="Kelola Toko">
+        {tab === 'toko' && isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}
+      </BarHalaman>
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="section-tabs w-full">
           <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>
           {user?.role === 'admin' && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
         </TabsList>
         <TabsContent value="toko" className="space-y-4">
-          {isOwnerLevel(user?.role) && <div className="flex justify-end"><Button onClick={openCreate}>Tambah Toko</Button></div>}
 
       <Card>
         <CardHeader>

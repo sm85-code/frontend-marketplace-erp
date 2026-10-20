@@ -1,5 +1,5 @@
 /** Building blocks shared by every list page (filters, table/cards, pager, selection bar, column picker). */
-export { default as BarHalaman } from './BarHalaman'
+export { default as BarHalaman, AksiHalaman } from './BarHalaman'
 export { BarFilter, FilterAksi, FilterCari, FilterPilih, FilterSakelar, FilterTanggal } from './BarFilter'
 export type { NilaiTanggal, OpsiFilter } from './BarFilter'
 export { default as BarPilihan } from './BarPilihan'

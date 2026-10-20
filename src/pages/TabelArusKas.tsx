@@ -12,6 +12,7 @@ import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { sheetSections } from '@/lib/sheetSections'
+import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import FinancialSheetTable from './FinancialSheetTable'
 import { AddRowDialog, RenameDialog } from './FinancialSheetDialogs'
@@ -150,20 +151,18 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          {anyHidden && !hanyaLihat && (
-            <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
-              Tampilkan baris yang dihapus
-            </button>
-          )}
-        </div>
-        {!tanpaUnduh && (
+      {anyHidden && !hanyaLihat && (
+        <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
+          Tampilkan baris yang dihapus
+        </button>
+      )}
+      {!tanpaUnduh && (
+        <AksiHalaman>
           <Button variant="outline" onClick={exportReport} disabled={!records.length}>
             <Download className="h-4 w-4" /> Unduh arus kas
           </Button>
-        )}
-      </div>
+        </AksiHalaman>
+      )}
       <FinancialSheetTable block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
