@@ -107,13 +107,13 @@ export function OrderPicker({
       }}
     >
       <DialogContent className="processing-dialog flex max-h-[92dvh] flex-col gap-3 overflow-hidden text-left sm:max-w-3xl">
-        <DialogHeader>
+        <DialogHeader className="shrink-0">
           <DialogTitle>Cek Pesanan</DialogTitle>
           <DialogDescription>
             Pilih item pesanan Shopee, lalu petakan ke Tukang atau Supplier. Pemetaan hanya tersimpan di sini, tidak dikirim ke Shopee.
           </DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Filter status pesanan">
+        <div className="-mx-1 flex shrink-0 gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Filter status pesanan">
           {FILTER_STATUS.map((f) => (
             <Button key={f.id} type="button" size="sm" className="shrink-0" variant={status === f.id ? 'default' : 'outline'} aria-pressed={status === f.id} onClick={() => { setStatus(f.id); setPage(1); setSelected(new Set()); setInfo('') }}>
               {f.label}
@@ -121,6 +121,7 @@ export function OrderPicker({
           ))}
         </div>
         <Input
+          className="shrink-0"
           aria-label="Cari pesanan untuk pemetaan"
           placeholder="Cari nomor pesanan, toko, produk, atau varian"
           value={search}
@@ -130,7 +131,7 @@ export function OrderPicker({
           }}
         />
         {!mapped && items.length > 0 && (
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex shrink-0 items-center gap-2 text-sm">
             <input className="h-4 w-4 accent-primary" type="checkbox" checked={allOn} onChange={(e) => toggle(ids, e.target.checked)} />
             Pilih semua di halaman ini ({items.length})
           </label>
@@ -144,10 +145,9 @@ export function OrderPicker({
               <section key={head.order_id} className="rounded-2xl border bg-card">
                 <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{head.order_number}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {head.shop} · Kirim sebelum {workTime(head.deadline)}{head.status ? ` · ${STATUS_ORDER[head.status] ?? head.status}` : ''}
-                    </p>
+                    <p className="break-all text-sm font-semibold">{head.order_number}</p>
+                    <p className="text-xs text-muted-foreground">{head.shop}{head.status ? ` · ${STATUS_ORDER[head.status] ?? head.status}` : ''}</p>
+                    <p className="text-xs text-muted-foreground">Kirim sebelum {workTime(head.deadline)}</p>
                   </div>
                   {!mapped && g.length > 1 && (
                     <Button type="button" size="sm" variant="ghost" className="shrink-0" onClick={() => toggle(groupIds, !groupOn)}>
@@ -208,7 +208,7 @@ export function OrderPicker({
             </p>
           )}
         </div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex shrink-0 items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={page === 1 || q.isFetching} onClick={() => setPage((p) => p - 1)}>
             Sebelumnya
           </Button>
@@ -220,13 +220,13 @@ export function OrderPicker({
           </Button>
         </div>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="shrink-0 text-sm text-destructive">
             {error}
           </p>
         )}
-        {info && <p role="status" className="text-sm text-primary">{info}</p>}
+        {info && <p role="status" className="shrink-0 text-sm text-primary">{info}</p>}
         {!mapped && (
-          <DialogFooter className="flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <DialogFooter className="shrink-0 flex-col gap-2 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm font-medium">{selected.size ? `${selected.size} item dipilih` : 'Belum ada item dipilih'}</span>
             <div className="grid grid-cols-2 gap-2">
               {(['tukang', 'supplier'] as const).map((to) => (
