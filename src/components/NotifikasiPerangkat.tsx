@@ -49,7 +49,7 @@ export default function NotifikasiPerangkat() {
   })
   const uji = useMutation({
     mutationFn: pushUji,
-    onSuccess: (hasil) => (hasil.terkirim ? toast.success('Notifikasi uji dikirim. Cek bilah notifikasi perangkat.') : toast.error('Notifikasi uji belum terkirim. Coba matikan lalu aktifkan lagi.')),
+    onSuccess: (hasil) => (hasil.terkirim ? toast.success('Notifikasi uji dikirim. Cek bilah notifikasi perangkat.') : toast.error(`Notifikasi uji belum terkirim (${hasil.perangkat ? `kode ${hasil.status?.join(', ')}` : 'perangkat ini belum terdaftar di server'}). Coba matikan lalu aktifkan lagi.`)),
     onError: (e) => toast.error(getApiError(e)),
   })
 
