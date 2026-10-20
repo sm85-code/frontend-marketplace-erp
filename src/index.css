@@ -740,31 +740,35 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 0 0 auto; }
 
 /* Operation feedback uses the same theme surfaces as confirmation dialogs. */
-.erp-feedback[data-sonner-toaster] { z-index: 100; --width: min(440px, calc(100vw - 24px)); }
+.erp-feedback[data-sonner-toaster] { z-index: 100; --width: min(300px, calc(100vw - 48px)); }
 .erp-feedback [data-sonner-toast][data-styled=true] {
   --toast-warna: var(--primary);
   background: var(--card);
   color: var(--card-foreground);
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  padding: 16px 18px;
-  gap: 14px;
-  box-shadow: 0 8px 30px color-mix(in oklab, var(--foreground) 12%, transparent);
+  border-radius: 1.5rem;
+  padding: 20px 22px;
+  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 14px 44px color-mix(in oklab, var(--foreground) 22%, transparent);
   font-family: var(--font-body);
 }
-/* The icon sits in a tinted circle, like the icon of a confirmation dialog. */
+/* Centered card: a solid icon circle on top, like the icon of a confirmation dialog. */
 .erp-feedback [data-sonner-toast] [data-icon] {
   flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.875rem;
+  height: 2.875rem;
   margin: 0;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--toast-warna);
-  background: color-mix(in oklab, var(--toast-warna) 16%, transparent);
+  color: #fff;
+  background: var(--toast-warna);
 }
+.erp-feedback [data-sonner-toast] [data-content] { align-items: center; }
 .erp-feedback [data-sonner-toast][data-type=success] { --toast-warna: var(--success); }
 .erp-feedback [data-sonner-toast][data-type=error] { --toast-warna: var(--destructive); }
 .erp-feedback [data-sonner-toast][data-type=warning] { --toast-warna: var(--warning); }
