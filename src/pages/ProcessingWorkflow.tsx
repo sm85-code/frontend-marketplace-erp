@@ -23,6 +23,7 @@ import {
   editProcessingJob,
   transitionProcessingJob,
   removeProcessingDraft,
+  releaseProcessingJob,
   editProcessingPacking,
   type ProcessingCatalog,
   type ProcessingJob,
@@ -618,6 +619,26 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             }}
           >
             Buka kembali
+          </Button>
+        )}
+        {r.source === 'erp' && r.stage !== 'draft' && (
+          <Button
+            size="sm"
+            variant={r.order_cancelled ? 'destructive' : 'ghost'}
+            disabled={!!busy}
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: 'Lepas pemetaan?',
+                  description: 'Item dikeluarkan dari pemetaan, data yang sudah diisi dibuang, dan item muncul lagi di Cek Pesanan untuk dipetakan ulang. Tidak ada yang dikirim ke Shopee.',
+                  confirmLabel: 'Lepas pemetaan',
+                  destructive: true,
+                })
+              )
+                void run(r, () => releaseProcessingJob(r))
+            }}
+          >
+            Lepas pemetaan
           </Button>
         )}
         {r.stage === 'draft' && (
