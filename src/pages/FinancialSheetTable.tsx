@@ -68,10 +68,13 @@ function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { g
   )
 }
 
-const Amount = ({ value, manual }: { value: number | null; manual: boolean }) => (
-  <span className={manual ? 'font-medium text-primary' : undefined}>
+/** Sub-rows (breakdown of a row) are set apart: italic and a different colour. */
+const GAYA_ANAK = 'italic text-indigo-700 dark:text-indigo-300'
+
+const Amount = ({ value, manual, warisan }: { value: number | null; manual: boolean; warisan?: boolean }) => (
+  <span className={manual ? `font-medium ${warisan ? '' : 'text-primary'}` : undefined}>
     {value === null ? '—' : fmtRp(value)}
-    {manual && <span aria-label="diisi manual" className="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" />}
+    {manual && <span aria-label="diisi manual" className={`ml-1 inline-block size-1.5 rounded-full align-middle ${warisan ? 'bg-current' : 'bg-primary'}`} />}
   </span>
 )
 
@@ -136,11 +139,11 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   className={`${line.def.emphasis ? 'bg-muted/50 font-semibold' : ''} ${can || rename ? 'cursor-pointer active:bg-muted/60' : ''}`}
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
-                  {nomor && !line.def.emphasis && <TableCell className="w-9 pr-0 text-center tabular-nums text-muted-foreground">{nomor.get(line.def.key) ?? ''}</TableCell>}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? 'pl-6 text-muted-foreground' : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
-                  <TableCell className={`whitespace-nowrap text-right tabular-nums ${cell?.selesai ? SELESAI : ''}`}>
+                  {nomor && !line.def.emphasis && <TableCell className={`w-9 pr-0 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
+                  <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
-                      <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} />
+                      <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
                       {!total && onCentang && bisaCentang?.(line) && <Centang line={line} week={pick} checked={!!cell?.selesai} onCentang={onCentang} />}
                     </span>
                   </TableCell>
@@ -196,10 +199,10 @@ export default function FinancialSheetTable(props: Props) {
                 const lastWithData = Math.max(0, line.cells.map((c) => c.value !== null).lastIndexOf(true))
                 return (
                   <TableRow key={line.def.key} className={line.def.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
-                    {nomor && !line.def.emphasis && <TableCell className="sticky left-0 z-10 bg-card px-2 text-center tabular-nums text-muted-foreground">{nomor.get(line.def.key) ?? ''}</TableCell>}
+                    {nomor && !line.def.emphasis && <TableCell className={`sticky left-0 z-10 bg-card px-2 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
                     <TableCell
                       colSpan={nomor && line.def.emphasis ? 2 : 1}
-                      className={`sticky z-10 ${line.def.induk ? 'pl-8 text-muted-foreground' : ''} ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
+                      className={`sticky z-10 ${line.def.induk ? `pl-8 ${GAYA_ANAK}` : ''} ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
                       {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
@@ -207,16 +210,16 @@ export default function FinancialSheetTable(props: Props) {
                     {line.cells.map((cell, w) => (
                       <TableCell
                         key={days[w]}
-                        className={`whitespace-nowrap text-right tabular-nums ${can ? 'cursor-pointer hover:bg-muted/60' : ''} ${cell.selesai ? SELESAI : ''}`}
+                        className={`whitespace-nowrap text-right tabular-nums ${can ? 'cursor-pointer hover:bg-muted/60' : ''} ${line.def.induk ? GAYA_ANAK : ''} ${cell.selesai ? SELESAI : ''}`}
                         onClick={can ? () => onEdit(line, w) : undefined}
                       >
                         <span className="inline-flex items-center justify-end gap-3">
-                          <Amount value={cell.value} manual={!hanyaLihat && cell.manual} />
+                          <Amount value={cell.value} manual={!hanyaLihat && cell.manual} warisan={!!line.def.induk} />
                           {onCentang && bisaCentang?.(line) && <Centang line={line} week={w} checked={!!cell.selesai} onCentang={onCentang} />}
                         </span>
                       </TableCell>
                     ))}
-                    <TableCell className="whitespace-nowrap bg-muted/40 text-right tabular-nums">
+                    <TableCell className={`whitespace-nowrap bg-muted/40 text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''}`}>
                       <Amount value={line.total} manual={false} />
                     </TableCell>
                   </TableRow>

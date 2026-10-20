@@ -111,4 +111,17 @@ describe('arus kas breakdown', () => {
     lembar.baris.push({ id: keySembunyi('k_prod'), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' })
     expect(line(build(lembar), 'c:a')).toBeUndefined()
   })
+
+  it('keeps the main row equal to the numbered rows of its group (sub-rows are never added in)', () => {
+    const lembar = emptyLembar()
+    const d = '2026-10-04'
+    lembar.baris.push({ id: 'c:x', tabel: RINCI_TABEL, grup: 'Kas masuk', label: 'Baris baru' })
+    lembar.baris.push({ id: 'c:a', tabel: RINCI_TABEL, grup: `${ANAK}k_prod`, label: 'Toko A' })
+    lembar.sel[`c:x|${d}`] = '40'
+    lembar.sel[`c:a|${d}`] = '350'
+    const b = build(lembar)
+    const numbered = b.lines.filter((l): l is Line => !isGroup(l) && ['k_toko', 'k_prod', 'k_cat', 'c:x'].includes(l.def.key))
+    const rest = line(b, 'Kas masuk:selisih')?.cells[0].value ?? 0
+    expect(numbered.reduce((s, l) => s + (l.cells[0].value ?? 0), 0) + rest).toBe(line(b, 'kas_masuk')!.cells[0].value)
+  })
 })
