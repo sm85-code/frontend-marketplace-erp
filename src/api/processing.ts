@@ -80,6 +80,12 @@ export type ProcessingCandidate = {
   note: string
   source: 'erp' | 'reseller' | 'internal'
 }
+/** A line of Cek Pesanan: an order item, with its mapping when it already has one (filter "dipetakan"). */
+export type CandidateStatus = 'menunggu' | 'dikirim' | 'selesai' | 'semua' | 'dipetakan'
+export type ProcessingCandidateItem = ProcessingCandidate & {
+  status?: string
+  job?: { id: string; version: number; route: 'tukang' | 'supplier'; stage: string; cancelled: boolean } | null
+}
 export type ProcessingStage = 'draft' | 'produksi' | 'supplier' | 'pengecatan' | 'packing' | 'siap_kirim'
 export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   id: string
@@ -166,12 +172,14 @@ export const saveBulkProductionStructure = async (structure_model_id: string, it
   (await api.post<{ count: number }>('/processing/prices/bulk-structure', { structure_model_id, items })).data
 export const getProcessingJobs = async () =>
   (await api.get<{ items: ProcessingJob[] }>('/processing/jobs')).data
-export const getProcessingCandidates = async (q: string, page: number) =>
+export const getProcessingCandidates = async (q: string, page: number, status: CandidateStatus = 'menunggu') =>
   (
-    await api.get<{ items: ProcessingCandidate[]; total: number; page: number }>('/processing/candidates', {
-      params: { q, page },
+    await api.get<{ items: ProcessingCandidateItem[]; total: number; page: number; per_page?: number }>('/processing/candidates', {
+      params: { q, page, status },
     })
   ).data
+export const releaseProcessingJob = async (job: { id: string; version: number }) =>
+  (await api.post(`/processing/jobs/${job.id}/release`, null, { params: { version: job.version } })).data
 export const selectProcessingItems = async (route: 'tukang' | 'supplier', item_ids: string[]) =>
   (await api.post('/processing/jobs/select', { route, item_ids })).data
 export const createManualProcessingOrder = async (payload: unknown) =>
