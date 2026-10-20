@@ -676,7 +676,7 @@ h4,
 .erp-content .bar-halaman p { margin-top: .25rem; max-width: 70ch; }
 .erp-content input:not([type="checkbox"]):not([type="radio"]), .erp-content select, .erp-content textarea { min-height: 2.5rem; }
 @media (max-width: 639px) {
-  .erp-content button:not([data-slot="checkbox"]):not([role="checkbox"]) { min-height: 2.5rem; }
+  .erp-content button:not([data-slot="checkbox"]):not([role="checkbox"]):not([data-slot="switch"]) { min-height: 2.5rem; }
   .erp-content .bar-halaman { gap: .75rem; }
 }
 
