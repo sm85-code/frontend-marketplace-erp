@@ -5,7 +5,8 @@ import { Download } from 'lucide-react'
 import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
-import { ANAK, anakDari, applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { kategoriDari, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
@@ -51,8 +52,18 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const [target, setTarget] = useState<(RinciTarget & { week: number }) | null>(null)
   const [addTo, setAddTo] = useState<GroupDef | null>(null)
   const [addChildTo, setAddChildTo] = useState<string | null>(null)
+  const grupDari = (key: string) => {
+    let group = ''
+    for (const l of block.lines) {
+      if (isGroup(l)) group = l.label
+      else if (l.def.key === key) break
+    }
+    return group
+  }
   const openEdit = (line: Line, week: number) => {
     if (line.def.key.endsWith(':selisih')) return
+    const grup = grupDari(line.def.key)
+    const opsi = line.def.induk || line.def.emphasis ? undefined : opsiKategori(grup)
     setTarget({
       key: line.def.key,
       label: line.def.label,
@@ -63,6 +74,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       child: childIds.has(line.def.key),
       anak: anakDari(lembar, line.def.key).length > 0,
       total: !!line.def.emphasis,
+      opsi,
+      kategori: opsi ? kategoriDari(lembar, line.def.key, grup) : undefined,
       week,
     })
   }
@@ -75,11 +88,12 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const rest = lembar.baris.filter((b) => b.id !== keyNama(key))
     return label === originalLabel(key) ? rest : [...rest, { id: keyNama(key), tabel: RINCI_TABEL, grup: 'nama', label }]
   }
-  const onSave = (label: string, value: string) => {
+  const onSave = (label: string, value: string, kategori?: string) => {
     if (!target) return
     const sel = target.total || target.anak ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
-    commit({ ...lembar, sel, baris })
+    const next = { ...lembar, sel, baris }
+    commit(kategori ? setKategori(next, target.key, grupDari(target.key), kategori) : next)
   }
   const onClearValue = () => {
     if (!target) return
@@ -94,7 +108,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       return
     }
     // A row takes its sub-rows with it.
-    const gone = new Set([target.key, ...anakDari(lembar, target.key).map((b) => b.id)])
+    const gone = new Set([target.key, ...anakDari(lembar, target.key).map((b) => b.id), keyKategori(target.key)])
     commit({
       ...lembar,
       baris: lembar.baris.filter((b) => !gone.has(b.id)),
