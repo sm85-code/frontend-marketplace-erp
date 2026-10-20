@@ -68,7 +68,7 @@ export default function ProcessingPage() {
       description: 'Lihat katalog otomatis atau kelola produk supplier secara manual.',
       content: <NonKayuTabs />,
     },
-    'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan produk, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
+    'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan model, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
     'tarif-packing': { title: 'Tarif Packing', description: 'Kelola tarif packing biasa dan packing kayu.', content: <ProcessingPrices kind="packing" /> },
   }
   if (page === 'katalog-siabumdes' || page === 'katalog-manual') return <Navigate to="/processing/produk-non-kayu" replace />
