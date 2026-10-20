@@ -743,13 +743,14 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 .erp-feedback[data-sonner-toaster] { z-index: 100; --width: min(440px, calc(100vw - 24px)); }
 .erp-feedback [data-sonner-toast][data-styled=true] {
   --toast-warna: var(--primary);
-  background: var(--card);
+  /* The card is tinted with its own type colour (from theme tokens) so it stands out from the white page behind it. */
+  background: color-mix(in oklab, var(--toast-warna) 10%, var(--card));
   color: var(--card-foreground);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in oklab, var(--toast-warna) 40%, var(--border));
   border-radius: 1.25rem;
   padding: 16px 18px;
   gap: 14px;
-  box-shadow: 0 8px 30px color-mix(in oklch, var(--foreground) 12%, transparent);
+  box-shadow: 0 10px 32px color-mix(in oklab, var(--toast-warna) 22%, transparent);
   font-family: var(--font-body);
 }
 /* The icon sits in a tinted circle, like the icon of a confirmation dialog. */
@@ -763,7 +764,7 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   align-items: center;
   justify-content: center;
   color: var(--toast-warna);
-  background: color-mix(in oklch, var(--toast-warna) 16%, transparent);
+  background: color-mix(in oklab, var(--toast-warna) 20%, transparent);
 }
 .erp-feedback [data-sonner-toast][data-type=success] { --toast-warna: var(--success); }
 .erp-feedback [data-sonner-toast][data-type=error] { --toast-warna: var(--destructive); }
