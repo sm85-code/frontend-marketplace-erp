@@ -8,6 +8,8 @@ interface ConfirmOptions {
   confirmLabel?: string
   cancelLabel?: string
   destructive?: boolean
+  /** An information dialog with one button (the answer is then always `true`). */
+  tanpaBatal?: boolean
 }
 
 interface ConfirmRequest extends Required<ConfirmOptions> {
@@ -33,6 +35,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         confirmLabel: options.confirmLabel || 'Lanjutkan',
         cancelLabel: options.cancelLabel || 'Batal',
         destructive: Boolean(options.destructive),
+        tanpaBatal: Boolean(options.tanpaBatal),
         resolve,
       })
     })
@@ -55,9 +58,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <DialogDescription className="whitespace-pre-line">{request?.description}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => close(false)}>
-              {request?.cancelLabel}
-            </Button>
+            {!request?.tanpaBatal && (
+              <Button type="button" variant="outline" onClick={() => close(false)}>
+                {request?.cancelLabel}
+              </Button>
+            )}
             <Button type="button" variant={request?.destructive ? 'destructive' : 'default'} onClick={() => close(true)}>
               {request?.confirmLabel}
             </Button>
