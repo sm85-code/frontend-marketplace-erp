@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
-import { getProcessingData } from '@/api/processing'
+import { rekeningTukang } from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { TabelLokal, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
@@ -51,14 +51,13 @@ const kolom: KolomTabel<Baris>[] = [
   },
 ]
 
-/** Accounts to pay: the craftsmen with an account number (Data Produksi → Tukang Kayu), then the other fixed accounts. */
+/** Accounts to pay: the craftsmen with an account number (Data Produksi → Tukang Kayu; the backend lists only those), then the other fixed accounts. */
 export default function RekeningTukangKayu() {
-  const q = useQuery({ queryKey: ['processing-data'], queryFn: getProcessingData })
+  const q = useQuery({ queryKey: ['rekening-tukang'], queryFn: rekeningTukang })
   const items: Baris[] = [
-    ...(q.data?.data?.tukang ?? [])
-      .filter((t) => !!t.no_rekening?.trim())
+    ...(q.data ?? [])
       .sort((a, b) => urutanTukang(a.nama) - urutanTukang(b.nama) || a.nama.localeCompare(b.nama, 'id'))
-      .map((t) => ({ id: t.id, nama: t.nama, jenis: 'Tukang kayu', bank: t.nama_bank?.trim() ?? '', rekening: t.no_rekening!.trim() })),
+      .map((t) => ({ id: t.id, nama: t.nama, jenis: 'Tukang kayu', bank: t.nama_bank, rekening: t.no_rekening })),
     ...REKENING_LAIN,
   ].map((r, i) => ({ ...r, no: i + 1 }))
   return (

@@ -91,3 +91,11 @@ export type LembarManualResponse = { version: number; lembar: LembarManual }
 export const lembarManual = async (periode: string) => (await api.get<LembarManualResponse>('/laporan-keuangan/lembar-manual', { params: { periode } })).data
 export const saveLembarManual = async (periode: string, version: number, lembar: LembarManual) =>
   (await api.put<LembarManualResponse>('/laporan-keuangan/lembar-manual', { version, lembar }, { params: { periode } })).data
+
+/** The Arus Kas page (admin and staff): same data as Laporan Keuangan, but saving only accepts the "done" ticks. */
+export const overviewArusKas = async (periode: string) => (await api.get<Overview>('/arus-kas/laporan', { params: { periode } })).data
+export const lembarArusKas = async (periode: string) => (await api.get<LembarManualResponse>('/arus-kas/lembar', { params: { periode } })).data
+export const saveLembarArusKas = async (periode: string, version: number, lembar: LembarManual) =>
+  (await api.put<LembarManualResponse>('/arus-kas/lembar', { version, lembar }, { params: { periode } })).data
+export type RekeningTukang = { id: string; nama: string; nama_bank: string; no_rekening: string }
+export const rekeningTukang = async () => (await api.get<RekeningTukang[]>('/arus-kas/rekening-tukang')).data

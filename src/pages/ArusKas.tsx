@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { useAuth } from '@/lib/auth'
+import { ROLES_ARUS_KAS } from '@/config/roles'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,10 +18,10 @@ const monthNow = () => {
 }
 export default function ArusKas() {
   const { user } = useAuth()
-  const allowed = user?.role === 'admin'
+  const allowed = !!user && ROLES_ARUS_KAS.includes(user.role)
   const [month, setMonth] = useState(monthNow)
-  const overview = useQuery({ queryKey: ['financial-reports', month], queryFn: () => reports.overview(month), enabled: allowed })
-  if (!allowed) return <p role="alert">Arus kas hanya dapat diakses admin.</p>
+  const overview = useQuery({ queryKey: ['financial-reports', month], queryFn: () => reports.overviewArusKas(month), enabled: allowed })
+  if (!allowed) return <p role="alert">Arus kas hanya dapat diakses admin dan staf.</p>
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
       <BarHalaman judul="Arus Kas" deskripsi="Arus kas Bumi Lestari, otomatis dari laporan keuangan">

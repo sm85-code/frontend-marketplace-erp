@@ -1,5 +1,6 @@
+import { NAV } from '@/config/nav'
 import { describe, expect, it } from 'vitest'
-import { isOwnerLevel, ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY, rolesYangBolehDibuat } from '@/config/roles'
+import { isOwnerLevel, ROLES_ADMIN_ONLY, ROLES_ARUS_KAS, ROLES_OWNER_ONLY, rolesYangBolehDibuat } from '@/config/roles'
 
 describe('role levels (admin > owner > staff)', () => {
   it('admin and owner share the owner-level pages and actions, staff does not', () => {
@@ -18,5 +19,11 @@ describe('role levels (admin > owner > staff)', () => {
     expect(rolesYangBolehDibuat('admin')).toEqual(['staff', 'owner', 'admin'])
     expect(rolesYangBolehDibuat('owner')).toEqual(['staff'])
     expect(rolesYangBolehDibuat('staff')).toEqual([])
+  })
+
+  it('the Arus Kas page is the only finance page open to staff', () => {
+    expect(ROLES_ARUS_KAS).toEqual(['admin', 'staff'])
+    const keuangan = NAV.filter((n) => n.grup === 'keuangan' && n.roles.includes('staff'))
+    expect(keuangan.map((n) => n.to)).toEqual(['/arus-kas'])
   })
 })
