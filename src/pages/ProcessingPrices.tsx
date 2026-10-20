@@ -49,6 +49,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [useHierarchy, setUseHierarchy] = useState(true)
   /** Paint tariffs: pick the model and size from the production list (otomatis) or type them (manual). */
   const [modeCat, setModeCat] = useState<'otomatis' | 'manual'>('otomatis')
+  const [cariModel, setCariModel] = useState('')
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
   const categoriesId = useId()
@@ -92,7 +93,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   }
   const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
-      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
+      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setCariModel(''); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
     }}>Edit</Button>
     {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
   </div>
@@ -164,6 +165,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   setAdding(true)
                   setUseHierarchy(true)
                   setModeCat('otomatis')
+                  setCariModel('')
                   setError('')
                   setEdit({
                     id: crypto.randomUUID(),
@@ -357,10 +359,19 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                     setEdit(v => v ? { ...v, production_price_id: '', produk: '', ukuran: '', sku: '' } : v)
                   }}>{m === 'otomatis' ? 'Otomatis (dari daftar)' : 'Manual (ketik sendiri)'}</Button>)}
                 </div>
-                {modeCat === 'otomatis' ? <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
-                const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id))
-                setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : <Field title="Model (boleh dikosongkan)"><Input maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
+                {modeCat === 'otomatis' ? (() => {
+                  const dipakai = (p: ProcessingPrice) => p.kind === 'produksi' && !!p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)
+                  const kata = cariModel.trim().toLocaleLowerCase('id')
+                  const cocok = (q.data?.items || []).filter(p => dipakai(p) && (p.id === edit.production_price_id || [p.model, p.model_kode, p.produk, p.ukuran, p.sku].filter(Boolean).join(' ').toLocaleLowerCase('id').includes(kata)))
+                  return <div className="space-y-2">
+                    <Field title="Cari model"><Input value={cariModel} onChange={e => setCariModel(e.target.value)} placeholder="Ketik model, ukuran, atau SKU" /></Field>
+                    <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
+                      const product = q.data?.items.find(p => p.id === e.target.value && dipakai(p))
+                      setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
+                    }}><option value="">{cocok.length ? 'Pilih model' : 'Tidak ada model yang cocok'}</option>{cocok.map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field>
+                    {kata && <p className="text-xs text-muted-foreground">{cocok.filter(p => p.id !== edit.production_price_id).length} model cocok</p>}
+                  </div>
+                })() : <Field title="Model (boleh dikosongkan)"><Input maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
               </> : (
               <Field title="Nama produk">
                 <Input
