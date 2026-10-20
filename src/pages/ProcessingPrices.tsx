@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getProcessingCatalogPrices, retireProcessingPrice, activateProcessingPrice, saveProcessingPrice, type ProcessingPrice } from '@/api/processing'
@@ -322,6 +323,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               onSubmit={async (e) => {
                 e.preventDefault()
                 if (editingColor) return
+                if (edit.kind === 'pengecatan' && modeCat === 'otomatis' && !edit.production_price_id) { setError('Pilih model dari daftar, atau pakai cara Manual.'); return }
                 const masalah = edit.kind === 'non_kayu' ? masalahVarian(edit.varian ?? []) : null
                 if (masalah) { setError(masalah); return }
                 setBusy(true)
@@ -363,13 +365,16 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   const dipakai = (p: ProcessingPrice) => p.kind === 'produksi' && !!p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)
                   const kata = cariModel.trim().toLocaleLowerCase('id')
                   const cocok = (q.data?.items || []).filter(p => dipakai(p) && (p.id === edit.production_price_id || [p.model, p.model_kode, p.produk, p.ukuran, p.sku].filter(Boolean).join(' ').toLocaleLowerCase('id').includes(kata)))
+                  const dipilih = edit.production_price_id || ''
                   return <div className="space-y-2">
-                    <Field title="Cari model"><Input value={cariModel} onChange={e => setCariModel(e.target.value)} placeholder="Ketik model, ukuran, atau SKU" /></Field>
-                    <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
-                      const product = q.data?.items.find(p => p.id === e.target.value && dipakai(p))
-                      setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-                    }}><option value="">{cocok.length ? 'Pilih model' : 'Tidak ada model yang cocok'}</option>{cocok.map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field>
-                    {kata && <p className="text-xs text-muted-foreground">{cocok.filter(p => p.id !== edit.production_price_id).length} model cocok</p>}
+                    <Field title="Model"><Input value={cariModel} onChange={e => setCariModel(e.target.value)} placeholder="Cari model, ukuran, atau SKU" autoComplete="off" /></Field>
+                    <div role="listbox" aria-label="Daftar model" className="max-h-56 space-y-1 overflow-y-auto rounded-2xl border border-input bg-background p-1">
+                      {cocok.length ? cocok.map(p => <button key={p.id} type="button" role="option" aria-selected={p.id === dipilih} className={cn('flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-accent', p.id === dipilih && 'bg-primary/10 ring-1 ring-primary')} onClick={() => setEdit(v => v ? {...v, production_price_id: p.id, produk: p.produk, ukuran: p.ukuran, sku: p.sku} : v)}>
+                        <span className="font-medium">{p.model || p.produk}</span>
+                        <span className="break-all text-xs text-muted-foreground">{[p.ukuran, p.sku].filter(Boolean).join(' · ')}</span>
+                      </button>) : <p className="px-3 py-2 text-sm text-muted-foreground">Tidak ada model yang cocok</p>}
+                    </div>
+                    {kata && <p className="text-xs text-muted-foreground">{cocok.filter(p => p.id !== dipilih).length} model cocok</p>}
                   </div>
                 })() : <Field title="Model (boleh dikosongkan)"><Input maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
               </> : (
