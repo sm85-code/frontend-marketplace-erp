@@ -15,6 +15,14 @@ const REKENING_LAIN = [
   { id: 'lain-titip-gaji', nama: 'YUYUN AULIA NURJANAH', jenis: 'Titip gaji', bank: 'BRI', rekening: '400501004422509' },
 ]
 
+/** Fixed order of the craftsmen in the list; anyone not named here follows alphabetically. */
+const URUTAN_TUKANG = ['joko wahyono', 'cahyono', 'ai hendarso', 'ahmad nur alim']
+const urutanTukang = (nama: string) => {
+  const n = nama.trim().toLowerCase()
+  const i = URUTAN_TUKANG.findIndex((x) => n === x)
+  return i >= 0 ? i : URUTAN_TUKANG.length
+}
+
 const salin = async (rekening: string) => {
   try {
     await navigator.clipboard.writeText(rekening)
@@ -49,7 +57,7 @@ export default function RekeningTukangKayu() {
   const items: Baris[] = [
     ...(q.data?.data?.tukang ?? [])
       .filter((t) => !!t.no_rekening?.trim())
-      .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+      .sort((a, b) => urutanTukang(a.nama) - urutanTukang(b.nama) || a.nama.localeCompare(b.nama, 'id'))
       .map((t) => ({ id: t.id, nama: t.nama, jenis: 'Tukang kayu', bank: t.nama_bank?.trim() ?? '', rekening: t.no_rekening!.trim() })),
     ...REKENING_LAIN,
   ].map((r, i) => ({ ...r, no: i + 1 }))
