@@ -14,6 +14,7 @@ export function useTutupHalaman(cadangan: string) {
 }
 
 export const KUNCI_PENJAGA = 'ampel-penjaga-riwayat'
+const KUNCI_ALAMAT = 'ampel-penjaga-alamat'
 
 type Riwayat = Pick<History, 'state' | 'replaceState' | 'pushState'>
 type Simpanan = Pick<Storage, 'getItem' | 'setItem'>
@@ -22,7 +23,7 @@ type Simpanan = Pick<Storage, 'getItem' | 'setItem'>
  * Puts a marked entry under the current page, once per tab, so the Back button on the first page lands on it and the app
  * can ask before leaving. The page entry above it is a copy, so nothing visible changes.
  */
-export function pasangPenjaga(riwayat: Riwayat, simpan: Simpanan): boolean {
+export function pasangPenjaga(riwayat: Riwayat, simpan: Simpanan, alamat?: string): boolean {
   try {
     if (simpan.getItem(KUNCI_PENJAGA)) return false
     simpan.setItem(KUNCI_PENJAGA, '1')
@@ -30,6 +31,11 @@ export function pasangPenjaga(riwayat: Riwayat, simpan: Simpanan): boolean {
     return false // without storage the guard could be added again on every reload
   }
   const state = riwayat.state
+  try {
+    if (alamat) simpan.setItem(KUNCI_ALAMAT, alamat)
+  } catch {
+    // only used to close the installed app from the same address as the guard entry
+  }
   riwayat.replaceState({ ...(state ?? {}), penjaga: true }, '')
   riwayat.pushState(state, '')
   return true
@@ -47,7 +53,7 @@ export function useKonfirmasiKeluar(aktif: boolean) {
   useEffect(() => {
     if (!aktif) return
     if (!window.matchMedia('(max-width: 1023px)').matches && !aplikasiTerpasang()) return
-    pasangPenjaga(window.history, window.sessionStorage)
+    pasangPenjaga(window.history, window.sessionStorage, window.location.pathname + window.location.search)
     let bertanya = false
     let lewati = false
     const onPop = async (e: PopStateEvent) => {
@@ -71,11 +77,18 @@ export function useKonfirmasiKeluar(aktif: boolean) {
         window.history.go(-2)
         return
       }
+      // Closing worked from the first page (same address as the guard entry) but not from the others, so line them up first.
+      try {
+        const alamat = window.sessionStorage.getItem(KUNCI_ALAMAT)
+        if (alamat && alamat !== window.location.pathname + window.location.search) window.history.replaceState(window.history.state, '', alamat)
+      } catch {
+        // keep the current address
+      }
       window.close()
       setTimeout(() => {
         lewati = true
         window.history.go(-1)
-        toast.info('Tekan tombol Kembali di HP sekali lagi untuk menutup aplikasi.')
+        toast.info('Tekan tombol Kembali di HP sekali lagi untuk menutup aplikasi.', { id: 'keluar-aplikasi' })
       }, 300)
     }
     window.addEventListener('popstate', onPop)
