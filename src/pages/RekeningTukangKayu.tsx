@@ -13,6 +13,7 @@ type Baris = { id: string; no: number; nama: string; jenis: string; bank: string
 const REKENING_LAIN = [
   { id: 'lain-iklan', nama: 'UMAR AL KAMAL', jenis: 'Iklan', bank: 'BRI', rekening: '400501028068531' },
   { id: 'lain-titip-gaji', nama: 'YUYUN AULIA NURJANAH', jenis: 'Titip gaji', bank: 'BRI', rekening: '400501004422509' },
+  { id: 'lain-kelompok', nama: 'SUCIATI RAHAYU', jenis: 'Rek. Kelompok', bank: 'BRI', rekening: '403101051773530' },
 ]
 
 /** Fixed order of the craftsmen in the list; anyone not named here follows alphabetically. */
