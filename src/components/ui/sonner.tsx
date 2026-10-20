@@ -29,8 +29,8 @@ export function Toaster(props: ComponentProps<typeof Sonner>) {
     className="toaster erp-feedback group"
     position="top-center"
     duration={6000}
-    offset="max(16px, env(safe-area-inset-top))"
-    mobileOffset={{ top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12 }}
+    offset="44vh"
+    mobileOffset={{ top: '44vh', left: 12, right: 12 }}
     visibleToasts={3}
     style={{ '--width': 'min(440px, calc(100vw - 24px))' } as CSSProperties}
     richColors={false}
