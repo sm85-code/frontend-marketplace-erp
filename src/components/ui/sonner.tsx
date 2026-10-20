@@ -33,7 +33,6 @@ export function Toaster(props: ComponentProps<typeof Sonner>) {
     mobileOffset={{ top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12 }}
     visibleToasts={3}
     style={{ '--width': 'min(440px, calc(100vw - 24px))' } as CSSProperties}
-    closeButton
     richColors={false}
     icons={{ success: <CircleCheck className="size-5" />, error: <CircleAlert className="size-5" />, info: <Info className="size-5" />, warning: <TriangleAlert className="size-5" /> }}
     toastOptions={{ closeButtonAriaLabel: 'Tutup pemberitahuan', classNames: { toast: 'erp-feedback-card', title: 'erp-feedback-title', description: 'erp-feedback-description' } }}
