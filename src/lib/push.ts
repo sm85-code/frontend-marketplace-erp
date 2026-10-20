@@ -39,7 +39,9 @@ export async function aktifkanPush(kunciPublik: string, pesanan: boolean, chat: 
   const izin = await Notification.requestPermission()
   if (izin !== 'granted') throw new Error('Izin notifikasi ditolak. Aktifkan lewat pengaturan situs di browser.')
   const reg = await pendaftaran()
-  const langganan = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: kunciKeBytes(kunciPublik) }))
+  // Always a fresh subscription: one the push service already dropped (410) is still handed back by the browser and would stay dead.
+  await (await reg.pushManager.getSubscription())?.unsubscribe()
+  const langganan = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: kunciKeBytes(kunciPublik) })
   return pushLangganan(langganan.toJSON(), pesanan, chat)
 }
 
