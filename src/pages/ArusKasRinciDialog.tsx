@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { Kategori } from '@/lib/kategoriKeuangan'
 
-export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean }
+export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean; /** Category choices for rows of cash in / cash out; the sub-rows follow their row. */ opsi?: Kategori[]; kategori?: string }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -20,7 +21,7 @@ export default function ArusKasRinciDialog({
 }: {
   target: RinciTarget | null
   onClose: () => void
-  onSave: (label: string, value: string) => void
+  onSave: (label: string, value: string, kategori?: string) => void
   onClearValue: () => void
   onDeleteRow: () => void
   onAddSplit: () => void
@@ -35,16 +36,17 @@ export default function ArusKasRinciDialog({
   )
 }
 
-function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChild }: { target: RinciTarget; onSave: (l: string, v: string) => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void; onAddChild: () => void }) {
+function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChild }: { target: RinciTarget; onSave: (l: string, v: string, k?: string) => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void; onAddChild: () => void }) {
   const [label, setLabel] = useState(target.label)
   const [value, setValue] = useState(target.current === null ? '' : String(target.current))
+  const [kategori, setKategori] = useState(target.kategori ?? '')
   const valid = !!label.trim() && (target.total || /^-?\d+(\.\d+)?$/.test(value))
   return (
     <form
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault()
-        if (valid) onSave(label.trim(), value)
+        if (valid) onSave(label.trim(), value, target.opsi ? kategori : undefined)
       }}
     >
       <DialogHeader>
@@ -58,6 +60,19 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChil
         <Label htmlFor="rinci-name">Nama baris</Label>
         <Input id="rinci-name" autoFocus maxLength={120} value={label} onChange={(e) => setLabel(e.target.value)} />
       </div>
+      {target.opsi && !target.total && (
+        <div className="space-y-2">
+          <Label htmlFor="rinci-kategori">Masuk ke komponen</Label>
+          <select id="rinci-kategori" value={kategori} onChange={(e) => setKategori(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+            {target.opsi.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">Menentukan di baris mana angka ini muncul di tab Pemasukan atau Pengeluaran.</p>
+        </div>
+      )}
       {!target.total && <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
         <MoneyInput id="rinci-amount" disabled={target.anak} value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />

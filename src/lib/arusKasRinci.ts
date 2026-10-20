@@ -9,13 +9,14 @@ export const keyNama = (key: string) => `c:nm-${safe(key)}`
 export const keyNilaiDasar = (key: string) => `rb:${key}`
 export const keySelesai = (key: string, day: string) => `ok:${key}|${day}`
 export const keySembunyi = (key: string) => `c:hide-${safe(key)}`
+export const keyKategori = (key: string) => `c:kt-${safe(key)}`
 /** Rows added before groups existed were kept in a shared pool; they belong to the cash-in group. */
 const LEGACY_GRUP = ['pool', 'k_prod', 'k_cat']
 
 const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 
-const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-')
+const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-') || id.startsWith('c:kt-')
 export const ANAK = 'anak:'
 export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id) && !b.grup.startsWith(ANAK))
 /** Sub-rows (breakdown) of a row; the same list for every period, only the figures differ. */
