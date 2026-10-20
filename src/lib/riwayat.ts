@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useConfirm } from '@/components/ConfirmProvider'
 
 /**
@@ -34,28 +35,48 @@ export function pasangPenjaga(riwayat: Riwayat, simpan: Simpanan): boolean {
   return true
 }
 
-/** On phones and installed apps: Back from the first page asks "Keluar dari aplikasi?" instead of leaving at once. */
+const aplikasiTerpasang = () => window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+/**
+ * On phones and installed apps: Back from the first page asks "Keluar dari aplikasi?" instead of leaving at once.
+ * In a browser, Keluar goes back past the guard entry. An installed app cannot be closed by history; it tries
+ * `window.close()` and otherwise leaves the guard entry so the phone's own Back button closes it with one more press.
+ */
 export function useKonfirmasiKeluar(aktif: boolean) {
   const confirm = useConfirm()
   useEffect(() => {
     if (!aktif) return
-    if (!window.matchMedia('(max-width: 1023px)').matches && !window.matchMedia('(display-mode: standalone)').matches) return
+    if (!window.matchMedia('(max-width: 1023px)').matches && !aplikasiTerpasang()) return
     pasangPenjaga(window.history, window.sessionStorage)
     let bertanya = false
+    let lewati = false
     const onPop = async (e: PopStateEvent) => {
       if (!(e.state as { penjaga?: boolean } | null)?.penjaga || bertanya) return
+      if (lewati) {
+        lewati = false
+        return
+      }
       bertanya = true
       // Back to the page at once, so the screen behind the question does not change; leaving jumps over the guard entry.
       window.history.forward()
       const keluar = await confirm({ title: 'Keluar dari aplikasi?', description: 'Tekan Keluar untuk menutup aplikasi.', confirmLabel: 'Keluar', cancelLabel: 'Tetap di sini' })
       bertanya = false
       if (!keluar) return
-      try {
-        window.sessionStorage.removeItem(KUNCI_PENJAGA)
-      } catch {
-        // nothing to clear
+      if (!aplikasiTerpasang()) {
+        try {
+          window.sessionStorage.removeItem(KUNCI_PENJAGA)
+        } catch {
+          // nothing to clear
+        }
+        window.history.go(-2)
+        return
       }
-      window.history.go(-2)
+      window.close()
+      setTimeout(() => {
+        lewati = true
+        window.history.go(-1)
+        toast.info('Tekan tombol Kembali di HP sekali lagi untuk menutup aplikasi.')
+      }, 300)
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
