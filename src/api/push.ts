@@ -9,4 +9,4 @@ export const pushLangganan = (langganan: PushSubscriptionJSON, pesanan: boolean,
     .post<PushStatus>('/push/langganan', { endpoint: langganan.endpoint, keys: { p256dh: langganan.keys?.p256dh, auth: langganan.keys?.auth }, pesanan, chat })
     .then((r) => r.data)
 export const pushBerhenti = (endpoint: string) => api.post('/push/berhenti', { endpoint }).then((r) => r.data)
-export const pushUji = () => api.post<{ terkirim: number }>('/push/uji').then((r) => r.data)
+export const pushUji = () => api.post<{ terkirim: number; perangkat?: number; status?: number[] }>('/push/uji').then((r) => r.data)
