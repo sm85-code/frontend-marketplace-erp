@@ -77,7 +77,7 @@ function PriceOptions({ prices }: { prices: ProcessingPrice[] }) {
     <>
       {prices.map((p) => (
         <option key={p.id} value={p.id}>
-          {[p.produk, p.model || p.kode, labelVarian(p), p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {p.harga ? fmtRp(p.harga) : 'Belum ada harga'}
+          {[p.kind === 'pengecatan' ? p.model || p.produk : p.produk, p.kind === 'pengecatan' ? '' : p.model || p.kode, labelVarian(p), p.warna, p.kind === 'packing' ? p.packing_type || 'biasa' : '', p.sku].filter(Boolean).join(' · ')} — {p.harga ? fmtRp(p.harga) : 'Belum ada harga'}
         </option>
       ))}
     </>

@@ -49,6 +49,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const categoriesId = useId()
   const titleOf = (kind: string) => kind === 'produksi' ? 'Katalog Produk Kayu' : kind === 'non_kayu' ? 'Katalog Produk Manual' : kind === 'packing' ? 'Tarif Packing' : 'Tarif Pengecatan'
   const categoryOf = (p: ProcessingPrice) => p.jenis?.trim() || ''
+  /** Paint tariffs are per model and size, so a tariff row is named by its model (the product name only when it has no model). */
+  const namaOf = (p: ProcessingPrice) => (p.kind === 'pengecatan' ? p.model?.trim() || p.produk : p.produk)
   const categories = [
     ...new Set(
       (q.data?.items || [])
@@ -92,12 +94,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const baseColumns: KolomTabel<ProcessingPrice>[] = [
     {
       kunci: 'produk',
-      judul: selectedKind === 'non_kayu' ? 'Produk / Varian' : 'Produk / Ukuran',
+      judul: selectedKind === 'non_kayu' ? 'Produk / Varian' : selectedKind === 'pengecatan' ? 'Model / Ukuran' : 'Produk / Ukuran',
       tetap: true,
-      nilai: (r) => r.produk,
+      nilai: (r) => namaOf(r),
       sel: (r) => (
         <div>
-          <p className="font-medium">{r.produk}</p>
+          <p className="font-medium">{namaOf(r)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {[labelVarian(r), r.sku].filter(Boolean).join(' · ') || '—'}
           </p>
@@ -197,7 +199,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             </div>}
             <Input
               aria-label={`Cari harga ${kind}`}
-              placeholder={kind === 'pengecatan' ? 'Cari produk, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
+              placeholder={kind === 'pengecatan' ? 'Cari model, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -233,7 +235,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 } : undefined}
                 kolom={columns}
                 idDari={(p) => p.id}
-                namaDari={(p) => p.produk}
+                namaDari={(p) => namaOf(p)}
                 minWidth={selectedKind === 'produksi' ? 950 : 580}
               />
             </div>
@@ -242,7 +244,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 <div className="flex items-start justify-between gap-3 py-4" key={r.id}>
                   {kind === 'produksi' && r.active !== false && <Checkbox aria-label={`Pilih ${r.produk} ${r.ukuran}`} checked={selected.has(r.id)} onCheckedChange={checked => selectRow(r, checked === true)} />}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold">{r.produk}</p>
+                    <p className="text-sm font-semibold">{namaOf(r)}</p>
                     {r.active === false && <span className="text-xs text-muted-foreground">Nonaktif</span>}
                     {kind === 'produksi' && (
                       <p className="mt-1 text-xs font-medium text-primary">
@@ -341,10 +343,10 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <p>Harga ini memakai data lama. Susun kategori, produk, dan model untuk membuat SKU otomatis.</p>
                   <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setUseHierarchy(true)}>Susun struktur</Button>
                 </div>}
-              {edit.kind === 'pengecatan' ? <Field title="Nama produk"><SelectField required value={edit.production_price_id || ''} onChange={e => {
+              {edit.kind === 'pengecatan' ? <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
                 const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id))
                 setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-              }}><option value="">Pilih produk terstruktur</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.produk,p.model,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
+              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
               <Field title="Nama produk">
                 <Input
                   required
