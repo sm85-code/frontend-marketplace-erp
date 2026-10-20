@@ -61,3 +61,48 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') event.respondWith(halaman(request))
   else if (url.pathname.startsWith('/assets/')) event.respondWith(aset(request))
 })
+
+// Notifikasi push dari server (pesanan baru, chat baru). Isi dikirim sebagai JSON: title, body, url, tag.
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch (err) {
+    data = { body: event.data ? event.data.text() : '' }
+  }
+  const judul = data.title || 'Ampel Kuning ERP System'
+  event.waitUntil(
+    self.registration.showNotification(judul, {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/favicon-32.png',
+      tag: data.tag || undefined,
+      renotify: !!data.tag,
+      data: { url: typeof data.url === 'string' ? data.url : '/dashboard' },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  // Hanya alamat di aplikasi ini yang boleh dibuka (bukan alamat lain atau '//host').
+  let tujuan = new URL('/dashboard', self.location.origin).href
+  try {
+    const url = new URL((event.notification.data && event.notification.data.url) || '/dashboard', self.location.origin)
+    if (url.origin === self.location.origin) tujuan = url.href
+  } catch (err) {
+    // alamat tidak valid: buka dashboard
+  }
+  event.waitUntil(
+    (async () => {
+      const jendela = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const w of jendela) {
+        if (new URL(w.url).origin === self.location.origin && 'navigate' in w) {
+          await w.navigate(tujuan)
+          return w.focus()
+        }
+      }
+      return self.clients.openWindow(tujuan)
+    })(),
+  )
+})
