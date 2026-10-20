@@ -12,6 +12,8 @@ export type Mode = 'week' | 'cum' | 'cumBefore'
 export type Dep = { row?: string; group?: string; custom?: string; sign?: 1 | -1; mode?: Mode }
 export type RowDef = {
   key: string
+  /** Key of the row this one is a breakdown of (Arus Kas sub-rows). */
+  induk?: string
   label: string
   tabel: string
   grup: string

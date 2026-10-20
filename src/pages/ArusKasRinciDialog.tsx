@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export type RinciTarget = { key: string; label: string; total: boolean; period: string; current: number | null; manual: boolean; split: boolean }
+export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; period: string; current: number | null; manual: boolean; split: boolean }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -16,6 +16,7 @@ export default function ArusKasRinciDialog({
   onClearValue,
   onDeleteRow,
   onAddSplit,
+  onAddChild,
 }: {
   target: RinciTarget | null
   onClose: () => void
@@ -23,17 +24,18 @@ export default function ArusKasRinciDialog({
   onClearValue: () => void
   onDeleteRow: () => void
   onAddSplit: () => void
+  onAddChild: () => void
 }) {
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-sm">
-        {target && <Form key={`${target.key}|${target.period}`} target={target} onSave={onSave} onClearValue={onClearValue} onDeleteRow={onDeleteRow} onAddSplit={onAddSplit} />}
+        {target && <Form key={`${target.key}|${target.period}`} target={target} onSave={onSave} onClearValue={onClearValue} onDeleteRow={onDeleteRow} onAddSplit={onAddSplit} onAddChild={onAddChild} />}
       </DialogContent>
     </Dialog>
   )
 }
 
-function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { target: RinciTarget; onSave: (l: string, v: string) => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void }) {
+function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChild }: { target: RinciTarget; onSave: (l: string, v: string) => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void; onAddChild: () => void }) {
   const [label, setLabel] = useState(target.label)
   const [value, setValue] = useState(target.current === null ? '' : String(target.current))
   const valid = !!label.trim() && (target.total || /^-?\d+(\.\d+)?$/.test(value))
@@ -46,7 +48,7 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
       }}
     >
       <DialogHeader>
-        <DialogTitle>{target.total ? 'Ubah nama baris' : target.split ? 'Baris rincian' : 'Ubah baris'}</DialogTitle>
+        <DialogTitle>{target.total ? 'Ubah nama baris' : target.child ? 'Rincian baris' : target.split ? 'Baris tambahan' : 'Ubah baris'}</DialogTitle>
         <DialogDescription>
           Periode {target.period}
           {target.manual ? ' · angka ini diisi manual' : ' · angka otomatis dari laporan keuangan'}
@@ -70,8 +72,13 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit }: { targe
         <div className="flex flex-wrap gap-2">
           {!target.total && (
             <>
-              <Button type="button" variant="outline" onClick={onAddSplit}>
-                Tambah baris rincian
+              {!target.child && (
+                <Button type="button" variant="outline" onClick={onAddSplit}>
+                  Tambah baris
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={onAddChild}>
+                Tambah rincian
               </Button>
               <Button type="button" variant="outline" onClick={onDeleteRow}>
                 Hapus baris

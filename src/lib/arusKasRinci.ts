@@ -17,7 +17,10 @@ const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 
 const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-')
-export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id))
+export const ANAK = 'anak:'
+export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id) && !b.grup.startsWith(ANAK))
+/** Sub-rows (breakdown) of a row; the same list for every period, only the figures differ. */
+export const anakDari = (lembar: Lembar, key: string) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup === `${ANAK}${key}`)
 export const hidden = (lembar: Lembar, key: string) => lembar.baris.some((b) => b.id === keySembunyi(key))
 export const nameOf = (lembar: Lembar, key: string, fallback: string) => lembar.baris.find((b) => b.id === keyNama(key))?.label ?? fallback
 const groupOf = (grup: string, labels: string[]) => (labels.includes(grup) ? grup : LEGACY_GRUP.includes(grup) ? labels[0] : undefined)
@@ -85,7 +88,29 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       })
       if (rest.some((c) => c.value)) shown.push(line(`${head.label}:selisih`, SELISIH, rest, { kind: 'calc' }))
     }
-    out.push(...shown)
+    for (const l of shown) {
+      out.push(l)
+      if (l.def.key.endsWith(':selisih')) continue
+      const kids = anakDari(lembar, l.def.key).map((r) => {
+        const cells = days.map((d, w): Cell => {
+          const t = typed(r.id, d)
+          if (t !== undefined) return { value: num(t), manual: true }
+          return { value: l.cells[w].value === null ? null : 0, manual: false }
+        })
+        const child = line(r.id, r.label, cells, { grup: head.label, induk: l.def.key })
+        child.custom = true
+        return child
+      })
+      out.push(...kids)
+      if (!kids.length) continue
+      // A breakdown never changes its row: what the sub-rows do not add up to (negative when they exceed it) shows below them.
+      const rest = days.map((_, w): Cell => {
+        const whole = l.cells[w].value
+        if (whole === null) return { value: null, manual: false }
+        return { value: round(whole - kids.reduce((s, k) => s + (k.cells[w].value ?? 0), 0)), manual: false }
+      })
+      if (rest.some((c) => c.value)) out.push(line(`${l.def.key}:selisih`, SELISIH, rest, { kind: 'calc', grup: head.label, induk: l.def.key }))
+    }
   }
   return { ...block, lines: out }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
-import { applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL } from './arusKasRinci'
+import { ANAK, applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL } from './arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
 
@@ -85,5 +85,30 @@ describe('arus kas breakdown', () => {
     const b = build(lembar)
     expect(line(b, 'jml_pemasukan')).toBeUndefined()
     expect(line(b, 'kas_masuk')!.cells[1].value).toBeNull()
+  })
+
+  it('breaks a row down into sub-rows without changing the row or any total', () => {
+    const lembar = emptyLembar()
+    const d = '2026-10-04'
+    lembar.baris.push({ id: 'c:a', tabel: RINCI_TABEL, grup: `${ANAK}k_prod`, label: 'Toko A' })
+    lembar.baris.push({ id: 'c:b', tabel: RINCI_TABEL, grup: `${ANAK}k_prod`, label: 'Toko B' })
+    lembar.sel[`c:a|${d}`] = '200'
+    lembar.sel[`c:b|${d}`] = '300'
+    const b = build(lembar)
+    expect(b.lines.filter((l) => !isGroup(l) && l.def.induk).map((l) => (l as Line).def.key)).toEqual(['c:a', 'c:b', 'k_prod:selisih'])
+    expect(line(b, 'k_prod')!.cells[0].value).toBe(600)
+    expect(line(b, 'k_prod:selisih')!.cells[0].value).toBe(100)
+    expect(line(b, 'Kas masuk:selisih')).toBeUndefined()
+    expect(line(b, 'kas_masuk')!.cells[0].value).toBe(650)
+  })
+
+  it('shows a negative remainder when the sub-rows exceed their row, and drops sub-rows of a removed row', () => {
+    const lembar = emptyLembar()
+    const d = '2026-10-04'
+    lembar.baris.push({ id: 'c:a', tabel: RINCI_TABEL, grup: `${ANAK}k_prod`, label: 'Toko A' })
+    lembar.sel[`c:a|${d}`] = '700'
+    expect(line(build(lembar), 'k_prod:selisih')!.cells[0].value).toBe(-100)
+    lembar.baris.push({ id: keySembunyi('k_prod'), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' })
+    expect(line(build(lembar), 'c:a')).toBeUndefined()
   })
 })

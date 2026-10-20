@@ -5,7 +5,7 @@ import { Download } from 'lucide-react'
 import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
-import { applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { ANAK, anakDari, applyRinci, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
@@ -42,11 +42,15 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const block = useMemo(() => namai([applyRinci(plain, days, lembar)], lembar)[0], [plain, days, lembar])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
-  const splitIds = new Set(splitsOf(lembar).map((b) => b.id))
+  const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
+  // Rows whose name and figures are stored under their own id (added rows and sub-rows), unlike the report's own rows.
+  const splitIds = new Set([...splitsOf(lembar).map((b) => b.id), ...childIds])
+  const indukDari = (key: string) => lembar.baris.find((b) => b.id === key)?.grup.slice(ANAK.length) ?? ''
   const anyHidden = lembar.baris.some((b) => b.id.startsWith('c:hide-'))
 
   const [target, setTarget] = useState<(RinciTarget & { week: number }) | null>(null)
   const [addTo, setAddTo] = useState<GroupDef | null>(null)
+  const [addChildTo, setAddChildTo] = useState<string | null>(null)
   const openEdit = (line: Line, week: number) => {
     if (line.def.key.endsWith(':selisih')) return
     setTarget({
@@ -56,6 +60,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
       split: splitIds.has(line.def.key),
+      child: childIds.has(line.def.key),
       total: !!line.def.emphasis,
       week,
     })
@@ -87,10 +92,12 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
       return
     }
+    // A row takes its sub-rows with it.
+    const gone = new Set([target.key, ...anakDari(lembar, target.key).map((b) => b.id)])
     commit({
       ...lembar,
-      baris: lembar.baris.filter((b) => b.id !== target.key),
-      sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !k.startsWith(`${target.key}|`))),
+      baris: lembar.baris.filter((b) => !gone.has(b.id)),
+      sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => ![...gone].some((id) => k.startsWith(`${id}|`)))),
     })
   }
   /** Tick = the cash transaction of that period was done. Only a marker; ticks made while ticking also froze the figure, which unticking still releases. */
@@ -107,19 +114,24 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     }
     save.mutate({ ...lembar, sel })
   }
-  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input'
+  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input' && !line.def.induk
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
-    if (!addTo) return
-    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup: addTo.label, label }] })
+    const grup = addChildTo ? `${ANAK}${addChildTo}` : addTo?.label
+    if (!grup) return
+    save.mutate({ ...lembar, baris: [...lembar.baris, { id: `c:${crypto.randomUUID().slice(0, 8)}`, tabel: RINCI_TABEL, grup, label }] })
     setAddTo(null)
+    setAddChildTo(null)
   }
+  const nameOfKey = (key: string) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? ''
 
+  // The Arus Kas page shows the main rows only; the sub-rows (breakdown) are seen and edited in Laporan Keuangan.
+  const tampil = useMemo(() => (hanyaLihat ? { ...block, lines: block.lines.filter((l) => isGroup(l) || !l.def.induk) } : block), [block, hanyaLihat])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
       ['Uraian', ...days.map(dateLabel), 'JUMLAH / POSISI TERAKHIR'],
-      ...block.lines.filter((l) => isGroup(l) || !l.hidden).map((line) => (isGroup(line) ? [line.label] : [line.def.label, ...line.cells.map((c) => c.value), line.total])),
+      ...tampil.lines.filter((l) => isGroup(l) || !l.hidden).map((line) => (isGroup(line) ? [line.label] : [line.def.label, ...line.cells.map((c) => c.value), line.total])),
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
@@ -137,7 +149,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           </Button>
         )}
       </div>
-      <FinancialSheetTable block={block} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
@@ -153,6 +165,10 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           setTarget(null)
           setAddTo(group)
         }}
+        onAddChild={() => {
+          setAddChildTo(target ? (target.child ? indukDari(target.key) : target.key) : null)
+          setTarget(null)
+        }}
       />
       <RenameDialog
         target={ren && { title: 'Ubah judul kelompok', label: ren.label }}
@@ -162,7 +178,14 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           setRen(null)
         }}
       />
-      <AddRowDialog group={addTo ? { tabel: RINCI_TABEL, grup: addTo.label } : null} onClose={() => setAddTo(null)} onAdd={onAdd} />
+      <AddRowDialog
+        group={addChildTo ? { tabel: RINCI_TABEL, grup: `Rincian dari ${nameOfKey(addChildTo)}` } : addTo ? { tabel: RINCI_TABEL, grup: addTo.label } : null}
+        onClose={() => {
+          setAddTo(null)
+          setAddChildTo(null)
+        }}
+        onAdd={onAdd}
+      />
     </section>
   )
 }
