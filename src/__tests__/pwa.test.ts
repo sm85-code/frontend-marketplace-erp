@@ -9,7 +9,7 @@ describe('PWA', () => {
   const manifest = JSON.parse(manifestRaw)
 
   it('manifest names the app and can be installed (standalone, 192 and 512 icons that exist)', () => {
-    expect(manifest.name).toBe('Ampel Kuning ERP Sistem')
+    expect(manifest.name).toBe('Ampel Kuning ERP System')
     expect(manifest.display).toBe('standalone')
     expect(manifest.start_url).toBe('/')
     const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes)
