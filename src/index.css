@@ -744,9 +744,9 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 .erp-feedback [data-sonner-toast][data-styled=true] {
   --toast-warna: var(--primary);
   /* The card is tinted with its own type colour (from theme tokens) so it stands out from the white page behind it. */
-  background: color-mix(in oklab, var(--toast-warna) 10%, var(--card));
+  background: color-mix(in oklab, var(--toast-warna) 24%, var(--card));
   color: var(--card-foreground);
-  border: 1px solid color-mix(in oklab, var(--toast-warna) 40%, var(--border));
+  border: 2px solid color-mix(in oklab, var(--toast-warna) 75%, var(--card));
   border-radius: 1.25rem;
   padding: 16px 18px;
   gap: 14px;
@@ -764,7 +764,7 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
   align-items: center;
   justify-content: center;
   color: var(--toast-warna);
-  background: color-mix(in oklab, var(--toast-warna) 20%, transparent);
+  background: color-mix(in oklab, var(--toast-warna) 35%, transparent);
 }
 .erp-feedback [data-sonner-toast][data-type=success] { --toast-warna: var(--success); }
 .erp-feedback [data-sonner-toast][data-type=error] { --toast-warna: var(--destructive); }
