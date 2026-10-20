@@ -7,6 +7,7 @@ import { ConfirmProvider } from '@/components/ConfirmProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/lib/theme'
 import '@/index.css'
+import { daftarkanServiceWorker } from '@/lib/pwa'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,3 +31,5 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </StrictMode>,
 )
+
+daftarkanServiceWorker()
