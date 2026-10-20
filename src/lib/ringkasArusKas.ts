@@ -147,5 +147,56 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     { emphasis: true },
   )
   const labaRugi: Block = { title: 'C. LABA / RUGI', tabel: 'laba_rugi', lines: [{ group: true, label: 'Ringkasan', tabel: 'laba_rugi' }, cMasuk, cKeluar, laba] }
-  return plain.map((b) => (b.tabel === 'pemasukan' ? pemasukan : b.tabel === 'pengeluaran' ? pengeluaran : b.tabel === 'laba_rugi' ? labaRugi : b))
+  const neraca = (b: Block): Block => {
+    const akhir = arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'akhir')
+    const lines = b.lines.map((l) => ({ ...l })) as (Line | GroupDef)[]
+    const at = (key: string) => lines.find((l): l is Line => !isGroup(l) && l.def.key === key)
+    const set = (l: Line | undefined, kind: RowDef['kind'], cells: Cell[]) => {
+      if (!l) return
+      l.def = { ...l.def, kind }
+      l.cells = cells
+      l.total = total(cells, l.def.total)
+    }
+    set(at('n_kas'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value ?? null, manual: false })))
+    set(at('n_laba_ini'), 'calc', laba.cells.map((c) => ({ ...c })))
+    // Last period's profit carries into the next one's "earlier profit" unless it is typed over.
+    const lalu = at('n_laba_lalu')
+    const ini = at('n_laba_ini')
+    if (lalu && ini) {
+      const cells: Cell[] = []
+      days.forEach((d, w) => {
+        const typed = lembar.sel[`${lalu.def.key}|${d}`]
+        const before = cells[w - 1]?.value
+        const prevIni = ini.cells[w - 1]?.value
+        const own = lalu.cells[w]
+        cells.push(typed !== undefined ? { value: num(typed), manual: true } : w > 0 && before != null && prevIni != null && own.value !== null ? { value: round(before + prevIni), manual: false } : own)
+      })
+      set(lalu, 'input', cells)
+    }
+    // Section totals follow the rows again, and the balance check closes the books.
+    const per = new Map<string, Line[]>()
+    let grup = ''
+    for (const l of lines) {
+      if (isGroup(l)) grup = l.label
+      else if (!l.def.emphasis) per.set(grup, [...(per.get(grup) ?? []), l])
+    }
+    const jumlah = (rows: Line[]): Cell[] =>
+      days.map((_, w) => {
+        const v = rows.map((l) => l.cells[w].value).filter((x): x is number => x !== null)
+        return { value: v.length ? sum(v) : null, manual: false }
+      })
+    const aset = jumlah(per.get('Aset') ?? [])
+    const utang = jumlah(per.get('Kewajiban') ?? [])
+    const ekuitas = jumlah(per.get('Ekuitas') ?? [])
+    const plus = (a: Cell[], b2: Cell[], sign = 1): Cell[] => a.map((c, w) => ({ value: c.value === null && b2[w].value === null ? null : round((c.value ?? 0) + sign * (b2[w].value ?? 0)), manual: false }))
+    set(at('jml_aset'), 'calc', aset)
+    set(at('jml_utang'), 'calc', utang)
+    set(at('jml_ekuitas'), 'calc', ekuitas)
+    set(at('jml_kew_ekuitas'), 'calc', plus(utang, ekuitas))
+    set(at('selisih'), 'calc', plus(plus(aset, utang, -1), ekuitas, -1))
+    return { ...b, lines }
+  }
+  return plain.map((b) =>
+    b.tabel === 'pemasukan' ? pemasukan : b.tabel === 'pengeluaran' ? pengeluaran : b.tabel === 'laba_rugi' ? labaRugi : b.tabel === 'neraca' ? neraca(b) : b.tabel === 'arus_kas' ? arus : b,
+  )
 }

@@ -75,4 +75,26 @@ describe('summarized tabs from Arus Kas', () => {
     expect(val(build(), 'jml_pemasukan', 1)).toBeNull()
     expect(val(build(), 'laba', 1)).toBeNull()
   })
+
+  it('the balance sheet takes cash from Arus Kas and profit from Laba/Rugi, and the balance check follows', () => {
+    const b = build()
+    expect(val(b, 'n_kas')).toBe(val(b, 'akhir'))
+    expect(val(b, 'n_laba_ini')).toBe(val(b, 'laba'))
+    const [aset, utang, ekuitas] = ['jml_aset', 'jml_utang', 'jml_ekuitas'].map((k) => val(b, k)!)
+    expect(val(b, 'selisih')).toBe(aset - utang - ekuitas)
+    expect(val(b, 'jml_kew_ekuitas')).toBe(utang + ekuitas)
+  })
+
+  it('editing a cash row changes cash and the balance check, and profit carries into the next period', () => {
+    const lembar = emptyLembar()
+    lembar.sel[`${keyNilaiDasar('k_toko')}|${d}`] = '1300'
+    const base = build()
+    const b = build(lembar)
+    expect(val(b, 'n_kas')).toBe(val(base, 'n_kas')! + 1000)
+    expect(val(b, 'n_laba_ini')).toBe(val(base, 'n_laba_ini')! + 1000)
+    const second = emptyLembar()
+    second.sel[`${keyNilaiDasar('k_toko')}|${days[1]}`] = '1'
+    const c = build(second)
+    expect(val(c, 'n_laba_lalu', 1)).toBe(val(c, 'n_laba_lalu', 0)! + val(c, 'n_laba_ini', 0)!)
+  })
 })
