@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; period: string; current: number | null; manual: boolean; split: boolean }
+export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -60,8 +60,8 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChil
       </div>
       {!target.total && <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
-        <MoneyInput id="rinci-amount" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
-        {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kas masuk tidak berubah; yang belum terbagi tampil di baris “Belum dirinci”.</p>}
+        <MoneyInput id="rinci-amount" disabled={target.anak} value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
+        {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kelompok dan saldo kas mengikuti angka ini{target.anak ? ' (dihitung dari jumlah rinciannya)' : ''}.</p>}
         {target.manual && (
           <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={onClearValue}>
             Kembalikan ke angka otomatis

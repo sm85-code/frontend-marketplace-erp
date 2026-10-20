@@ -2,7 +2,6 @@ import type { Block, Cell, GroupDef, Line, Lembar } from '@/lib/sheetEngine'
 import { isGroup } from '@/lib/sheetEngine'
 
 export const RINCI_TABEL = 'arus_rinci'
-export const SELISIH = 'Belum dirinci'
 
 /** Ids must match the backend's `c:[\w-]+` pattern, so row keys such as `c:ab12` are flattened. */
 const safe = (key: string) => key.replace(/[^\w-]/g, '_')
@@ -36,22 +35,31 @@ const line = (key: string, label: string, cells: Cell[], extra: Partial<Line['de
   }
 }
 
+const totalOf = (cells: Cell[], mode: 'sum' | 'first' | 'last'): number | null => {
+  const present = cells.map((c) => c.value).filter((v): v is number => v !== null)
+  if (!present.length) return null
+  return mode === 'first' ? present[0] : mode === 'last' ? present.at(-1)! : round(present.reduce((a, b) => a + b, 0))
+}
+const withCells = (l: Line, cells: Cell[]): Line => ({ ...l, cells, total: totalOf(cells, l.def.total) })
+
 /**
- * Every row of the cash-flow table can be renamed; every detail row can also be typed over, removed or split into more
- * rows. The totals (cash in, cash out, transfers) never change: whatever the detail rows of a group do not add up to
- * shows as "Belum dirinci".
+ * Every row of the cash-flow table can be renamed; every detail row can also be typed over, removed, split into more
+ * rows or broken down into sub-rows. The reference figure of a row is the sum of its sub-rows when it has any, else its
+ * own figure; the group totals (cash in, cash out, transfers) follow those figures, and the opening/closing cash
+ * follow the totals, so nothing is left "undivided".
  */
 export function applyRinci(block: Block, days: string[], lembar: Lembar): Block {
   const labels = block.lines.filter(isGroup).map((g) => g.label)
   const typed = (key: string, d: string) => lembar.sel[`${key}|${d}`]
   const renamed = (l: Line): Line => ({ ...l, def: { ...l.def, kind: 'input', label: nameOf(lembar, l.def.key, l.def.label) } })
   const out: (Line | GroupDef)[] = []
+  const patched = new Map<string, Cell[]>()
   const all = block.lines
   let i = 0
   while (i < all.length) {
     const head = all[i++]
     if (!isGroup(head)) {
-      out.push(renamed(head))
+      out.push(patched.has(head.def.key) ? withCells(renamed(head), patched.get(head.def.key)!) : renamed(head))
       continue
     }
     out.push(head)
@@ -65,8 +73,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
         const t = typed(keyNilaiDasar(o.def.key), days[w])
         return t !== undefined ? { value: num(t), manual: true } : c
       })
-      const present = cells.map((c) => c.value).filter((v): v is number => v !== null)
-      shown.push({ ...renamed(o), cells, total: present.length ? round(present.reduce((a, b) => a + b, 0)) : null })
+      shown.push(withCells(renamed(o), cells))
     }
     for (const r of splitsOf(lembar)) {
       if (groupOf(r.grup, labels) !== head.label) continue
@@ -79,38 +86,51 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       added.custom = true
       shown.push(added)
     }
-    for (const l of shown) l.cells = l.cells.map((c, w) => (lembar.sel[keySelesai(l.def.key, days[w])] !== undefined ? { ...c, selesai: true } : c))
-    if (total) {
-      const rest = days.map((_, w): Cell => {
-        const whole = total.cells[w].value
-        if (whole === null) return { value: null, manual: false }
-        return { value: round(whole - shown.reduce((s, l) => s + (l.cells[w].value ?? 0), 0)), manual: false }
-      })
-      if (rest.some((c) => c.value)) shown.push(line(`${head.label}:selisih`, SELISIH, rest, { kind: 'calc' }))
-    }
-    for (const l of shown) {
-      out.push(l)
-      if (l.def.key.endsWith(':selisih')) continue
-      const kids = anakDari(lembar, l.def.key).map((r) => {
+    const group: Line[] = []
+    for (const l0 of shown) {
+      const kids = anakDari(lembar, l0.def.key).map((r) => {
         const cells = days.map((d, w): Cell => {
           const t = typed(r.id, d)
           if (t !== undefined) return { value: num(t), manual: true }
-          return { value: l.cells[w].value === null ? null : 0, manual: false }
+          return { value: l0.cells[w].value === null ? null : 0, manual: false }
         })
-        const child = line(r.id, r.label, cells, { grup: head.label, induk: l.def.key })
+        const child = line(r.id, r.label, cells, { grup: head.label, induk: l0.def.key })
         child.custom = true
         return child
       })
-      out.push(...kids)
-      if (!kids.length) continue
-      // A breakdown never changes its row: what the sub-rows do not add up to (negative when they exceed it) shows below them.
-      const rest = days.map((_, w): Cell => {
-        const whole = l.cells[w].value
-        if (whole === null) return { value: null, manual: false }
-        return { value: round(whole - kids.reduce((s, k) => s + (k.cells[w].value ?? 0), 0)), manual: false }
-      })
-      if (rest.some((c) => c.value)) out.push(line(`${l.def.key}:selisih`, SELISIH, rest, { kind: 'calc', grup: head.label, induk: l.def.key }))
+      // With sub-rows the row shows their sum; without, its own figure stays the reference.
+      const own = kids.length ? withCells(l0, l0.cells.map((c, w): Cell => ({ value: c.value === null ? null : round(kids.reduce((s, k) => s + (k.cells[w].value ?? 0), 0)), manual: false }))) : l0
+      for (const row of [own, ...kids]) row.cells = row.cells.map((c, w) => (lembar.sel[keySelesai(row.def.key, days[w])] !== undefined ? { ...c, selesai: true } : c))
+      group.push(own, ...kids)
     }
+    if (total) {
+      const parents = group.filter((l) => !l.def.induk)
+      patched.set(
+        total.def.key,
+        total.cells.map((c, w): Cell => {
+          const values = parents.map((l) => l.cells[w].value).filter((v): v is number => v !== null)
+          return { value: c.value === null ? null : round(values.reduce((a, b) => a + b, 0)), manual: false }
+        }),
+      )
+    }
+    out.push(...group)
+  }
+  // Opening cash of a period is the closing cash of the one before; closing = opening + cash in - cash out + transfers.
+  const byKey = new Map(out.filter((l): l is Line => !isGroup(l)).map((l) => [l.def.key, l]))
+  const [awal, akhir] = [byKey.get('awal'), byKey.get('akhir')]
+  const [masuk, keluar, transfer] = ['kas_masuk', 'kas_keluar', 'transfer'].map((k) => byKey.get(k))
+  if (awal && akhir && masuk && keluar && transfer) {
+    const open: Cell[] = []
+    const close: Cell[] = []
+    days.forEach((_, w) => {
+      const o = w === 0 || akhir.cells[w - 1].value === null ? awal.cells[w] : { value: close[w - 1].value, manual: false }
+      open.push(o)
+      const [m, k, t] = [masuk, keluar, transfer].map((l) => l.cells[w].value)
+      close.push(o.value === null || akhir.cells[w].value === null || m === null || k === null || t === null ? akhir.cells[w] : { value: round(o.value + m - k + t), manual: false })
+    })
+    const at = (l: Line) => out.indexOf(l)
+    out[at(awal)] = withCells(awal, open)
+    out[at(akhir)] = withCells(akhir, close)
   }
   return { ...block, lines: out }
 }
