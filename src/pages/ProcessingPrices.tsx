@@ -44,6 +44,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [adding, setAdding] = useState(false)
   const [editingColor, setEditingColor] = useState(false)
   const [useHierarchy, setUseHierarchy] = useState(true)
+  /** Paint tariffs: pick the model and size from the production list (otomatis) or type them (manual). */
+  const [modeCat, setModeCat] = useState<'otomatis' | 'manual'>('otomatis')
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
   const categoriesId = useId()
@@ -87,7 +89,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   }
   const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
-      setAdding(false); setUseHierarchy(!!price.structure_model_id); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price)
+      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price)
     }}>Edit</Button>
     {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
   </div>
@@ -158,6 +160,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 onClick={() => {
                   setAdding(true)
                   setUseHierarchy(true)
+                  setModeCat('otomatis')
                   setError('')
                   setEdit({
                     id: crypto.randomUUID(),
@@ -343,10 +346,19 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   <p>Harga ini memakai data lama. Susun kategori, produk, dan model untuk membuat SKU otomatis.</p>
                   <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setUseHierarchy(true)}>Susun struktur</Button>
                 </div>}
-              {edit.kind === 'pengecatan' ? <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
+              {edit.kind === 'pengecatan' ? <>
+                <div className="flex gap-2" role="group" aria-label="Cara memilih model">
+                  {(['otomatis', 'manual'] as const).map(m => <Button key={m} type="button" size="sm" variant={modeCat === m ? 'default' : 'outline'} aria-pressed={modeCat === m} onClick={() => {
+                    if (m === modeCat) return
+                    setModeCat(m)
+                    setEdit(v => v ? { ...v, production_price_id: '', produk: '', ukuran: '', sku: '' } : v)
+                  }}>{m === 'otomatis' ? 'Otomatis (dari daftar)' : 'Manual (ketik sendiri)'}</Button>)}
+                </div>
+                {modeCat === 'otomatis' ? <Field title="Model"><SelectField required value={edit.production_price_id || ''} onChange={e => {
                 const product = q.data?.items.find(p => p.id === e.target.value && p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id))
                 setEdit(v => v && product ? {...v, production_price_id: product.id, produk: product.produk, ukuran: product.ukuran, sku: product.sku} : v)
-              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : (
+              }}><option value="">Pilih model</option>{(q.data?.items || []).filter(p => p.kind === 'produksi' && p.structure_model_id && (p.active !== false || p.id === edit.production_price_id)).map(p => <option key={p.id} value={p.id}>{[p.model || p.produk,p.ukuran,p.sku].filter(Boolean).join(' · ')}</option>)}</SelectField></Field> : <Field title="Model"><Input required maxLength={300} value={edit.produk} placeholder="Contoh: Rak Piring Lantai" onChange={e => change('produk', e.target.value)} /></Field>}
+              </> : (
               <Field title="Nama produk">
                 <Input
                   required
@@ -376,7 +388,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               )}
               {edit.kind === 'packing' && <Field title="Jenis packing"><SelectField value={edit.packing_type || 'biasa'} onChange={e => change('packing_type', e.target.value)}><option value="biasa">Biasa</option><option value="kayu">Kayu</option></SelectField></Field>}
               {edit.kind === 'pengecatan' && <ProcessingColorField onEditingChange={setEditingColor} value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={(color, id) => setEdit(v => v ? {...v, warna:color, color_id:id} : v)} />}
-              {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly value={edit.ukuran}/></Field><Field title="SKU produksi"><Input readOnly value={edit.sku}/></Field></div> : <div className={edit.kind === 'packing' || edit.kind === 'non_kayu' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
+              {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly={modeCat === 'otomatis'} required={modeCat === 'manual'} maxLength={100} value={edit.ukuran} placeholder={modeCat === 'manual' ? 'Contoh: 50x30' : undefined} onChange={e => change('ukuran', e.target.value)}/></Field><Field title={modeCat === 'manual' ? 'SKU (opsional)' : 'SKU produksi'}><Input readOnly={modeCat === 'otomatis'} maxLength={200} value={edit.sku} onChange={e => change('sku', e.target.value)}/></Field></div> : <div className={edit.kind === 'packing' || edit.kind === 'non_kayu' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
                 {edit.kind === 'non_kayu' ? <div className="col-span-2"><ProcessingVarian value={edit.varian ?? []} onChange={varian => setEdit(v => v ? { ...v, varian } : v)} /></div> : <Field title="Ukuran">
                   <Input
                     maxLength={100}

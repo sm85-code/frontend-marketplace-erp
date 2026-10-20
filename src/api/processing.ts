@@ -158,7 +158,7 @@ export const saveProcessingPrice = async (price: ProcessingPrice) => {
       catatan,
       ...(kind === 'packing' ? { packing_type: packing_type || 'biasa' } : {}),
       ...(kind === 'non_kayu' ? { varian: varian ?? [] } : {}),
-      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '', ...(color_id ? { color_id } : {}), ...(production_price_id ? { production_price_id } : {}) } : {}),
+      ...(kind === 'produksi' ? { jenis: jenis ?? '', ...(structure_model_id ? { structure_model_id } : {}) } : kind === 'pengecatan' ? { warna: warna ?? '', ...(color_id ? { color_id } : {}), ...(production_price_id !== undefined ? { production_price_id } : {}) } : {}),
     })
   ).data
 }
