@@ -75,13 +75,22 @@ const Amount = ({ value, manual }: { value: number | null; manual: boolean }) =>
   </span>
 )
 
-/** Number of each detail row, restarting at every group heading. */
-function nomorBaris(block: Block): Map<string, number> {
-  const out = new Map<string, number>()
+/** Number of each detail row, restarting at every group heading; sub-rows are 1.1, 1.2, ... under their row. */
+function nomorBaris(block: Block): Map<string, string> {
+  const out = new Map<string, string>()
   let n = 0
+  let anak = 0
   for (const line of block.lines) {
-    if (isGroup(line)) n = 0
-    else if (!line.hidden && !line.def.emphasis && !line.def.key.endsWith(':selisih')) out.set(line.def.key, ++n)
+    if (isGroup(line)) {
+      n = 0
+      continue
+    }
+    if (line.hidden || line.def.emphasis || line.def.key.endsWith(':selisih')) continue
+    if (line.def.induk) out.set(line.def.key, `${out.get(line.def.induk) ?? n}.${++anak}`)
+    else {
+      anak = 0
+      out.set(line.def.key, String(++n))
+    }
   }
   return out
 }
@@ -128,7 +137,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
                   {nomor && !line.def.emphasis && <TableCell className="w-9 pr-0 text-center tabular-nums text-muted-foreground">{nomor.get(line.def.key) ?? ''}</TableCell>}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className="whitespace-normal">{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? 'pl-6 text-muted-foreground' : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} />
@@ -190,7 +199,7 @@ export default function FinancialSheetTable(props: Props) {
                     {nomor && !line.def.emphasis && <TableCell className="sticky left-0 z-10 bg-card px-2 text-center tabular-nums text-muted-foreground">{nomor.get(line.def.key) ?? ''}</TableCell>}
                     <TableCell
                       colSpan={nomor && line.def.emphasis ? 2 : 1}
-                      className={`sticky z-10 ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
+                      className={`sticky z-10 ${line.def.induk ? 'pl-8 text-muted-foreground' : ''} ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
                       {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
