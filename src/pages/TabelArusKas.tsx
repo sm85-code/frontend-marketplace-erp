@@ -23,10 +23,10 @@ const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleD
 export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean }) {
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
-  const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => reports.lembarManual(month) })
+  const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
   const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
   const save = useMutation({
-    mutationFn: (next: Lembar) => reports.saveLembarManual(month, manual.data?.version ?? 0, next),
+    mutationFn: (next: Lembar) => (hanyaLihat ? reports.saveLembarArusKas : reports.saveLembarManual)(month, manual.data?.version ?? 0, next),
     // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
     onMutate: (next: Lembar) => qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old)),
     onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),

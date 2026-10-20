@@ -14,6 +14,9 @@ export const ROLES_OWNER_ONLY: Role[] = ['admin', 'owner']
 /** What only an admin may do: change other users' usernames, names and roles, and everything under Kelola Toko, Kelola Pengguna, Iklan and Settlement. */
 export const ROLES_ADMIN_ONLY: Role[] = ['admin']
 
+/** The Arus Kas page is also open to staff, who tick transactions as done (the backend refuses any other change from the page). */
+export const ROLES_ARUS_KAS: Role[] = ['admin', 'staff']
+
 /** Admin and owner share every page and action except the admin-only ones above. */
 export function isOwnerLevel(role: Role | null | undefined): boolean {
   return role === 'admin' || role === 'owner'

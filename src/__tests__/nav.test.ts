@@ -11,9 +11,9 @@ describe('filterNavForUser', () => {
     expect(filterNavForUser({ role: 'owner' }).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/pengaturan-toko'].includes(to)))
   })
 
-  it('staff only gets the shared pages, in workflow order', () => {
+  it('staff gets the shared pages and Arus Kas, in workflow order', () => {
     const paths = filterNavForUser({ role: 'staff' }).map((n) => n.to)
-    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/profile'])
+    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/arus-kas', '/profile'])
   })
 })
 
@@ -46,9 +46,9 @@ describe('menu order follows the daily workflow', () => {
     expect(kelompokNav(filterNavForUser({ role: 'owner' })).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toBeUndefined()
   })
 
-  it('drops sections a role cannot see anything in', () => {
+  it('drops sections a role cannot see anything in (staff sees Keuangan for Arus Kas only)', () => {
     const grup = kelompokNav(filterNavForUser({ role: 'staff' })).map((g) => g.grup.id)
-    expect(grup).toEqual(['harian', 'produk', 'pengaturan'])
+    expect(grup).toEqual(['harian', 'produk', 'keuangan', 'pengaturan'])
   })
 
   it('every nav item belongs to a known section', () => {

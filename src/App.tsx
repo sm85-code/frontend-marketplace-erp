@@ -5,7 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
-import { ROLES_ADMIN_ONLY, ROLES_OWNER_ONLY } from '@/config/roles'
+import { ROLES_ADMIN_ONLY, ROLES_ARUS_KAS, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Role } from '@/api/types'
 
@@ -93,7 +93,7 @@ export default function App() {
               <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/processing/template" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ProcessingPage /></LazyPage></Protected>} />
-              <Route path="/arus-kas" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ArusKas /></LazyPage></Protected>} />
+              <Route path="/arus-kas" element={<Protected roles={ROLES_ARUS_KAS}><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
