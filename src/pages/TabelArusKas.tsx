@@ -61,6 +61,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       manual: line.cells[week]?.manual ?? false,
       split: splitIds.has(line.def.key),
       child: childIds.has(line.def.key),
+      anak: anakDari(lembar, line.def.key).length > 0,
       total: !!line.def.emphasis,
       week,
     })
@@ -76,7 +77,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   const onSave = (label: string, value: string) => {
     if (!target) return
-    const sel = target.total ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const sel = target.total || target.anak ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
     commit({ ...lembar, sel, baris })
   }
