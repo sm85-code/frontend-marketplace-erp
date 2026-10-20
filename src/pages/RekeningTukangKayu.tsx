@@ -9,6 +9,12 @@ import Spinner from '@/components/Spinner'
 
 type Baris = { id: string; no: number; nama: string; jenis: string; bank: string; rekening: string }
 
+/** Accounts that are not craftsmen, so they are not in the Tukang Kayu data. */
+const REKENING_LAIN = [
+  { id: 'lain-iklan', nama: 'UMAR AL KAMAL', jenis: 'Iklan', bank: 'BRI', rekening: '400501028068531' },
+  { id: 'lain-titip-gaji', nama: 'YUYUN AULIA NURJANAH', jenis: 'Titip gaji', bank: 'BRI', rekening: '400501004422509' },
+]
+
 const salin = async (rekening: string) => {
   try {
     await navigator.clipboard.writeText(rekening)
@@ -37,19 +43,22 @@ const kolom: KolomTabel<Baris>[] = [
   },
 ]
 
-/** Bank accounts of the wood craftsmen (Data Produksi → Tukang Kayu) that have an account number, for making payments. */
+/** Accounts to pay: the craftsmen with an account number (Data Produksi → Tukang Kayu), then the other fixed accounts. */
 export default function RekeningTukangKayu() {
   const q = useQuery({ queryKey: ['processing-data'], queryFn: getProcessingData })
-  const items: Baris[] = (q.data?.data?.tukang ?? [])
-    .filter((t) => !!t.no_rekening?.trim())
-    .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
-    .map((t, i) => ({ id: t.id, no: i + 1, nama: t.nama, jenis: 'Tukang kayu', bank: t.nama_bank?.trim() ?? '', rekening: t.no_rekening!.trim() }))
+  const items: Baris[] = [
+    ...(q.data?.data?.tukang ?? [])
+      .filter((t) => !!t.no_rekening?.trim())
+      .sort((a, b) => a.nama.localeCompare(b.nama, 'id'))
+      .map((t) => ({ id: t.id, nama: t.nama, jenis: 'Tukang kayu', bank: t.nama_bank?.trim() ?? '', rekening: t.no_rekening!.trim() })),
+    ...REKENING_LAIN,
+  ].map((r, i) => ({ ...r, no: i + 1 }))
   return (
-    <section aria-label="Rekening tukang kayu" className="min-w-0 space-y-3">
-      <h2 className="text-lg font-semibold">Rekening Tukang Kayu</h2>
-      {q.isLoading && <Spinner label="Memuat rekening tukang…" />}
+    <section aria-label="Daftar nomor rekening pembayaran" className="min-w-0 space-y-3">
+      <h2 className="text-lg font-semibold">Daftar Nomor Rekening Pembayaran</h2>
+      {q.isLoading && <Spinner label="Memuat daftar rekening…" />}
       {q.error && <p role="alert" className="text-sm text-destructive">{getApiError(q.error)}</p>}
-      {q.data && <TabelLokal label="Rekening tukang kayu" items={items} kolom={kolom} idDari={(r) => r.id} namaDari={(r) => r.nama} minWidth={640} />}
+      {q.data && <TabelLokal label="Daftar nomor rekening pembayaran" items={items} kolom={kolom} idDari={(r) => r.id} namaDari={(r) => r.nama} minWidth={640} />}
     </section>
   )
 }
