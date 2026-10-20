@@ -12,7 +12,8 @@ const buat = (state: unknown, sudah = false) => {
 describe('guard entry for the Back button', () => {
   it('marks the current entry and puts a copy of the page on top, once per tab', () => {
     const { riwayat, simpan } = buat({ usr: null, key: 'abc', idx: 0 })
-    expect(pasangPenjaga(riwayat, simpan)).toBe(true)
+    expect(pasangPenjaga(riwayat, simpan, '/dashboard')).toBe(true)
+    expect(simpan.getItem('ampel-penjaga-alamat')).toBe('/dashboard')
     expect(riwayat.replaceState).toHaveBeenCalledWith({ usr: null, key: 'abc', idx: 0, penjaga: true }, '')
     expect(riwayat.pushState).toHaveBeenCalledWith({ usr: null, key: 'abc', idx: 0 }, '')
     expect(pasangPenjaga(riwayat, simpan)).toBe(false)
