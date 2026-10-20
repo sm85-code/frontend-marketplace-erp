@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
+import NotifikasiPerangkat from '@/components/NotifikasiPerangkat'
 
 /** A quick check for the obvious mistakes while typing; the server does the real one (syntax and the domain). */
 const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -92,6 +93,9 @@ export default function ProfilePage() {
           </Button>
         </CardContent>
       </Card>
+      <div className="mt-4">
+        <NotifikasiPerangkat />
+      </div>
     </div>
   )
 }

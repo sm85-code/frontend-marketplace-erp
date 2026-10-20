@@ -28,4 +28,11 @@ describe('PWA', () => {
     expect(sw).toContain('url.origin !== self.location.origin')
     expect(sw).toContain("url.pathname.startsWith('/assets/')")
   })
+
+  it('the service worker shows pushes and only opens addresses of this app when one is tapped', () => {
+    expect(sw).toContain("addEventListener('push'")
+    expect(sw).toContain('showNotification')
+    expect(sw).toContain("addEventListener('notificationclick'")
+    expect(sw).toContain('url.origin === self.location.origin')
+  })
 })
