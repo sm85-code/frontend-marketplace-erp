@@ -1,5 +1,6 @@
 import { qk } from '@/api/keys'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { useTutupHalaman } from '@/lib/riwayat'
 import { useQuery } from '@tanstack/react-query'
 import { daftarKampanyeIklan } from '@/api/endpoints'
 import KelolaKampanye from './iklan/KelolaKampanye'
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button'
 export default function KampanyeDetailPage() {
   const { akun, id } = useParams()
   const [params] = useSearchParams()
-  const navigate = useNavigate()
+  const tutup = useTutupHalaman('/iklan?tab=kampanye')
   const hari = [7, 14, 28].includes(Number(params.get('hari')))
     ? Number(params.get('hari'))
     : 7
@@ -28,7 +29,7 @@ export default function KampanyeDetailPage() {
         <p>Kampanye tidak ditemukan pada periode ini.</p>
         <Button
           variant="outline"
-          onClick={() => navigate('/iklan?tab=kampanye')}
+          onClick={tutup}
         >
           Kembali ke Kampanye
         </Button>
@@ -40,7 +41,7 @@ export default function KampanyeDetailPage() {
       kampanye={kampanye}
       hari={data.data!.hari}
       biayaShopee={data.data!.biaya_shopee_persen ?? null}
-      onTutup={() => navigate('/iklan?tab=kampanye')}
+      onTutup={tutup}
     />
   )
 }

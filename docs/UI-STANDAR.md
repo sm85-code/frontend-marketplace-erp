@@ -74,6 +74,7 @@ sebagai `kolom:asc|desc` dan kuncinya harus dikenal API (`urut.kunci` pada kolom
 `src/config/nav.ts`: **urutan array `NAV` adalah urutan menu** (sidebar, drawer, bilah bawah).
 Grup: Harian (Dashboard, Pesanan) → Produk (Katalog Shopee, Produk, Listing, Gudang & Stok) →
 Keuangan (Laporan Keuangan, Arus Kas, Dana & Saldo Shopee) → Iklan (khusus admin) → Pengaturan (Toko, Staff, Profil Saya).
+Berpindah antar menu (sidebar, bilah bawah, drawer) memakai `replace`, jadi tombol Kembali HP tidak berputar di antara menu yang pernah dibuka; menutup halaman rincian memakai `useTutupHalaman` (`src/lib/riwayat.ts`). Di HP dan aplikasi terpasang, Kembali dari halaman pertama menampilkan *Keluar dari aplikasi?* (`useKonfirmasiKeluar`).
 Bilah bawah HP: 4 menu `bawah` berprioritas tertinggi yang boleh dilihat peran itu, ditampilkan menurut urutan alur;
 sisanya lewat *Lainnya* (drawer yang sama). Urutan kiri ke kanan ditentukan `posisiBawah`. Pemilik: Dashboard, Produk, Katalog, Pesanan, Lainnya. Filter status Pesanan bawaannya *Perlu diproses*. Staf: Dashboard, Pesanan, Toko, Profil.
 

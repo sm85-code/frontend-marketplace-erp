@@ -37,6 +37,7 @@ export default function BottomNav({
           <NavLink
             key={item.to}
             to={item.to}
+            replace
             data-testid={`bottom-nav-${item.to.replace(/\//g, '-') || 'root'}`}
             className={cn(
               'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition-colors',

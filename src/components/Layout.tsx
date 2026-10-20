@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { filterNavForUser, itemBawah, kelompokNav } from '@/config/nav'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
+import { useKonfirmasiKeluar } from '@/lib/riwayat'
 
 function isNavActive(pathname: string, to: string, allPaths: string[]) {
   const matches = allPaths.filter((p) => pathname === p || pathname.startsWith(`${p}/`))
@@ -22,6 +23,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [open, setOpen] = useState(false)
+  useKonfirmasiKeluar(!!user)
 
   const visible = useMemo(() => filterNavForUser(user), [user])
   const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
@@ -99,6 +101,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                       <NavLink
                         key={n.to}
                         to={n.to}
+                        replace
                         data-testid={`nav-${n.to.replace(/\//g, '-')}`}
                         onClick={() => setOpen(false)}
                         aria-current={active ? 'page' : undefined}
