@@ -31,6 +31,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
   const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
+  // The read-only page (opened by staff) does not know the profit sharing: its figures are those without it. What is saved still keeps the admin's entries.
+  const lembarHitung: Lembar = useMemo(() => (hanyaLihat ? { ...lembar, sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !KEY_PEMBAGIAN.has(k.split('|')[0]))) } : lembar), [lembar, hanyaLihat]) // eslint-disable-line react-hooks/exhaustive-deps
   const save = useMutation({
     mutationFn: (next: Lembar) => (hanyaLihat ? reports.saveLembarArusKas : reports.saveLembarManual)(month, manual.data?.version ?? 0, next),
     // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
@@ -45,16 +47,16 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   // The Operasional entries of the month fill their rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
   const plain = useMemo(
-    () => computeSheet(sheetSections(data), records, days, lembar).find((b) => b.tabel === 'arus_kas')!,
+    () => computeSheet(sheetSections(data), records, days, lembarHitung).find((b) => b.tabel === 'arus_kas')!,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, days.join('|')],
+    [data, lembarHitung, days.join('|')],
   )
   const lembarTampil = useMemo(
-    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat, plain),
+    () => denganOperasional(lembarHitung, days, operasional.data ?? [], daftarKat, plain),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lembar, days.join('|'), operasional.data, daftarKat, plain],
+    [lembarHitung, days.join('|'), operasional.data, daftarKat, plain],
   )
-  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembar, t)[0], [plain, days, lembarTampil, lembar, t])
+  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembarHitung, t)[0], [plain, days, lembarTampil, lembarHitung, t])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
