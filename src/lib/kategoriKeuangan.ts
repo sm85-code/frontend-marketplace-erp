@@ -28,6 +28,7 @@ const AWAL: Record<string, string> = {
   k_pembelian: 'non_kayu',
   k_operasional: 'lain_keluar',
   k_langganan: 'langganan',
+  k_gaji: 'gaji',
   k_topup: 'bukan_keluar',
   k_lain_keluar: 'lain_keluar',
 }

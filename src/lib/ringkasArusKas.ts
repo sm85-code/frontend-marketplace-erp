@@ -100,6 +100,9 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
         const cells = days.map((d, w): Cell => {
           if (dipakai) {
             const found = perPeriode[w].get(k.kategori!)
+            const old = k.lama ? lama(k.lama)?.cells[w] : undefined
+            // A component that also has an old-table figure (gaji): a period saved before it became a cash-out keeps that figure.
+            if (old && !found?.total && hasData[w]) return { value: old.value, manual: false }
             return { value: hasData[w] ? round(found?.total ?? 0) : null, manual: false }
           }
           // Filled by hand: the typed figure, else the figure of the old tables, else zero.
