@@ -23,4 +23,19 @@ describe('row and group names', () => {
     expect(lembar.baris).toEqual([])
     expect(keyGrup('arus_kas', 'Transfer antar kas')).toMatch(/^c:[\w-]{1,40}$/)
   })
+
+  it('applies the Kelola Aplikasi texts below the per-month pencil and keeps ids', () => {
+    const teks = (id: string, bawaan: string) =>
+      ({ 'baris:produk': 'Global kayu', 'grupsheet:pemasukan:Penjualan dan jasa': 'Global grup', 'judul:pemasukan': 'Uang masuk', 'baris:shop:Toko A': 'Tidak boleh' })[id] ?? bawaan
+    const dasar: Block[] = [{ ...blocks[0], title: 'A. PEMASUKAN' }]
+    const [b] = namai(dasar, emptyLembar(), teks)
+    expect(b.title).toBe('A. Uang masuk')
+    expect(b.lines.find(isGroup)!.tampil).toBe('Global grup')
+    const baris = (bl: Block) => Object.fromEntries(bl.lines.filter((l): l is Line => !isGroup(l)).map((l) => [l.def.key, l.def.label]))
+    expect(baris(b)).toEqual({ produk: 'Global kayu', 'shop:Toko A': 'Toko A' })
+    const bulan = setNamaBaris(setNamaGrup(emptyLembar(), 'pemasukan', 'Penjualan dan jasa', 'Bulan ini'), 'produk', 'Penjualan produk kayu', 'Khusus bulan')
+    const [c] = namai(dasar, bulan, teks)
+    expect(c.lines.find(isGroup)!.tampil).toBe('Bulan ini')
+    expect(baris(c).produk).toBe('Khusus bulan')
+  })
 })

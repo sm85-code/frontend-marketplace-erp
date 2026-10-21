@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
+import { useLabel } from '@/api/pengaturanUi'
+import { idMenu } from '@/config/nav'
 import { buatKategori, buatKelompok, daftarKategori, ubahKategori, ubahKelompok, urutkanKategori, type ArahKategori, type Kelompok, type KategoriTransaksi } from '@/api/kategori'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
@@ -20,12 +22,18 @@ import { useAuth } from '@/lib/auth'
 
 const NAMA_ARAH: Record<ArahKategori, string> = { masuk: 'Pemasukan', keluar: 'Pengeluaran' }
 const NAMA_HALAMAN = { umum: 'Operasional Umum', packing: 'Operasional Packing' } as const
+const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing' } as const
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
 type Isi = { nama: string; kelompok: string; operasional: string }
 const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelompok_id, operasional: k.operasional ?? '' })
 const kirim = (i: Isi) => ({ nama: i.nama.trim(), kelompok: i.kelompok, operasional: i.operasional || null })
-const penempatan = (k: KategoriTransaksi) => (k.kelompok === '' ? 'Tidak masuk laporan' : k.operasional ? `${k.kelompok} · ${NAMA_HALAMAN[k.operasional]}` : k.kelompok)
+/** Names of the two Operasional pages as set on Kelola Aplikasi. */
+function useNamaHalaman() {
+  const t = useLabel()
+  return Object.fromEntries(Object.entries(NAMA_HALAMAN).map(([v, n]) => [v, t(idMenu(PATH_HALAMAN[v as keyof typeof PATH_HALAMAN]), n)])) as Record<keyof typeof NAMA_HALAMAN, string>
+}
+const penempatan = (k: KategoriTransaksi, halaman: Record<string, string>) => (k.kelompok === '' ? 'Tidak masuk laporan' : k.operasional ? `${k.kelompok} · ${halaman[k.operasional]}` : k.kelompok)
 
 /** The name being typed and what leaving the field does: save a changed name, or put the saved one back when it is too short or refused. */
 function useNama(k: KategoriTransaksi, simpan: (i: Isi, aktif: boolean) => Promise<void>) {
@@ -63,12 +71,13 @@ const KolomNama = ({ k, bisaTulis, n }: { k: KategoriTransaksi; bisaTulis: boole
   bisaTulis ? <Input aria-label={`Nama ${k.nama}`} value={n.nama} maxLength={80} onChange={(e) => n.setNama(e.target.value)} onBlur={() => void n.keluar()} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /> : <>{k.nama}</>
 
 function Baris(p: PropsBaris) {
+  const halaman = useNamaHalaman()
   const { k, bisaTulis } = p
   const n = useNama(k, p.simpan)
   return (
     <TableRow className={k.aktif ? '' : 'opacity-60'}>
       <TableCell className="min-w-56"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /></TableCell>
-      <TableCell className="min-w-48 text-muted-foreground">{penempatan(k)}</TableCell>
+      <TableCell className="min-w-48 text-muted-foreground">{penempatan(k, halaman)}</TableCell>
       <TableCell className="whitespace-nowrap">{k.dipakai > 0 ? `${k.dipakai} baris` : '—'}</TableCell>
       <TableCell><Status k={k} /></TableCell>
       <TableCell>{bisaTulis && <Aksi {...p} />}</TableCell>
@@ -78,12 +87,13 @@ function Baris(p: PropsBaris) {
 
 /** Phone layout: one card per category, so nothing scrolls sideways. */
 function Kartu(p: PropsBaris) {
+  const halaman = useNamaHalaman()
   const { k, bisaTulis } = p
   const n = useNama(k, p.simpan)
   return (
     <li className={`space-y-2 rounded-lg border p-3 ${k.aktif ? '' : 'opacity-60'}`}>
       <KolomNama k={k} bisaTulis={bisaTulis} n={n} />
-      <p className="text-sm text-muted-foreground">{penempatan(k)}</p>
+      <p className="text-sm text-muted-foreground">{penempatan(k, halaman)}</p>
       <div className="flex items-center justify-between gap-2 teks-kecil text-muted-foreground">
         <Status k={k} />
         <span>{k.dipakai > 0 ? `${k.dipakai} baris` : 'Belum dipakai'}</span>
@@ -102,6 +112,7 @@ function DialogAtur({ k, kelompok, onClose, onSimpan }: { k: KategoriTransaksi |
 }
 
 function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: Kelompok[]; onSimpan: (isi: Isi) => void }) {
+  const halaman = useNamaHalaman()
   const [isi, setIsi] = useState(isiDari(k))
   return (
     <form
@@ -126,7 +137,7 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
           <Label htmlFor="atur-operasional">Ditawarkan di halaman</Label>
           <select id="atur-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
             <option value="">Tidak ditawarkan</option>
-            {Object.entries(NAMA_HALAMAN).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            {Object.entries(halaman).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
       )}
@@ -138,6 +149,7 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
 }
 
 function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKategori; kelompok: Kelompok[]; buka: boolean; onClose: () => void; onSaved: () => void }) {
+  const halaman = useNamaHalaman()
   const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
   useEffect(() => {
     if (buka) setIsi({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
@@ -180,7 +192,7 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
               <Label htmlFor="kat-operasional">Ditawarkan di halaman</Label>
               <select id="kat-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
                 <option value="">Tidak ditawarkan</option>
-                {Object.entries(NAMA_HALAMAN).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {Object.entries(halaman).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
           )}

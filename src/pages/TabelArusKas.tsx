@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useLabel } from '@/api/pengaturanUi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Download } from 'lucide-react'
@@ -24,6 +25,7 @@ const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleD
 
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
 export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean }) {
+  const t = useLabel()
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
@@ -51,7 +53,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lembar, days.join('|'), operasional.data, daftarKat, plain],
   )
-  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembar)[0], [plain, days, lembarTampil, lembar])
+  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembar, t)[0], [plain, days, lembarTampil, lembar, t])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))

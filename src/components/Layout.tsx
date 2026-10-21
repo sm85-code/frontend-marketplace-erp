@@ -131,7 +131,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{user.nama}</div>
                 <div className="text-xs leading-5" style={{ color: 'var(--text-muted)' }}>
-                  {akses?.nama ?? ROLE_LABELS[user.role] ?? user.role}
+                  {akses?.nama ?? t(`role:${user.role}`, ROLE_LABELS[user.role] ?? user.role)}
                 </div>
               </div>
               <Button

@@ -26,17 +26,30 @@ export const setNamaGrup = (lembar: Lembar, tabel: string, original: string, lab
   return { ...lembar, baris: label === original ? rest : [...rest, { id, tabel: RINCI_TABEL, grup: `${tabel}|${original}`.slice(0, 80), label }] }
 }
 
-/** Blocks with renamed rows and group titles applied. */
-export function namai(blocks: Block[], lembar: Lembar): Block[] {
+/** Ids of the texts that Kelola Aplikasi can change for every month at once (the per-sheet pencil still wins for its own month). */
+export const idTab = (tabel: string) => `tab:${tabel}`
+export const idJudul = (tabel: string) => `judul:${tabel}`
+/** The tab buttons of Laporan Keuangan: [table, built-in name], in the order shown. */
+export const TAB_LAPORAN: [string, string][] = [['arus_kas', 'Arus Kas'], ['pemasukan', 'Pemasukan'], ['pengeluaran', 'Pengeluaran'], ['laba_rugi', 'Laba/Rugi'], ['neraca', 'Neraca']]
+export const idGrupSheet = (tabel: string, label: string) => `grupsheet:${tabel}:${label}`
+export const idBaris = (key: string) => `baris:${key}`
+type Teks = (id: string, bawaan: string) => string
+const apa: Teks = (_id, bawaan) => bawaan
+
+/** Blocks with renamed rows and group titles applied. Order of precedence: Kategori Transaksi settings, the pencil of this month, Kelola Aplikasi, the built-in text. */
+export function namai(blocks: Block[], lembar: Lembar, t: Teks = apa): Block[] {
   return blocks.map((block) => ({
     ...block,
+    title: `${block.title.slice(0, 3)}${t(idJudul(block.tabel), block.title.slice(3))}`,
     lines: block.lines.map((line) => {
       if (isGroup(line)) {
         if (line.dariPengaturan) return line // named in the Kategori Transaksi settings, not per sheet
         const named = lembar.baris.find((b) => b.id === keyGrup(line.tabel, line.label))?.label
-        return named ? { ...line, tampil: named } : line
+        const global = t(idGrupSheet(line.tabel, line.label), line.label)
+        const tampil = named ?? (global !== line.label ? global : undefined)
+        return tampil ? { ...line, tampil } : line
       }
-      return bisaDiganti(line.def.key) ? { ...line, def: { ...line.def, label: nameOf(lembar, line.def.key, line.def.label) } } : line
+      return bisaDiganti(line.def.key) ? { ...line, def: { ...line.def, label: nameOf(lembar, line.def.key, t(idBaris(line.def.key), line.def.label)) } } : line
     }),
   }))
 }
