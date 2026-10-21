@@ -100,6 +100,9 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
         const cells = days.map((d, w): Cell => {
           if (dipakai) {
             const found = perPeriode[w].get(k.kategori!)
+            const old = k.lama ? lama(k.lama)?.cells[w] : undefined
+            // A component that also has an old-table figure (gaji): a period saved before it became a cash-out keeps that figure.
+            if (old && !found?.total && hasData[w]) return { value: old.value, manual: false }
             return { value: hasData[w] ? round(found?.total ?? 0) : null, manual: false }
           }
           // Filled by hand: the typed figure, else the figure of the old tables, else zero.
@@ -151,6 +154,23 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     }
     set(at('n_kas'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value ?? null, manual: false })))
     set(at('n_laba_ini'), 'calc', laba.cells.map((c) => ({ ...c })))
+    // Salary cash and salary owed follow the Gaji row of Arus Kas (typed over or not): each period's difference from the
+    // report's own figure carries on into the later balances. Owed salary follows it through the Pengeluaran tab's Gaji.
+    const ikuti = (row: Line | undefined, own: Line | undefined, shown: Line | undefined) => {
+      if (!row || !own || !shown) return
+      let carried = 0
+      set(
+        row,
+        'calc',
+        row.cells.map((c, w) => {
+          carried = round(carried + (shown.cells[w].value ?? 0) - (own.cells[w].value ?? 0))
+          return { value: c.value === null ? null : round(c.value + carried), manual: false }
+        }),
+      )
+    }
+    const byKey = (blok: Block, key: string) => blok.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)
+    ikuti(at('n_kas_gaji'), lama('k_gaji'), byKey(arus, 'k_gaji'))
+    ikuti(at('n_utang_gaji'), lama('gaji'), byKey(pengeluaran, 'gaji'))
     // Last period's profit carries into the next one's "earlier profit" unless it is typed over.
     const lalu = at('n_laba_lalu')
     const ini = at('n_laba_ini')

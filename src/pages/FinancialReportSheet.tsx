@@ -16,6 +16,7 @@ import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
 import { useKategori } from '@/api/kategori'
+import { denganOperasional } from '@/lib/operasionalArusKas'
 import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
@@ -69,10 +70,17 @@ export default function FinancialReportSheet({
     },
   })
   const daftarKat = useKategori()
-  const plain = useMemo(
-    () => ringkasDariArusKas(computeSheet(sheetSections(data), records, days, lembar), days, lembar, daftarKat),
+  // The Operasional entries of the month fill their Arus Kas rows; a figure typed by hand in a cell wins over them.
+  const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, false], queryFn: () => reports.operasionalBulan(month, false) })
+  const lembarTampil = useMemo(
+    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, daftarKat, days.join('|')],
+    [lembar, days.join('|'), operasional.data, daftarKat],
+  )
+  const plain = useMemo(
+    () => ringkasDariArusKas(computeSheet(sheetSections(data, daftarKat), records, days, lembarTampil), days, lembarTampil, daftarKat),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lembarTampil, daftarKat, days.join('|')],
   )
   const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
