@@ -48,6 +48,9 @@ const PEMASUKAN: Kelompok[] = [
       { key: 'p:cat', label: 'Jasa cat', kategori: 'cat' },
       { key: 'p:packing', label: 'Jasa packing', kategori: 'packing' },
       { key: 'p:proses', label: 'Jasa proses pesanan', kategori: 'proses' },
+      // Combined figures some rows are kept in; shown only once a row is filed under them.
+      { key: 'p:produk_proses', label: 'Penjualan produk + proses', kategori: 'produk_proses', autoHide: true },
+      { key: 'p:cat_packing', label: 'Jasa cat + packing', kategori: 'cat_packing', autoHide: true },
       { key: 'p:lain_masuk', label: 'Pemasukan lainnya', kategori: 'lain_masuk', autoHide: true },
     ],
   },

@@ -107,6 +107,22 @@ describe('summarized tabs from Arus Kas', () => {
     })
   })
 
+  it('the two combined categories feed their own components, hidden until a row is filed under them', () => {
+    const before = build()
+    const hidden = (blocks: ReturnType<typeof build>, key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.hidden
+    expect(hidden(before, 'p:produk_proses')).toBe(true)
+    expect(hidden(before, 'p:cat_packing')).toBe(true)
+    let lembar = setKategori(emptyLembar(), 'k_prod', 'Kas masuk', 'produk_proses')
+    lembar = setKategori(lembar, 'k_cat', 'Kas masuk', 'cat_packing')
+    const b = build(lembar)
+    expect(val(b, 'p:produk_proses')).toBe(600)
+    expect(val(b, 'p:cat_packing')).toBe(50)
+    expect(val(b, 'p:produk')).toBe(0)
+    expect(val(b, 'p:cat')).toBe(0)
+    expect(hidden(b, 'p:produk_proses')).toBe(false)
+    expect(val(b, 'jml_pemasukan')).toBe(val(before, 'jml_pemasukan')) // the same money, filed under other components
+  })
+
   it('a component with no Arus Kas row is filled by hand', () => {
     const lembar = emptyLembar()
     lembar.sel[`p:packing|${d}`] = '35'

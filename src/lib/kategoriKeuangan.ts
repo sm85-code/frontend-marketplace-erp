@@ -9,6 +9,8 @@ export const KATEGORI_MASUK: Kategori[] = [
   { id: 'cat', label: 'Jasa cat' },
   { id: 'packing', label: 'Jasa packing' },
   { id: 'proses', label: 'Jasa proses pesanan' },
+  { id: 'produk_proses', label: 'Penjualan produk + proses' },
+  { id: 'cat_packing', label: 'Jasa cat + packing' },
   { id: 'lain_masuk', label: 'Pemasukan lainnya' },
   { id: 'bukan', label: 'Bukan pemasukan' },
 ]
