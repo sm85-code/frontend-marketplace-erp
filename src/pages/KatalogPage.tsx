@@ -3,7 +3,6 @@ import AksiLainnya from '@/components/AksiLainnya'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
 import UkuranHalaman from '@/components/UkuranHalaman'
 import { useAuth } from '@/lib/auth'
-import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -53,8 +52,8 @@ const OPSI_TAMPILAN = [
 type Tampilan = (typeof OPSI_TAMPILAN)[number]['value']
 
 export default function KatalogPage() {
-  const { user } = useAuth()
-  const manage = isOwnerLevel(user?.role)
+  const { bisa } = useAuth()
+  const manage = bisa('katalog', 'tulis')
   const qc = useQueryClient()
   const [perHalaman,setPerHalaman]=useState(DEFAULT_PER_HALAMAN)
   const confirm = useConfirm()

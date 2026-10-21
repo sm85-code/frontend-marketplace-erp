@@ -26,8 +26,8 @@ function NonKayuTabs() {
 }
 
 export default function ProcessingPage() {
-  const { user } = useAuth()
-  const allowed = user?.role === 'admin'
+  const { bisa } = useAuth()
+  const allowed = bisa('processing')
   const location = useLocation()
   const navigate = useNavigate()
   const qc = useQueryClient()

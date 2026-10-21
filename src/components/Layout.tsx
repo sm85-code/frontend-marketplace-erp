@@ -7,7 +7,7 @@ import AppearancePopover from '@/components/AppearancePopover'
 import BottomNav from '@/components/BottomNav'
 import WallpaperLayer from '@/components/WallpaperLayer'
 import { Button } from '@/components/ui/button'
-import { filterNavForUser, itemBawah, kelompokNav } from '@/config/nav'
+import { filterNav, itemBawah, kelompokNav } from '@/config/nav'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 import { useKonfirmasiKeluar } from '@/lib/riwayat'
@@ -20,12 +20,12 @@ function isNavActive(pathname: string, to: string, allPaths: string[]) {
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth()
+  const { user, akses, logout } = useAuth()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   useKonfirmasiKeluar(!!user)
 
-  const visible = useMemo(() => filterNavForUser(user), [user])
+  const visible = useMemo(() => filterNav(akses), [akses])
   const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
 
   const grup = useMemo(() => kelompokNav(visible), [visible])
@@ -129,7 +129,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold">{user.nama}</div>
                 <div className="text-xs leading-5" style={{ color: 'var(--text-muted)' }}>
-                  {ROLE_LABELS[user.role]}
+                  {akses?.nama ?? ROLE_LABELS[user.role] ?? user.role}
                 </div>
               </div>
               <Button

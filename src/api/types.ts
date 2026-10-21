@@ -1,7 +1,7 @@
 /** Mirrors tenants/marketplace_erp/modules/marketplace_erp/application/schemas.py field for field. */
 
-/** admin (everything, incl. other users' usernames and roles) > owner > staff (only the shops assigned to it). */
-export type Role = 'admin' | 'owner' | 'staff'
+/** A role id: admin, owner and staff are built in; the others are defined in Kelola Pengguna. */
+export type Role = string
 
 export type Platform = 'shopee' | 'tiktokshop' | 'lazada' | 'blibli'
 
@@ -833,4 +833,46 @@ export interface PromosiProdukInput {
   harga?: string
   batas_pembelian?: number
   stok_promo?: number
+}
+
+/** What a signed-in user's role may do (GET /auth/akses). */
+export type Tingkat = 'baca' | 'tulis'
+export interface AksesSaya {
+  role: string
+  nama: string
+  akses_toko: 'semua' | 'ditugaskan'
+  halaman: Record<string, Tingkat>
+}
+
+export interface HalamanDef {
+  id: string
+  label: string
+  grup: string
+  /** Which levels exist for the page: some are only read, some only an action. */
+  tingkat: Tingkat[]
+}
+
+export interface RoleDef {
+  id: string
+  nama: string
+  keterangan: string
+  akses_toko: 'semua' | 'ditugaskan'
+  /** Built in (cannot be deleted). */
+  sistem: boolean
+  /** The admin role: everything, cannot be changed. */
+  terkunci: boolean
+  jumlah_pengguna: number
+  halaman: Record<string, Tingkat>
+}
+
+export interface RoleDaftar {
+  roles: RoleDef[]
+  halaman: HalamanDef[]
+}
+
+export interface RoleIsian {
+  nama: string
+  keterangan: string
+  akses_toko: 'semua' | 'ditugaskan'
+  halaman: Record<string, Tingkat>
 }

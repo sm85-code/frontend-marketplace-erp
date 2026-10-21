@@ -16,7 +16,7 @@ import NotifikasiPerangkat from '@/components/NotifikasiPerangkat'
 const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth()
+  const { user, akses, refreshUser } = useAuth()
   const [nama, setNama] = useState(user?.nama ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
 
@@ -53,7 +53,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Role</div>
-            <div className="font-medium">{ROLE_LABELS[user.role]}</div>
+            <div className="font-medium">{akses?.nama ?? ROLE_LABELS[user.role] ?? user.role}</div>
           </div>
           <form
             className="space-y-4"
