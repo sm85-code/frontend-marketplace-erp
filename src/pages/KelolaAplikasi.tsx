@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRUP_NAV, NAV, idGrup, idMenu } from '@/config/nav'
-import { ROLE_LABELS } from '@/config/roles'
+import { GRUP_AKSES, idGrupAkses, ROLE_LABELS } from '@/config/roles'
 import { bisa } from '@/lib/akses'
 import { useAuth } from '@/lib/auth'
 import { idBaris, idGrupSheet, idJudul, idTab, TAB_LAPORAN } from '@/lib/namaBaris'
@@ -60,6 +60,7 @@ const KATEGORI: Record<Kategori, Bagian[]> = {
         { id: ID_APP.logo, nama: 'Teks', judul: 'Alamat gambar logo', bawaan: APP_BAWAAN.logo, alamat: true },
       ],
     },
+    { judul: 'Kelompok halaman di pengaturan role', keterangan: 'Judul kelompok pada tabel hak akses di Kelola Pengguna dan Role.', teks: GRUP_AKSES.map((g) => ({ id: idGrupAkses(g), nama: 'Kelompok', bawaan: g })) },
     { judul: 'Nama role bawaan', keterangan: 'Role buatan sendiri diberi nama di Kelola Pengguna.', teks: Object.entries(ROLE_LABELS).map(([id, nama]) => ({ id: `role:${id}`, nama: 'Role', bawaan: nama })) },
   ],
   menu: [
