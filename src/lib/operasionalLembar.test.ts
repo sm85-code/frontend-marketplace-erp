@@ -19,7 +19,7 @@ describe('operasional as a table', () => {
   const data: OperasionalDaftar = {
     jenis: 'umum',
     periode: '2026-10',
-    kategori: [{ id: 'gaji', label: 'Gaji', aktif: true }, { id: 'atk', label: 'Belanja ATK', aktif: true }],
+    kategori: [{ id: 'gaji', label: 'Gaji' }, { id: 'atk', label: 'Belanja ATK' }],
     items: [
       { id: '1', kategori: 'gaji', tanggal: '2026-10-05', uraian: 'Gaji minggu 1', jumlah: '1000000.00' },
       { id: '2', kategori: 'gaji', tanggal: '2026-10-19', uraian: 'Gaji minggu 3', jumlah: '1000000.00' },
