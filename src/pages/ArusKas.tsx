@@ -10,7 +10,6 @@ import BarHalaman from '@/components/daftar/BarHalaman'
 import Spinner from '@/components/Spinner'
 import TabelArusKas from './TabelArusKas'
 import RekeningTukangKayu from './RekeningTukangKayu'
-import RujukanBiayaProduksi from './RujukanBiayaProduksi'
 
 const monthNow = () => {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit' }).formatToParts(new Date())
@@ -36,7 +35,6 @@ export default function ArusKas() {
         </div>
       )}
       {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat />}
-      <RujukanBiayaProduksi month={month} />
       <RekeningTukangKayu />
     </div>
   )
