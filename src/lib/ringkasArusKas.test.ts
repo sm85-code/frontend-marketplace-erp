@@ -4,6 +4,7 @@ import { keyKategori, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { kategoriRincian, setKategori } from './kategoriKeuangan'
 import { KATEGORI_BAWAAN, KELOMPOK_BAWAAN, type KategoriTransaksi, type KelompokDaftar } from '@/api/kategori'
 import { ringkasDariArusKas } from './ringkasArusKas'
+import { namai, setNamaGrup } from './namaBaris'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
 
@@ -323,3 +324,14 @@ describe('categories added by the user', () => {
   })
 })
 
+
+describe('group names from the category settings', () => {
+  it('are not overridden by a name saved in the sheet for the same group', () => {
+    const lembar = setNamaGrup(emptyLembar(), 'pengeluaran', 'Harga pokok penjualan', 'Nama lama dari pensil')
+    const k = { ...KELOMPOK_BAWAAN, keluar: [{ id: 'hpp', nama: 'Biaya langsung' }, KELOMPOK_BAWAAN.keluar[1]] }
+    const blocks = namai(ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, lembar), days, lembar, KATEGORI_BAWAAN, k), lembar)
+    const g = blocks.find((x) => x.tabel === 'pengeluaran')!.lines.filter(isGroup)[0]
+    expect(g.tampil).toBe('Biaya langsung')
+    expect(g.dariPengaturan).toBe(true)
+  })
+})

@@ -100,7 +100,7 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     const baris: Line[] = []
     const perPeriode = days.map((_, w) => perKategori(arus, sumber.grup, lembar, w, daftar))
     for (const g of kelompok) {
-      lines.push({ group: true, label: g.label, tabel, tampil: g.tampil })
+      lines.push({ group: true, label: g.label, tabel, tampil: g.tampil, dariPengaturan: g.tampil !== undefined })
       for (const k of g.komponen) {
         const dipakai = perPeriode.some((m) => (m.get(k.kategori ?? '')?.n ?? 0) > 0)
         const cells = days.map((d, w): Cell => {
