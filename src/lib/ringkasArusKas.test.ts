@@ -335,3 +335,27 @@ describe('group names from the category settings', () => {
     expect(g.dariPengaturan).toBe(true)
   })
 })
+
+describe('laba kotor dan laba bersih', () => {
+  const garis = (b: ReturnType<typeof build>, key: string) => b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
+  it('gross profit is income less the cost of goods, net profit is gross profit less the other expenses', () => {
+    const b = build()
+    const hpp = val(b, 'c_hpp')!
+    const beban = val(b, 'c_k:beban')!
+    expect(hpp).toBe(200 + 80)
+    expect(val(b, 'laba_kotor')).toBe(val(b, 'jml_pemasukan')! - hpp)
+    expect(val(b, 'laba')).toBe(val(b, 'laba_kotor')! - beban)
+    expect(val(b, 'laba')).toBe(val(b, 'jml_pemasukan')! - val(b, 'jml_pengeluaran')!)
+    expect(garis(b, 'laba_kotor')?.def.emphasis).toBe(true)
+  })
+  it('the rows follow the group names and groups of the category settings', () => {
+    const k = { ...KELOMPOK_BAWAAN, keluar: [{ id: 'hpp', nama: 'Biaya langsung' }, KELOMPOK_BAWAAN.keluar[1], { id: 'kel_lain', nama: 'Biaya lain' }] }
+    const daftar = KATEGORI_BAWAAN.map((c) => (c.id === 'langganan' ? { ...c, kelompok: 'Biaya lain', kelompok_id: 'kel_lain' } : c))
+    const lembar = emptyLembar()
+    const b = ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, lembar), days, lembar, daftar, k)
+    expect(garis(b, 'c_hpp')?.def.label).toBe('Biaya langsung')
+    expect(garis(b, 'c_k:kel_lain')?.def.label).toBe('Biaya lain')
+    expect(garis(b, 'c_k:kel_lain')?.cells[0].value).toBe(5)
+    expect(garis(b, 'laba')?.cells[0].value).toBe(garis(b, 'laba_kotor')!.cells[0].value! - garis(b, 'c_k:beban')!.cells[0].value! - 5)
+  })
+})
