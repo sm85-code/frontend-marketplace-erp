@@ -32,7 +32,7 @@ const AWAL: Record<string, string> = {
   k_topup: 'bukan_keluar',
   k_lain_keluar: 'lain_keluar',
 }
-export const kategoriAwal = (key: string, grup: string) => AWAL[key] ?? (grup === GRUP_MASUK ? 'lain_masuk' : 'lain_keluar')
+export const kategoriAwal = (key: string, grup: string) => AWAL[key] ?? (key.startsWith('op:') ? key.slice(3) : undefined) ?? (grup === GRUP_MASUK ? 'lain_masuk' : 'lain_keluar')
 
 export const kategoriDari = (lembar: Lembar, key: string, grup: string, daftar: KategoriTransaksi[] = KATEGORI_BAWAAN) => {
   const saved = normal(lembar.baris.find((b) => b.id === keyKategori(key))?.label, grup)

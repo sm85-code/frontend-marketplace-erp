@@ -7,6 +7,7 @@ import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
+import { denganOperasional } from '@/lib/operasionalArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
@@ -37,13 +38,20 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
     },
   })
-  const plain = useMemo(
-    () => computeSheet(sheetSections(data), records, days, lembar).find((b) => b.tabel === 'arus_kas')!,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, days.join('|')],
-  )
-  const block = useMemo(() => namai([applyRinci(plain, days, lembar)], lembar)[0], [plain, days, lembar])
   const daftarKat = useKategori()
+  // The Operasional entries of the month fill their rows; a figure typed by hand in a cell wins over them.
+  const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
+  const lembarTampil = useMemo(
+    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lembar, days.join('|'), operasional.data, daftarKat],
+  )
+  const plain = useMemo(
+    () => computeSheet(sheetSections(data, daftarKat), records, days, lembarTampil).find((b) => b.tabel === 'arus_kas')!,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lembarTampil, daftarKat, days.join('|')],
+  )
+  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembar)[0], [plain, days, lembarTampil, lembar])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))

@@ -147,6 +147,7 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
 
   const sesudah = () => {
     setTersimpan(true)
+    void qc.invalidateQueries({ queryKey: ['operasional-arus-kas'] })
     return qc.invalidateQueries({ queryKey: ['operasional', jenis] })
   }
   useEffect(() => {
