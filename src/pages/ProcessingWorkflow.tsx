@@ -45,7 +45,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { OrderPicker, ManualOrderForm } from './ProcessingOrderPicker'
+import { OrderPicker } from './ProcessingOrderPicker'
 import { cn } from '@/lib/utils'
 import { POL0S, SelectField, Field } from './processingShared'
 import { workTime } from '@/lib/processingTime'
@@ -511,6 +511,9 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
   )
 }
 
+/** A job made from an order of the Pesanan menu (a marketplace order or a manual one), as opposed to a legacy hand-typed job. */
+const dariPesanan = (r: { source: string; item_id?: string }) => r.source === 'erp' || !!r.item_id
+
 export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCatalog | null | undefined }) {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-jobs'], queryFn: getProcessingJobs })
@@ -520,7 +523,6 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   const confirm = useConfirm()
   const [table, setTable] = useState<WorkTable>('tukang')
   const [picker, setPicker] = useState<'tukang' | 'supplier' | null>(null)
-  const [manual, setManual] = useState(false)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -637,7 +639,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             Buka kembali
           </Button>
         )}
-        {r.source === 'erp' && r.stage !== 'draft' && (
+        {dariPesanan(r) && r.stage !== 'draft' && (
           <Button
             size="sm"
             variant={r.order_cancelled ? 'destructive' : 'ghost'}
@@ -657,7 +659,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             Lepas pemetaan
           </Button>
         )}
-        {r.source !== 'erp' && r.stage !== 'draft' && (
+        {!dariPesanan(r) && r.stage !== 'draft' && (
           <Button
             size="sm"
             variant="ghost"
@@ -677,7 +679,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             Batalkan pemetaan
           </Button>
         )}
-        {(r.stage === 'draft' || r.source !== 'erp') && (
+        {(r.stage === 'draft' || !dariPesanan(r)) && (
           <Button
             size="sm"
             variant="ghost"
@@ -685,9 +687,9 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             onClick={async () => {
               if (
                 await confirm({
-                  title: r.source === 'erp' ? 'Hapus draf pemetaan?' : 'Hapus pesanan manual?',
+                  title: dariPesanan(r) ? 'Hapus draf pemetaan?' : 'Hapus pesanan manual?',
                   description:
-                    r.source === 'erp'
+                    dariPesanan(r)
                       ? 'Item ERP akan tersedia kembali di Cek Pesanan.'
                       : 'Pesanan manual ini dihapus beserta data yang sudah diisi di semua tahap. Tindakan ini tidak bisa dibatalkan.',
                   confirmLabel: 'Hapus',
@@ -801,9 +803,6 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                   <Plus className="h-4 w-4" /> Cek Pesanan
                 </Button>
               )}
-              <Button variant="outline" onClick={() => setManual(true)}>
-                Tambah pesanan
-              </Button>
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -1017,18 +1016,6 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           }}
         />
       )}{' '}
-      {manual && (
-        <ManualOrderForm
-          onClose={() => setManual(false)}
-          onSaved={async (route) => {
-            await refresh()
-            setTable(route)
-            setStatus('all')
-            setSearch('')
-            setPage(1)
-          }}
-        />
-      )}
       {editing && (
         <MappingEditor
           key={`${editing.job.id}:${editing.job.version}`}

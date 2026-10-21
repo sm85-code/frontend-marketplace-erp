@@ -36,4 +36,5 @@ export const PLATFORM_LABELS: Record<string, string> = {
   tiktokshop: 'TikTokShop',
   lazada: 'Lazada',
   blibli: 'Blibli',
+  manual: 'Pesanan Manual',
 }
