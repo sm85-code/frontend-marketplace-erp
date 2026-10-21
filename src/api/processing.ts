@@ -178,6 +178,9 @@ export const getProcessingCandidates = async (q: string, page: number, status: C
       params: { q, page, status },
     })
   ).data
+/** Cancel the mapping of a manual order: it goes back to a draft, the order itself stays. */
+export const resetProcessingJob = async (job: { id: string; version: number }) =>
+  (await api.post(`/processing/jobs/${job.id}/reset`, null, { params: { version: job.version } })).data
 export const releaseProcessingJob = async (job: { id: string; version: number }) =>
   (await api.post(`/processing/jobs/${job.id}/release`, null, { params: { version: job.version } })).data
 export const selectProcessingItems = async (route: 'tukang' | 'supplier', item_ids: string[]) =>
