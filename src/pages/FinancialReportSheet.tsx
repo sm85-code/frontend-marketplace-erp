@@ -15,7 +15,7 @@ import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
-import { useKategori } from '@/api/kategori'
+import { useKategori, useKelompok } from '@/api/kategori'
 import { denganOperasional } from '@/lib/operasionalArusKas'
 import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
 import { sheetDays } from '@/lib/sheetDays'
@@ -70,18 +70,20 @@ export default function FinancialReportSheet({
     },
   })
   const daftarKat = useKategori()
+  const kelompok = useKelompok()
   // The Operasional entries of the month fill their Arus Kas rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, false], queryFn: () => reports.operasionalBulan(month, false) })
+  const sheet = useMemo(
+    () => computeSheet(sheetSections(data), records, days, lembar),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lembar, days.join('|')],
+  )
   const lembarTampil = useMemo(
-    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat),
+    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat, sheet.find((b) => b.tabel === 'arus_kas')!),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lembar, days.join('|'), operasional.data, daftarKat],
+    [lembar, days.join('|'), operasional.data, daftarKat, sheet],
   )
-  const plain = useMemo(
-    () => ringkasDariArusKas(computeSheet(sheetSections(data, daftarKat), records, days, lembarTampil), days, lembarTampil, daftarKat),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembarTampil, daftarKat, days.join('|')],
-  )
+  const plain = useMemo(() => ringkasDariArusKas(sheet, days, lembarTampil, daftarKat, kelompok), [sheet, days, lembarTampil, daftarKat, kelompok]) // eslint-disable-line react-hooks/exhaustive-deps
   const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)

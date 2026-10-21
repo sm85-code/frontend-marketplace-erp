@@ -74,8 +74,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
         const t = typed(keyNilaiDasar(o.def.key), days[w])
         return t !== undefined ? { value: num(t), manual: true } : c
       })
-      // A row that only shows once it has an amount appears when a figure was typed or filled in for it.
-      shown.push({ ...withCells(renamed(o), cells), hidden: o.def.autoHide ? cells.every((c) => !c.value) : o.hidden })
+      shown.push(withCells(renamed(o), cells))
     }
     for (const r of splitsOf(lembar)) {
       if (groupOf(r.grup, labels) !== head.label) continue

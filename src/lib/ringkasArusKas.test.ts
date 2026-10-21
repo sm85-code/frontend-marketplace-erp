@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
 import { keyKategori, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { kategoriRincian, setKategori } from './kategoriKeuangan'
-import { KATEGORI_BAWAAN, type KategoriTransaksi } from '@/api/kategori'
+import { KATEGORI_BAWAAN, KELOMPOK_BAWAAN, type KategoriTransaksi, type KelompokDaftar } from '@/api/kategori'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -181,7 +181,7 @@ describe('editable categories', () => {
     expect(baris?.cells[0].value).toBe(200)
   })
   it('a new category lands in the group chosen for it and takes rows filed under it', () => {
-    const baru: KategoriTransaksi = { ...KATEGORI_BAWAAN[0], id: 'sewa', arah: 'keluar', nama: 'Sewa', kelompok: 'Beban operasional', urut: 99, sistem: false, auto_sembunyi: true }
+    const baru: KategoriTransaksi = { ...KATEGORI_BAWAAN[0], id: 'sewa', arah: 'keluar', nama: 'Sewa', kelompok: 'Beban operasional', kelompok_id: 'beban', urut: 99, sistem: false, auto_sembunyi: true }
     const lembar = setKategori(emptyLembar(), 'k_pembelian', 'Kas keluar', 'sewa', 'non_kayu')
     const b = dengan((k) => [...k, baru], lembar)
     expect(val(b, 'p:sewa')).toBe(80)
@@ -237,6 +237,26 @@ describe('salary as a cash-out and transfers to the operational cash accounts', 
     expect(val(b, 'kas_keluar')).toBe(200 + 80 + 10 + 5 + 40 + 25) // the rows add up, gaji included
     expect(val(b, 'transfer')).toBe(0)
     expect(b.flatMap((x) => x.lines).some((l) => !isGroup(l) && l.def.key === 'tr_gaji')).toBe(false)
+  })
+})
+
+describe('groups with ids', () => {
+  const dengan = (kelompok: KelompokDaftar, daftar: KategoriTransaksi[] = KATEGORI_BAWAAN) =>
+    ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, emptyLembar()), days, emptyLembar(), daftar, kelompok)
+  const grup = (b: ReturnType<typeof build>, tabel: string) => b.find((x) => x.tabel === tabel)!.lines.filter(isGroup)
+  it('a renamed group shows its new name and keeps the identity saved sheets know it by', () => {
+    const k = { ...KELOMPOK_BAWAAN, keluar: [{ id: 'hpp', nama: 'Biaya langsung' }, KELOMPOK_BAWAAN.keluar[1]] }
+    const g = grup(dengan(k), 'pengeluaran')
+    expect(g[0].label).toBe('Harga pokok penjualan')
+    expect(g[0].tampil).toBe('Biaya langsung')
+  })
+  it('a group added by the user takes the categories placed in it, and its figures count in the total', () => {
+    const k = { ...KELOMPOK_BAWAAN, keluar: [...KELOMPOK_BAWAAN.keluar, { id: 'kel_lain', nama: 'Biaya lain' }] }
+    const daftar = KATEGORI_BAWAAN.map((c) => (c.id === 'langganan' ? { ...c, kelompok: 'Biaya lain', kelompok_id: 'kel_lain' } : c))
+    const b = dengan(k, daftar)
+    const g = grup(b, 'pengeluaran')
+    expect(g.at(-1)).toMatchObject({ label: 'kel:kel_lain', tampil: 'Biaya lain' })
+    expect(val(b, 'jml_pengeluaran')).toBe(200 + 80 + 40 + 15 + 5 + 10)
   })
 })
 

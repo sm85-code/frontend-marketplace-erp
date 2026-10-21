@@ -1,7 +1,5 @@
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
-import { KATEGORI_BAWAAN, type KategoriTransaksi } from '@/api/kategori'
-import { kategoriBarisBaru } from '@/lib/operasionalArusKas'
 import type { Dep, GroupDef, RowDef, SectionDef } from '@/lib/sheetEngine'
 
 const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key] ?? '0')
@@ -28,7 +26,7 @@ const prior = (row: string, sign: 1 | -1 = 1): Dep => ({ row, sign, mode: 'cumBe
 const C = (tabel: string, grup: string): Dep => ({ custom: `${tabel}|${grup}` })
 
 /** The five report tables as row definitions; see sheetEngine for how `deps` keep totals and the balance sheet in step. */
-export function sheetSections(data: Overview, kategori: KategoriTransaksi[] = KATEGORI_BAWAAN): SectionDef[] {
+export function sheetSections(data: Overview): SectionDef[] {
   const shopNames = [...new Set(data.laporan.flatMap((r) => (r.rincian_toko ?? []).map((s) => s.nama)))]
   const anyNonZero = (pick: (r: Report) => string) => data.laporan.some((r) => Number(pick(r)) !== 0)
   const section = (tabel: string, title: string) => {
@@ -130,8 +128,6 @@ export function sheetSections(data: Overview, kategori: KategoriTransaksi[] = KA
   // The salary set aside into the salary cash account leaves the main cash, so it is a cash-out. Reports closed before it
   // was listed here kept it under Transfer antar kas; it is shown here for them too (same figure, same closing cash).
   d.row('k_gaji', 'Gaji', (r) => String(r.hasil.kas_keluar_gaji ?? r.input.transfer_kas_gaji ?? '0'))
-  // Categories of the Operasional pages without a row of their own: filled from those pages, shown once they have an amount.
-  for (const k of kategoriBarisBaru(kategori)) d.row(`op:${k.id}`, k.nama, () => '0', { autoHide: true })
   d.row('k_topup', 'Top-up iklan', input('topup_iklan'))
   d.row('k_lain_keluar', 'Pengeluaran lainnya (baris manual)', () => '0', {
     kind: 'calc',

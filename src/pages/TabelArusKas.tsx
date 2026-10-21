@@ -41,15 +41,15 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const daftarKat = useKategori()
   // The Operasional entries of the month fill their rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
-  const lembarTampil = useMemo(
-    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lembar, days.join('|'), operasional.data, daftarKat],
-  )
   const plain = useMemo(
-    () => computeSheet(sheetSections(data, daftarKat), records, days, lembarTampil).find((b) => b.tabel === 'arus_kas')!,
+    () => computeSheet(sheetSections(data), records, days, lembar).find((b) => b.tabel === 'arus_kas')!,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembarTampil, daftarKat, days.join('|')],
+    [data, lembar, days.join('|')],
+  )
+  const lembarTampil = useMemo(
+    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat, plain),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lembar, days.join('|'), operasional.data, daftarKat, plain],
   )
   const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembar)[0], [plain, days, lembarTampil, lembar])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
