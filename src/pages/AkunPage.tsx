@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import AutoOrderSettings from '@/components/AutoOrderSettings'
+import TokoPenjualanTab from '@/components/TokoPenjualanTab'
 import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
 import FormDialog from '@/components/FormDialog'
@@ -255,6 +256,7 @@ export default function AkunPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="section-tabs w-full">
           <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>
+          <TabsTrigger value="penjualan">Toko Internal &amp; Reseller</TabsTrigger>
           {bisa('otomasi') && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
         </TabsList>
         <TabsContent value="toko" className="space-y-4">
@@ -289,6 +291,7 @@ export default function AkunPage() {
       </Card>
 
         </TabsContent>
+        <TabsContent value="penjualan" className="space-y-4"><TokoPenjualanTab /></TabsContent>
         {bisa('otomasi') && <>
           <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><AutoOrderSettings /></TabsContent>
           <TabsContent value="otomasi">
