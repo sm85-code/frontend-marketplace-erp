@@ -31,3 +31,19 @@ export function weekRange(month: string, index: number): string {
   return rentang(monday.toISOString().slice(0, 10), saturday.toISOString().slice(0, 10))
 }
 
+
+/**
+ * The reporting periods of a month, as the Periode columns of the report tables: Monday-Sunday weeks counted from the
+ * week of the 1st. `mulai`/`akhir` are the dates of the period that fall inside the month; `label` is the header range.
+ */
+export function mingguBulan(month: string): { mulai: string; akhir: string; label: string }[] {
+  const first = `${month}-01`
+  const last = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0, 12)).toISOString().slice(0, 10)
+  const dow = (new Date(`${first}T12:00:00Z`).getUTCDay() + 6) % 7
+  const out: { mulai: string; akhir: string; label: string }[] = []
+  for (let monday = addDays(first, -dow); monday <= last; monday = addDays(monday, 7)) {
+    const sunday = addDays(monday, 6)
+    out.push({ mulai: monday < first ? first : monday, akhir: sunday > last ? last : sunday, label: weekRange(month, out.length) })
+  }
+  return out
+}

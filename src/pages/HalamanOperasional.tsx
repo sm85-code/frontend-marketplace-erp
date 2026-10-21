@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { fmtRp, getApiError } from '@/api/client'
@@ -22,7 +22,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { mingguBulan, periodeBerjalan } from '@/lib/tanggal'
 import { alasanBelumBisa, barisBaruTerisi, jumlahTampil, sama, tanggalBawaan, type Isi } from '@/lib/operasionalBaris'
 
 const wib = (opsi: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', ...opsi }).format(new Date())
@@ -146,6 +148,19 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
   const kunci = ['operasional', jenis, periode] as const
   const { data, isLoading, error, refetch } = useQuery({ queryKey: kunci, queryFn: () => daftarOperasional(jenis, periode) })
   const [tersimpan, setTersimpan] = useState(false)
+  // Entries are kept by reporting period (Monday-Sunday), the same periods as the columns of Arus Kas.
+  const minggu = useMemo(() => mingguBulan(periode), [periode])
+  const [dipilih, setDipilih] = useState<{ periode: string; indeks: number } | null>(null)
+  const indeks = dipilih?.periode === periode ? dipilih.indeks : periodeBerjalan(periode, minggu.length)
+  const ini = minggu[indeks]
+  // The chosen period slides to the middle of its row (the row only, never the page), also once the data has arrived.
+  const barisPeriode = useRef<HTMLDivElement>(null)
+  const ada = !!data
+  useEffect(() => {
+    const kotak = barisPeriode.current
+    const tab = kotak?.querySelector<HTMLElement>('[aria-selected="true"]')
+    if (kotak && tab) kotak.scrollLeft = tab.offsetLeft - (kotak.clientWidth - tab.offsetWidth) / 2
+  }, [indeks, periode, ada])
 
   const sesudah = () => {
     setTersimpan(true)
@@ -169,7 +184,11 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
 
   const sibuk = tambah.isPending || ubah.isPending || hapus.isPending
   const bisaTulis = !!data?.bisa_tulis
-  const tanggalAwal = tanggalBawaan(periode, hariIni())
+  const dalamPeriode = (tanggal: string) => tanggal >= ini.mulai && tanggal <= ini.akhir
+  const itemsPeriode = (data?.items ?? []).filter((i) => dalamPeriode(i.tanggal))
+  const jumlahPeriode = (items: TransaksiOperasional[]) => items.reduce((a, i) => a + Number(i.jumlah), 0)
+  const hariBawaan = tanggalBawaan(periode, hariIni())
+  const tanggalAwal = dalamPeriode(hariBawaan) ? hariBawaan : ini.mulai
   const sisipan = (k: { id: string; label: string }) => (
     <BarisBaru label={k.label} tanggalAwal={tanggalAwal} simpan={(isi) => tambah.mutateAsync({ kategori: k.id, isi }).then(() => undefined)} />
   )
@@ -184,9 +203,22 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
       {error && <QueryError error={error} retry={refetch} />}
       {data && (
         <>
+          <Tabs value={String(indeks)} onValueChange={(v) => setDipilih({ periode, indeks: Number(v) })}>
+            <div ref={barisPeriode} className="max-w-full overflow-x-auto">
+            <TabsList className="section-tabs !max-w-none !flex-nowrap" aria-label="Periode mingguan">
+              {minggu.map((m, i) => (
+                <TabsTrigger key={m.mulai} value={String(i)} className="h-auto flex-col gap-0 py-1.5">
+                  <span className="text-xs font-normal opacity-80">Periode</span>
+                  <span>{m.label}</span>
+                  <span className="text-xs font-normal tabular-nums opacity-80">{fmtRp(jumlahPeriode((data?.items ?? []).filter((x) => x.tanggal >= m.mulai && x.tanggal <= m.akhir)))}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            </div>
+          </Tabs>
           <Card>
             <CardContent className="space-y-4 pt-4">
-              {bisaTulis && <p className="teks-kecil text-muted-foreground">Ketik langsung di baris. Isi tanggal, uraian, dan jumlah; pindah ke kolom lain atau tekan Enter dan baris tersimpan otomatis. Baris putus-putus di bawah tiap kelompok untuk transaksi baru.</p>}
+              {bisaTulis && <p className="teks-kecil text-muted-foreground">Dicatat per periode mingguan (Senin–Minggu), sama dengan kolom Periode di Arus Kas. Ketik langsung di baris. Isi tanggal, uraian, dan jumlah; pindah ke kolom lain atau tekan Enter dan baris tersimpan otomatis. Baris putus-putus di bawah tiap kelompok untuk transaksi baru.</p>}
               <div>
                 <TableShell label={`Transaksi ${judul}`} minWidth={600}>
                   <Table>
@@ -203,7 +235,7 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
                     </TableHeader>
                     <TableBody>
                       {data.kategori.map((k) => {
-                        const baris = data.items.filter((i) => i.kategori === k.id)
+                        const baris = itemsPeriode.filter((i) => i.kategori === k.id)
                         return (
                           <Fragment key={k.id}>
                             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -213,7 +245,7 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
                                   <Badge variant="secondary">{baris.length} transaksi</Badge>
                                 </span>
                               </TableCell>
-                              <TableCell className="text-right font-semibold tabular-nums">{fmtRp(data.ringkasan.per_kategori[k.id] ?? '0')}</TableCell>
+                              <TableCell className="text-right font-semibold tabular-nums">{fmtRp(jumlahPeriode(baris))}</TableCell>
                               <TableCell />
                             </TableRow>
                             {baris.map((item, n) => (
@@ -231,8 +263,8 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
                         )
                       })}
                       <TableRow className="bg-[var(--table-heading-background)] font-bold hover:bg-[var(--table-heading-background)]">
-                        <TableCell colSpan={3}>Jumlah {judul}</TableCell>
-                        <TableCell className="text-right tabular-nums">{fmtRp(data.ringkasan.total)}</TableCell>
+                        <TableCell colSpan={3}>Jumlah {judul} periode ini</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmtRp(jumlahPeriode(itemsPeriode))}</TableCell>
                         <TableCell />
                       </TableRow>
                     </TableBody>
