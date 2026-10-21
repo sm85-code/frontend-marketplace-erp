@@ -27,11 +27,11 @@ const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelo
 const kirim = (i: Isi) => ({ nama: i.nama.trim(), kelompok: i.kelompok, operasional: i.operasional || null })
 const penempatan = (k: KategoriTransaksi) => (k.kelompok === '' ? 'Tidak masuk laporan' : k.operasional ? `${k.kelompok} · ${NAMA_HALAMAN[k.operasional]}` : k.kelompok)
 
-function Baris({ k, bisaTulis, simpan, geser, atur, awal, akhir }: { k: KategoriTransaksi; bisaTulis: boolean; simpan: (i: Isi, aktif: boolean) => Promise<void>; geser: (arah: -1 | 1) => void; atur: () => void; awal: boolean; akhir: boolean }) {
+/** The name being typed and what leaving the field does: save a changed name, or put the saved one back when it is too short or refused. */
+function useNama(k: KategoriTransaksi, simpan: (i: Isi, aktif: boolean) => Promise<void>) {
   const [nama, setNama] = useState(k.nama)
   useEffect(() => setNama(k.nama), [k.nama])
-  const tetap = k.kelompok === '' // "not income / expense" lands nowhere and stays on offer
-  const simpanNama = async () => {
+  const keluar = async () => {
     if (nama.trim() === k.nama) return
     if (nama.trim().length < 2) return setNama(k.nama)
     try {
@@ -40,25 +40,56 @@ function Baris({ k, bisaTulis, simpan, geser, atur, awal, akhir }: { k: Kategori
       setNama(k.nama)
     }
   }
+  return { nama, setNama, keluar }
+}
+
+type PropsBaris = { k: KategoriTransaksi; bisaTulis: boolean; simpan: (i: Isi, aktif: boolean) => Promise<void>; geser: (arah: -1 | 1) => void; atur: () => void; awal: boolean; akhir: boolean }
+
+const Status = ({ k }: { k: KategoriTransaksi }) => (!k.aktif ? <Badge variant="secondary">Disembunyikan</Badge> : k.kelompok === '' ? <Badge variant="secondary">Tetap</Badge> : <Badge>Aktif</Badge>)
+
+function Aksi({ k, simpan, geser, atur, awal, akhir }: PropsBaris) {
+  const tetap = k.kelompok === '' // "not income / expense" lands nowhere and stays on offer
+  return (
+    <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
+      <Button type="button" size="sm" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
+      <Button type="button" size="sm" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
+      {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur</Button>}
+      {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`${k.aktif ? 'Sembunyikan' : 'Tampilkan'} ${k.nama}`} onClick={() => void simpan(isiDari(k), !k.aktif)}>{k.aktif ? 'Sembunyikan' : 'Tampilkan'}</Button>}
+    </div>
+  )
+}
+
+const KolomNama = ({ k, bisaTulis, n }: { k: KategoriTransaksi; bisaTulis: boolean; n: ReturnType<typeof useNama> }) =>
+  bisaTulis ? <Input aria-label={`Nama ${k.nama}`} value={n.nama} maxLength={80} onChange={(e) => n.setNama(e.target.value)} onBlur={() => void n.keluar()} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /> : <>{k.nama}</>
+
+function Baris(p: PropsBaris) {
+  const { k, bisaTulis } = p
+  const n = useNama(k, p.simpan)
   return (
     <TableRow className={k.aktif ? '' : 'opacity-60'}>
-      <TableCell className="min-w-56">
-        {bisaTulis ? <Input aria-label={`Nama ${k.nama}`} value={nama} maxLength={80} onChange={(e) => setNama(e.target.value)} onBlur={() => void simpanNama()} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /> : k.nama}
-      </TableCell>
+      <TableCell className="min-w-56"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /></TableCell>
       <TableCell className="min-w-48 text-muted-foreground">{penempatan(k)}</TableCell>
       <TableCell className="whitespace-nowrap">{k.dipakai > 0 ? `${k.dipakai} baris` : '—'}</TableCell>
-      <TableCell>{!k.aktif ? <Badge variant="secondary">Disembunyikan</Badge> : tetap ? <Badge variant="secondary">Tetap</Badge> : <Badge>Aktif</Badge>}</TableCell>
-      <TableCell>
-        {bisaTulis && (
-          <div className="flex flex-wrap justify-end gap-1.5">
-            <Button type="button" size="sm" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
-            <Button type="button" size="sm" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
-            {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur</Button>}
-            {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`${k.aktif ? 'Sembunyikan' : 'Tampilkan'} ${k.nama}`} onClick={() => void simpan(isiDari(k), !k.aktif)}>{k.aktif ? 'Sembunyikan' : 'Tampilkan'}</Button>}
-          </div>
-        )}
-      </TableCell>
+      <TableCell><Status k={k} /></TableCell>
+      <TableCell>{bisaTulis && <Aksi {...p} />}</TableCell>
     </TableRow>
+  )
+}
+
+/** Phone layout: one card per category, so nothing scrolls sideways. */
+function Kartu(p: PropsBaris) {
+  const { k, bisaTulis } = p
+  const n = useNama(k, p.simpan)
+  return (
+    <li className={`space-y-2 rounded-lg border p-3 ${k.aktif ? '' : 'opacity-60'}`}>
+      <KolomNama k={k} bisaTulis={bisaTulis} n={n} />
+      <p className="text-sm text-muted-foreground">{penempatan(k)}</p>
+      <div className="flex items-center justify-between gap-2 teks-kecil text-muted-foreground">
+        <Status k={k} />
+        <span>{k.dipakai > 0 ? `${k.dipakai} baris` : 'Belum dipakai'}</span>
+      </div>
+      {bisaTulis && <Aksi {...p} />}
+    </li>
   )
 }
 
@@ -211,7 +242,7 @@ export default function KategoriTransaksiPage() {
         )}
       </BarHalaman>
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="h-auto flex-wrap">
+        <TabsList className="section-tabs">
           {TAB.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}
         </TabsList>
       </Tabs>
@@ -220,6 +251,13 @@ export default function KategoriTransaksiPage() {
       {data && (
         <Card>
           <CardContent className="space-y-3 pt-4">
+            <ul className="space-y-3 md:hidden" aria-label="Kategori transaksi">
+              {daftar.map((k, i) => (
+                <Kartu key={k.id} k={k} bisaTulis={bisaTulis} awal={i === 0} akhir={i === daftar.length - 1} geser={(d) => geser(i, d)} atur={() => setAtur(k)} simpan={(isi, aktif) => ubah.mutateAsync({ id: k.id, isi, aktif }).then(() => undefined)} />
+              ))}
+              {daftar.length === 0 && <li className="text-center text-sm text-muted-foreground">Belum ada kategori di sini.</li>}
+            </ul>
+            <div className="hidden md:block">
             <TableShell label="Kategori transaksi" minWidth={760}>
               <Table>
                 <TableHeader>
@@ -243,6 +281,7 @@ export default function KategoriTransaksiPage() {
                 </TableBody>
               </Table>
             </TableShell>
+            </div>
             <p className="teks-kecil text-muted-foreground">Mengubah nama hanya mengganti tulisan: di pilihan kategori Arus Kas, tab Pemasukan/Pengeluaran, dan halaman Operasional. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.</p>
           </CardContent>
         </Card>
