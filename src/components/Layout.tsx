@@ -7,7 +7,7 @@ import AppearancePopover from '@/components/AppearancePopover'
 import BottomNav from '@/components/BottomNav'
 import WallpaperLayer from '@/components/WallpaperLayer'
 import { Button } from '@/components/ui/button'
-import { useLabel } from '@/api/pengaturanUi'
+import { APP_BAWAAN, useIdentitas, useLabel } from '@/api/pengaturanUi'
 import { denganLabel, filterNav, idGrup, itemBawah, kelompokNav } from '@/config/nav'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
@@ -20,6 +20,12 @@ function isNavActive(pathname: string, to: string, allPaths: string[]) {
   return best === to
 }
 
+/** A logo address that does not load falls back to the built-in logo. */
+const logoCadangan = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  e.currentTarget.onerror = null
+  e.currentTarget.src = APP_BAWAAN.logo
+}
+
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, akses, logout } = useAuth()
   const location = useLocation()
@@ -27,6 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   useKonfirmasiKeluar(!!user)
 
   const t = useLabel()
+  const app = useIdentitas()
   const visible = useMemo(() => denganLabel(filterNav(akses), t), [akses, t])
   const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
 
@@ -49,11 +56,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
+          <img src={app.logo} onError={logoCadangan} alt={app.nama} className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
           <div className="min-w-0 leading-tight">
-            <div className="font-heading truncate text-sm font-semibold">Ampel Kuning</div>
+            <div className="font-heading truncate text-sm font-semibold">{app.nama}</div>
             <div className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
-              ERP System
+              {app.subjudul}
             </div>
           </div>
         </div>
@@ -75,11 +82,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
         >
           <div className="flex shrink-0 items-center gap-3 px-4 pt-5 pb-4">
-            <img src="/logo-ampel-kuning.png" alt="Ampel Kuning" className="h-10 w-14 shrink-0 rounded-md bg-white object-contain" />
+            <img src={app.logo} onError={logoCadangan} alt={app.nama} className="h-10 w-14 shrink-0 rounded-md bg-white object-contain" />
             <div className="min-w-0 flex-1">
-              <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">Ampel Kuning</div>
+              <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">{app.nama}</div>
               <div className="text-xs leading-5 font-medium" style={{ color: 'var(--text-muted)' }}>
-                ERP System
+                {app.subjudul}
               </div>
             </div>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
