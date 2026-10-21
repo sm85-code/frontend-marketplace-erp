@@ -1,7 +1,8 @@
 import WorkspaceOverlays from '@/components/WorkspaceOverlays'
 import { SinkronisasiSession } from '@/components/SinkronisasiProvider'
-import { lazy, Suspense, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
+import { pasangPendengarNotifikasi } from '@/lib/pwa'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
@@ -57,6 +58,13 @@ function LazyPage({ children }: { children: ReactNode }) {
       <Suspense fallback={<PageFallback />}>{children}</Suspense>
     </ErrorBoundary>
   )
+}
+
+/** A tapped push notification asks the open window to go to the new order or chat; do it inside the app. */
+function PendengarNotifikasi() {
+  const navigate = useNavigate()
+  useEffect(() => pasangPendengarNotifikasi((alamat) => navigate(alamat)), [navigate])
+  return null
 }
 
 function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string; perlu?: Tingkat }) {
@@ -148,6 +156,7 @@ path="/iklan"
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />
             </Routes>
+            <PendengarNotifikasi />
             <WorkspaceOverlays/>
           </SinkronisasiSession></AuthProvider>
         </BrowserRouter>

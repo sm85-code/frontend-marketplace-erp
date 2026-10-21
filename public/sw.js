@@ -97,12 +97,41 @@ self.addEventListener('notificationclick', (event) => {
     (async () => {
       const jendela = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       for (const w of jendela) {
-        if (new URL(w.url).origin === self.location.origin && 'navigate' in w) {
-          await w.navigate(tujuan)
-          return w.focus()
+        if (new URL(w.url).origin !== self.location.origin) continue
+        // Satu jendela gagal (mis. tidak terkontrol service worker ini) tidak boleh menghentikan ketukan: coba berikutnya, lalu buka baru.
+        try {
+          if (await bukaDiJendela(w, tujuan)) return
+        } catch (err) {
+          // coba jendela lain atau buka jendela baru
         }
       }
       return self.clients.openWindow(tujuan)
     })(),
   )
 })
+
+// Jendela yang sudah terbuka: bawa ke depan, lalu minta halaman berpindah sendiri (tanpa memuat ulang) dan tunggu jawabannya.
+// Halaman dari versi lama tidak menjawab; untuk itu jendela dipindahkan langsung. Mengembalikan true bila tujuan terbuka.
+async function bukaDiJendela(w, tujuan) {
+  try {
+    await w.focus()
+  } catch (err) {
+    // fokus bisa ditolak; tetap coba berpindah halaman
+  }
+  const dijawab = await new Promise((selesai) => {
+    const saluran = new MessageChannel()
+    const batas = setTimeout(() => selesai(false), 700)
+    saluran.port1.onmessage = () => {
+      clearTimeout(batas)
+      selesai(true)
+    }
+    try {
+      w.postMessage({ type: 'buka', url: tujuan }, [saluran.port2])
+    } catch (err) {
+      clearTimeout(batas)
+      selesai(false)
+    }
+  })
+  if (dijawab) return true
+  return !!(await w.navigate(tujuan))
+}
