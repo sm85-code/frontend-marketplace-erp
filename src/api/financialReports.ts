@@ -103,3 +103,7 @@ export const saveLembarArusKas = async (periode: string, version: number, lembar
   (await api.put<LembarManualResponse>('/arus-kas/lembar', { version, lembar }, { params: { periode } })).data
 export type RekeningTukang = { id: string; nama: string; nama_bank: string; no_rekening: string }
 export const rekeningTukang = async () => (await api.get<RekeningTukang[]>('/arus-kas/rekening-tukang')).data
+
+export type BiayaProduksi = { tanggal: string; tahap: 'produksi' | 'supplier' | 'pengecatan' | 'packing'; pihak: string; jumlah: string }
+/** Cost of the production stages finished in a month (Pemetaan Order), as a reference for the cash-flow table. Never posted to it. */
+export const biayaProduksiBulan = async (periode: string) => (await api.get<{ periode: string; items: BiayaProduksi[] }>('/arus-kas/biaya-produksi', { params: { periode } })).data.items
