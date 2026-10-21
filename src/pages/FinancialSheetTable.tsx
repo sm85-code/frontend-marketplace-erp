@@ -36,8 +36,6 @@ type Props = {
   onRenameGroup?: (group: GroupDef) => void
   /** A small note after a row's name (e.g. the category its figure is filed under). */
   ketBaris?: (line: Line) => string | undefined
-  /** Adds a Tanggal column after Uraian (on phones the date follows the row's name); rows without a date show nothing. */
-  kolomTanggal?: (line: Line) => string | undefined
 }
 
 function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean; onRenameGroup?: (g: GroupDef) => void }) {
@@ -122,7 +120,7 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
 }
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, kolomTanggal }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const nomor = bernomor ? nomorBaris(block) : null
@@ -149,7 +147,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
                   {nomor && !line.def.emphasis && <TableCell className={`w-9 pr-0 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line) ?? kolomTanggal?.(line)} /></TableCell>
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
@@ -167,9 +165,8 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, kolomTanggal } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris } = props
   const nomor = bernomor ? nomorBaris(block) : null
-  const tgl = kolomTanggal ? 1 : 0
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader>
@@ -178,11 +175,10 @@ export default function FinancialSheetTable(props: Props) {
       <CardContent className="min-w-0 space-y-3">
         <PhoneTable {...props} />
         <div className="hidden max-w-full overflow-x-auto rounded-lg border md:block">
-          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': `${(nomor ? 264 : 220) + tgl * 112}px` } as React.CSSProperties} aria-label={block.title.slice(3)}>
+          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': nomor ? '264px' : '220px' } as React.CSSProperties} aria-label={block.title.slice(3)}>
             <colgroup>
               {nomor && <col className="w-[44px]" />}
               <col className="w-[220px]" />
-              {kolomTanggal && <col className="w-[112px]" />}
               {days.map((d) => (
                 <col key={d} className="w-[142px]" />
               ))}
@@ -192,7 +188,6 @@ export default function FinancialSheetTable(props: Props) {
               <TableRow>
                 {nomor && <TableHead className="sticky left-0 z-10 bg-muted px-2 text-center">No</TableHead>}
                 <TableHead className={`sticky z-10 bg-muted ${nomor ? 'left-[44px]' : 'left-0'}`}>Uraian</TableHead>
-                {kolomTanggal && <TableHead>Tanggal</TableHead>}
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
                     <span className="block">Periode</span>
@@ -204,7 +199,7 @@ export default function FinancialSheetTable(props: Props) {
             </TableHeader>
             <TableBody>
               {block.lines.map((line) => {
-                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + (nomor ? 3 : 2) + tgl} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
+                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + (nomor ? 3 : 2)} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
                 if (line.hidden) return null
                 const can = editable(line) && !hanyaLihat
                 const rename = !can && !hanyaLihat && !!onRenameRow && bisaDiganti(line.def.key)
@@ -213,14 +208,13 @@ export default function FinancialSheetTable(props: Props) {
                   <TableRow key={line.def.key} className={line.def.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
                     {nomor && !line.def.emphasis && <TableCell className={`sticky left-0 z-10 bg-card px-2 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
                     <TableCell
-                      colSpan={(nomor && line.def.emphasis ? 2 : 1) + (line.def.emphasis ? tgl : 0)}
+                      colSpan={nomor && line.def.emphasis ? 2 : 1}
                       className={`sticky z-10 ${line.def.induk ? `pl-8 ${GAYA_ANAK}` : ''} ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
                       {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
                       <Ket teks={ketBaris?.(line)} />
                     </TableCell>
-                    {kolomTanggal && !line.def.emphasis && <TableCell className="whitespace-nowrap tabular-nums">{kolomTanggal(line) ?? ''}</TableCell>}
                     {line.cells.map((cell, w) => (
                       <TableCell
                         key={days[w]}
