@@ -215,5 +215,16 @@ describe('salary as a cash-out and transfers to the operational cash accounts', 
     expect(val(b, 'gaji')).toBe(40)
     expect(val(b, 'jml_pengeluaran')).toBe(200 + 80 + 40 + 15 + 5 + 10)
   })
+  it('kas gaji and utang gaji in the balance sheet follow the Gaji row typed in Arus Kas, and the sheet still balances', () => {
+    const base = make(baru)
+    const lembar = emptyLembar()
+    lembar.sel[`${keyNilaiDasar('k_gaji')}|${days[0]}`] = '100'
+    const typed = ringkasDariArusKas(computeSheet(sheetSections({ laporan: [baru] } as unknown as Overview), [baru], days, lembar), days, lembar)
+    expect(val(typed, 'k_gaji')).toBe(100)
+    expect(val(typed, 'n_kas_gaji')).toBe(val(base, 'n_kas_gaji')! + 60)
+    expect(val(typed, 'n_utang_gaji')).toBe(val(base, 'n_utang_gaji')! + 60)
+    expect(val(typed, 'gaji')).toBe(100)
+    expect(val(typed, 'selisih')).toBe(val(base, 'selisih'))
+  })
 })
 
