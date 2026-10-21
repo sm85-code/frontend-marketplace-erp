@@ -8,6 +8,8 @@ import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Plus, RefreshCw, Undo2 } from 'lucide-react'
+import { useAuth } from '@/lib/auth'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
@@ -52,6 +54,7 @@ const PILIHAN_RESI = [
 
 export default function PesananPage() {
   const qc = useQueryClient()
+  const { bisa } = useAuth()
   const [perHalaman,setPerHalaman]=useState(DEFAULT_PER_HALAMAN)
   const confirm = useConfirm()
   const f = useFilterDaftar(AWAL)
@@ -273,9 +276,12 @@ export default function PesananPage() {
     <Tabs value={tahapDariTautan(f.nilai.tahap) || 'semua'} onValueChange={(tahap) => f.ubah({ tahap: tahap === 'semua' ? '' : tahap })} className="block min-w-0 space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
-        <Sinkronisasi jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
-
-        <AksiLainnya><Button asChild variant="outline"><Link to="/pesanan/retur">Retur & Refund</Link></Button><Button variant="outline" onClick={() => setFormBuka(true)}>Pesanan Manual</Button>      <div className="order-mobile-view md:hidden" role="group" aria-label="Tampilan pesanan di HP">
+        {bisa('pesanan_manual', 'tulis') && <Button onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /> Pesanan Manual</Button>}
+        <AksiLainnya>
+          <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
+          <Button asChild variant="ghost" className="w-full justify-start gap-2"><Link to="/pesanan/retur"><Undo2 className="size-4" aria-hidden="true" /> Retur & Refund</Link></Button>
+          <div className="order-mobile-view flex items-center justify-between gap-3 border-t pt-2 md:hidden" role="group" aria-label="Tampilan pesanan di HP">
+        <span className="px-2 text-sm text-muted-foreground">Tampilan di HP</span>
         <div className="inline-flex rounded-lg border bg-card p-1">
           {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
         </div>
