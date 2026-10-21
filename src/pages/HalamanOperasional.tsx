@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { fmtRp, getApiError } from '@/api/client'
 import {
@@ -13,16 +13,17 @@ import {
 } from '@/api/operasional'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { BarHalaman } from '@/components/daftar'
 import { useConfirm } from '@/components/ConfirmProvider'
 import MoneyInput from '@/components/MoneyInput'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import PeriodPicker from '@/components/PeriodPicker'
+import TombolLipat from '@/components/TombolLipat'
+import { GAYA_ANAK, NomorRincian } from '@/pages/FinancialSheetTable'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { mingguBulan, periodeBerjalan } from '@/lib/tanggal'
 import { alasanBelumBisa, jumlahTampil, sama, tanggalBawaan, type Isi } from '@/lib/operasionalBaris'
@@ -31,8 +32,6 @@ const wib = (opsi: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-CA
 const hariIni = () => wib({ year: 'numeric', month: '2-digit', day: '2-digit' })
 const bulanIni = () => hariIni().slice(0, 7)
 
-const tglTampil = (t: string) => t.split('-').reverse().join('/')
-const aksenKategori = 'border-l-4 border-l-primary/60'
 
 /** What the pop-up edits: a saved entry (`id`) or a new one for a category. */
 type Sasaran = { kategori: string; label: string; item?: TransaksiOperasional }
@@ -107,14 +106,14 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
   const [dipilih, setDipilih] = useState<{ periode: string; indeks: number } | null>(null)
   const indeks = dipilih?.periode === periode ? dipilih.indeks : periodeBerjalan(periode, minggu.length)
   const ini = minggu[indeks]
-  // The chosen period slides to the middle of its row (the row only, never the page), also once the data has arrived.
-  const barisPeriode = useRef<HTMLDivElement>(null)
-  const ada = !!data
-  useEffect(() => {
-    const kotak = barisPeriode.current
-    const tab = kotak?.querySelector<HTMLElement>('[aria-selected="true"]')
-    if (kotak && tab) kotak.scrollLeft = tab.offsetLeft - (kotak.clientWidth - tab.offsetWidth) / 2
-  }, [indeks, periode, ada])
+  // Categories whose transactions are folded away (tree view).
+  const [lipat, setLipat] = useState<ReadonlySet<string>>(new Set())
+  const ubahLipat = (id: string) =>
+    setLipat((sekarang) => {
+      const next = new Set(sekarang)
+      if (!next.delete(id)) next.add(id)
+      return next
+    })
 
   const sesudah = () => {
     setTersimpan(true)
@@ -147,6 +146,10 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
   const dalam = (tanggal: string, m: { mulai: string; akhir: string }) => tanggal >= m.mulai && tanggal <= m.akhir
   const jumlahDari = (items: TransaksiOperasional[]) => items.reduce((a, i) => a + Number(i.jumlah), 0)
   const itemsPeriode = (data?.items ?? []).filter((i) => dalam(i.tanggal, ini))
+  const berisi = (data?.kategori ?? []).filter((k) => itemsPeriode.some((i) => i.kategori === k.id)).map((k) => k.id)
+  const adaRincian = berisi.length > 0
+  const semuaTertutup = adaRincian && berisi.every((id) => lipat.has(id))
+  const lipatSemua = () => setLipat(semuaTertutup ? new Set() : new Set(berisi))
   const hariBawaan = tanggalBawaan(periode, hariIni())
   const tanggalBaru = dalam(hariBawaan, ini) ? hariBawaan : ini.mulai
   return (
@@ -159,89 +162,80 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
       {isLoading && <Spinner label="Memuat transaksi…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && (
-        <>
-          <Tabs value={String(indeks)} onValueChange={(v) => setDipilih({ periode, indeks: Number(v) })}>
-            <div ref={barisPeriode} className="max-w-full overflow-x-auto">
-              <TabsList className="section-tabs !max-w-none !flex-nowrap" aria-label="Periode mingguan">
-                {minggu.map((m, i) => (
-                  <TabsTrigger key={m.mulai} value={String(i)} className="h-auto flex-col gap-0 py-1.5">
-                    <span className="text-xs font-normal opacity-80">Periode</span>
-                    <span>{m.label}</span>
-                    <span className="text-xs font-normal tabular-nums opacity-80">{fmtRp(jumlahDari((data.items ?? []).filter((x) => dalam(x.tanggal, m))))}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </Tabs>
-          <Card>
-            <CardContent className="space-y-4 pt-4">
-              <p className="teks-kecil text-muted-foreground">Dicatat per periode mingguan (Senin–Minggu), sama dengan kolom Periode di Arus Kas.{bisaTulis ? ' Ketuk transaksi untuk mengubahnya, atau Tambah di tiap kategori.' : ''}</p>
-              <TableShell label={`Transaksi ${judul}`} minWidth={0}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8 px-1 text-center">No</TableHead>
-                      <TableHead className="w-16 px-2 sm:w-28">Tanggal</TableHead>
-                      <TableHead>Uraian</TableHead>
-                      <TableHead className="text-right">Jumlah</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.kategori.map((k) => {
-                      const baris = itemsPeriode.filter((i) => i.kategori === k.id)
-                      return (
-                        <Fragment key={k.id}>
-                          <TableRow className="bg-muted/50 hover:bg-muted/50">
-                            <TableCell colSpan={3} className={`whitespace-normal font-semibold ${aksenKategori}`}>
-                              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                {k.label}
-                                {bisaTulis && (
-                                  <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" aria-label={`Tambah transaksi ${k.label}`} onClick={() => setSasaran({ kategori: k.id, label: k.label })}>
-                                    <Plus className="size-3.5" aria-hidden /> Tambah
-                                  </Button>
-                                )}
-                              </span>
-                            </TableCell>
-                            <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums">{fmtRp(jumlahDari(baris))}</TableCell>
-                          </TableRow>
-                          {baris.map((item, n) => (
+        <Card className="min-w-0 overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle>{judul}</CardTitle>
+            {adaRincian && (
+              <Button type="button" variant="outline" size="sm" onClick={lipatSemua}>
+                {semuaTertutup ? <ChevronsUpDown className="size-4" aria-hidden="true" /> : <ChevronsDownUp className="size-4" aria-hidden="true" />}
+                {semuaTertutup ? 'Buka semua rincian' : 'Lipat semua rincian'}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="min-w-0 space-y-3">
+            <PeriodPicker semuaLayar pick={indeks} onPick={(i) => setDipilih({ periode, indeks: i })} options={minggu.map((m) => ({ key: m.mulai, label: 'Periode', sub: m.label }))} />
+            <div className="overflow-hidden rounded-lg border">
+              <Table aria-label={`Transaksi ${judul}`}>
+                <TableHeader className="bg-muted">
+                  <TableRow>
+                    <TableHead className="w-16 px-1 text-center">No</TableHead>
+                    <TableHead>Uraian</TableHead>
+                    <TableHead className="text-right">Jumlah</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.kategori.map((k, n) => {
+                    const baris = itemsPeriode.filter((i) => i.kategori === k.id)
+                    const tertutup = lipat.has(k.id)
+                    return (
+                      <Fragment key={k.id}>
+                        <TableRow
+                          className={bisaTulis ? 'cursor-pointer hover:bg-muted/60 active:bg-muted/60' : undefined}
+                          tabIndex={bisaTulis ? 0 : undefined}
+                          aria-label={bisaTulis ? `Tambah transaksi ${k.label}` : undefined}
+                          onClick={bisaTulis ? () => setSasaran({ kategori: k.id, label: k.label }) : undefined}
+                          onKeyDown={bisaTulis ? (e) => e.key === 'Enter' && setSasaran({ kategori: k.id, label: k.label }) : undefined}
+                        >
+                          <TableCell className="w-16 px-1 text-center tabular-nums text-muted-foreground">
+                            <span className="inline-flex items-center justify-end gap-0.5">
+                              {baris.length > 0 ? <TombolLipat tertutup={tertutup} nama={k.label} onClick={() => ubahLipat(k.id)} /> : <span className="inline-block w-7" aria-hidden="true" />}
+                              {n + 1}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-normal">{k.label}</TableCell>
+                          <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtRp(jumlahDari(baris))}</TableCell>
+                        </TableRow>
+                        {!tertutup &&
+                          baris.map((item, m) => (
                             <TableRow
                               key={item.id}
-                              className={bisaTulis ? 'cursor-pointer hover:bg-muted/60' : undefined}
+                              className={bisaTulis ? 'cursor-pointer hover:bg-muted/60 active:bg-muted/60' : undefined}
                               tabIndex={bisaTulis ? 0 : undefined}
-                              aria-label={bisaTulis ? `Ubah transaksi ${k.label} ${n + 1}` : undefined}
+                              aria-label={bisaTulis ? `Ubah transaksi ${k.label} ${n + 1}.${m + 1}` : undefined}
                               onClick={bisaTulis ? () => setSasaran({ kategori: k.id, label: k.label, item }) : undefined}
                               onKeyDown={bisaTulis ? (e) => e.key === 'Enter' && setSasaran({ kategori: k.id, label: k.label, item }) : undefined}
                             >
-                              <TableCell className="px-1 text-center tabular-nums text-muted-foreground">{n + 1}</TableCell>
-                              <TableCell className="whitespace-nowrap px-2">
-                                <span className="sm:hidden">{tglTampil(item.tanggal).slice(0, 5)}</span>
-                                <span className="hidden sm:inline">{tglTampil(item.tanggal)}</span>
+                              <TableCell />
+                              <TableCell className={`whitespace-normal break-words ${GAYA_ANAK}`}>
+                                <NomorRincian teks={`${n + 1}.${m + 1}`} />
+                                {item.uraian || '—'}
                               </TableCell>
-                              <TableCell className="whitespace-normal break-words">{item.uraian || '—'}</TableCell>
-                              <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtRp(item.jumlah)}</TableCell>
+                              <TableCell className={`whitespace-nowrap text-right tabular-nums ${GAYA_ANAK}`}>{fmtRp(item.jumlah)}</TableCell>
                             </TableRow>
                           ))}
-                          {baris.length === 0 && (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-sm text-muted-foreground">
-                                Belum ada transaksi di periode ini.
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </Fragment>
-                      )
-                    })}
-                    <TableRow className="bg-[var(--table-heading-background)] font-bold hover:bg-[var(--table-heading-background)]">
-                      <TableCell colSpan={3}>Jumlah {judul} periode ini</TableCell>
-                      <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtRp(jumlahDari(itemsPeriode))}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableShell>
-            </CardContent>
-          </Card>
-        </>
+                      </Fragment>
+                    )
+                  })}
+                  <TableRow className="bg-muted/50 font-semibold hover:bg-muted/50">
+                    <TableCell colSpan={2}>Jumlah {judul}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtRp(jumlahDari(itemsPeriode))}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+            {bisaTulis && <p className="teks-kecil text-muted-foreground">Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus.</p>}
+          </CardContent>
+        </Card>
       )}
       <DialogTransaksi
         sasaran={sasaran}
