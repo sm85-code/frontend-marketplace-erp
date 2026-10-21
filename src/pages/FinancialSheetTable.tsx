@@ -44,7 +44,7 @@ function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { g
       <TableHead colSpan={colSpan} scope="rowgroup">
         <span className="sticky left-0 inline-flex w-full items-center justify-between gap-2 pr-3 md:w-auto md:gap-4">
           {group.tampil ?? group.label}
-          {onRenameGroup && (
+          {onRenameGroup && !group.dariPengaturan && (
             <button
               type="button"
               onClick={() => onRenameGroup(group)}

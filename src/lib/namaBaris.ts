@@ -32,6 +32,7 @@ export function namai(blocks: Block[], lembar: Lembar): Block[] {
     ...block,
     lines: block.lines.map((line) => {
       if (isGroup(line)) {
+        if (line.dariPengaturan) return line // named in the Kategori Transaksi settings, not per sheet
         const named = lembar.baris.find((b) => b.id === keyGrup(line.tabel, line.label))?.label
         return named ? { ...line, tampil: named } : line
       }

@@ -83,7 +83,7 @@ export default function FinancialReportSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lembar, days.join('|'), operasional.data, daftarKat, sheet],
   )
-  const plain = useMemo(() => ringkasDariArusKas(sheet, days, lembarTampil, daftarKat, kelompok), [sheet, days, lembarTampil, daftarKat, kelompok]) // eslint-disable-line react-hooks/exhaustive-deps
+  const plain = useMemo(() => ringkasDariArusKas(sheet, days, lembarTampil, daftarKat, kelompok, new Set(records.map((r) => r.tanggal))), [sheet, days, lembarTampil, daftarKat, kelompok, records]) // eslint-disable-line react-hooks/exhaustive-deps
   const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)

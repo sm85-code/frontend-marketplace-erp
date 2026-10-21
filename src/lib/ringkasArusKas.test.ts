@@ -4,6 +4,7 @@ import { keyKategori, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { kategoriRincian, setKategori } from './kategoriKeuangan'
 import { KATEGORI_BAWAAN, KELOMPOK_BAWAAN, type KategoriTransaksi, type KelompokDaftar } from '@/api/kategori'
 import { ringkasDariArusKas } from './ringkasArusKas'
+import { namai, setNamaGrup } from './namaBaris'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
 
@@ -260,3 +261,77 @@ describe('groups with ids', () => {
   })
 })
 
+
+describe('salary balances over closed and open periods', () => {
+  const bal = (o: Record<string, string>) => ({ ...zero, modal: '1000', ...o })
+  const rec = (tanggal: string, awal: Record<string, string>, akhir: Record<string, string>) =>
+    ({
+      tanggal,
+      input: { gaji: '100', transfer_kas_gaji: '100', pendapatan_produk: '0', jasa_proses: '0', jasa_cat_packing: '0', bayar_tukang: '0', pembelian: '0', operasional: '0', langganan: '0', topup_iklan: '0', tambahan_modal: '0' },
+      hasil: {
+        pemasukan_toko: '0', perubahan_piutang: '0', pemasukan: '0', pengeluaran: '100', laba: '-100', kas_masuk: '0', kas_keluar: '0', transfer_antar_kas: '-100',
+        penyesuaian_stok: '0', penyesuaian_utang: '0', biaya_iklan: '0', saldo_awal: bal(awal), saldo_akhir: bal(akhir), neraca: { aset: '0', utang: '0', ekuitas: '0', selisih: '0' },
+      },
+    }) as unknown as Report
+  const r1 = rec('2026-10-04', { kas_utama: '1000' }, { kas_utama: '900', kas_gaji: '100', utang_gaji: '100', saldo_laba: '-100' })
+  const r2 = rec('2026-10-11', { kas_utama: '900', kas_gaji: '100', utang_gaji: '100', saldo_laba: '-100' }, { kas_utama: '800', kas_gaji: '200', utang_gaji: '200', saldo_laba: '-200' })
+  const hari = ['2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25']
+  const ada = [r1, r2]
+  const hitung = (sel: Record<string, string>) => {
+    const lembar = emptyLembar()
+    lembar.sel = sel
+    const plain = computeSheet(sheetSections({ laporan: ada } as unknown as Overview), ada, hari, lembar)
+    return ringkasDariArusKas(plain, hari, lembar, KATEGORI_BAWAAN, KELOMPOK_BAWAAN, new Set(ada.map((r) => r.tanggal)))
+  }
+  it('both balances grow by the same Gaji typed in the open periods, and the sheet keeps balancing', () => {
+    const k = (d: string) => `${keyNilaiDasar('k_gaji')}|${d}`
+    const b = hitung({ [k(hari[2])]: '100', [k(hari[3])]: '100', [`n_modal|${hari[2]}`]: '1000', [`n_stok|${hari[2]}`]: '0' })
+    expect(val(b, 'n_kas_gaji', 2)).toBe(300)
+    expect(val(b, 'n_utang_gaji', 2)).toBe(300)
+    expect(val(b, 'n_kas_gaji', 3)).toBe(400)
+    expect(val(b, 'n_utang_gaji', 3)).toBe(400)
+    expect(val(b, 'selisih', 2)).toBe(val(b, 'selisih', 1))
+  })
+  it('a closed period keeps its report figures', () => {
+    const b = hitung({})
+    expect([val(b, 'n_kas_gaji', 0), val(b, 'n_kas_gaji', 1)]).toEqual([100, 200])
+    expect([val(b, 'n_utang_gaji', 0), val(b, 'n_utang_gaji', 1)]).toEqual([100, 200])
+  })
+})
+
+describe('neraca rows filled by hand', () => {
+  it('typing over Arus Kas rows moves only the automatic rows, not iklan, stok, kas operasional, modal, piutang or utang usaha', () => {
+    const lembar = emptyLembar()
+    lembar.sel[`${keyNilaiDasar('k_topup')}|${days[0]}`] = '777'
+    lembar.sel[`${keyNilaiDasar('k_gaji')}|${days[0]}`] = '55'
+    const before = build()
+    const after = build(lembar)
+    for (const k of ['n_iklan', 'n_stok', 'n_kas_ops', 'n_modal', 'n_piutang', 'n_utang_usaha', 'n_saldo_toko']) expect(val(after, k)).toBe(val(before, k))
+    expect(val(after, 'n_kas')).not.toBe(val(before, 'n_kas'))
+    expect(val(after, 'n_kas_gaji')).not.toBe(val(before, 'n_kas_gaji'))
+  })
+})
+
+describe('categories added by the user', () => {
+  const baru: KategoriTransaksi = { ...KATEGORI_BAWAAN[0], id: 'sewa', arah: 'keluar', nama: 'Sewa', kelompok: 'Beban operasional', kelompok_id: 'beban', urut: 99, sistem: false, auto_sembunyi: true }
+  const baris = (b: ReturnType<typeof build>, key: string) => b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
+  it('shows in Pengeluaran at once, with nothing filed under it yet, so an amount can be typed', () => {
+    const b = ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, emptyLembar()), days, emptyLembar(), [...KATEGORI_BAWAAN, baru])
+    expect(baris(b, 'p:sewa').hidden).toBe(false)
+    expect(baris(b, 'p:sewa').def.kind).toBe('input')
+    // a starting category that is rarely used still waits for an amount
+    expect(baris(b, 'p:atk').hidden).toBe(true)
+  })
+})
+
+
+describe('group names from the category settings', () => {
+  it('are not overridden by a name saved in the sheet for the same group', () => {
+    const lembar = setNamaGrup(emptyLembar(), 'pengeluaran', 'Harga pokok penjualan', 'Nama lama dari pensil')
+    const k = { ...KELOMPOK_BAWAAN, keluar: [{ id: 'hpp', nama: 'Biaya langsung' }, KELOMPOK_BAWAAN.keluar[1]] }
+    const blocks = namai(ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, lembar), days, lembar, KATEGORI_BAWAAN, k), lembar)
+    const g = blocks.find((x) => x.tabel === 'pengeluaran')!.lines.filter(isGroup)[0]
+    expect(g.tampil).toBe('Biaya langsung')
+    expect(g.dariPengaturan).toBe(true)
+  })
+})

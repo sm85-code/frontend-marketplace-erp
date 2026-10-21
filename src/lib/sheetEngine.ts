@@ -31,7 +31,14 @@ export type RowDef = {
   base: (r: Report) => string
 }
 /** `tampil` is the name shown after a rename; `label` stays the identity used by totals and added rows. */
-export type GroupDef = { group: true; label: string; tabel: string; tampil?: string }
+export type GroupDef = {
+  group: true
+  label: string
+  tabel: string
+  tampil?: string
+  /** The title is the name of a group in the Kategori Transaksi settings: only that setting renames it. */
+  dariPengaturan?: boolean
+}
 export type SectionDef = { title: string; tabel: string; rows: (RowDef | GroupDef)[] }
 export type Lembar = {
   sel: Record<string, string>
