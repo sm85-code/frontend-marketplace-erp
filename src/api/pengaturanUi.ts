@@ -1,0 +1,28 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import api from '@/api/client'
+
+export const daftarPengaturanUi = () => api.get<{ items: Record<string, string> }>('/pengaturan-ui').then((r) => r.data.items ?? {})
+export const simpanPengaturanUi = (id: string, teks: string) => api.put(`/pengaturan-ui/${id}`, { teks }).then((r) => r.data)
+export const kembalikanPengaturanUi = (id: string) => api.delete(`/pengaturan-ui/${id}`).then((r) => r.data)
+
+const KUNCI = ['pengaturan-ui']
+
+/** The texts the admin changed, by id. Empty while loading or if they cannot be had: the app then shows its own defaults. */
+export function usePengaturanUi() {
+  return useQuery({ queryKey: KUNCI, queryFn: daftarPengaturanUi, staleTime: 5 * 60_000, retry: false })
+}
+
+/** `t(id, bawaan)`: the text the admin set for this id, else the app's own default. Identity is always the id, never the text. */
+export function useLabel() {
+  const { data } = usePengaturanUi()
+  return useCallback((id: string, bawaan: string) => data?.[id] ?? bawaan, [data])
+}
+
+export function useUbahTeks() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, teks }: { id: string; teks: string | null }) => (teks === null ? kembalikanPengaturanUi(id) : simpanPengaturanUi(id, teks)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KUNCI }),
+  })
+}

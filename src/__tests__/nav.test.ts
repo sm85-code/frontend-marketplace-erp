@@ -9,7 +9,7 @@ describe('filterNav', () => {
 
   it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNav(aksesBawaan('admin')).length).toBe(NAV.length)
-    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/kategori-transaksi', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/pengaturan-toko'].includes(to)))
+    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/kategori-transaksi', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/kelola-aplikasi', '/pengaturan-toko'].includes(to)))
   })
 
   it('staff gets the shared pages and Arus Kas, in workflow order', () => {
@@ -32,7 +32,7 @@ describe('menu order follows the daily workflow', () => {
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
       keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan', '/kategori-transaksi'],
       'info-toko': ['/pengaturan-toko', '/performa-toko', '/iklan', '/settlement'],
-      pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
+      pengaturan: ['/toko', '/asisten', '/staff', '/kelola-aplikasi', '/profile'],
     })
   })
 

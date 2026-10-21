@@ -1,10 +1,18 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
+import { useLabel } from '@/api/pengaturanUi'
+import { idMenu, NAV } from '@/config/nav'
 
 const ID_AKSI = 'aksi-halaman'
 
 /** Page title (with an optional description) on the left, page actions on the right; wraps on phones. */
 export default function BarHalaman({ judul, deskripsi, children }: { judul: string; deskripsi?: string; children?: ReactNode }) {
+  const t = useLabel()
+  const { pathname } = useLocation()
+  // A title that is the menu text of this very page follows what the admin set for that menu on Kelola Aplikasi.
+  const menu = NAV.find((n) => n.to === pathname && n.label === judul)
+  if (menu) judul = t(idMenu(menu.to), judul)
   return (
     <header className="bar-halaman">
       <div className="min-w-0">

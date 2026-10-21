@@ -19,6 +19,7 @@ import {
   Wallet,
   PackageOpen,
   Tags,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { bisa, type AksesSaya } from '@/lib/akses'
 
@@ -81,8 +82,18 @@ export const NAV: NavItem[] = [
   { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/asisten', label: 'Asisten AI', icon: Bot, halaman: 'asisten', grup: 'pengaturan' },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', grup: 'pengaturan' },
+  { to: '/kelola-aplikasi', label: 'Kelola Aplikasi', icon: SlidersHorizontal, halaman: 'kelola_aplikasi', grup: 'pengaturan' },
   { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, halaman: '*', grup: 'pengaturan', bawah: 6, posisiBawah: 6 },
 ]
+
+/** Id of a menu item's / section's text on Kelola Aplikasi (the text itself is only what is shown). */
+export const idMenu = (to: string) => `menu:${to}`
+export const idGrup = (id: GrupNav) => `grup:${id}`
+
+/** The same items and sections with the texts the admin set; nothing but the shown text changes. */
+export function denganLabel(items: NavItem[], t: (id: string, bawaan: string) => string): NavItem[] {
+  return items.map((n) => ({ ...n, label: t(idMenu(n.to), n.label), shortLabel: n.shortLabel === undefined ? undefined : t(idMenu(n.to), n.shortLabel) }))
+}
 
 /** Visible items split into their sidebar sections (empty sections are dropped), keeping NAV order. */
 export function kelompokNav(items: NavItem[]): { grup: (typeof GRUP_NAV)[number]; items: NavItem[] }[] {
