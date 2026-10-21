@@ -14,17 +14,16 @@ import TabelArusKas from './TabelArusKas'
 import { AddRowDialog, EditCellDialog, RenameDialog, type EditTarget } from './FinancialSheetDialogs'
 import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
-import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
-import { sheetSections } from '@/lib/sheetSections'
+import { cellKey, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { useKategori, useKelompok } from '@/api/kategori'
-import { denganOperasional } from '@/lib/operasionalArusKas'
-import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
+import { susunLaporan } from '@/lib/susunLaporan'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
+import KartuPembagianLaba from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const months = [
@@ -75,17 +74,11 @@ export default function FinancialReportSheet({
   const kelompok = useKelompok()
   // The Operasional entries of the month fill their Arus Kas rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, false], queryFn: () => reports.operasionalBulan(month, false) })
-  const sheet = useMemo(
-    () => computeSheet(sheetSections(data), records, days, lembar),
+  const { plain } = useMemo(
+    () => susunLaporan(data, records, days, lembar, operasional.data ?? [], daftarKat, kelompok),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, days.join('|')],
+    [data, lembar, days.join('|'), operasional.data, daftarKat, kelompok, records],
   )
-  const lembarTampil = useMemo(
-    () => denganOperasional(lembar, days, operasional.data ?? [], daftarKat, sheet.find((b) => b.tabel === 'arus_kas')!),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lembar, days.join('|'), operasional.data, daftarKat, sheet],
-  )
-  const plain = useMemo(() => ringkasDariArusKas(sheet, days, lembarTampil, daftarKat, kelompok, new Set(records.map((r) => r.tanggal))), [sheet, days, lembarTampil, daftarKat, kelompok, records]) // eslint-disable-line react-hooks/exhaustive-deps
   const blocks = useMemo(() => namai(plain, lembar, t), [plain, lembar, t])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
@@ -180,6 +173,7 @@ export default function FinancialReportSheet({
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
       </AksiHalaman>
+      <KartuPembagianLaba month={month} days={days} lembar={lembar} menyimpan={save.isPending} onIsi={(next) => save.mutate(next)} />
       <Tabs defaultValue="3" className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">

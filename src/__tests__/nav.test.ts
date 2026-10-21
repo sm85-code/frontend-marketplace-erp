@@ -32,7 +32,7 @@ describe('menu order follows the daily workflow', () => {
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
       keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan', '/kategori-transaksi'],
       'info-toko': ['/pengaturan-toko', '/performa-toko', '/iklan', '/settlement'],
-      pengaturan: ['/toko', '/asisten', '/staff', '/kelola-aplikasi', '/profile'],
+      pengaturan: ['/toko', '/staff', '/kelola-aplikasi', '/asisten', '/profile'],
     })
   })
 

@@ -120,4 +120,14 @@ describe('arus kas breakdown', () => {
     const b = build(lembar)
     expect(line(b, 'awal')!.cells[1].value).toBe(line(b, 'akhir')!.cells[0].value)
   })
+
+  it('profit paid out lowers the closing main cash shown, and the next opening follows', () => {
+    const lembar = emptyLembar()
+    lembar.sel[`pl_admin|${d}`] = '100'
+    lembar.sel[`pl_owner|${d}`] = '150'
+    const b = build(lembar)
+    expect(cell0(b, 'jml_pembagian')).toBe(250)
+    expect(cell0(b, 'akhir')).toBe(1400)
+    expect(line(b, 'awal')!.cells[1].value).toBe(1400)
+  })
 })

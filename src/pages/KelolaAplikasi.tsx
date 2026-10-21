@@ -1,4 +1,3 @@
-import { RotateCcw, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { Overview } from '@/api/financialReports'
@@ -6,9 +5,12 @@ import { getApiError } from '@/api/client'
 import { APP_BAWAAN, ID_APP, usePengaturanUi, useUbahTeks } from '@/api/pengaturanUi'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
+import TableShell from '@/components/TableShell'
 import { BarHalaman } from '@/components/daftar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRUP_NAV, NAV, idGrup, idMenu } from '@/config/nav'
 import { GRUP_AKSES, idGrupAkses, ROLE_LABELS } from '@/config/roles'
@@ -92,7 +94,8 @@ const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'M
 
 const alamatSah = (a: string) => /^https:\/\/\S+$/.test(a) || /^\/[^\s/]\S*$/.test(a)
 
-function Kolom({ t, sekarang, bisaUbah }: { t: Teks; sekarang: string | undefined; bisaUbah: boolean }) {
+/** The text being typed for one id and what leaving the field does: save a changed text, put the saved one back when it is empty or refused, or drop the setting when it equals the built-in one. */
+function useTeks(t: Teks, sekarang: string | undefined) {
   const ubah = useUbahTeks()
   const tampil = sekarang ?? t.bawaan
   const [isi, setIsi] = useState(tampil)
@@ -101,12 +104,8 @@ function Kolom({ t, sekarang, bisaUbah }: { t: Teks; sekarang: string | undefine
     setLama(tampil)
     setIsi(tampil)
   }
-  const jalankan = (teks: string | null) =>
-    ubah.mutate(
-      { id: t.id, teks },
-      { onError: (e) => { setIsi(tampil); toast.error(getApiError(e)) } },
-    )
-  const simpan = () => {
+  const jalankan = (teks: string | null) => ubah.mutate({ id: t.id, teks }, { onError: (e) => { setIsi(tampil); toast.error(getApiError(e)) } })
+  const keluar = () => {
     const teks = isi.trim().replace(/\s+/g, ' ')
     if (teks === tampil || teks === '') return setIsi(tampil)
     if (t.alamat && !alamatSah(teks)) {
@@ -115,45 +114,49 @@ function Kolom({ t, sekarang, bisaUbah }: { t: Teks; sekarang: string | undefine
     }
     jalankan(teks === t.bawaan ? null : teks)
   }
-  const diubah = sekarang !== undefined
-  const idKolom = `kolom-${t.id.replace(/\s+/g, '_')}`
+  return { isi, setIsi, keluar, kembalikan: () => jalankan(null), diubah: sekarang !== undefined }
+}
+
+type PropsBaris = { t: Teks; sekarang: string | undefined; bisaUbah: boolean }
+
+const Isian = ({ t, k, bisaUbah }: { t: Teks; k: ReturnType<typeof useTeks>; bisaUbah: boolean }) =>
+  bisaUbah ? (
+    <Input aria-label={`Teks untuk ${t.judul ?? t.bawaan}`} value={k.isi} maxLength={120} onChange={(e) => k.setIsi(e.target.value)} onBlur={k.keluar} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+  ) : (
+    <>{k.isi}</>
+  )
+
+function Baris({ t, sekarang, bisaUbah }: PropsBaris) {
+  const k = useTeks(t, sekarang)
   return (
-    <div className="space-y-1.5">
-      <div className="flex h-6 items-center justify-between gap-2">
-        <label htmlFor={idKolom} className="min-w-0 truncate text-sm font-medium" title={t.bawaan}>{t.judul ?? t.bawaan}</label>
-        {!(diubah && bisaUbah) && <span className="min-w-0 shrink truncate text-xs text-muted-foreground">{t.judul ? `Bawaan: ${t.bawaan}` : t.nama}</span>}
-        {diubah && bisaUbah && (
-          <button type="button" className="flex items-center gap-1 rounded text-xs font-medium text-primary hover:underline" aria-label={`Kembalikan ${t.bawaan}`} onClick={() => jalankan(null)}>
-            <RotateCcw className="size-3" aria-hidden="true" />
-            Kembalikan
-          </button>
-        )}
-      </div>
-      <Input id={idKolom} value={isi} maxLength={120} disabled={!bisaUbah} className={diubah ? 'border-primary/60' : undefined} onChange={(e) => setIsi(e.target.value)} onBlur={simpan} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-    </div>
+    <TableRow>
+      <TableCell className="min-w-56">{t.judul ?? t.bawaan}</TableCell>
+      <TableCell className="min-w-64"><Isian t={t} k={k} bisaUbah={bisaUbah} /></TableCell>
+      <TableCell className="whitespace-nowrap text-right">
+        {bisaUbah && k.diubah && <Button type="button" size="sm" variant="outline" aria-label={`Kembalikan ${t.judul ?? t.bawaan}`} onClick={k.kembalikan}>Kembalikan</Button>}
+      </TableCell>
+    </TableRow>
   )
 }
 
-function KartuBagian({ b, data, bisaUbah }: { b: Bagian; data: Record<string, string> | undefined; bisaUbah: boolean }) {
+/** Phone layout: one card per text, so nothing scrolls sideways. */
+function Kartu({ t, sekarang, bisaUbah }: PropsBaris) {
+  const k = useTeks(t, sekarang)
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{b.judul}</CardTitle>
-        {b.keterangan && <p className="text-sm text-muted-foreground">{b.keterangan}</p>}
-      </CardHeader>
-      <CardContent className="grid gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-        {b.teks.map((t) => (
-          <Kolom key={t.id} t={t} sekarang={data?.[t.id]} bisaUbah={bisaUbah} />
-        ))}
-      </CardContent>
-    </Card>
+    <li className="space-y-2 rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{t.judul ?? t.bawaan}</span>
+        {bisaUbah && k.diubah && <Button type="button" size="sm" variant="outline" aria-label={`Kembalikan ${t.judul ?? t.bawaan}`} onClick={k.kembalikan}>Kembalikan</Button>}
+      </div>
+      <Isian t={t} k={k} bisaUbah={bisaUbah} />
+    </li>
   )
 }
 
 function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
   const alamat = data?.[ID_APP.logo] ?? APP_BAWAAN.logo
   return (
-    <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
+    <div className="flex items-center gap-3 rounded-lg border p-3">
       <img src={alamat} alt="Pratinjau logo" className="h-12 w-16 shrink-0 rounded-md bg-white object-contain" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = APP_BAWAAN.logo }} />
       <div className="min-w-0">
         <div className="font-heading truncate text-sm font-semibold">{data?.[ID_APP.nama] ?? APP_BAWAAN.nama}</div>
@@ -164,6 +167,7 @@ function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
   )
 }
 
+/** Kelola Aplikasi: change the texts the app shows. Only the shown text changes; every text has a fixed id, so nothing stored or calculated is affected. */
 export default function KelolaAplikasi() {
   const { akses } = useAuth()
   const bisaUbah = bisa(akses, 'kelola_aplikasi', 'tulis')
@@ -176,43 +180,70 @@ export default function KelolaAplikasi() {
     const semua = k ? (Object.keys(KATEGORI) as Kategori[]).flatMap((x) => KATEGORI[x]) : KATEGORI[kategori]
     if (!k) return semua
     return semua
-      .map((b) => ({ ...b, teks: b.teks.filter((t) => t.bawaan.toLowerCase().includes(k) || (data?.[t.id] ?? '').toLowerCase().includes(k)) }))
+      .map((b) => ({ ...b, teks: b.teks.filter((t) => t.bawaan.toLowerCase().includes(k) || (t.judul ?? '').toLowerCase().includes(k) || (data?.[t.id] ?? '').toLowerCase().includes(k)) }))
       .filter((b) => b.teks.length > 0)
   }, [cari, kategori, data])
   const jumlahUbah = data ? Object.keys(data).length : 0
 
   return (
-    <div className="space-y-5">
-      <BarHalaman judul="Kelola Aplikasi" deskripsi="Ubah tulisan yang tampil di aplikasi. Hanya tampilan yang berubah; data dan cara kerja tetap sama." />
-      {!bisaUbah && <p className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">Anda hanya bisa melihat halaman ini.</p>}
-      <div className="flex flex-wrap items-center gap-3">
-        {!cari && (
-          <Tabs value={kategori} onValueChange={(v) => setKategori(v as Kategori)}>
-            <TabsList>
-              {(Object.keys(KATEGORI) as Kategori[]).map((k) => (
-                <TabsTrigger key={k} value={k}>{NAMA_KATEGORI[k]}</TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
-        <div className="relative w-full sm:ml-auto sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari teks di semua bagian..." className="pl-9" aria-label="Cari teks" />
-        </div>
-        {jumlahUbah > 0 && <span className="text-sm text-muted-foreground">{jumlahUbah} teks diubah</span>}
-      </div>
-      {isLoading ? (
-        <Spinner />
-      ) : error ? (
-        <QueryError error={error} retry={() => refetch()} />
-      ) : (
-        <div className="space-y-4">
-          {!cari && kategori === 'aplikasi' && <PratinjauLogo data={data} />}
-          {bagian.map((b) => (
-            <KartuBagian key={`${b.judul}-${b.teks[0]?.id}`} b={b} data={data} bisaUbah={bisaUbah} />
+    <div className="financial-page min-w-0 space-y-5 text-left">
+      <BarHalaman judul="Kelola Aplikasi" deskripsi="Ubah tulisan yang tampil di aplikasi. Hanya tampilan yang berubah; data dan cara kerja tetap sama.">
+        <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari teks di semua bagian…" className="w-full sm:w-72" aria-label="Cari teks" />
+      </BarHalaman>
+      <Tabs value={kategori} onValueChange={(v) => setKategori(v as Kategori)}>
+        <TabsList className="section-tabs">
+          {(Object.keys(KATEGORI) as Kategori[]).map((k) => (
+            <TabsTrigger key={k} value={k}>{NAMA_KATEGORI[k]}</TabsTrigger>
           ))}
-          {cari && bagian.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Tidak ada teks yang cocok.</p>}
-        </div>
+        </TabsList>
+      </Tabs>
+      {isLoading && <Spinner label="Memuat pengaturan…" />}
+      {error && <QueryError error={error} retry={refetch} />}
+      {data && (
+        <Card>
+          <CardContent className="space-y-4 pt-4">
+            {!bisaUbah && <p className="teks-kecil text-muted-foreground">Anda hanya bisa melihat halaman ini.</p>}
+            {kategori === 'aplikasi' && !cari && <PratinjauLogo data={data} />}
+            <ul className="space-y-3 md:hidden" aria-label="Teks aplikasi">
+              {bagian.map((b) => (
+                <li key={`${b.judul}-${b.teks[0]?.id}`} className="space-y-2">
+                  <h2 className="text-sm font-semibold">{b.judul}</h2>
+                  <ul className="space-y-3">
+                    {b.teks.map((t) => <Kartu key={t.id} t={t} sekarang={data[t.id]} bisaUbah={bisaUbah} />)}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden md:block">
+              <TableShell label="Teks aplikasi" minWidth={720}>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Teks bawaan</TableHead>
+                      <TableHead>Teks yang ditampilkan</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bagian.flatMap((b) => [
+                      <TableRow key={`h-${b.judul}-${b.teks[0]?.id}`} className="financial-row-group">
+                        <TableHead colSpan={3} scope="rowgroup">{b.judul}{b.keterangan && <span className="ml-2 text-xs font-normal normal-case text-muted-foreground">{b.keterangan}</span>}</TableHead>
+                      </TableRow>,
+                      ...b.teks.map((t) => <Baris key={t.id} t={t} sekarang={data[t.id]} bisaUbah={bisaUbah} />),
+                    ])}
+                    {bagian.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">Tidak ada teks yang cocok.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableShell>
+            </div>
+            {bagian.length === 0 && <p className="text-center text-sm text-muted-foreground md:hidden">Tidak ada teks yang cocok.</p>}
+            <p className="teks-kecil text-muted-foreground">{jumlahUbah > 0 ? `${jumlahUbah} teks sudah diubah. ` : ''}Teks yang sama dengan bawaan tidak disimpan. Kolom kosong mengembalikan teks sebelumnya.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

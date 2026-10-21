@@ -115,4 +115,15 @@ describe('sheet engine', () => {
     expect(row('n_laba_lalu').cells[1].value).toBe(600)
     expect(row('selisih').cells[1].value).toBe(0)
   })
+
+  it('profit paid out leaves the main cash and the retained profit, not the expenses, and the balance sheet still balances', () => {
+    const b = run({ ...emptyLembar(), sel: { 'pl_admin|2026-10-04': '120', 'pl_owner|2026-10-04': '180' } })
+    expect(total(b, 'jml_pembagian')).toBe(300)
+    expect(total(b, 'akhir')).toBe(1000)
+    expect(total(b, 'n_kas')).toBe(1000)
+    expect(total(b, 'jml_pengeluaran')).toBe(200)
+    expect(total(b, 'laba')).toBe(300)
+    expect(total(b, 'n_laba_lalu')).toBe(-300)
+    expect(total(b, 'selisih')).toBe(0)
+  })
 })

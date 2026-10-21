@@ -116,10 +116,11 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
     }
     out.push(...group)
   }
-  // Opening cash of a period is the closing cash of the one before; closing = opening + cash in - cash out + transfers.
+  // Opening cash of a period is the closing cash of the one before; closing = opening + cash in - cash out + transfers - profit paid out.
   const byKey = new Map(out.filter((l): l is Line => !isGroup(l)).map((l) => [l.def.key, l]))
   const [awal, akhir] = [byKey.get('awal'), byKey.get('akhir')]
   const [masuk, keluar, transfer] = ['kas_masuk', 'kas_keluar', 'transfer'].map((k) => byKey.get(k))
+  const dibagi = byKey.get('jml_pembagian')
   if (awal && akhir && masuk && keluar && transfer) {
     const open: Cell[] = []
     const close: Cell[] = []
@@ -127,7 +128,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       const o = w === 0 || akhir.cells[w - 1].value === null ? awal.cells[w] : { value: close[w - 1].value, manual: false }
       open.push(o)
       const [m, k, t] = [masuk, keluar, transfer].map((l) => l.cells[w].value)
-      close.push(o.value === null || akhir.cells[w].value === null || m === null || k === null || t === null ? akhir.cells[w] : { value: round(o.value + m - k + t), manual: false })
+      close.push(o.value === null || akhir.cells[w].value === null || m === null || k === null || t === null ? akhir.cells[w] : { value: round(o.value + m - k + t - (dibagi?.cells[w].value ?? 0)), manual: false })
     })
     const at = (l: Line) => out.indexOf(l)
     out[at(awal)] = withCells(awal, open)
