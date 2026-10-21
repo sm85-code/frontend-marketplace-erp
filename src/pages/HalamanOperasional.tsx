@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ListChecks, Plus, Trash2, TrendingUp, Wallet } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { fmtRp, getApiError } from '@/api/client'
 import {
@@ -11,7 +11,6 @@ import {
   type JenisOperasional,
   type TransaksiOperasional,
 } from '@/api/operasional'
-import KartuMetrik from '@/components/KartuMetrik'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import TableShell from '@/components/TableShell'
@@ -31,7 +30,6 @@ const hariIni = () => wib({ year: 'numeric', month: '2-digit', day: '2-digit' })
 const bulanIni = () => hariIni().slice(0, 7)
 
 type Simpan = (isi: Isi) => Promise<void>
-type Tata = 'tabel' | 'kartu'
 
 const tglTampil = (t: string) => t.split('-').reverse().join('/')
 const aksenKategori = 'border-l-4 border-l-primary/60'
@@ -63,13 +61,13 @@ const saatKeluar = (keluar: () => void) => (e: React.FocusEvent<HTMLElement>) =>
   if (!e.currentTarget.contains(e.relatedTarget as Node | null)) keluar()
 }
 
-type PropsBaris = { item: TransaksiOperasional; label: string; nomor: number; bisaTulis: boolean; simpan: Simpan; hapus: () => void; tata: Tata }
+type PropsBaris = { item: TransaksiOperasional; label: string; nomor: number; bisaTulis: boolean; simpan: Simpan; hapus: () => void }
 
 /** One saved entry. Its fields are typed into directly; leaving the row saves what changed. */
-function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus, tata }: PropsBaris) {
+function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus }: PropsBaris) {
   const { isi, setIsi, keluarBaris } = useBaris(item, simpan)
   const nama = (kolom: string) => `${kolom} ${label} baris ${nomor}`
-  const tanggal = <Input type="date" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
+  const tanggal = <Input type="date" className="px-2 text-sm" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
   const uraian = <Input aria-label={nama('Uraian')} value={isi.uraian} maxLength={255} onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
   const jumlah = <MoneyInput aria-label={nama('Jumlah')} className="text-right" value={isi.jumlah} onChange={(e) => setIsi((x) => ({ ...x, jumlah: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
   const tombolHapus = (
@@ -77,31 +75,6 @@ function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus, tata }: 
       <Trash2 className="size-4" aria-hidden />
     </Button>
   )
-  if (tata === 'kartu') {
-    return (
-      <li className="space-y-2 rounded-lg border bg-card p-3" onBlur={bisaTulis ? saatKeluar(() => void keluarBaris()) : undefined}>
-        {bisaTulis ? (
-          <>
-            <div className="flex items-center gap-2">
-              <span className="w-6 shrink-0 text-center text-sm tabular-nums text-muted-foreground">{nomor}</span>
-              <div className="min-w-0 flex-1">{tanggal}</div>
-              {tombolHapus}
-            </div>
-            {uraian}
-            {jumlah}
-          </>
-        ) : (
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-medium">{item.uraian || '—'}</p>
-              <p className="teks-kecil text-muted-foreground">{nomor}. {tglTampil(item.tanggal)}</p>
-            </div>
-            <span className="shrink-0 font-semibold tabular-nums">{fmtRp(item.jumlah)}</span>
-          </div>
-        )}
-      </li>
-    )
-  }
   if (!bisaTulis) {
     return (
       <TableRow>
@@ -116,7 +89,7 @@ function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus, tata }: 
   return (
     <TableRow onBlur={saatKeluar(() => void keluarBaris())}>
       <TableCell className="w-12 text-center tabular-nums text-muted-foreground">{nomor}</TableCell>
-      <TableCell className="w-44">{tanggal}</TableCell>
+      <TableCell className="w-40">{tanggal}</TableCell>
       <TableCell>{uraian}</TableCell>
       <TableCell className="w-48">{jumlah}</TableCell>
       <TableCell className="w-14 text-right">{tombolHapus}</TableCell>
@@ -125,7 +98,7 @@ function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus, tata }: 
 }
 
 /** The empty row at the end of a category: fill the amount (and a description) and move on, the row is saved and a new one opens. */
-function BarisBaru({ label, tanggalAwal, simpan, tata }: { label: string; tanggalAwal: string; simpan: Simpan; tata: Tata }) {
+function BarisBaru({ label, tanggalAwal, simpan }: { label: string; tanggalAwal: string; simpan: Simpan }) {
   const kosong = (tanggal: string): Isi => ({ tanggal, uraian: '', jumlah: '' })
   const [isi, setIsi] = useState<Isi>(() => kosong(tanggalAwal))
   const menyimpan = useRef(false)
@@ -151,25 +124,13 @@ function BarisBaru({ label, tanggalAwal, simpan, tata }: { label: string; tangga
     }
   }
   const nama = (kolom: string) => `${kolom} ${label} baris baru`
-  const tanggal = <Input type="date" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
+  const tanggal = <Input type="date" className="px-2 text-sm" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
   const uraian = <Input aria-label={nama('Uraian')} placeholder="Ketik uraian…" value={isi.uraian} maxLength={255} onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
   const jumlah = <MoneyInput aria-label={nama('Jumlah')} className="text-right" placeholder="Jumlah" value={isi.jumlah} onChange={(e) => setIsi((x) => ({ ...x, jumlah: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-  if (tata === 'kartu') {
-    return (
-      <li className="space-y-2 rounded-lg border border-dashed bg-muted/20 p-3" onBlur={saatKeluar(() => void keluarBaris())}>
-        <div className="flex items-center gap-2">
-          <Plus className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <div className="min-w-0 flex-1">{tanggal}</div>
-        </div>
-        {uraian}
-        {jumlah}
-      </li>
-    )
-  }
   return (
     <TableRow className="bg-muted/20 hover:bg-muted/30" onBlur={saatKeluar(() => void keluarBaris())}>
       <TableCell className="w-12 text-center text-muted-foreground"><Plus className="mx-auto size-4" aria-hidden /></TableCell>
-      <TableCell className="w-44">{tanggal}</TableCell>
+      <TableCell className="w-40">{tanggal}</TableCell>
       <TableCell>{uraian}</TableCell>
       <TableCell className="w-48">{jumlah}</TableCell>
       <TableCell className="w-14" />
@@ -208,10 +169,9 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
 
   const sibuk = tambah.isPending || ubah.isPending || hapus.isPending
   const bisaTulis = !!data?.bisa_tulis
-  const terbesar = data?.kategori.map((k) => ({ label: k.label, jumlah: Number(data.ringkasan.per_kategori[k.id] ?? 0) })).sort((a, b) => b.jumlah - a.jumlah)[0]
   const tanggalAwal = tanggalBawaan(periode, hariIni())
-  const sisipan = (k: { id: string; label: string }, tata: Tata) => (
-    <BarisBaru label={k.label} tanggalAwal={tanggalAwal} tata={tata} simpan={(isi) => tambah.mutateAsync({ kategori: k.id, isi }).then(() => undefined)} />
+  const sisipan = (k: { id: string; label: string }) => (
+    <BarisBaru label={k.label} tanggalAwal={tanggalAwal} simpan={(isi) => tambah.mutateAsync({ kategori: k.id, isi }).then(() => undefined)} />
   )
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
@@ -224,43 +184,11 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
       {error && <QueryError error={error} retry={refetch} />}
       {data && (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-            <KartuMetrik label={`Jumlah ${judul}`} icon={Wallet} nilai={fmtRp(data.ringkasan.total)} catatan="Bulan yang dipilih" />
-            <KartuMetrik label="Transaksi" icon={ListChecks} nilai={String(data.items.length)} catatan="Baris tercatat" />
-            <KartuMetrik className="col-span-2 lg:col-span-1" label="Kategori terbesar" icon={TrendingUp} nilai={terbesar && terbesar.jumlah > 0 ? fmtRp(terbesar.jumlah) : '—'} catatan={terbesar && terbesar.jumlah > 0 ? terbesar.label : 'Belum ada transaksi'} />
-          </div>
           <Card>
             <CardContent className="space-y-4 pt-4">
               {bisaTulis && <p className="teks-kecil text-muted-foreground">Ketik langsung di baris. Isi tanggal, uraian, dan jumlah; pindah ke kolom lain atau tekan Enter dan baris tersimpan otomatis. Baris putus-putus di bawah tiap kelompok untuk transaksi baru.</p>}
-              <div className="space-y-5 md:hidden">
-                {data.kategori.map((k) => {
-                  const baris = data.items.filter((i) => i.kategori === k.id)
-                  return (
-                    <section key={k.id} aria-label={k.label} className="space-y-2">
-                      <div className={`flex items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2 ${aksenKategori}`}>
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span className="text-sm font-semibold">{k.label}</span>
-                          <Badge variant="secondary">{baris.length}</Badge>
-                        </div>
-                        <span className="shrink-0 text-sm font-semibold tabular-nums">{fmtRp(data.ringkasan.per_kategori[k.id] ?? '0')}</span>
-                      </div>
-                      <ul className="space-y-2">
-                        {baris.map((item, n) => (
-                          <BarisTransaksi key={item.id} tata="kartu" item={item} label={k.label} nomor={n + 1} bisaTulis={bisaTulis} simpan={(isi) => ubah.mutateAsync({ id: item.id, kategori: k.id, isi }).then(() => undefined)} hapus={() => void onHapus(item, k.label)} />
-                        ))}
-                        {bisaTulis && sisipan(k, 'kartu')}
-                        {!bisaTulis && baris.length === 0 && <li className="px-1 text-sm text-muted-foreground">Belum ada transaksi.</li>}
-                      </ul>
-                    </section>
-                  )
-                })}
-                <div className="flex items-center justify-between rounded-lg bg-[var(--table-heading-background)] px-3 py-3 font-bold">
-                  <span>Jumlah {judul}</span>
-                  <span className="tabular-nums">{fmtRp(data.ringkasan.total)}</span>
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <TableShell label={`Transaksi ${judul}`} minWidth={720}>
+              <div>
+                <TableShell label={`Transaksi ${judul}`} minWidth={600}>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -289,9 +217,9 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
                               <TableCell />
                             </TableRow>
                             {baris.map((item, n) => (
-                              <BarisTransaksi key={item.id} tata="tabel" item={item} label={k.label} nomor={n + 1} bisaTulis={bisaTulis} simpan={(isi) => ubah.mutateAsync({ id: item.id, kategori: k.id, isi }).then(() => undefined)} hapus={() => void onHapus(item, k.label)} />
+                              <BarisTransaksi key={item.id} item={item} label={k.label} nomor={n + 1} bisaTulis={bisaTulis} simpan={(isi) => ubah.mutateAsync({ id: item.id, kategori: k.id, isi }).then(() => undefined)} hapus={() => void onHapus(item, k.label)} />
                             ))}
-                            {bisaTulis && sisipan(k, 'tabel')}
+                            {bisaTulis && sisipan(k)}
                             {!bisaTulis && baris.length === 0 && (
                               <TableRow>
                                 <TableCell colSpan={5} className="text-muted-foreground">

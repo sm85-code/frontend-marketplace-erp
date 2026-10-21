@@ -103,7 +103,10 @@ function Simpul({ line, lipat, onLipat }: { line: Line; lipat: ReadonlySet<strin
       aria-expanded={!tertutup}
       aria-label={`${tertutup ? 'Buka' : 'Lipat'} rincian ${line.def.label}`}
       title={tertutup ? 'Tampilkan rincian' : 'Sembunyikan rincian'}
-      onClick={() => onLipat(line.def.key)}
+      onClick={(e) => {
+        e.stopPropagation() // the row opens its edit pop-up when tapped; the node only folds
+        onLipat(line.def.key)
+      }}
       className="inline-flex size-4 shrink-0 items-center justify-center rounded border border-border text-muted-foreground hover:border-primary hover:text-primary"
     >
       {tertutup ? <Plus className="size-3" aria-hidden="true" /> : <Minus className="size-3" aria-hidden="true" />}
