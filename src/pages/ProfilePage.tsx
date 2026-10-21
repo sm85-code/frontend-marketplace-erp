@@ -55,7 +55,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Role</div>
-            <div className="font-medium">{akses?.nama ?? t(`role:${user.role}`, ROLE_LABELS[user.role] ?? user.role)}</div>
+            <div className="font-medium">{t(`role:${user.role}`, akses?.nama ?? ROLE_LABELS[user.role] ?? user.role)}</div>
           </div>
           <form
             className="space-y-4"
