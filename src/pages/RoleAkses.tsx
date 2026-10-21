@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLabel } from '@/api/pengaturanUi'
+import { idGrupAkses } from '@/config/roles'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
@@ -77,6 +79,7 @@ export default function RoleAkses() {
     if (ok) hapus.mutate()
   }
 
+  const t = useLabel()
   const grup = useMemo(() => {
     const out: { nama: string; items: HalamanDef[] }[] = []
     for (const h of data?.halaman ?? []) {
@@ -176,7 +179,7 @@ export default function RoleAkses() {
                     <Fragment key={g.nama}>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
                         <TableCell colSpan={3} className="font-semibold">
-                          {g.nama}
+                          {t(idGrupAkses(g.nama), g.nama)}
                         </TableCell>
                       </TableRow>
                       {g.items.map((h) => {

@@ -19,6 +19,15 @@ export function useLabel() {
   return useCallback((id: string, bawaan: string) => data?.[id] ?? bawaan, [data])
 }
 
+export const ID_APP = { nama: 'app:nama', subjudul: 'app:subjudul', logo: 'app:logo' } as const
+export const APP_BAWAAN = { nama: 'Ampel Kuning', subjudul: 'ERP System', logo: '/logo-ampel-kuning.png' }
+
+/** Name, subtitle and logo shown in the sidebar and the phone header. */
+export function useIdentitas() {
+  const t = useLabel()
+  return { nama: t(ID_APP.nama, APP_BAWAAN.nama), subjudul: t(ID_APP.subjudul, APP_BAWAAN.subjudul), logo: t(ID_APP.logo, APP_BAWAAN.logo) }
+}
+
 export function useUbahTeks() {
   const qc = useQueryClient()
   return useMutation({

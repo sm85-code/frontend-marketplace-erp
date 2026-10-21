@@ -7,6 +7,10 @@ export const ROLE_LABELS: Record<string, string> = {
   staff: 'Staff',
 }
 
+/** Page groups of the access settings: the server's group name is the identity, the text shown can be changed on Kelola Aplikasi. */
+export const GRUP_AKSES = ['Harian', 'Produk', 'Processing', 'Keuangan', 'Info Toko', 'Iklan', 'Pengaturan']
+export const idGrupAkses = (grup: string) => `grupakses:${grup}`
+
 /** Pages only `owner` may reach — produk/listing/gudang
  * management and user administration (Iklan and Settlement are admin-only, see ROLES_ADMIN_ONLY). `staff` is scoped (per StaffAkunMarketplace)
  * to dashboard, pesanan, chat and catalogue reads for its assigned toko only — see Layout/App routing. */
