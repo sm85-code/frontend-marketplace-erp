@@ -30,7 +30,7 @@ describe('menu order follows the daily workflow', () => {
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
-      keuangan: ['/laporan-keuangan', '/arus-kas', '/settlement'],
+      keuangan: ['/laporan-keuangan', '/arus-kas', '/operasional-umum', '/operasional-packing', '/settlement'],
       iklan: ['/iklan'],
       'info-toko': ['/performa-toko', '/pengaturan-toko'],
       pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
@@ -45,7 +45,8 @@ describe('menu order follows the daily workflow', () => {
       expect(semua).not.toContain('/iklan')
       expect(semua).not.toContain('/settlement')
     }
-    expect(kelompokNav(filterNav(aksesBawaan('owner'))).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toBeUndefined()
+    // owner may only look at the two Operasional pages by default; the rest of Keuangan stays admin-only
+    expect(kelompokNav(filterNav(aksesBawaan('owner'))).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/operasional-umum', '/operasional-packing'])
     expect(kelompokNav(filterNav(aksesBawaan('staff'))).find((g) => g.grup.id === 'iklan')).toBeUndefined()
   })
 

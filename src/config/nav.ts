@@ -16,6 +16,8 @@ import {
   Warehouse,
   Hammer,
   ArrowLeftRight,
+  Wallet,
+  PackageOpen,
 } from 'lucide-react'
 import { bisa, type AksesSaya } from '@/lib/akses'
 
@@ -69,6 +71,8 @@ export const NAV: NavItem[] = [
   { to: '/processing/template', label: 'Template', icon: FilePenLine, halaman: 'processing', grup: 'data-produksi' },
   { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
   { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
+  { to: '/operasional-umum', label: 'Operasional Umum', icon: Wallet, halaman: 'operasional_umum', grup: 'keuangan' },
+  { to: '/operasional-packing', label: 'Operasional Packing', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: 'settlement', grup: 'keuangan' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },

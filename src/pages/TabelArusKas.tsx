@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
-import { kategoriDari, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
+import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
@@ -64,7 +64,9 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const openEdit = (line: Line, week: number) => {
     if (line.def.key.endsWith(':selisih')) return
     const grup = grupDari(line.def.key)
-    const opsi = line.def.induk || line.def.emphasis ? undefined : opsiKategori(grup)
+    const adaRincian = anakDari(lembar, line.def.key).length > 0
+    // A row with sub-rows has no category of its own: each sub-row (1.1, 1.2, ...) picks where its figure goes.
+    const opsi = line.def.emphasis || adaRincian ? undefined : opsiKategori(grup)
     setTarget({
       key: line.def.key,
       label: line.def.label,
@@ -73,12 +75,22 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       manual: line.cells[week]?.manual ?? false,
       split: splitIds.has(line.def.key),
       child: childIds.has(line.def.key),
-      anak: anakDari(lembar, line.def.key).length > 0,
+      anak: adaRincian,
       total: !!line.def.emphasis,
       opsi,
-      kategori: opsi ? kategoriDari(lembar, line.def.key, grup) : undefined,
+      kategori: !opsi ? undefined : line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup) : kategoriDari(lembar, line.def.key, grup),
+      kategoriDiRincian: adaRincian && !!opsiKategori(grup),
       week,
     })
+  }
+  /** The component a row's (or sub-row's) figure is filed under, shown after its name. A row with sub-rows shows none: they do. */
+  const ketKategori = (line: Line) => {
+    if (line.def.emphasis || anakDari(lembar, line.def.key).length > 0) return undefined
+    const grup = grupDari(line.def.key)
+    const opsi = opsiKategori(grup)
+    if (!opsi) return undefined
+    const id = line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup) : kategoriDari(lembar, line.def.key, grup)
+    return opsi.find((o) => o.id === id)?.label
   }
   const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.key)}|${days[t.week]}`)
   const commit = (next: Lembar) => {
@@ -94,7 +106,10 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const sel = target.total || target.anak ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
     const next = { ...lembar, sel, baris }
-    commit(kategori ? setKategori(next, target.key, grupDari(target.key), kategori) : next)
+    const grup = grupDari(target.key)
+    // A sub-row's default is its row's category; choosing that one again removes its own choice.
+    const bawaan = target.child ? kategoriDari(lembar, indukDari(target.key), grup) : undefined
+    commit(kategori ? setKategori(next, target.key, grup, kategori, bawaan) : next)
   }
   const onClearValue = () => {
     if (!target) return
@@ -109,7 +124,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       return
     }
     // A row takes its sub-rows with it.
-    const gone = new Set([target.key, ...anakDari(lembar, target.key).map((b) => b.id), keyKategori(target.key)])
+    const kids = anakDari(lembar, target.key).map((b) => b.id)
+    const gone = new Set([target.key, ...kids, keyKategori(target.key), ...kids.map(keyKategori)])
     commit({
       ...lembar,
       baris: lembar.baris.filter((b) => !gone.has(b.id)),
@@ -163,7 +179,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           </Button>
         </AksiHalaman>
       )}
-      <FinancialSheetTable block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable ketBaris={ketKategori} block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}

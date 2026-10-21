@@ -9,6 +9,8 @@ export const KATEGORI_MASUK: Kategori[] = [
   { id: 'cat', label: 'Jasa cat' },
   { id: 'packing', label: 'Jasa packing' },
   { id: 'proses', label: 'Jasa proses pesanan' },
+  { id: 'produk_proses', label: 'Penjualan produk + proses' },
+  { id: 'cat_packing', label: 'Jasa cat + packing' },
   { id: 'lain_masuk', label: 'Pemasukan lainnya' },
   { id: 'bukan', label: 'Bukan pemasukan' },
 ]
@@ -49,8 +51,18 @@ export const kategoriDari = (lembar: Lembar, key: string, grup: string) => {
   return saved && opsi?.some((o) => o.id === saved) ? saved : kategoriAwal(key, grup)
 }
 
-/** Choosing the initial category clears the override. */
-export const setKategori = (lembar: Lembar, key: string, grup: string, id: string): Lembar => {
+/**
+ * The category of a sub-row (rincian, numbered 1.1, 1.2, ...): its own when one was chosen, else the one of its row.
+ * A row with sub-rows has no category of its own to act on: each sub-row decides where its figure goes.
+ */
+export const kategoriRincian = (lembar: Lembar, key: string, indukKey: string, grup: string) => {
+  const opsi = opsiKategori(grup)
+  const saved = lembar.baris.find((b) => b.id === keyKategori(key))?.label
+  return saved && opsi?.some((o) => o.id === saved) ? saved : kategoriDari(lembar, indukKey, grup)
+}
+
+/** Choosing the category the row would have anyway (`bawaan`: its initial one, or its row's for a sub-row) clears the override. */
+export const setKategori = (lembar: Lembar, key: string, grup: string, id: string, bawaan: string = kategoriAwal(key, grup)): Lembar => {
   const rest = lembar.baris.filter((b) => b.id !== keyKategori(key))
-  return { ...lembar, baris: id === kategoriAwal(key, grup) ? rest : [...rest, { id: keyKategori(key), tabel: RINCI_TABEL, grup: 'kategori', label: id }] }
+  return { ...lembar, baris: id === bawaan ? rest : [...rest, { id: keyKategori(key), tabel: RINCI_TABEL, grup: 'kategori', label: id }] }
 }

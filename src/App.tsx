@@ -1,7 +1,8 @@
 import WorkspaceOverlays from '@/components/WorkspaceOverlays'
 import { SinkronisasiSession } from '@/components/SinkronisasiProvider'
-import { lazy, Suspense, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
+import { pasangPendengarNotifikasi } from '@/lib/pwa'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
@@ -33,6 +34,8 @@ const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const DocumentTemplatesPage = lazy(() => import('@/pages/DocumentTemplatesPage'))
 const ProcessingPage = lazy(() => import('@/pages/ProcessingPage'))
 const ArusKas = lazy(() => import('@/pages/ArusKas'))
+const OperasionalUmumPage = lazy(() => import('@/pages/OperasionalUmum'))
+const OperasionalPackingPage = lazy(() => import('@/pages/OperasionalPacking'))
 const FinancialReportsPage = lazy(() => import('@/pages/FinancialReportsPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
 const IklanPage = lazy(() => import('@/pages/IklanPage'))
@@ -55,6 +58,13 @@ function LazyPage({ children }: { children: ReactNode }) {
       <Suspense fallback={<PageFallback />}>{children}</Suspense>
     </ErrorBoundary>
   )
+}
+
+/** A tapped push notification asks the open window to go to the new order or chat; do it inside the app. */
+function PendengarNotifikasi() {
+  const navigate = useNavigate()
+  useEffect(() => pasangPendengarNotifikasi((alamat) => navigate(alamat)), [navigate])
+  return null
 }
 
 function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string; perlu?: Tingkat }) {
@@ -93,6 +103,8 @@ export default function App() {
               <Route path="/performa-toko" element={<Protected halaman="info_toko"><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/processing/template" element={<Protected halaman="processing"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected halaman="processing"><LazyPage><ProcessingPage /></LazyPage></Protected>} />
+              <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
+              <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
               <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
@@ -144,6 +156,7 @@ path="/iklan"
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />
             </Routes>
+            <PendengarNotifikasi />
             <WorkspaceOverlays/>
           </SinkronisasiSession></AuthProvider>
         </BrowserRouter>

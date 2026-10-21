@@ -10,3 +10,29 @@ export function daftarkanServiceWorker() {
     })
   })
 }
+
+/**
+ * Listens for the service worker asking an open window to go somewhere (a tapped notification: new order, new chat). The
+ * page moves there inside the app, without reloading, and answers on the port so the worker knows it was handled.
+ * Only addresses of this app are followed. Returns the function that stops listening.
+ */
+export function pasangPendengarNotifikasi(buka: (alamat: string) => void): () => void {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return () => {}
+  const wadah = navigator.serviceWorker
+  const pesan = (event: MessageEvent) => {
+    const isi = event.data as { type?: string; url?: unknown } | null
+    if (isi?.type !== 'buka' || typeof isi.url !== 'string') return
+    let alamat: URL
+    try {
+      alamat = new URL(isi.url, window.location.origin)
+    } catch {
+      return
+    }
+    if (alamat.origin !== window.location.origin) return
+    event.ports?.[0]?.postMessage('ok')
+    buka(alamat.pathname + alamat.search + alamat.hash)
+  }
+  wadah.addEventListener('message', pesan)
+  wadah.startMessages?.() // messages wait in a queue until this is called (setting onmessage would do it, addEventListener does not)
+  return () => wadah.removeEventListener('message', pesan)
+}
