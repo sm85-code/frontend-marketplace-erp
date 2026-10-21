@@ -26,6 +26,28 @@ import RoleAkses from '@/pages/RoleAkses'
 import { useAuth } from '@/lib/auth'
 import type { AkunMarketplace, Role, StaffAkun, User } from '@/api/types'
 
+/** Main role first, then the extra ones the account holds. */
+const semuaRole = (u: User) => [u.role, ...(u.peran_tambahan ?? [])]
+
+/** Extra roles an account holds on top of its main one; its access is the union of all of them. */
+function PilihRoleTambahan({ pilihan, dipilih, namaRole, onChange }: { pilihan: string[]; dipilih: string[]; namaRole: (id: string) => string; onChange: (v: string[]) => void }) {
+  if (pilihan.length === 0) return null
+  return (
+    <fieldset className="space-y-1.5">
+      <legend className="text-sm font-medium">Role tambahan (opsional)</legend>
+      <p className="text-xs text-muted-foreground">Akses digabung dengan role utama: halaman dibuka bila salah satu role mengizinkan, dan tulis mengalahkan baca.</p>
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {pilihan.map((r) => (
+          <label key={r} className="flex cursor-pointer items-center gap-2 text-sm">
+            <Checkbox checked={dipilih.includes(r)} onCheckedChange={(v) => onChange(v === true ? [...dipilih, r] : dipilih.filter((x) => x !== r))} />
+            {namaRole(r)}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 const kolomPengguna = (namaRole: (id: string) => string): KolomTabel<User>[] => [
   { kunci: 'nama', judul: 'Nama', kelas: 'font-medium', tetap: true, sel: (u) => u.nama, nilai: (u) => u.nama },
   { kunci: 'username', judul: 'Username', kelas: 'font-mono', sel: (u) => u.username ?? '—', nilai: (u) => u.username },
@@ -33,8 +55,12 @@ const kolomPengguna = (namaRole: (id: string) => string): KolomTabel<User>[] => 
   {
     kunci: 'role',
     judul: 'Role',
-    sel: (u) => <Badge variant={u.role === 'staff' ? 'secondary' : 'default'}>{namaRole(u.role)}</Badge>,
-    nilai: (u) => namaRole(u.role),
+    sel: (u) => (
+      <span className="flex flex-wrap gap-1">
+        {semuaRole(u).map((r, i) => <Badge key={r} variant={i > 0 || r === 'staff' ? 'secondary' : 'default'}>{namaRole(r)}</Badge>)}
+      </span>
+    ),
+    nilai: (u) => semuaRole(u).map(namaRole).join(', '),
   },
 ]
 
@@ -71,9 +97,9 @@ export default function StaffPage() {
   const dibatasiToko = (id: string) => (roleMap.get(id)?.akses_toko ?? (id === 'staff' ? 'ditugaskan' : 'semua')) === 'ditugaskan'
   // An admin may give any role that exists; an owner only the built-in staff role.
   const peranBoleh = adalahAdmin && roleDaftar ? ['staff', ...roleDaftar.roles.map((r) => r.id).filter((id) => id !== 'staff')] : rolesYangBolehDibuat(saya?.role)
-  const [userForm, setUserForm] = useState({ nama: '', username: '', email: '', password: '', role: 'staff' as Role })
+  const [userForm, setUserForm] = useState({ nama: '', username: '', email: '', password: '', role: 'staff' as Role, peran_tambahan: [] as string[] })
   const [editUser, setEditUser] = useState<User | null>(null)
-  const [editForm, setEditForm] = useState({ username: '', nama: '', role: 'staff' as Role })
+  const [editForm, setEditForm] = useState({ username: '', nama: '', role: 'staff' as Role, peran_tambahan: [] as string[] })
   const [assignDialog, setAssignDialog] = useState(false)
   const [assignForm, setAssignForm] = useState({ user_id: '', akun_ids: [] as string[] })
 
@@ -83,7 +109,9 @@ export default function StaffPage() {
 
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
   const userMap = new Map((users ?? []).map((u) => [u.id, u]))
-  const staffUsers = (users ?? []).filter((u) => dibatasiToko(u.role))
+  // An account reaches only its assigned shops when none of its roles reaches every shop.
+  const dibatasiUser = (u: User) => semuaRole(u).every(dibatasiToko)
+  const staffUsers = (users ?? []).filter(dibatasiUser)
 
   const createUserMut = useMutation({
     mutationFn: endpoints.createUser,
@@ -91,13 +119,13 @@ export default function StaffPage() {
       toast.success('Akun dibuat — beri tahu password sementara ke pengguna')
       qc.invalidateQueries({ queryKey: ['users'] })
       setUserDialog(false)
-      setUserForm({ nama: '', username: '', email: '', password: '', role: 'staff' })
+      setUserForm({ nama: '', username: '', email: '', password: '', role: 'staff', peran_tambahan: [] })
     },
     onError: (e) => toast.error(getApiError(e)),
   })
 
   const updateUserMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: { username?: string; nama?: string; role?: Role } }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: { username?: string; nama?: string; role?: Role; peran_tambahan?: string[] } }) =>
       endpoints.updateUser(id, payload),
     onSuccess: () => {
       toast.success('Akun diperbarui')
@@ -109,7 +137,7 @@ export default function StaffPage() {
 
   function bukaEdit(u: User) {
     setEditUser(u)
-    setEditForm({ username: u.username ?? '', nama: u.nama, role: u.role })
+    setEditForm({ username: u.username ?? '', nama: u.nama, role: u.role, peran_tambahan: u.peran_tambahan ?? [] })
   }
 
   const assignMut = useMutation({
@@ -184,7 +212,7 @@ export default function StaffPage() {
             <TabelLokal
               label="Daftar pengguna"
               items={users}
-              kolom={[...kolomPengguna(namaRole), { kunci: 'toko', judul: 'Toko ditugaskan', kelas: 'min-w-[180px] max-w-[320px] break-words', sel: u => dibatasiToko(u.role) ? (staffAkun ?? []).filter(r => r.user_id === u.id).map(r => akunMap.get(r.akun_id)?.nama_toko ?? 'Toko tidak tersedia').join(', ') || 'Belum ditugaskan' : 'Sesuai kewenangan role' }]}
+              kolom={[...kolomPengguna(namaRole), { kunci: 'toko', judul: 'Toko ditugaskan', kelas: 'min-w-[180px] max-w-[320px] break-words', sel: u => dibatasiUser(u) ? (staffAkun ?? []).filter(r => r.user_id === u.id).map(r => akunMap.get(r.akun_id)?.nama_toko ?? 'Toko tidak tersedia').join(', ') || 'Belum ditugaskan' : 'Sesuai kewenangan role' }]}
               idDari={(u) => u.id}
               namaDari={(u) => u.nama}
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
@@ -284,6 +312,9 @@ export default function StaffPage() {
                 </SelectContent>
               </Select>
             </div>
+            {adalahAdmin && userForm.role !== 'admin' && (
+              <PilihRoleTambahan pilihan={peranBoleh.filter((r) => r !== 'admin' && r !== userForm.role)} dipilih={userForm.peran_tambahan} namaRole={namaRole} onChange={(v) => setUserForm((f) => ({ ...f, peran_tambahan: v }))} />
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUserDialog(false)}>
@@ -333,6 +364,9 @@ export default function StaffPage() {
                 </SelectContent>
               </Select>
             </div>
+            {adalahAdmin && editForm.role !== 'admin' && (
+              <PilihRoleTambahan pilihan={peranBoleh.filter((r) => r !== 'admin' && r !== editForm.role)} dipilih={editForm.peran_tambahan} namaRole={namaRole} onChange={(v) => setEditForm((f) => ({ ...f, peran_tambahan: v }))} />
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUser(null)}>
@@ -344,7 +378,7 @@ export default function StaffPage() {
                 editUser &&
                 updateUserMut.mutate({
                   id: editUser.id,
-                  payload: { username: editForm.username.trim(), nama: editForm.nama.trim(), role: editForm.role },
+                  payload: { username: editForm.username.trim(), nama: editForm.nama.trim(), role: editForm.role, peran_tambahan: editForm.peran_tambahan.filter((r) => r !== editForm.role) },
                 })
               }
             >

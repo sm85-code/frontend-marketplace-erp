@@ -68,10 +68,11 @@ export const createUser = (payload: {
   email?: string | null
   password: string
   role: Role
+  peran_tambahan?: string[]
 }) => api.post<User>('/users', payload).then((r) => r.data)
 
 /** Admin only: change an account's username, display name or role. */
-export const updateUser = (id: string, payload: { username?: string; nama?: string; role?: Role }) =>
+export const updateUser = (id: string, payload: { username?: string; nama?: string; role?: Role; peran_tambahan?: string[] }) =>
   api.patch<User>(`/users/${id}`, payload).then((r) => r.data)
 
 /** Admin only: delete another account (not yourself, not the last admin). */

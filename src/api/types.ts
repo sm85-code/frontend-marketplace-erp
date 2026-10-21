@@ -21,6 +21,8 @@ export interface User {
   /** Optional contact email, also accepted at login. */
   email: string | null
   role: Role
+  /** Roles held on top of the main one; access is the union of all of them. */
+  peran_tambahan?: string[]
   must_change_password: boolean
 }
 
@@ -839,6 +841,8 @@ export interface PromosiProdukInput {
 export type Tingkat = 'baca' | 'tulis'
 export interface AksesSaya {
   role: string
+  /** The main role first, then the extra ones. */
+  roles?: string[]
   nama: string
   akses_toko: 'semua' | 'ditugaskan'
   halaman: Record<string, Tingkat>
