@@ -8,7 +8,7 @@ import BottomNav from '@/components/BottomNav'
 import WallpaperLayer from '@/components/WallpaperLayer'
 import { Button } from '@/components/ui/button'
 import { APP_BAWAAN, useIdentitas, useLabel } from '@/api/pengaturanUi'
-import { denganLabel, filterNav, idGrup, itemBawah, kelompokNav } from '@/config/nav'
+import { denganLabel, filterNav, idGrup, idNavBawah, itemBawahDipilih, kelompokNav } from '@/config/nav'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 import { useKonfirmasiKeluar } from '@/lib/riwayat'
@@ -38,7 +38,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
 
   const grup = useMemo(() => kelompokNav(visible), [visible])
-  const bottomItems = useMemo(() => itemBawah(visible), [visible])
+  const navBawah = t(idNavBawah(akses?.role ?? user?.role ?? ''), '')
+  const bottomItems = useMemo(() => itemBawahDipilih(visible, navBawah), [visible, navBawah])
 
   // "Lainnya" lights up when the current page is not one of the bottom tabs.
   const moreActive = useMemo(() => {

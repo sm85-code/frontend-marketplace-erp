@@ -10,6 +10,7 @@ import { BarHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import KelolaMenuBawah from '@/pages/KelolaMenuBawah'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRUP_NAV, NAV, idGrup, idMenu } from '@/config/nav'
@@ -35,7 +36,9 @@ interface Bagian {
   keterangan?: string
   teks: Teks[]
 }
-type Kategori = 'aplikasi' | 'menu' | 'laporan'
+type Kategori = 'aplikasi' | 'menu' | 'bawah' | 'laporan'
+type KategoriTeks = Exclude<Kategori, 'bawah'>
+const URUTAN_TAB: Kategori[] = ['aplikasi', 'menu', 'bawah', 'laporan']
 
 const LEMBAR = sheetSections({ laporan: [] } as unknown as Overview)
 // Pemasukan, Pengeluaran and the groups/rows of Laba/Rugi that come from the categories are named in Kategori Transaksi,
@@ -51,7 +54,7 @@ const TAMBAHAN: Record<string, Teks[]> = {
 }
 
 /** Every text that can be changed here, in the order of the page. The id is what the app goes by; the text is only shown. Add new editable texts here. */
-const KATEGORI: Record<Kategori, Bagian[]> = {
+const KATEGORI: Record<KategoriTeks, Bagian[]> = {
   aplikasi: [
     {
       judul: 'Identitas aplikasi',
@@ -90,7 +93,7 @@ const KATEGORI: Record<Kategori, Bagian[]> = {
     })),
   ],
 }
-const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'Menu', laporan: 'Laporan Keuangan' }
+const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'Menu', bawah: 'Menu bawah', laporan: 'Laporan Keuangan' }
 
 const alamatSah = (a: string) => /^https:\/\/\S+$/.test(a) || /^\/[^\s/]\S*$/.test(a)
 
@@ -177,7 +180,7 @@ export default function KelolaAplikasi() {
 
   const bagian = useMemo(() => {
     const k = cari.trim().toLowerCase()
-    const semua = k ? (Object.keys(KATEGORI) as Kategori[]).flatMap((x) => KATEGORI[x]) : KATEGORI[kategori]
+    const semua = k ? (Object.keys(KATEGORI) as KategoriTeks[]).flatMap((x) => KATEGORI[x]) : kategori === 'bawah' ? [] : KATEGORI[kategori]
     if (!k) return semua
     return semua
       .map((b) => ({ ...b, teks: b.teks.filter((t) => t.bawaan.toLowerCase().includes(k) || (t.judul ?? '').toLowerCase().includes(k) || (data?.[t.id] ?? '').toLowerCase().includes(k)) }))
@@ -192,14 +195,15 @@ export default function KelolaAplikasi() {
       </BarHalaman>
       <Tabs value={kategori} onValueChange={(v) => setKategori(v as Kategori)}>
         <TabsList className="section-tabs">
-          {(Object.keys(KATEGORI) as Kategori[]).map((k) => (
+          {URUTAN_TAB.map((k) => (
             <TabsTrigger key={k} value={k}>{NAMA_KATEGORI[k]}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
       {isLoading && <Spinner label="Memuat pengaturan…" />}
       {error && <QueryError error={error} retry={refetch} />}
-      {data && (
+      {data && kategori === 'bawah' && !cari && <KelolaMenuBawah data={data} bisaUbah={bisaUbah} />}
+      {data && (kategori !== 'bawah' || !!cari) && (
         <Card>
           <CardContent className="space-y-4 pt-4">
             {!bisaUbah && <p className="teks-kecil text-muted-foreground">Anda hanya bisa melihat halaman ini.</p>}

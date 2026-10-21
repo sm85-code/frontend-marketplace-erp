@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterNav, GRUP_NAV, itemBawah, kelompokNav, NAV } from '@/config/nav'
+import { filterNav, GRUP_NAV, itemBawah, itemBawahDipilih, kelompokNav, NAV } from '@/config/nav'
 import { aksesBawaan } from './aksesBawaan'
 
 describe('filterNav', () => {
@@ -72,5 +72,20 @@ describe('phone bottom bar', () => {
 
   it('never shows more tabs than asked for', () => {
     expect(itemBawah(filterNav(aksesBawaan('owner')), 2).map((n) => n.to)).toEqual(['/dashboard', '/katalog'])
+  })
+})
+
+describe('bottom bar chosen on Kelola Aplikasi', () => {
+  const menu = filterNav(aksesBawaan('staff'))
+  it('keeps the built-in bar when nothing is chosen', () => {
+    expect(itemBawahDipilih(menu, undefined).map((n) => n.to)).toEqual(itemBawah(menu).map((n) => n.to))
+    expect(itemBawahDipilih(menu, '').map((n) => n.to)).toEqual(itemBawah(menu).map((n) => n.to))
+  })
+  it('follows the chosen order and drops menus the role cannot open or that are repeated', () => {
+    expect(itemBawahDipilih(menu, '/chat, /dashboard,/chat,/settlement,/profile').map((n) => n.to)).toEqual(['/chat', '/dashboard', '/profile'])
+  })
+  it('never shows more than four tabs, and falls back when nothing usable is chosen', () => {
+    expect(itemBawahDipilih(menu, '/dashboard,/pesanan,/chat,/katalog,/profile').map((n) => n.to)).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog'])
+    expect(itemBawahDipilih(menu, '/settlement').map((n) => n.to)).toEqual(itemBawah(menu).map((n) => n.to))
   })
 })
