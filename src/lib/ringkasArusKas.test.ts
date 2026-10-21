@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
-import { keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
-import { setKategori } from './kategoriKeuangan'
+import { keyKategori, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
+import { kategoriRincian, setKategori } from './kategoriKeuangan'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -52,6 +52,59 @@ describe('summarized tabs from Arus Kas', () => {
     expect(val(b, 'p:produk')).toBe(500)
     expect(val(b, 'p:proses')).toBe(100)
     expect(val(b, 'jml_pemasukan')).toBe(300 + 500 + 100 + 50 + 20)
+  })
+
+  describe('category per sub-row (1.1, 1.2, ...)', () => {
+    const dua = () => {
+      const lembar = emptyLembar()
+      lembar.baris.push({ id: 'c:a', tabel: RINCI_TABEL, grup: 'anak:k_prod', label: 'Penjualan' }, { id: 'c:b', tabel: RINCI_TABEL, grup: 'anak:k_prod', label: 'Jasa cat' })
+      lembar.sel[`c:a|${d}`] = '400'
+      lembar.sel[`c:b|${d}`] = '200'
+      return lembar
+    }
+
+    it('sub-rows follow their row until one picks another category, and the total never changes', () => {
+      const before = build(dua())
+      expect(val(before, 'p:produk')).toBe(600)
+      expect(val(before, 'p:cat')).toBe(50)
+      const after = build(setKategori(dua(), 'c:b', 'Kas masuk', 'cat', 'produk'))
+      expect(val(after, 'p:produk')).toBe(400) // 1.1 stays under the row's category
+      expect(val(after, 'p:cat')).toBe(250) // 1.2 moved: 200 + the 50 of the other row
+      expect(val(after, 'jml_pemasukan')).toBe(val(before, 'jml_pemasukan'))
+    })
+
+    it('one row can feed two components at once, in either order of the sub-rows', () => {
+      let lembar = setKategori(dua(), 'c:a', 'Kas masuk', 'saldo_toko', 'produk')
+      lembar = setKategori(lembar, 'c:b', 'Kas masuk', 'proses', 'produk')
+      const b = build(lembar)
+      expect(val(b, 'p:saldo_toko')).toBe(300 + 400)
+      expect(val(b, 'p:proses')).toBe(200)
+      expect(val(b, 'p:produk')).toBe(0)
+    })
+
+    it('changing the row category moves the sub-rows that have no choice of their own', () => {
+      const b = build(setKategori(dua(), 'k_prod', 'Kas masuk', 'cat'))
+      expect(val(b, 'p:produk')).toBe(0)
+      expect(val(b, 'p:cat')).toBe(50 + 600)
+    })
+
+    it('a sub-row shows its own category, else its row\'s; choosing the row\'s again drops the choice', () => {
+      const own = setKategori(dua(), 'c:b', 'Kas masuk', 'cat', 'produk')
+      expect(kategoriRincian(own, 'c:a', 'k_prod', 'Kas masuk')).toBe('produk')
+      expect(kategoriRincian(own, 'c:b', 'k_prod', 'Kas masuk')).toBe('cat')
+      const back = setKategori(own, 'c:b', 'Kas masuk', 'produk', 'produk')
+      expect(back.baris.some((x) => x.id === keyKategori('c:b'))).toBe(false)
+    })
+
+    it('works for cash out too', () => {
+      const lembar = emptyLembar()
+      lembar.baris.push({ id: 'c:x', tabel: RINCI_TABEL, grup: 'anak:k_pembelian', label: 'Cat' }, { id: 'c:y', tabel: RINCI_TABEL, grup: 'anak:k_pembelian', label: 'Kardus' })
+      lembar.sel[`c:x|${d}`] = '30'
+      lembar.sel[`c:y|${d}`] = '50'
+      const b = build(setKategori(lembar, 'c:y', 'Kas keluar', 'perl_packing', 'non_kayu'))
+      expect(val(b, 'p:non_kayu')).toBe(30)
+      expect(val(b, 'p:perl_packing')).toBe(50)
+    })
   })
 
   it('a component with no Arus Kas row is filled by hand', () => {

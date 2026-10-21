@@ -1,22 +1,27 @@
 import { applyRinci } from '@/lib/arusKasRinci'
 import { isGroup, type Block, type Cell, type GroupDef, type Lembar, type Line, type RowDef } from '@/lib/sheetEngine'
-import { GRUP_KELUAR, GRUP_MASUK, kategoriDari } from '@/lib/kategoriKeuangan'
+import { GRUP_KELUAR, GRUP_MASUK, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuangan'
 
 const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 const sum = (values: (number | null)[]) => round(values.reduce<number>((a, v) => a + (v ?? 0), 0))
 
-/** Amounts of the rows of one Arus Kas group (cash in / cash out), per category and period. Sub-rows are already summed into their row. */
+/**
+ * Amounts of one Arus Kas group (cash in / cash out) per category and period. A row without sub-rows files its own figure
+ * under its category; a row with sub-rows files each sub-row's figure under that sub-row's category (which follows the
+ * row until another is chosen), so one row can feed several components.
+ */
 function perKategori(arus: Block, grup: string, lembar: Lembar, w: number) {
   const out = new Map<string, { n: number; total: number }>()
+  const punyaRincian = new Set(arus.lines.flatMap((l) => (!isGroup(l) && l.def.induk ? [l.def.induk] : [])))
   let current = ''
   for (const l of arus.lines) {
     if (isGroup(l)) {
       current = l.label
       continue
     }
-    if (current !== grup || l.def.emphasis || l.def.induk) continue
-    const id = kategoriDari(lembar, l.def.key, grup)
+    if (current !== grup || l.def.emphasis || punyaRincian.has(l.def.key)) continue
+    const id = l.def.induk ? kategoriRincian(lembar, l.def.key, l.def.induk, grup) : kategoriDari(lembar, l.def.key, grup)
     const prev = out.get(id) ?? { n: 0, total: 0 }
     out.set(id, { n: prev.n + 1, total: prev.total + (l.cells[w].value ?? 0) })
   }

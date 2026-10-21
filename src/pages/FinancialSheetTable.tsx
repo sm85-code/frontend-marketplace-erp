@@ -34,6 +34,8 @@ type Props = {
   /** Rename a total / calculated row (rows that can be typed over rename in their edit pop-up). */
   onRenameRow?: (line: Line) => void
   onRenameGroup?: (group: GroupDef) => void
+  /** A small note after a row's name (e.g. the category its figure is filed under). */
+  ketBaris?: (line: Line) => string | undefined
 }
 
 function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean; onRenameGroup?: (g: GroupDef) => void }) {
@@ -79,6 +81,11 @@ const Amount = ({ value, manual, warisan }: { value: number | null; manual: bool
 )
 
 /** Number of each detail row, restarting at every group heading; sub-rows are 1.1, 1.2, ... under their row. */
+/** The note after a row's name: small, muted, and kept apart from the name. */
+function Ket({ teks }: { teks?: string }) {
+  return teks ? <span className="teks-kecil ml-1.5 whitespace-nowrap font-normal text-muted-foreground">· {teks}</span> : null
+}
+
 function nomorBaris(block: Block): Map<string, string> {
   const out = new Map<string, string>()
   let n = 0
@@ -113,7 +120,7 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
 }
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const nomor = bernomor ? nomorBaris(block) : null
@@ -140,7 +147,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
                   {nomor && !line.def.emphasis && <TableCell className={`w-9 pr-0 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}</TableCell>
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
@@ -158,7 +165,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris } = props
   const nomor = bernomor ? nomorBaris(block) : null
   return (
     <Card className="min-w-0 overflow-hidden">
@@ -206,6 +213,7 @@ export default function FinancialSheetTable(props: Props) {
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
                       {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
+                      <Ket teks={ketBaris?.(line)} />
                     </TableCell>
                     {line.cells.map((cell, w) => (
                       <TableCell

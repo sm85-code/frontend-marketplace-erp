@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Kategori } from '@/lib/kategoriKeuangan'
 
-export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean; /** Category choices for rows of cash in / cash out; the sub-rows follow their row. */ opsi?: Kategori[]; kategori?: string }
+export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean; /** Category choices for a row of cash in / cash out without sub-rows, and for each sub-row (which follows its row until another is chosen). */ opsi?: Kategori[]; kategori?: string; /** The row has sub-rows: its category is chosen on each of them. */ kategoriDiRincian?: boolean }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -70,8 +70,11 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChil
               </option>
             ))}
           </select>
-          <p className="text-xs text-muted-foreground">Menentukan di baris mana angka ini muncul di tab Pemasukan atau Pengeluaran.</p>
+          <p className="text-xs text-muted-foreground">{target.child ? 'Menentukan di komponen mana angka rincian ini muncul di tab Pemasukan atau Pengeluaran. Awalnya mengikuti barisnya.' : 'Menentukan di komponen mana angka ini muncul di tab Pemasukan atau Pengeluaran.'}</p>
         </div>
+      )}
+      {target.kategoriDiRincian && !target.total && (
+        <p className="text-xs text-muted-foreground">Baris ini punya rincian. Komponen Pemasukan atau Pengeluaran dipilih di tiap rincian (1.1, 1.2, dst), jadi satu baris bisa masuk ke beberapa komponen.</p>
       )}
       {!target.total && <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
