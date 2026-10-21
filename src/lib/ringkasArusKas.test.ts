@@ -260,3 +260,40 @@ describe('groups with ids', () => {
   })
 })
 
+
+describe('salary balances over closed and open periods', () => {
+  const bal = (o: Record<string, string>) => ({ ...zero, modal: '1000', ...o })
+  const rec = (tanggal: string, awal: Record<string, string>, akhir: Record<string, string>) =>
+    ({
+      tanggal,
+      input: { gaji: '100', transfer_kas_gaji: '100', pendapatan_produk: '0', jasa_proses: '0', jasa_cat_packing: '0', bayar_tukang: '0', pembelian: '0', operasional: '0', langganan: '0', topup_iklan: '0', tambahan_modal: '0' },
+      hasil: {
+        pemasukan_toko: '0', perubahan_piutang: '0', pemasukan: '0', pengeluaran: '100', laba: '-100', kas_masuk: '0', kas_keluar: '0', transfer_antar_kas: '-100',
+        penyesuaian_stok: '0', penyesuaian_utang: '0', biaya_iklan: '0', saldo_awal: bal(awal), saldo_akhir: bal(akhir), neraca: { aset: '0', utang: '0', ekuitas: '0', selisih: '0' },
+      },
+    }) as unknown as Report
+  const r1 = rec('2026-10-04', { kas_utama: '1000' }, { kas_utama: '900', kas_gaji: '100', utang_gaji: '100', saldo_laba: '-100' })
+  const r2 = rec('2026-10-11', { kas_utama: '900', kas_gaji: '100', utang_gaji: '100', saldo_laba: '-100' }, { kas_utama: '800', kas_gaji: '200', utang_gaji: '200', saldo_laba: '-200' })
+  const hari = ['2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25']
+  const ada = [r1, r2]
+  const hitung = (sel: Record<string, string>) => {
+    const lembar = emptyLembar()
+    lembar.sel = sel
+    const plain = computeSheet(sheetSections({ laporan: ada } as unknown as Overview), ada, hari, lembar)
+    return ringkasDariArusKas(plain, hari, lembar, KATEGORI_BAWAAN, KELOMPOK_BAWAAN, new Set(ada.map((r) => r.tanggal)))
+  }
+  it('both balances grow by the same Gaji typed in the open periods, and the sheet keeps balancing', () => {
+    const k = (d: string) => `${keyNilaiDasar('k_gaji')}|${d}`
+    const b = hitung({ [k(hari[2])]: '100', [k(hari[3])]: '100', [`n_modal|${hari[2]}`]: '1000', [`n_stok|${hari[2]}`]: '0' })
+    expect(val(b, 'n_kas_gaji', 2)).toBe(300)
+    expect(val(b, 'n_utang_gaji', 2)).toBe(300)
+    expect(val(b, 'n_kas_gaji', 3)).toBe(400)
+    expect(val(b, 'n_utang_gaji', 3)).toBe(400)
+    expect(val(b, 'selisih', 2)).toBe(val(b, 'selisih', 1))
+  })
+  it('a closed period keeps its report figures', () => {
+    const b = hitung({})
+    expect([val(b, 'n_kas_gaji', 0), val(b, 'n_kas_gaji', 1)]).toEqual([100, 200])
+    expect([val(b, 'n_utang_gaji', 0), val(b, 'n_utang_gaji', 1)]).toEqual([100, 200])
+  })
+})

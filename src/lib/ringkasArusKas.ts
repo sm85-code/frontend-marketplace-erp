@@ -74,7 +74,7 @@ const PENGELUARAN = (daftar: KategoriTransaksi[], kelompok: KelompokDaftar, adaS
  * filed under its category (each Arus Kas row picks one); a component with no such row is filled by hand (a component
  * of the old tables keeps its figure there), which is where the non-cash side of the accrual basis goes.
  */
-export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lembar, daftar: KategoriTransaksi[] = KATEGORI_BAWAAN, kelompok: KelompokDaftar = KELOMPOK_BAWAAN): Block[] {
+export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lembar, daftar: KategoriTransaksi[] = KATEGORI_BAWAAN, kelompok: KelompokDaftar = KELOMPOK_BAWAAN, tutup?: ReadonlySet<string>): Block[] {
   const kas = plain.find((b) => b.tabel === 'arus_kas')
   if (!kas) return plain
   const arus = applyRinci(kas, days, lembar)
@@ -159,17 +159,24 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     }
     set(at('n_kas'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value ?? null, manual: false })))
     set(at('n_laba_ini'), 'calc', laba.cells.map((c) => ({ ...c })))
-    // Salary cash and salary owed follow the Gaji row of Arus Kas (typed over or not): each period's difference from the
-    // report's own figure carries on into the later balances. Owed salary follows it through the Pengeluaran tab's Gaji.
+    // Salary cash and salary owed follow the Gaji row of Arus Kas (typed over or not), the owed one through the Pengeluaran
+    // tab's Gaji. A closed period keeps the figure of its report, moved by what was typed over its own; a period still open
+    // is the balance before it plus that period's Gaji, so both balances grow by the same single figure.
+    const tertutup = (w: number) => !tutup || tutup.has(days[w])
     const ikuti = (row: Line | undefined, own: Line | undefined, shown: Line | undefined) => {
       if (!row || !own || !shown) return
-      let carried = 0
+      let diubah = 0
+      let saldo: number | null = null
       set(
         row,
         'calc',
         row.cells.map((c, w) => {
-          carried = round(carried + (shown.cells[w].value ?? 0) - (own.cells[w].value ?? 0))
-          return { value: c.value === null ? null : round(c.value + carried), manual: false }
+          const gaji = shown.cells[w].value ?? 0
+          if (tertutup(w)) {
+            diubah = round(diubah + gaji - (own.cells[w].value ?? 0))
+            saldo = c.value === null ? null : round(c.value + diubah)
+          } else saldo = c.value === null ? null : round((saldo ?? 0) + gaji)
+          return { value: saldo, manual: false }
         }),
       )
     }
