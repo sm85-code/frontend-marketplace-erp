@@ -24,6 +24,7 @@ import {
   transitionProcessingJob,
   removeProcessingDraft,
   releaseProcessingJob,
+  resetProcessingJob,
   editProcessingPacking,
   type ProcessingCatalog,
   type ProcessingJob,
@@ -656,7 +657,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             Lepas pemetaan
           </Button>
         )}
-        {r.stage === 'draft' && (
+        {r.source !== 'erp' && r.stage !== 'draft' && (
           <Button
             size="sm"
             variant="ghost"
@@ -664,8 +665,32 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             onClick={async () => {
               if (
                 await confirm({
-                  title: 'Hapus draf pemetaan?',
-                  description: 'Item ERP akan tersedia kembali di Cek Pesanan.',
+                  title: 'Batalkan pemetaan?',
+                  description: 'Tukang atau supplier, harga, warna, packing, dan progres diatur ulang ke draf. Data pesanan manual (pemesan, tanggal, item) tetap ada dan bisa dipetakan lagi.',
+                  confirmLabel: 'Batalkan pemetaan',
+                  destructive: true,
+                })
+              )
+                void run(r, () => resetProcessingJob(r))
+            }}
+          >
+            Batalkan pemetaan
+          </Button>
+        )}
+        {(r.stage === 'draft' || r.source !== 'erp') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!!busy}
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: r.source === 'erp' ? 'Hapus draf pemetaan?' : 'Hapus pesanan manual?',
+                  description:
+                    r.source === 'erp'
+                      ? 'Item ERP akan tersedia kembali di Cek Pesanan.'
+                      : 'Pesanan manual ini dihapus beserta data yang sudah diisi di semua tahap. Tindakan ini tidak bisa dibatalkan.',
+                  confirmLabel: 'Hapus',
                   destructive: true,
                 })
               )
