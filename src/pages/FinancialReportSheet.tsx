@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useLabel } from '@/api/pengaturanUi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucide-react'
@@ -20,7 +21,7 @@ import { denganOperasional } from '@/lib/operasionalArusKas'
 import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
-import { bisaDiganti, namai, setNamaBaris, setNamaGrup } from '@/lib/namaBaris'
+import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import KartuMetrik from '@/components/KartuMetrik'
@@ -56,6 +57,7 @@ export default function FinancialReportSheet({
   data: Overview
   month: string
 }) {
+  const t = useLabel()
   const { records, days } = sheetDays(data, month)
 
   const qc = useQueryClient()
@@ -84,7 +86,7 @@ export default function FinancialReportSheet({
     [lembar, days.join('|'), operasional.data, daftarKat, sheet],
   )
   const plain = useMemo(() => ringkasDariArusKas(sheet, days, lembarTampil, daftarKat, kelompok, new Set(records.map((r) => r.tanggal))), [sheet, days, lembarTampil, daftarKat, kelompok, records]) // eslint-disable-line react-hooks/exhaustive-deps
-  const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
+  const blocks = useMemo(() => namai(plain, lembar, t), [plain, lembar, t])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
 
@@ -182,9 +184,9 @@ export default function FinancialReportSheet({
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
-            {[['Arus Kas', 3], ['Pemasukan', 0], ['Pengeluaran', 1], ['Laba/Rugi', 2], ['Neraca', 4]].map(([label, i]) => (
-              <TabsTrigger key={label} value={String(i)}>
-                {label}
+            {TAB_LAPORAN.map(([tabel, label]) => (
+              <TabsTrigger key={tabel} value={String(blocks.findIndex((b) => b.tabel === tabel))}>
+                {t(idTab(tabel), label)}
               </TabsTrigger>
             ))}
           </TabsList>

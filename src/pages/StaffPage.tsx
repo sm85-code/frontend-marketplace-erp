@@ -1,4 +1,5 @@
 import Bantuan from '@/components/Bantuan'
+import { useLabel } from '@/api/pengaturanUi'
 import FormDialog from '@/components/FormDialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import QueryError from '@/components/QueryError'
@@ -88,12 +89,13 @@ export default function StaffPage() {
   const confirm = useConfirm()
   const [userDialog, setUserDialog] = useState(false)
   const { user: saya, bisa } = useAuth()
+  const t = useLabel()
   const adalahAdmin = bisa('kelola_pengguna', 'tulis')
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') === 'role' ? 'role' : 'pengguna'
   const { data: roleDaftar } = useQuery({ queryKey: ['roles'], queryFn: daftarRole, enabled: adalahAdmin })
   const roleMap = new Map((roleDaftar?.roles ?? []).map((r) => [r.id, r]))
-  const namaRole = (id: string) => roleMap.get(id)?.nama ?? ROLE_LABELS[id] ?? id
+  const namaRole = (id: string) => roleMap.get(id)?.nama ?? t(`role:${id}`, ROLE_LABELS[id] ?? id)
   const dibatasiToko = (id: string) => (roleMap.get(id)?.akses_toko ?? (id === 'staff' ? 'ditugaskan' : 'semua')) === 'ditugaskan'
   // An admin may give any role that exists; an owner only the built-in staff role.
   const peranBoleh = adalahAdmin && roleDaftar ? ['staff', ...roleDaftar.roles.map((r) => r.id).filter((id) => id !== 'staff')] : rolesYangBolehDibuat(saya?.role)

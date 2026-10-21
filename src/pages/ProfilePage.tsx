@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { useLabel } from '@/api/pengaturanUi'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -17,6 +18,7 @@ const FORMAT_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export default function ProfilePage() {
   const { user, akses, refreshUser } = useAuth()
+  const t = useLabel()
   const [nama, setNama] = useState(user?.nama ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
 
@@ -53,7 +55,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Role</div>
-            <div className="font-medium">{akses?.nama ?? ROLE_LABELS[user.role] ?? user.role}</div>
+            <div className="font-medium">{akses?.nama ?? t(`role:${user.role}`, ROLE_LABELS[user.role] ?? user.role)}</div>
           </div>
           <form
             className="space-y-4"
