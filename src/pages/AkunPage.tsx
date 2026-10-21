@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PLATFORM_LABELS, isOwnerLevel } from '@/config/roles'
+import { PLATFORM_LABELS } from '@/config/roles'
 import { useAuth } from '@/lib/auth'
 import { Link } from 'react-router-dom'
 import { shopConnections } from '@/api/commerce'
@@ -46,7 +46,7 @@ const kolomToko: KolomTabel<AkunMarketplace>[] = [
 
 export default function AkunPage() {
   const { warehouseEnabled } = useStockSettings()
-  const { user } = useAuth()
+  const { bisa } = useAuth()
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [tab, setTab] = useState('toko')
@@ -214,12 +214,12 @@ export default function AkunPage() {
 
   const actions = (akun:AkunMarketplace) => (
     <AksiLainnya>
-      {akun.platform === 'shopee' && isOwnerLevel(user?.role) && (
+      {akun.platform === 'shopee' && bisa('kelola_toko', 'tulis') && (
         <Button size="sm" variant="outline" onClick={() => connectMut.mutate(akun.id)}>
           {akun.id_toko_eksternal ? 'Otorisasi ulang' : 'Hubungkan Shopee'}
         </Button>
       )}
-      {akun.id_toko_eksternal && isOwnerLevel(user?.role) && (
+      {akun.id_toko_eksternal && bisa('kelola_toko', 'tulis') && (
         <>
           <Button size="sm" variant="outline" onClick={() => syncProdukMut.mutate(akun.id)}>
             Sinkronisasi Produk
@@ -232,7 +232,7 @@ export default function AkunPage() {
           </Button>}
         </>
       )}
-      {isOwnerLevel(user?.role) && (
+      {bisa('kelola_toko', 'tulis') && (
         <>
           <Button size="sm" variant="outline" onClick={() => openEdit(akun)}>
             Edit
@@ -250,12 +250,12 @@ export default function AkunPage() {
       {connections.error && <QueryError error={connections.error} retry={connections.refetch}/>}
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Kelola Toko">
-        {tab === 'toko' && isOwnerLevel(user?.role) && <Button onClick={openCreate}>Tambah Toko</Button>}
+        {tab === 'toko' && bisa('kelola_toko', 'tulis') && <Button onClick={openCreate}>Tambah Toko</Button>}
       </BarHalaman>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="section-tabs w-full">
           <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>
-          {user?.role === 'admin' && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
+          {bisa('otomasi') && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
         </TabsList>
         <TabsContent value="toko" className="space-y-4">
 
@@ -289,7 +289,7 @@ export default function AkunPage() {
       </Card>
 
         </TabsContent>
-        {user?.role === 'admin' && <>
+        {bisa('otomasi') && <>
           <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><AutoOrderSettings /></TabsContent>
           <TabsContent value="otomasi">
             <div className="grid gap-3 md:grid-cols-2">{(akunList ?? []).filter(a => a.platform === 'shopee').map(a => <Card key={a.id}><CardHeader><CardTitle>{a.nama_toko}</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=rating`}>Balasan Rating Otomatis</Link></Button><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=boost`}>Boost Otomatis</Link></Button></CardContent></Card>)}</div>

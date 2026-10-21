@@ -5,9 +5,8 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
-import { ROLES_ADMIN_ONLY, ROLES_ARUS_KAS, ROLES_OWNER_ONLY } from '@/config/roles'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import type { Role } from '@/api/types'
+import type { Tingkat } from '@/api/types'
 
 const EngagementAutomationPage = lazy(() => import('@/pages/EngagementAutomationPage'))
 const ShopSettingsPage = lazy(() => import('@/pages/ShopSettingsPage'))
@@ -58,15 +57,16 @@ function LazyPage({ children }: { children: ReactNode }) {
   )
 }
 
-function Protected({ children, roles }: { children: ReactNode; roles?: Role[] }) {
-  const { user, loading } = useAuth()
+function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string; perlu?: Tingkat }) {
+  const { user, loading, akses, bisa } = useAuth()
   const location = useLocation()
   if (loading) return <PageFallback />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
   if (user.must_change_password && location.pathname !== '/ganti-password') {
     return <Navigate to="/ganti-password" replace state={{ from: location }} />
   }
-  if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />
+  if (!akses) return <PageFallback />
+  if (halaman && !bisa(halaman, perlu)) return <Navigate to={bisa('dashboard') ? '/dashboard' : '/profile'} replace />
   return <Layout>{children}</Layout>
 }
 
@@ -87,59 +87,59 @@ export default function App() {
                 element={<Protected><LazyPage><GantiPasswordPage /></LazyPage></Protected>}
               />
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
-              <Route path="/asisten" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AssistantPage /></LazyPage></Protected>} />
-              <Route path="/otomasi-produk" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
-              <Route path="/pengaturan-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
-              <Route path="/performa-toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
-              <Route path="/processing/template" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
-              <Route path="/processing/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><ProcessingPage /></LazyPage></Protected>} />
-              <Route path="/arus-kas" element={<Protected roles={ROLES_ARUS_KAS}><LazyPage><ArusKas /></LazyPage></Protected>} />
-              <Route path="/laporan-keuangan/*" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
-              <Route path="/dashboard" element={<Protected><LazyPage><DashboardPage /></LazyPage></Protected>} />
-              <Route path="/toko" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><AkunPage /></LazyPage></Protected>} />
+              <Route path="/asisten" element={<Protected halaman="asisten"><LazyPage><AssistantPage /></LazyPage></Protected>} />
+              <Route path="/otomasi-produk" element={<Protected halaman="otomasi"><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
+              <Route path="/pengaturan-toko" element={<Protected halaman="info_toko"><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
+              <Route path="/performa-toko" element={<Protected halaman="info_toko"><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
+              <Route path="/processing/template" element={<Protected halaman="processing"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
+              <Route path="/processing/*" element={<Protected halaman="processing"><LazyPage><ProcessingPage /></LazyPage></Protected>} />
+              <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
+              <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
+              <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
+              <Route path="/toko" element={<Protected halaman="kelola_toko"><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route
                 path="/katalog"
-                element={<Protected><LazyPage><KatalogPage /></LazyPage></Protected>}
+                element={<Protected halaman="katalog"><LazyPage><KatalogPage /></LazyPage></Protected>}
               />
-              <Route path="/katalog/:id" element={<Protected><LazyPage><KatalogDetailPage /></LazyPage></Protected>} />
-              <Route path="/katalog/promosi/:akun/:id" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PromosiDetailPage /></LazyPage></Protected>} />
+              <Route path="/katalog/:id" element={<Protected halaman="katalog"><LazyPage><KatalogDetailPage /></LazyPage></Protected>} />
+              <Route path="/katalog/promosi/:akun/:id" element={<Protected halaman="promosi"><LazyPage><PromosiDetailPage /></LazyPage></Protected>} />
               <Route
                 path="/produk"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ProdukPage /></LazyPage></Protected>}
+                element={<Protected halaman="produk"><LazyPage><ProdukPage /></LazyPage></Protected>}
               />
               <Route
                 path="/listing"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><ListingPage /></LazyPage></Protected>}
+                element={<Protected halaman="listing"><LazyPage><ListingPage /></LazyPage></Protected>}
               />
               <Route
                 path="/gudang"
-                element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><GudangPage /></LazyPage></Protected>}
+                element={<Protected halaman="gudang"><LazyPage><GudangPage /></LazyPage></Protected>}
               />
-              <Route path="/chat" element={<Protected><LazyPage><ChatPage /></LazyPage></Protected>} />
-              <Route path="/pesanan" element={<Protected><LazyPage><PesananPage /></LazyPage></Protected>} />
-              <Route path="/pesanan/retur" element={<Protected><LazyPage><ReturPage /></LazyPage></Protected>} />
-              <Route path="/katalog/publikasi" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PublicationPage /></LazyPage></Protected>} />
-              <Route path="/katalog/promosi" element={<Protected roles={ROLES_OWNER_ONLY}><LazyPage><PromosiPage /></LazyPage></Protected>} />
+              <Route path="/chat" element={<Protected halaman="chat"><LazyPage><ChatPage /></LazyPage></Protected>} />
+              <Route path="/pesanan" element={<Protected halaman="pesanan"><LazyPage><PesananPage /></LazyPage></Protected>} />
+              <Route path="/pesanan/retur" element={<Protected halaman="retur"><LazyPage><ReturPage /></LazyPage></Protected>} />
+              <Route path="/katalog/publikasi" element={<Protected halaman="publikasi"><LazyPage><PublicationPage /></LazyPage></Protected>} />
+              <Route path="/katalog/promosi" element={<Protected halaman="promosi"><LazyPage><PromosiPage /></LazyPage></Protected>} />
               <Route
                 path="/pesanan/:id"
-                element={<Protected><LazyPage><PesananDetailPage /></LazyPage></Protected>}
+                element={<Protected halaman="pesanan"><LazyPage><PesananDetailPage /></LazyPage></Protected>}
               />
               <Route
                 path="/settlement"
-                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><SettlementPage /></LazyPage></Protected>}
+                element={<Protected halaman="settlement"><LazyPage><SettlementPage /></LazyPage></Protected>}
               />
               <Route
 path="/iklan"
-                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanPage /></LazyPage></Protected>}
+                element={<Protected halaman="iklan"><LazyPage><IklanPage /></LazyPage></Protected>}
               />
-              <Route path="/iklan/toko/:akun/kampanye/:id" element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><KampanyeDetailPage /></LazyPage></Protected>} />
+              <Route path="/iklan/toko/:akun/kampanye/:id" element={<Protected halaman="iklan"><LazyPage><KampanyeDetailPage /></LazyPage></Protected>} />
               <Route
                 path="/iklan/:id"
-                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><IklanDetailPage /></LazyPage></Protected>}
+                element={<Protected halaman="iklan"><LazyPage><IklanDetailPage /></LazyPage></Protected>}
               />
               <Route
                 path="/staff"
-                element={<Protected roles={ROLES_ADMIN_ONLY}><LazyPage><StaffPage /></LazyPage></Protected>}
+                element={<Protected halaman="kelola_pengguna"><LazyPage><StaffPage /></LazyPage></Protected>}
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />

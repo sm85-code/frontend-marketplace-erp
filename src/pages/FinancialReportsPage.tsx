@@ -20,8 +20,8 @@ const monthNow = () => {
 }
 
 export default function FinancialReportsPage() {
-  const { user } = useAuth()
-  const allowed = user?.role === 'admin'
+  const { bisa } = useAuth()
+  const allowed = bisa('laporan_keuangan')
   const [month, setMonth] = useState(monthNow)
   const overview = useQuery({
     queryKey: ['financial-reports', month],

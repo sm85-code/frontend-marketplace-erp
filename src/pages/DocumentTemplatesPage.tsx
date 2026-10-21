@@ -995,8 +995,8 @@ function TemplateLoader({ kind }: { kind: DocumentKind }) {
   return q.data ? <TemplateEditor initial={q.data} /> : null;
 }
 export default function DocumentTemplatesPage() {
-  const { user } = useAuth();
-  if (user?.role !== "admin")
+  const { bisa } = useAuth();
+  if (!bisa("processing", "tulis"))
     return <p role="alert">Template hanya dapat diakses admin.</p>;
   return (
     <div className="min-w-0 space-y-4 text-left" data-text-align="preserve">

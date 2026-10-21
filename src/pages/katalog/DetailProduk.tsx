@@ -4,7 +4,6 @@ import StatistikProduk from './StatistikProduk'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
 import Bantuan from '@/components/Bantuan'
 import { useAuth } from '@/lib/auth'
-import { isOwnerLevel } from '@/config/roles'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -24,8 +23,8 @@ import { labelStatusVarian, labelVarian, namaTier, nilaiVarian, rentangHarga, te
 
 /** Dialog with everything about one catalogue product: all photos, full description, variants, size. */
 export default function DetailProduk({ id, onTutup }: { id: string | null; onTutup: () => void }) {
-  const { user } = useAuth()
-  const manage = isOwnerLevel(user?.role)
+  const { bisa } = useAuth()
+  const manage = bisa('katalog', 'tulis')
   const { data: detail, isLoading, error, refetch } = useQuery({
     queryKey: qk.katalogOne(id ?? ''),
     queryFn: () => endpoints.getKatalog(id as string),
@@ -41,8 +40,8 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
           <div className="teks-data space-y-4">
             {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
             {manage && <SalinMasterProduk ids={[detail.id]} />}
-            {user?.role === 'admin' && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
-            {user?.role === 'admin' && <ShopeeProductTools detail={detail} close={onTutup} />}
+            {bisa('katalog_lanjutan', 'tulis') && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
+            {bisa('katalog_lanjutan', 'tulis') && <ShopeeProductTools detail={detail} close={onTutup} />}
             <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
             {manage && <Bantuan rincian judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
             <div className="flex flex-wrap items-center gap-2">

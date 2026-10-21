@@ -5,7 +5,6 @@ import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
 import { useAuth } from '@/lib/auth'
-import { isOwnerLevel } from '@/config/roles'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }) {
-  const { user } = useAuth()
+  const { bisa } = useAuth()
   const confirm = useConfirm()
   const qc = useQueryClient()
   const [editing, setEditing] = useState(false)
@@ -34,7 +33,7 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
       qc.invalidateQueries({ queryKey: ['listing'] })
     },
   })
-  if (!isOwnerLevel(user?.role)) return null
+  if (!bisa('katalog', 'tulis')) return null
 
   async function status() {
     const unlist = detail.status === 'NORMAL'

@@ -12,7 +12,6 @@ import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/compon
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/lib/auth'
-import { isOwnerLevel } from '@/config/roles'
 import { PLATFORM_LABELS } from '@/config/roles'
 
 const ITEM_KOSONG = { produk_id: '', nama_produk: '', harga_satuan: '', qty: '1' }
@@ -30,8 +29,8 @@ export default function FormPesananManual({
   akunList: AkunMarketplace[]
 }) {
   const qc = useQueryClient()
-  const { user } = useAuth()
-  const { data: produk } = useQuery({ queryKey: ['produk'], queryFn: endpoints.listProduk, enabled: open && isOwnerLevel(user?.role) })
+  const { bisa } = useAuth()
+  const { data: produk } = useQuery({ queryKey: ['produk'], queryFn: endpoints.listProduk, enabled: open && bisa('produk') })
   const [form, setForm] = useState(FORM_KOSONG)
   const [items, setItems] = useState([{ ...ITEM_KOSONG }])
 

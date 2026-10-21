@@ -8,9 +8,9 @@ const AssistantPage=lazy(()=>import('@/pages/AssistantPage'))
 
 /** Mounted outside Routes: navigation and minimization preserve the draft and active conversation. */
 export default function WorkspaceOverlays() {
-  const {user}=useAuth()
+  const {user,bisa}=useAuth()
   const {pathname}=useLocation()
-  return user?.role==='admin' && !user.must_change_password && !pathname.startsWith('/login') && !pathname.startsWith('/oauth/') ? <FloatingAssistant key={user.id}/> : null
+  return user && bisa('asisten') && !user.must_change_password && !pathname.startsWith('/login') && !pathname.startsWith('/oauth/') ? <FloatingAssistant key={user.id}/> : null
 }
 function FloatingAssistant() {
   const {pathname}=useLocation()
