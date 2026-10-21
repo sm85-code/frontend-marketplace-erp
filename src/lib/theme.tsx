@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 /** Appearance system ported from live frontend-siabumdes.
- * Defaults: Ripple wallpaper, Hijau theme, Geist, light mode.
+ * Defaults: Ripple wallpaper, Hijau theme, Geist, light mode, Kecil text size.
  */
 
 export const FONTS = [
@@ -48,8 +48,8 @@ export const WALLPAPERS = [
 
 export const HURUF = [
   { id: 'sangat-kecil', label: 'Sangat kecil (terpadat)' },
-  { id: 'kecil', label: 'Kecil (lebih banyak data)' },
-  { id: 'sedang', label: 'Sedang (bawaan)' },
+  { id: 'kecil', label: 'Kecil (bawaan)' },
+  { id: 'sedang', label: 'Sedang' },
   { id: 'besar', label: 'Besar' },
 ] as const
 
@@ -112,7 +112,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   setWallpaper: () => {},
   mode: 'light',
   setMode: () => {},
-  huruf: 'sedang',
+  huruf: 'kecil',
   setHuruf: () => {},
 })
 
@@ -122,7 +122,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [baseColor, setBaseColor] = useState<BaseColor>(() => readStored(BASE_KEY, VALID_BASE_COLORS, 'zinc'))
   const [wallpaper, setWallpaper] = useState<WallpaperId>(() => readStored(WALLPAPER_KEY, VALID_WALLPAPERS, 'glow'))
   const [mode, setMode] = useState<Mode>(() => readStored(MODE_KEY, VALID_MODES, 'light'))
-  const [huruf, setHuruf] = useState<HurufId>(() => readStored(HURUF_KEY, VALID_HURUF, 'sedang'))
+  const [huruf, setHuruf] = useState<HurufId>(() => readStored(HURUF_KEY, VALID_HURUF, 'kecil'))
 
   useEffect(() => {
     document.documentElement.setAttribute('data-font', font)

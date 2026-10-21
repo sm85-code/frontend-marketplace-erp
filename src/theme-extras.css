@@ -329,7 +329,7 @@
    Tampilan (html[data-huruf]). Tap targets stay >= 44px through control height, not font size.
    ------------------------------------------------------------------------------------------------ */
 :root {
-  --skala-huruf: 1;
+  --skala-huruf: 0.92; /* Kecil, the default (also before the saved choice is applied) */
   font-size: calc(100% * var(--skala-huruf)); /* every rem-based size follows the chosen font size */
   --teks-data: 0.875rem; /* 13px: table cells, card values */
   --teks-kecil: 0.75rem; /* 12px: second lines, hints */
@@ -354,6 +354,10 @@
 
 :root[data-huruf='kecil'] {
   --skala-huruf: 0.92;
+}
+
+:root[data-huruf='sedang'] {
+  --skala-huruf: 1;
 }
 
 :root[data-huruf='besar'] {

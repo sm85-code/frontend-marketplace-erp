@@ -100,6 +100,19 @@ export function kelompokNav(items: NavItem[]): { grup: (typeof GRUP_NAV)[number]
   return GRUP_NAV.map((grup) => ({ grup, items: items.filter((n) => n.grup === grup.id) })).filter((g) => g.items.length > 0)
 }
 
+/** Id of the bottom bar setting of a role on Kelola Aplikasi; its text is the chosen menu paths, comma separated, in order. */
+export const idNavBawah = (role: string) => `navbawah:${role}`
+
+/**
+ * The bottom bar of a role: the menus the admin chose for it (in that order, only those the role may open), else the
+ * built-in choice. An empty or unusable choice falls back to the built-in one.
+ */
+export function itemBawahDipilih(items: NavItem[], pilihan: string | undefined, maks = SLOT_BAWAH): NavItem[] {
+  const dipilih = (pilihan ?? '').split(',').map((p) => p.trim()).filter(Boolean)
+  const hasil = [...new Set(dipilih)].flatMap((to) => items.filter((n) => n.to === to)).slice(0, maks)
+  return hasil.length ? hasil : itemBawah(items, maks)
+}
+
 /** The tabs of the phone bottom bar: the highest-priority visible items, shown left to right by `posisiBawah`. */
 export function itemBawah(items: NavItem[], maks = SLOT_BAWAH): NavItem[] {
   const terpilih = new Set(
