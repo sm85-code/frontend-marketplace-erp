@@ -5,7 +5,8 @@ import { fmtRp, fmtDateTime, getApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TabelLokal, type KolomTabel } from '@/components/daftar'
-import { Field, SelectField } from './processingShared'
+import { Field } from './processingShared'
+import { cn } from '@/lib/utils'
 
 export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedId?: string; onPick?: (product: SupplierCatalogProduct) => void }) {
   const qc = useQueryClient()
@@ -18,6 +19,7 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const selected = catalog.data?.items.find(p => p.id === selectedId)
+  const matches = (catalog.data?.items ?? []).filter(p => [p.sku, p.name, p.category_name].join(' ').toLowerCase().includes(search.trim().toLowerCase()))
   const columns: KolomTabel<SupplierCatalogProduct>[] = [
     { kunci: 'sku', judul: 'SKU', nilai: p => p.sku, sel: p => p.sku },
     { kunci: 'name', judul: 'Produk', tetap: true, nilai: p => p.name, sel: p => p.name },
@@ -56,11 +58,29 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
     {catalog.data && <>
       <p className="text-xs text-muted-foreground">Harga jual supplier menjadi harga beli ERP. Stok dibaca {fmtDateTime(catalog.data.read_at)}.</p>
       {onPick ? <>
-        <Field title="Produk katalog"><SelectField required value={selectedId || ''} onChange={e => { const p = catalog.data.items.find(p => p.id === e.target.value); if(p) onPick(p) }}>
-          <option value="">Pilih produk katalog</option>
-          {catalog.data.items.map(p => <option key={p.id} value={p.id}>{p.sku} — {p.name} · {fmtRp(p.sell_price)} · stok {p.qty_on_hand} {p.unit_of_measure}</option>)}
-        </SelectField></Field>
-        {selected && <div className="rounded-xl bg-muted/30 p-3 text-sm"><p>{selected.name} · {selected.sku}</p><p className="mt-1 font-medium">Harga terkini {fmtRp(selected.sell_price)} · Stok {selected.qty_on_hand} {selected.unit_of_measure}</p><Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => onPick(selected)}>Gunakan harga terkini</Button></div>}
+        <div className="space-y-2">
+          <Input aria-label="Cari produk katalog" placeholder="Cari nama, SKU, atau kategori" value={search} onChange={e => setSearch(e.target.value)} />
+          <div role="listbox" aria-label="Produk katalog" className="max-h-60 space-y-1 overflow-y-auto rounded-2xl border border-input bg-background p-1">
+            {matches.map(p => {
+              const habis = p.qty_on_hand <= 0
+              return <button key={p.id} type="button" role="option" aria-selected={p.id === selectedId} aria-disabled={habis} disabled={habis} title={habis ? 'Stok supplier habis' : undefined}
+                className={cn('flex w-full flex-col rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent', p.id === selectedId && 'bg-primary/10 ring-1 ring-primary')}
+                onClick={() => onPick(p)}>
+                <span className="flex items-start justify-between gap-3">
+                  <span className="font-medium">{p.name}</span>
+                  <span className="shrink-0 font-semibold tabular-nums">{fmtRp(p.sell_price)}</span>
+                </span>
+                <span className="flex justify-between gap-3 text-xs text-muted-foreground">
+                  <span className="break-all">{[p.sku, p.category_name].filter(Boolean).join(' · ')}</span>
+                  <span className={cn('shrink-0 tabular-nums', habis && 'font-medium text-destructive')}>{habis ? 'Habis' : `Stok ${p.qty_on_hand} ${p.unit_of_measure}`}</span>
+                </span>
+              </button>
+            })}
+            {!matches.length && <p className="px-3 py-2 text-sm text-muted-foreground">Tidak ada produk yang cocok</p>}
+          </div>
+          <p className="text-xs text-muted-foreground">{matches.length} dari {catalog.data.items.length} produk.</p>
+        </div>
+        {selected && <div className="rounded-xl bg-muted/30 p-3 text-sm"><p>{selected.name} · {selected.sku}</p><p className="mt-1 font-medium">Harga terkini {fmtRp(selected.sell_price)} · Stok {selected.qty_on_hand} {selected.unit_of_measure}</p><Button type="button" size="sm" variant="outline" className="mt-2" disabled={selected.qty_on_hand <= 0} onClick={() => onPick(selected)}>Gunakan harga terkini</Button></div>}
       </> : <>
         <Input aria-label="Cari katalog otomatis" placeholder="Cari nama, SKU, atau kategori" value={search} onChange={e => setSearch(e.target.value)} />
         <TabelLokal label="Katalog Produk Otomatis" items={catalog.data.items.filter(p => [p.sku,p.name,p.category_name].join(' ').toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={p => p.id} namaDari={p => p.name} minWidth={800} />
