@@ -310,3 +310,16 @@ describe('neraca rows filled by hand', () => {
     expect(val(after, 'n_kas_gaji')).not.toBe(val(before, 'n_kas_gaji'))
   })
 })
+
+describe('categories added by the user', () => {
+  const baru: KategoriTransaksi = { ...KATEGORI_BAWAAN[0], id: 'sewa', arah: 'keluar', nama: 'Sewa', kelompok: 'Beban operasional', kelompok_id: 'beban', urut: 99, sistem: false, auto_sembunyi: true }
+  const baris = (b: ReturnType<typeof build>, key: string) => b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)!
+  it('shows in Pengeluaran at once, with nothing filed under it yet, so an amount can be typed', () => {
+    const b = ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, emptyLembar()), days, emptyLembar(), [...KATEGORI_BAWAAN, baru])
+    expect(baris(b, 'p:sewa').hidden).toBe(false)
+    expect(baris(b, 'p:sewa').def.kind).toBe('input')
+    // a starting category that is rarely used still waits for an amount
+    expect(baris(b, 'p:atk').hidden).toBe(true)
+  })
+})
+

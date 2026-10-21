@@ -51,7 +51,8 @@ const komponenDari = (daftar: KategoriTransaksi[], arah: KategoriTransaksi['arah
   daftar
     .filter((k) => k.arah === arah && k.kelompok_id === kelompokId)
     .sort((x, y) => x.urut - y.urut)
-    .map((k) => ({ key: LAMA_KEY.has(k.id) ? k.id : `p:${k.id}`, label: k.nama, kategori: k.id, lama: LAMA_KEY.has(k.id) ? k.id : undefined, autoHide: k.auto_sembunyi || !k.aktif }))
+    .map((k) => ({ key: LAMA_KEY.has(k.id) ? k.id : `p:${k.id}`, label: k.nama, kategori: k.id, lama: LAMA_KEY.has(k.id) ? k.id : undefined, // A category the user added shows from the start (so it can be typed into); only the starting ones that are rarely used wait for an amount.
+    autoHide: (k.auto_sembunyi && k.sistem) || !k.aktif }))
 
 const PEMASUKAN = (daftar: KategoriTransaksi[], kelompok: KelompokDaftar): Kelompok[] => [
   ...kelompok.masuk.map((g) => ({ label: labelKelompok(g), tampil: g.nama, komponen: komponenDari(daftar, 'masuk', g.id) })),
