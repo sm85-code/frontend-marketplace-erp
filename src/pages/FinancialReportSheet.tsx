@@ -11,6 +11,7 @@ import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
 import FinancialSheetTable from './FinancialSheetTable'
 import TabelArusKas from './TabelArusKas'
+import RujukanBiayaProduksi from './RujukanBiayaProduksi'
 import { AddRowDialog, EditCellDialog, RenameDialog, type EditTarget } from './FinancialSheetDialogs'
 import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
@@ -195,7 +196,10 @@ export default function FinancialReportSheet({
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : block.tabel === 'arus_kas' ? (
-              <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
+              <div className="min-w-0 space-y-5">
+                <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
+                <RujukanBiayaProduksi month={month} />
+              </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
             )}
