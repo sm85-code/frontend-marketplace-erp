@@ -39,7 +39,7 @@ type Komponen = {
   autoHide?: boolean
 }
 /** `label` is the group's stable identity in the sheet (what rows added to it are filed under); `tampil` is its current name. */
-type Kelompok = { label: string; tampil?: string; komponen: Komponen[] }
+type Kelompok = { label: string; tampil?: string; /** Id of the group in the category settings (absent for the fixed adjustment groups). */ id?: string; komponen: Komponen[] }
 
 /** Groups that existed before they had ids keep the title they were filed under in saved sheets; new ones are `kel:<id>`. */
 const LABEL_LAMA: Record<string, string> = { pemasukan: 'Pemasukan', hpp: 'Harga pokok penjualan', beban: 'Beban operasional' }
@@ -55,11 +55,12 @@ const komponenDari = (daftar: KategoriTransaksi[], arah: KategoriTransaksi['arah
     autoHide: (k.auto_sembunyi && k.sistem) || !k.aktif }))
 
 const PEMASUKAN = (daftar: KategoriTransaksi[], kelompok: KelompokDaftar): Kelompok[] => [
-  ...kelompok.masuk.map((g) => ({ label: labelKelompok(g), tampil: g.nama, komponen: komponenDari(daftar, 'masuk', g.id) })),
+  ...kelompok.masuk.map((g) => ({ id: g.id, label: labelKelompok(g), tampil: g.nama, komponen: komponenDari(daftar, 'masuk', g.id) })),
   { label: 'Penyesuaian piutang', komponen: [{ key: 'piutang_chg', label: 'Perubahan piutang (lihat neraca)', lama: 'piutang_chg' }] },
 ]
 const PENGELUARAN = (daftar: KategoriTransaksi[], kelompok: KelompokDaftar, adaStok: boolean, adaUtang: boolean): Kelompok[] =>
   kelompok.keluar.map((g) => ({
+    id: g.id,
     label: labelKelompok(g),
     tampil: g.nama,
     komponen: [
@@ -95,11 +96,13 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     total: total(cells),
   })
 
+  const subtotal = new Map<string, Cell[]>() // per group of the category settings: the figure of its components, per period
   const bangun = (tabel: string, title: string, kelompok: Kelompok[], sumber: { grup: string }, totalKey: string, totalLabel: string): Block => {
     const lines: (Line | GroupDef)[] = []
     const baris: Line[] = []
     const perPeriode = days.map((_, w) => perKategori(arus, sumber.grup, lembar, w, daftar))
     for (const g of kelompok) {
+      const awal = baris.length
       lines.push({ group: true, label: g.label, tabel, tampil: g.tampil, dariPengaturan: g.tampil !== undefined })
       for (const k of g.komponen) {
         const dipakai = perPeriode.some((m) => (m.get(k.kategori ?? '')?.n ?? 0) > 0)
@@ -121,6 +124,16 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
         lines.push(l)
         baris.push(l)
       }
+      if (g.id) {
+        const own = baris.slice(awal)
+        subtotal.set(
+          g.id,
+          days.map((_, w): Cell => {
+            const v = own.map((l) => l.cells[w].value).filter((x): x is number => x !== null)
+            return { value: v.length ? sum(v) : null, manual: false }
+          }),
+        )
+      }
     }
     const cells = days.map((_, w): Cell => {
       const v = baris.map((l) => l.cells[w].value).filter((x): x is number => x !== null)
@@ -136,18 +149,17 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
   const tot = (b: Block, key: string) => b.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)!
   const masuk = tot(pemasukan, 'jml_pemasukan')
   const keluar = tot(pengeluaran, 'jml_pengeluaran')
+  const selisih = (a: Cell[], b: Cell[]): Cell[] => a.map((c, w) => ({ value: c.value === null && b[w].value === null ? null : round((c.value ?? 0) - (b[w].value ?? 0)), manual: false }))
+  const kosong = (): Cell[] => days.map(() => ({ value: null, manual: false }))
+  const nama = new Map([...kelompok.masuk, ...kelompok.keluar].map((g) => [g.id, g.nama]))
+  const hpp = subtotal.get('hpp') ?? kosong()
+  // Gross profit = income less the cost of goods; net profit = gross profit less every other group of expenses.
   const cMasuk = line('laba_rugi', 'Ringkasan', 'c_masuk', 'Pemasukan', 'calc', masuk.cells.map((c) => ({ ...c })))
-  const cKeluar = line('laba_rugi', 'Ringkasan', 'c_keluar', 'Pengeluaran', 'calc', keluar.cells.map((c) => ({ ...c })))
-  const laba = line(
-    'laba_rugi',
-    'Ringkasan',
-    'laba',
-    'Laba bersih',
-    'calc',
-    days.map((_, w): Cell => ({ value: masuk.cells[w].value === null && keluar.cells[w].value === null ? null : round((masuk.cells[w].value ?? 0) - (keluar.cells[w].value ?? 0)), manual: false })),
-    { emphasis: true },
-  )
-  const labaRugi: Block = { title: 'C. LABA / RUGI', tabel: 'laba_rugi', lines: [{ group: true, label: 'Ringkasan', tabel: 'laba_rugi' }, cMasuk, cKeluar, laba] }
+  const cHpp = line('laba_rugi', 'Ringkasan', 'c_hpp', nama.get('hpp') ?? 'Harga pokok penjualan', 'calc', hpp.map((c) => ({ ...c })))
+  const kotor = line('laba_rugi', 'Ringkasan', 'laba_kotor', 'Laba kotor', 'calc', selisih(masuk.cells, hpp), { emphasis: true })
+  const lain = kelompok.keluar.filter((g) => g.id !== 'hpp').map((g) => line('laba_rugi', 'Ringkasan', `c_k:${g.id}`, g.nama, 'calc', (subtotal.get(g.id) ?? kosong()).map((c) => ({ ...c }))))
+  const laba = line('laba_rugi', 'Ringkasan', 'laba', 'Laba bersih', 'calc', selisih(masuk.cells, keluar.cells), { emphasis: true })
+  const labaRugi: Block = { title: 'C. LABA / RUGI', tabel: 'laba_rugi', lines: [{ group: true, label: 'Ringkasan', tabel: 'laba_rugi' }, cMasuk, cHpp, kotor, ...lain, laba] }
   const neraca = (b: Block): Block => {
     const akhir = arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'akhir')
     const lines = b.lines.map((l) => ({ ...l })) as (Line | GroupDef)[]
