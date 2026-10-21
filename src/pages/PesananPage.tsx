@@ -420,7 +420,7 @@ export default function PesananPage() {
 
       {pengiriman && <DialogPengiriman pesanan={pengiriman.pesanan} cetak={pengiriman.cetak}
         onClose={() => setPengiriman(null)} onConfirm={konfirmasiPengiriman} />}
-      <FormPesananManual open={formBuka} onOpenChange={setFormBuka} akunList={akunList ?? []} />
+      <FormPesananManual open={formBuka} onOpenChange={setFormBuka} />
     </Tabs>
   )
 }

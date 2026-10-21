@@ -88,6 +88,8 @@ export type ProcessingCandidateItem = ProcessingCandidate & {
 }
 export type ProcessingStage = 'draft' | 'produksi' | 'supplier' | 'pengecatan' | 'packing' | 'siap_kirim'
 export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
+  /** The order item the job was made from; absent for a legacy hand-typed job. */
+  item_id?: string
   id: string
   version: number
   route: 'tukang' | 'supplier'
