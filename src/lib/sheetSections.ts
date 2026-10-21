@@ -147,21 +147,23 @@ export function sheetSections(data: Overview): SectionDef[] {
   })
 
   const e = section('neraca', 'E. POSISI KEUANGAN / NERACA')
+  // Only Kas utama, Kas gaji, Utang gaji and the profit lines are filled in automatically; every other row is typed by hand
+  // (a closed period keeps its report's figure, an open one carries the previous period's until it is typed over).
   e.group('Aset')
   e.row('n_kas', 'Kas utama', end('kas_utama'), { total: 'last', deps: [{ row: 'akhir' }] })
-  e.row('n_stok', 'Stok produk', end('stok'), { total: 'last', deps: [cum('adj_stok', -1)] })
-  e.row('n_kas_ops', 'Kas operasional packing', end('kas_operasional'), { total: 'last', deps: [cum('tr_ops', -1), cum('tr_packing', -1)] })
-  e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last', deps: [cum('k_topup'), cum('iklan', -1)] })
-  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last', deps: [cum('piutang_chg'), { ...C('pemasukan', 'Penyesuaian piutang'), mode: 'cum' }] })
+  e.row('n_stok', 'Stok produk', end('stok'), { total: 'last' })
+  e.row('n_kas_ops', 'Kas operasional packing', end('kas_operasional'), { total: 'last' })
+  e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last' })
+  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last' })
   e.row('n_saldo_toko', 'Saldo tertahan toko / Shopee', end('saldo_toko'), { total: 'last' })
   e.row('n_kas_gaji', 'Kas gaji (disisihkan)', end('kas_gaji'), { total: 'last', deps: [cum('k_gaji')] })
   e.row('jml_aset', 'Jumlah aset', (r) => r.hasil.neraca.aset, { ...calcTotal, total: 'last', deps: [G('neraca', 'Aset')] })
   e.group('Kewajiban')
   e.row('n_utang_gaji', 'Utang gaji', end('utang_gaji'), { total: 'last', deps: [cum('gaji')] })
-  e.row('n_utang_usaha', 'Utang usaha / operasional berjalan', end('utang_usaha'), { total: 'last', deps: [cum('adj_utang')] })
+  e.row('n_utang_usaha', 'Utang usaha / operasional berjalan', end('utang_usaha'), { total: 'last' })
   e.row('jml_utang', 'Jumlah kewajiban / utang', (r) => r.hasil.neraca.utang, { ...calcTotal, total: 'last', deps: [G('neraca', 'Kewajiban')] })
   e.group('Ekuitas')
-  e.row('n_modal', 'Modal', end('modal'), { total: 'last', deps: [cum('tr_modal')] })
+  e.row('n_modal', 'Modal', end('modal'), { total: 'last' })
   e.row('n_laba_lalu', 'Saldo laba/rugi periode lalu', before('saldo_laba'), {
     total: 'first',
     carry: ['n_laba_lalu', 'n_laba_ini'],

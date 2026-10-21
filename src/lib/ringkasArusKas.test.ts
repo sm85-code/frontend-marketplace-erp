@@ -297,3 +297,16 @@ describe('salary balances over closed and open periods', () => {
     expect([val(b, 'n_utang_gaji', 0), val(b, 'n_utang_gaji', 1)]).toEqual([100, 200])
   })
 })
+
+describe('neraca rows filled by hand', () => {
+  it('typing over Arus Kas rows moves only the automatic rows, not iklan, stok, kas operasional, modal, piutang or utang usaha', () => {
+    const lembar = emptyLembar()
+    lembar.sel[`${keyNilaiDasar('k_topup')}|${days[0]}`] = '777'
+    lembar.sel[`${keyNilaiDasar('k_gaji')}|${days[0]}`] = '55'
+    const before = build()
+    const after = build(lembar)
+    for (const k of ['n_iklan', 'n_stok', 'n_kas_ops', 'n_modal', 'n_piutang', 'n_utang_usaha', 'n_saldo_toko']) expect(val(after, k)).toBe(val(before, k))
+    expect(val(after, 'n_kas')).not.toBe(val(before, 'n_kas'))
+    expect(val(after, 'n_kas_gaji')).not.toBe(val(before, 'n_kas_gaji'))
+  })
+})
