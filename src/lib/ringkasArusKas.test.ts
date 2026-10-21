@@ -156,6 +156,19 @@ describe('summarized tabs from Arus Kas', () => {
     expect(val(b, 'jml_kew_ekuitas')).toBe(utang + ekuitas)
   })
 
+  it('profit paid out lowers cash and the retained profit by the same amount, leaving expenses, profit and the balance check unchanged', () => {
+    const lembar = emptyLembar()
+    lembar.sel[`pl_admin|${d}`] = '100'
+    lembar.sel[`pl_owner|${d}`] = '150'
+    const base = build()
+    const b = build(lembar)
+    expect(val(b, 'n_kas')).toBe(val(base, 'n_kas')! - 250)
+    expect(val(b, 'n_laba_lalu')).toBe(val(base, 'n_laba_lalu')! - 250)
+    expect(val(b, 'laba')).toBe(val(base, 'laba'))
+    expect(val(b, 'jml_pengeluaran')).toBe(val(base, 'jml_pengeluaran'))
+    expect(val(b, 'selisih')).toBe(val(base, 'selisih'))
+  })
+
   it('editing a cash row changes cash and the balance check, and profit carries into the next period', () => {
     const lembar = emptyLembar()
     lembar.sel[`${keyNilaiDasar('k_toko')}|${d}`] = '1300'

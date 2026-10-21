@@ -1,5 +1,6 @@
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
+import { keyPembagian, PENERIMA_LABA } from '@/config/pembagianLaba'
 import type { Dep, GroupDef, RowDef, SectionDef } from '@/lib/sheetEngine'
 
 const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key] ?? '0')
@@ -112,7 +113,7 @@ export function sheetSections(data: Overview): SectionDef[] {
     total_row: true,
     carry: ['akhir'],
     showCarried: true,
-    deps: [prior('kas_masuk'), prior('kas_keluar', -1), prior('transfer')],
+    deps: [prior('kas_masuk'), prior('kas_keluar', -1), prior('transfer'), prior('jml_pembagian', -1)],
   })
   d.group('Kas masuk')
   d.row('k_toko', 'Saldo toko', result('pemasukan_toko'), { kind: 'calc', deps: [G('pemasukan', 'Penarikan saldo toko')] })
@@ -140,10 +141,14 @@ export function sheetSections(data: Overview): SectionDef[] {
   d.row('tr_packing', 'Transfer ke kas operasional packing (−)', (r) => sumAmounts([`-${r.input.transfer_ke_ops_packing ?? '0'}`]))
   if (anyNonZero((r) => String(r.input.tambahan_modal ?? 0))) d.row('tr_modal', 'Tambahan modal', input('tambahan_modal'))
   d.row('transfer', 'Jumlah transfer antar kas', (r) => (r.hasil.kas_keluar_gaji === undefined ? sumAmounts([r.hasil.transfer_antar_kas, r.input.transfer_kas_gaji ?? '0']) : r.hasil.transfer_antar_kas), { ...calcTotal, deps: [G('arus_kas', 'Transfer antar kas')] })
+  // The whole month's profit is shared out after the month closes: it leaves the main cash and the retained profit, and is not an expense.
+  d.group('Pembagian laba')
+  for (const p of PENERIMA_LABA) d.row(keyPembagian(p.id), `Pembagian laba ${p.nama.toLowerCase()} (${p.persen}%)`, () => '0')
+  d.row('jml_pembagian', 'Jumlah pembagian laba', () => '0', { ...calcTotal, deps: [G('arus_kas', 'Pembagian laba')] })
   d.row('akhir', 'Saldo akhir kas utama', end('kas_utama'), {
     ...calcTotal,
     total: 'last',
-    deps: [cum('kas_masuk'), cum('kas_keluar', -1), cum('transfer')],
+    deps: [cum('kas_masuk'), cum('kas_keluar', -1), cum('transfer'), cum('jml_pembagian', -1)],
   })
 
   const e = section('neraca', 'E. POSISI KEUANGAN / NERACA')
@@ -167,7 +172,7 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.row('n_laba_lalu', 'Saldo laba/rugi periode lalu', before('saldo_laba'), {
     total: 'first',
     carry: ['n_laba_lalu', 'n_laba_ini'],
-    deps: [prior('laba')],
+    deps: [prior('laba'), cum('jml_pembagian', -1)],
   })
   e.row('n_laba_ini', 'Laba/rugi periode berjalan', result('laba'), { kind: 'calc', deps: [{ row: 'laba' }] })
   e.row('jml_ekuitas', 'Jumlah ekuitas', (r) => r.hasil.neraca.ekuitas, { ...calcTotal, total: 'last', deps: [G('neraca', 'Ekuitas')] })
