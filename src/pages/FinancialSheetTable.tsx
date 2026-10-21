@@ -1,6 +1,8 @@
-import { Pencil, Plus } from 'lucide-react'
+import { ChevronsDownUp, ChevronsUpDown, Minus, Pencil, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { fmtRp } from '@/api/client'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { bisaDiganti } from '@/lib/namaBaris'
@@ -36,6 +38,9 @@ type Props = {
   onRenameGroup?: (group: GroupDef) => void
   /** A small note after a row's name (e.g. the category its figure is filed under). */
   ketBaris?: (line: Line) => string | undefined
+  /** Rows whose sub-rows are folded away (tree view of the breakdown), and how to fold/unfold one. */
+  lipat?: ReadonlySet<string>
+  onLipat?: (key: string) => void
 }
 
 function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean; onRenameGroup?: (g: GroupDef) => void }) {
@@ -86,6 +91,29 @@ function Ket({ teks }: { teks?: string }) {
   return teks ? <span className="teks-kecil ml-1.5 whitespace-nowrap font-normal text-muted-foreground">· {teks}</span> : null
 }
 
+/** Keys of the rows that have visible sub-rows. */
+const punyaRincian = (block: Block) => new Set(block.lines.flatMap((l) => (!isGroup(l) && !l.hidden && l.def.induk ? [l.def.induk] : [])))
+
+/** Fold/unfold button of a row with sub-rows, set in the No column like a tree node. */
+function Simpul({ line, lipat, onLipat }: { line: Line; lipat: ReadonlySet<string>; onLipat: (key: string) => void }) {
+  const tertutup = lipat.has(line.def.key)
+  return (
+    <button
+      type="button"
+      aria-expanded={!tertutup}
+      aria-label={`${tertutup ? 'Buka' : 'Lipat'} rincian ${line.def.label}`}
+      title={tertutup ? 'Tampilkan rincian' : 'Sembunyikan rincian'}
+      onClick={() => onLipat(line.def.key)}
+      className="inline-flex size-4 shrink-0 items-center justify-center rounded border border-border text-muted-foreground hover:border-primary hover:text-primary"
+    >
+      {tertutup ? <Plus className="size-3" aria-hidden="true" /> : <Minus className="size-3" aria-hidden="true" />}
+    </button>
+  )
+}
+
+/** The number of a sub-row sits inside the name cell, in line with the text of the row it breaks down. */
+const NomorRincian = ({ teks }: { teks?: string }) => (teks ? <span className="mr-2 tabular-nums">{teks}</span> : null)
+
 function nomorBaris(block: Block): Map<string, string> {
   const out = new Map<string, string>()
   let n = 0
@@ -120,10 +148,11 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
 }
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, lipat, onLipat }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const nomor = bernomor ? nomorBaris(block) : null
+  const induk = useMemo(() => punyaRincian(block), [block])
   const options = [
     ...days.map((_, i) => ({ key: String(i), label: 'Periode', sub: weekLabel(i) })),
     { key: 'total', label: block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah', sub: '' },
@@ -136,7 +165,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
           <TableBody>
             {block.lines.map((line) => {
               if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={nomor ? 3 : 2} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
-              if (line.hidden) return null
+              if (line.hidden || (line.def.induk && lipat?.has(line.def.induk))) return null
               const can = editable(line) && !total && !hanyaLihat
               const rename = !editable(line) && !hanyaLihat && !!onRenameRow && bisaDiganti(line.def.key)
               const cell = total ? { value: line.total, manual: false } : line.cells[pick]
@@ -146,8 +175,17 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   className={`${line.def.emphasis ? 'bg-muted/50 font-semibold' : ''} ${can || rename ? 'cursor-pointer active:bg-muted/60' : ''}`}
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
-                  {nomor && !line.def.emphasis && <TableCell className={`w-9 pr-0 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? `pl-6 ${GAYA_ANAK}` : ''}`}>{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
+                  {nomor && !line.def.emphasis && (
+                    <TableCell className="w-12 pr-0 text-center tabular-nums text-muted-foreground">
+                      {!line.def.induk && (
+                        <span className="inline-flex items-center gap-1">
+                          {lipat && onLipat && induk.has(line.def.key) && <Simpul line={line} lipat={lipat} onLipat={onLipat} />}
+                          {nomor.get(line.def.key) ?? ''}
+                        </span>
+                      )}
+                    </TableCell>
+                  )}
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? GAYA_ANAK : ''}`}>{line.def.induk && <NomorRincian teks={nomor?.get(line.def.key)} />}{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
@@ -167,17 +205,37 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 export default function FinancialSheetTable(props: Props) {
   const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris } = props
   const nomor = bernomor ? nomorBaris(block) : null
+  const [lipatSendiri, setLipatSendiri] = useState<ReadonlySet<string>>(new Set())
+  const induk = useMemo(() => punyaRincian(block), [block])
+  const lipat = props.lipat ?? lipatSendiri
+  const onLipat =
+    props.onLipat ??
+    ((key: string) =>
+      setLipatSendiri((sekarang) => {
+        const next = new Set(sekarang)
+        if (!next.delete(key)) next.add(key)
+        return next
+      }))
+  const semuaTertutup = induk.size > 0 && [...induk].every((k) => lipat.has(k))
+  const lipatSemua = () => (semuaTertutup ? setLipatSendiri(new Set()) : setLipatSendiri(new Set(induk)))
+  const kembangan = { ...props, lipat, onLipat }
   return (
     <Card className="min-w-0 overflow-hidden">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle>{sentenceCase(block.title.slice(3))}</CardTitle>
+        {nomor && induk.size > 0 && !props.lipat && (
+          <Button type="button" variant="outline" size="sm" onClick={lipatSemua}>
+            {semuaTertutup ? <ChevronsUpDown className="size-4" aria-hidden="true" /> : <ChevronsDownUp className="size-4" aria-hidden="true" />}
+            {semuaTertutup ? 'Buka semua rincian' : 'Lipat semua rincian'}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
-        <PhoneTable {...props} />
+        <PhoneTable {...kembangan} />
         <div className="hidden max-w-full overflow-x-auto rounded-lg border md:block">
-          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': nomor ? '264px' : '220px' } as React.CSSProperties} aria-label={block.title.slice(3)}>
+          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': nomor ? '276px' : '220px' } as React.CSSProperties} aria-label={block.title.slice(3)}>
             <colgroup>
-              {nomor && <col className="w-[44px]" />}
+              {nomor && <col className="w-[56px]" />}
               <col className="w-[220px]" />
               {days.map((d) => (
                 <col key={d} className="w-[142px]" />
@@ -187,7 +245,7 @@ export default function FinancialSheetTable(props: Props) {
             <TableHeader className="bg-muted">
               <TableRow>
                 {nomor && <TableHead className="sticky left-0 z-10 bg-muted px-2 text-center">No</TableHead>}
-                <TableHead className={`sticky z-10 bg-muted ${nomor ? 'left-[44px]' : 'left-0'}`}>Uraian</TableHead>
+                <TableHead className={`sticky z-10 bg-muted ${nomor ? 'left-[56px]' : 'left-0'}`}>Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
                     <span className="block">Periode</span>
@@ -200,18 +258,28 @@ export default function FinancialSheetTable(props: Props) {
             <TableBody>
               {block.lines.map((line) => {
                 if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + (nomor ? 3 : 2)} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
-                if (line.hidden) return null
+                if (line.hidden || (line.def.induk && lipat.has(line.def.induk))) return null
                 const can = editable(line) && !hanyaLihat
                 const rename = !can && !hanyaLihat && !!onRenameRow && bisaDiganti(line.def.key)
                 const lastWithData = Math.max(0, line.cells.map((c) => c.value !== null).lastIndexOf(true))
                 return (
                   <TableRow key={line.def.key} className={line.def.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
-                    {nomor && !line.def.emphasis && <TableCell className={`sticky left-0 z-10 bg-card px-2 text-center tabular-nums ${line.def.induk ? GAYA_ANAK : 'text-muted-foreground'}`}>{nomor.get(line.def.key) ?? ''}</TableCell>}
+                    {nomor && !line.def.emphasis && (
+                      <TableCell className="sticky left-0 z-10 bg-card px-2 text-center tabular-nums text-muted-foreground">
+                        {!line.def.induk && (
+                          <span className="inline-flex items-center gap-1">
+                            {induk.has(line.def.key) && <Simpul line={line} lipat={lipat} onLipat={onLipat} />}
+                            {nomor.get(line.def.key) ?? ''}
+                          </span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell
                       colSpan={nomor && line.def.emphasis ? 2 : 1}
-                      className={`sticky z-10 ${line.def.induk ? `pl-8 ${GAYA_ANAK}` : ''} ${nomor && !line.def.emphasis ? 'left-[44px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
+                      className={`sticky z-10 ${line.def.induk ? GAYA_ANAK : ''} ${nomor && !line.def.emphasis ? 'left-[56px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
+                      {line.def.induk && <NomorRincian teks={nomor?.get(line.def.key)} />}
                       {line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}
                       <Ket teks={ketBaris?.(line)} />
                     </TableCell>
