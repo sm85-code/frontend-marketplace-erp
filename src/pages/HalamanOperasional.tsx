@@ -1,168 +1,137 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useEffect, useRef, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { fmtRp, getApiError } from '@/api/client'
-import {
-  daftarOperasional,
-  hapusOperasional,
-  tambahOperasional,
-  ubahOperasional,
-  type JenisOperasional,
-  type TransaksiOperasional,
-} from '@/api/operasional'
+import { daftarOperasional, hapusOperasional, tambahOperasional, ubahOperasional, type JenisOperasional, type TransaksiOperasional } from '@/api/operasional'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
-import TableShell from '@/components/TableShell'
 import { BarHalaman } from '@/components/daftar'
 import { useConfirm } from '@/components/ConfirmProvider'
 import MoneyInput from '@/components/MoneyInput'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { alasanBelumBisa, barisBaruTerisi, jumlahTampil, sama, tanggalBawaan, type Isi } from '@/lib/operasionalBaris'
+import { alasanBelumBisa, jumlahTampil, tanggalBawaan, type Isi } from '@/lib/operasionalBaris'
+import { susunOperasional } from '@/lib/operasionalLembar'
+import { periodeBerjalan, weekRange } from '@/lib/tanggal'
+import { isGroup, type Line } from '@/lib/sheetEngine'
+import FinancialSheetTable from './FinancialSheetTable'
 
 const wib = (opsi: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', ...opsi }).format(new Date())
 const hariIni = () => wib({ year: 'numeric', month: '2-digit', day: '2-digit' })
 const bulanIni = () => hariIni().slice(0, 7)
+const tampilTanggal = (t: string) => t.split('-').reverse().join('/')
 
-type Simpan = (isi: Isi) => Promise<void>
+/** Which entry is open in the pop-up: a saved one (`item`) or a new one in a category. */
+type Buka = { kategori: string; label: string; item?: TransaksiOperasional; nomor?: number }
 
-/** One saved entry. Its fields are typed into directly; leaving the row saves what changed. */
-function BarisTransaksi({ item, label, nomor, bisaTulis, simpan, hapus }: { item: TransaksiOperasional; label: string; nomor: number; bisaTulis: boolean; simpan: Simpan; hapus: () => void }) {
-  const dari = (): Isi => ({ tanggal: item.tanggal, uraian: item.uraian, jumlah: jumlahTampil(item.jumlah) })
-  const [isi, setIsi] = useState<Isi>(dari)
-  useEffect(() => setIsi(dari()), [item.tanggal, item.uraian, item.jumlah]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function keluarBaris() {
-    if (sama(isi, dari())) return
-    const alasan = alasanBelumBisa(isi)
-    if (alasan) {
-      toast.error(alasan)
-      setIsi(dari())
-      return
-    }
-    try {
-      await simpan(isi)
-    } catch {
-      setIsi(dari()) // the page shows why; the row goes back to what is saved
-    }
-  }
-  const nama = (kolom: string) => `${kolom} ${label} baris ${nomor}`
-  if (!bisaTulis) {
-    return (
-      <TableRow>
-        <TableCell className="whitespace-nowrap">{item.tanggal.split('-').reverse().join('/')}</TableCell>
-        <TableCell>{item.uraian || '—'}</TableCell>
-        <TableCell className="text-right tabular-nums">{fmtRp(item.jumlah)}</TableCell>
-        <TableCell />
-      </TableRow>
-    )
-  }
+function DialogBaris({ buka, periode, sibuk, onClose, onSimpan, onHapus }: { buka: Buka | null; periode: string; sibuk: boolean; onClose: () => void; onSimpan: (isi: Isi) => void; onHapus: () => void }) {
   return (
-    <TableRow
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void keluarBaris()
+    <Dialog open={!!buka} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">{buka && <Form key={buka.item?.id ?? `baru-${buka.kategori}`} buka={buka} periode={periode} sibuk={sibuk} onSimpan={onSimpan} onHapus={onHapus} />}</DialogContent>
+    </Dialog>
+  )
+}
+
+function Form({ buka, periode, sibuk, onSimpan, onHapus }: { buka: Buka; periode: string; sibuk: boolean; onSimpan: (isi: Isi) => void; onHapus: () => void }) {
+  const awal: Isi = buka.item ? { tanggal: buka.item.tanggal, uraian: buka.item.uraian, jumlah: jumlahTampil(buka.item.jumlah) } : { tanggal: tanggalBawaan(periode, hariIni()), uraian: '', jumlah: '' }
+  const [isi, setIsi] = useState<Isi>(awal)
+  const alasan = alasanBelumBisa(isi)
+  return (
+    <form
+      className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (alasan) return toast.error(alasan)
+        onSimpan(isi)
       }}
     >
-      <TableCell className="w-44">
-        <Input type="date" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
-      </TableCell>
-      <TableCell>
-        <Input aria-label={nama('Uraian')} value={isi.uraian} maxLength={255} onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
-      </TableCell>
-      <TableCell className="w-48">
-        <MoneyInput aria-label={nama('Jumlah')} className="text-right" value={isi.jumlah} onChange={(e) => setIsi((x) => ({ ...x, jumlah: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-      </TableCell>
-      <TableCell className="w-14 text-right">
-        <Button type="button" size="icon" variant="ghost" aria-label={nama('Hapus')} onClick={hapus}>
-          <Trash2 className="size-4" aria-hidden />
+      <DialogHeader>
+        <DialogTitle>{buka.item ? 'Ubah baris' : 'Tambah baris'}</DialogTitle>
+        <DialogDescription>{buka.item ? `${buka.label} · baris ${buka.nomor}` : buka.label}</DialogDescription>
+      </DialogHeader>
+      <div className="space-y-1.5">
+        <Label htmlFor="op-tanggal">Tanggal</Label>
+        <Input id="op-tanggal" type="date" value={isi.tanggal} onChange={(e) => setIsi({ ...isi, tanggal: e.target.value })} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="op-uraian">Uraian</Label>
+        <Input id="op-uraian" value={isi.uraian} maxLength={255} onChange={(e) => setIsi({ ...isi, uraian: e.target.value })} />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="op-jumlah">Jumlah (Rp)</Label>
+        <MoneyInput id="op-jumlah" className="text-right" value={isi.jumlah} onChange={(e) => setIsi({ ...isi, jumlah: e.target.value })} />
+      </div>
+      <DialogFooter className="sm:justify-between">
+        {buka.item ? (
+          <Button type="button" variant="outline" className="text-destructive" disabled={sibuk} onClick={onHapus}>
+            Hapus baris
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button type="submit" disabled={sibuk}>
+          Simpan
         </Button>
-      </TableCell>
-    </TableRow>
+      </DialogFooter>
+    </form>
   )
 }
 
-/** The empty row at the end of a category: fill the amount (and a description) and move on, the row is saved and a new one opens. */
-function BarisBaru({ label, tanggalAwal, simpan }: { label: string; tanggalAwal: string; simpan: Simpan }) {
-  const kosong = (tanggal: string): Isi => ({ tanggal, uraian: '', jumlah: '' })
-  const [isi, setIsi] = useState<Isi>(() => kosong(tanggalAwal))
-  const menyimpan = useRef(false)
-  // Another month was picked: start from that month's date again.
-  useEffect(() => setIsi(kosong(tanggalAwal)), [tanggalAwal])
-
-  async function keluarBaris() {
-    if (menyimpan.current || !barisBaruTerisi(isi)) return
-    const alasan = alasanBelumBisa(isi)
-    if (alasan) {
-      if (isi.jumlah.trim() === '') return // still being filled in: wait for the amount
-      toast.error(alasan)
-      return
-    }
-    menyimpan.current = true
-    try {
-      await simpan(isi)
-      setIsi(kosong(isi.tanggal)) // keep the date: several entries of one day are typed one after the other
-    } catch {
-      /* the error is shown by the page; the typed values stay so nothing is lost */
-    } finally {
-      menyimpan.current = false
-    }
-  }
-  const nama = (kolom: string) => `${kolom} ${label} baris baru`
-  return (
-    <TableRow
-      className="bg-muted/20"
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void keluarBaris()
-      }}
-    >
-      <TableCell className="w-44">
-        <Input type="date" aria-label={nama('Tanggal')} value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
-      </TableCell>
-      <TableCell>
-        <Input aria-label={nama('Uraian')} placeholder="Ketik uraian…" value={isi.uraian} maxLength={255} onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
-      </TableCell>
-      <TableCell className="w-48">
-        <MoneyInput aria-label={nama('Jumlah')} className="text-right" placeholder="Jumlah" value={isi.jumlah} onChange={(e) => setIsi((x) => ({ ...x, jumlah: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-      </TableCell>
-      <TableCell className="w-14" />
-    </TableRow>
-  )
-}
-
-/** Operasional Umum and Operasional Packing: dated entries typed straight into the table, grouped by category. */
+/** Operasional Umum and Operasional Packing: the entries of a month in the Arus Kas layout (a group per category, weekly columns), with a Tanggal column. */
 export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis: JenisOperasional; judul: string; deskripsi: string }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [periode, setPeriode] = useState(bulanIni)
-  const kunci = ['operasional', jenis, periode] as const
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: kunci, queryFn: () => daftarOperasional(jenis, periode) })
+  const [buka, setBuka] = useState<Buka | null>(null)
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ['operasional', jenis, periode], queryFn: () => daftarOperasional(jenis, periode) })
   const [tersimpan, setTersimpan] = useState(false)
-
-  const sesudah = () => {
-    setTersimpan(true)
-    return qc.invalidateQueries({ queryKey: ['operasional', jenis] })
-  }
   useEffect(() => {
     if (!tersimpan) return
     const t = setTimeout(() => setTersimpan(false), 3000)
     return () => clearTimeout(t)
   }, [tersimpan])
 
+  const sesudah = () => {
+    setTersimpan(true)
+    setBuka(null)
+    return qc.invalidateQueries({ queryKey: ['operasional', jenis] })
+  }
   const tambah = useMutation({ mutationFn: (v: { kategori: string; isi: Isi }) => tambahOperasional(jenis, { kategori: v.kategori, ...v.isi }), onSuccess: sesudah, onError: (e) => toast.error(getApiError(e)) })
   const ubah = useMutation({ mutationFn: (v: { id: string; kategori: string; isi: Isi }) => ubahOperasional(jenis, v.id, { kategori: v.kategori, ...v.isi }), onSuccess: sesudah, onError: (e) => toast.error(getApiError(e)) })
   const hapus = useMutation({ mutationFn: (id: string) => hapusOperasional(jenis, id), onSuccess: sesudah, onError: (e) => toast.error(getApiError(e)) })
+  const sibuk = tambah.isPending || ubah.isPending || hapus.isPending
 
-  async function onHapus(item: TransaksiOperasional, label: string) {
-    const ok = await confirm({ title: 'Hapus transaksi ini?', description: `${label} · ${fmtRp(item.jumlah)}${item.uraian ? ` · ${item.uraian}` : ''}. Tindakan ini tidak bisa dibatalkan.`, confirmLabel: 'Hapus', destructive: true })
-    if (ok) hapus.mutate(item.id)
+  const susunan = useMemo(() => (data ? susunOperasional(data, judul) : null), [data, judul])
+  const bisaTulis = !!data?.bisa_tulis
+  const nomorDi = (line: Line) => {
+    if (!susunan) return 0
+    let n = 0
+    for (const l of susunan.block.lines) {
+      if (isGroup(l) || l.def.emphasis) {
+        if (isGroup(l)) n = 0
+        continue
+      }
+      n++
+      if (l === line) return n
+    }
+    return n
+  }
+  const labelKategori = (id: string) => data?.kategori.find((k) => k.id === id)?.label ?? ''
+
+  async function onHapus() {
+    const t = buka?.item
+    if (!t) return
+    const ok = await confirm({ title: 'Hapus transaksi ini?', description: `${labelKategori(t.kategori)} · ${fmtRp(t.jumlah)}${t.uraian ? ` · ${t.uraian}` : ''}. Tindakan ini tidak bisa dibatalkan.`, confirmLabel: 'Hapus', destructive: true })
+    if (ok) hapus.mutate(t.id)
+  }
+  const simpan = (isi: Isi) => {
+    if (!buka) return
+    if (buka.item) ubah.mutate({ id: buka.item.id, kategori: buka.kategori, isi })
+    else tambah.mutate({ kategori: buka.kategori, isi })
   }
 
-  const sibuk = tambah.isPending || ubah.isPending || hapus.isPending
-  const bisaTulis = !!data?.bisa_tulis
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
       <BarHalaman judul={judul} deskripsi={deskripsi}>
@@ -172,67 +141,28 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
       </BarHalaman>
       {isLoading && <Spinner label="Memuat transaksi…" />}
       {error && <QueryError error={error} retry={refetch} />}
-      {data && (
-        <Card>
-          <CardContent className="space-y-3 pt-4">
-            {bisaTulis && <p className="teks-kecil text-muted-foreground">Ketik langsung di baris. Isi tanggal, uraian, dan jumlah; pindah ke kolom lain atau tekan Enter dan baris tersimpan otomatis. Baris kosong di bawah tiap kelompok untuk transaksi baru.</p>}
-            <TableShell label={`Transaksi ${judul}`} minWidth={640}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Uraian</TableHead>
-                    <TableHead className="text-right">Jumlah</TableHead>
-                    <TableHead className="text-right">
-                      <span className="sr-only">Aksi</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.kategori.map((k) => {
-                    const baris = data.items.filter((i) => i.kategori === k.id)
-                    return (
-                      <Fragment key={k.id}>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
-                          <TableCell colSpan={2} className="font-semibold">
-                            {k.label}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold tabular-nums">{fmtRp(data.ringkasan.per_kategori[k.id] ?? '0')}</TableCell>
-                          <TableCell />
-                        </TableRow>
-                        {baris.map((item, n) => (
-                          <BarisTransaksi
-                            key={item.id}
-                            item={item}
-                            label={k.label}
-                            nomor={n + 1}
-                            bisaTulis={bisaTulis}
-                            simpan={(isi) => ubah.mutateAsync({ id: item.id, kategori: k.id, isi }).then(() => undefined)}
-                            hapus={() => void onHapus(item, k.label)}
-                          />
-                        ))}
-                        {bisaTulis && <BarisBaru label={k.label} tanggalAwal={tanggalBawaan(periode, hariIni())} simpan={(isi) => tambah.mutateAsync({ kategori: k.id, isi }).then(() => undefined)} />}
-                        {!bisaTulis && baris.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-muted-foreground">
-                              Belum ada transaksi.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
-                    )
-                  })}
-                  <TableRow className="bg-[var(--table-heading-background)] font-bold hover:bg-[var(--table-heading-background)]">
-                    <TableCell colSpan={2}>Jumlah {judul}</TableCell>
-                    <TableCell className="text-right tabular-nums">{fmtRp(data.ringkasan.total)}</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableShell>
-          </CardContent>
-        </Card>
+      {susunan && (
+        <FinancialSheetTable
+          block={susunan.block}
+          days={susunan.days}
+          weekLabel={(i) => weekRange(periode, i)}
+          periodeAwal={periodeBerjalan(periode, susunan.days.length)}
+          hurufAsli
+          bernomor
+          hanyaLihat={!bisaTulis}
+          tanpaTambah={!bisaTulis}
+          kolomTanggal={(l) => (susunan.item.has(l.def.key) ? tampilTanggal(susunan.item.get(l.def.key)!.tanggal) : undefined)}
+          onEdit={(line) => {
+            const item = susunan.item.get(line.def.key)
+            if (item) setBuka({ kategori: item.kategori, label: labelKategori(item.kategori), item, nomor: nomorDi(line) })
+          }}
+          onAddRow={(g) => {
+            const k = data!.kategori.find((x) => x.label === g.label)
+            if (k) setBuka({ kategori: k.id, label: k.label })
+          }}
+        />
       )}
+      <DialogBaris buka={buka} periode={periode} sibuk={sibuk} onClose={() => setBuka(null)} onSimpan={simpan} onHapus={() => void onHapus()} />
     </div>
   )
 }
