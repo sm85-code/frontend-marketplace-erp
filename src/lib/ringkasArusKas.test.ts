@@ -226,5 +226,17 @@ describe('salary as a cash-out and transfers to the operational cash accounts', 
     expect(val(typed, 'gaji')).toBe(100)
     expect(val(typed, 'selisih')).toBe(val(base, 'selisih'))
   })
+  it('a report closed before the salary was listed under Kas keluar shows it there, with the same closing cash', () => {
+    const lama = {
+      ...record,
+      input: { ...record.input, transfer_kas_gaji: '40' },
+      hasil: { ...record.hasil, kas_keluar: '295', transfer_antar_kas: '-40' },
+    } as unknown as Report
+    const b = make(lama)
+    expect(val(b, 'k_gaji')).toBe(40)
+    expect(val(b, 'kas_keluar')).toBe(200 + 80 + 10 + 5 + 40 + 25) // the rows add up, gaji included
+    expect(val(b, 'transfer')).toBe(0)
+    expect(b.flatMap((x) => x.lines).some((l) => !isGroup(l) && l.def.key === 'tr_gaji')).toBe(false)
+  })
 })
 
