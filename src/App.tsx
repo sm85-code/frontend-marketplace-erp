@@ -33,6 +33,8 @@ const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
 const DocumentTemplatesPage = lazy(() => import('@/pages/DocumentTemplatesPage'))
 const ProcessingPage = lazy(() => import('@/pages/ProcessingPage'))
 const ArusKas = lazy(() => import('@/pages/ArusKas'))
+const OperasionalUmumPage = lazy(() => import('@/pages/OperasionalUmum'))
+const OperasionalPackingPage = lazy(() => import('@/pages/OperasionalPacking'))
 const FinancialReportsPage = lazy(() => import('@/pages/FinancialReportsPage'))
 const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
 const IklanPage = lazy(() => import('@/pages/IklanPage'))
@@ -93,6 +95,8 @@ export default function App() {
               <Route path="/performa-toko" element={<Protected halaman="info_toko"><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/processing/template" element={<Protected halaman="processing"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected halaman="processing"><LazyPage><ProcessingPage /></LazyPage></Protected>} />
+              <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
+              <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
               <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
