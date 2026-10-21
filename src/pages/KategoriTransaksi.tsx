@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
-import { buatKategori, daftarKategori, ubahKategori, urutkanKategori, type ArahKategori, type KategoriTransaksi } from '@/api/kategori'
+import { buatKategori, buatKelompok, daftarKategori, ubahKategori, ubahKelompok, urutkanKategori, type ArahKategori, type Kelompok, type KategoriTransaksi } from '@/api/kategori'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import TableShell from '@/components/TableShell'
@@ -23,7 +23,7 @@ const NAMA_HALAMAN = { umum: 'Operasional Umum', packing: 'Operasional Packing' 
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
 type Isi = { nama: string; kelompok: string; operasional: string }
-const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelompok, operasional: k.operasional ?? '' })
+const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelompok_id, operasional: k.operasional ?? '' })
 const kirim = (i: Isi) => ({ nama: i.nama.trim(), kelompok: i.kelompok, operasional: i.operasional || null })
 const penempatan = (k: KategoriTransaksi) => (k.kelompok === '' ? 'Tidak masuk laporan' : k.operasional ? `${k.kelompok} · ${NAMA_HALAMAN[k.operasional]}` : k.kelompok)
 
@@ -93,7 +93,7 @@ function Kartu(p: PropsBaris) {
   )
 }
 
-function DialogAtur({ k, kelompok, onClose, onSimpan }: { k: KategoriTransaksi | null; kelompok: string[]; onClose: () => void; onSimpan: (isi: Isi) => void }) {
+function DialogAtur({ k, kelompok, onClose, onSimpan }: { k: KategoriTransaksi | null; kelompok: Kelompok[]; onClose: () => void; onSimpan: (isi: Isi) => void }) {
   return (
     <Dialog open={!!k} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm">{k && <FormAtur key={k.id} k={k} kelompok={kelompok} onSimpan={onSimpan} />}</DialogContent>
@@ -101,7 +101,7 @@ function DialogAtur({ k, kelompok, onClose, onSimpan }: { k: KategoriTransaksi |
   )
 }
 
-function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: string[]; onSimpan: (isi: Isi) => void }) {
+function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: Kelompok[]; onSimpan: (isi: Isi) => void }) {
   const [isi, setIsi] = useState(isiDari(k))
   return (
     <form
@@ -118,7 +118,7 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: s
       <div className="space-y-1.5">
         <Label htmlFor="atur-kelompok">Kelompok di laporan</Label>
         <select id="atur-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
-          {kelompok.map((g) => <option key={g}>{g}</option>)}
+          {kelompok.map((g) => <option key={g.id} value={g.id}>{g.nama}</option>)}
         </select>
       </div>
       {k.arah === 'keluar' && (
@@ -137,10 +137,10 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: s
   )
 }
 
-function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKategori; kelompok: string[]; buka: boolean; onClose: () => void; onSaved: () => void }) {
-  const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0], operasional: '' })
+function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKategori; kelompok: Kelompok[]; buka: boolean; onClose: () => void; onSaved: () => void }) {
+  const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
   useEffect(() => {
-    if (buka) setIsi({ nama: '', kelompok: kelompok[0], operasional: '' })
+    if (buka) setIsi({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
   }, [buka, arah]) // eslint-disable-line react-hooks/exhaustive-deps
   const simpan = useMutation({
     mutationFn: () => buatKategori(arah, kirim(isi)),
@@ -172,7 +172,7 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
           <div className="space-y-1.5">
             <Label htmlFor="kat-kelompok">Kelompok di laporan</Label>
             <select id="kat-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
-              {kelompok.map((g) => <option key={g}>{g}</option>)}
+              {kelompok.map((g) => <option key={g.id} value={g.id}>{g.nama}</option>)}
             </select>
           </div>
           {arah === 'keluar' && (
@@ -191,6 +191,60 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Names of the groups of the Pemasukan / Pengeluaran tabs: change them or add one. Categories point at the id, so nothing breaks. */
+function PanelKelompok({ arah, kelompok, bisaTulis, onChanged }: { arah: ArahKategori; kelompok: Kelompok[]; bisaTulis: boolean; onChanged: () => void }) {
+  const [baru, setBaru] = useState('')
+  const tambah = useMutation({
+    mutationFn: () => buatKelompok(arah, baru.trim()),
+    onSuccess: () => {
+      setBaru('')
+      onChanged()
+      toast.success('Kelompok ditambahkan')
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  })
+  return (
+    <section aria-label="Kelompok laporan" className="space-y-2">
+      <h2 className="text-sm font-semibold">Kelompok di laporan</h2>
+      <p className="teks-kecil text-muted-foreground">Judul kelompok di tab {NAMA_ARAH[arah]} dan pilihan penempatan di atas. Ganti nama kapan saja; kategori yang sudah ditempatkan tetap di kelompoknya.</p>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {kelompok.map((g) => <ItemKelompok key={g.id} g={g} bisaTulis={bisaTulis} onChanged={onChanged} />)}
+      </ul>
+      {bisaTulis && (
+        <form
+          className="flex flex-wrap items-center gap-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (baru.trim().length >= 2) tambah.mutate()
+          }}
+        >
+          <Input aria-label="Nama kelompok baru" className="w-64" placeholder="Nama kelompok baru" value={baru} maxLength={80} onChange={(e) => setBaru(e.target.value)} />
+          <Button type="submit" variant="outline" disabled={tambah.isPending || baru.trim().length < 2}><Plus /> Tambah kelompok</Button>
+        </form>
+      )}
+    </section>
+  )
+}
+
+function ItemKelompok({ g, bisaTulis, onChanged }: { g: Kelompok; bisaTulis: boolean; onChanged: () => void }) {
+  const [nama, setNama] = useState(g.nama)
+  useEffect(() => setNama(g.nama), [g.nama])
+  const simpan = useMutation({ mutationFn: () => ubahKelompok(g.id, nama.trim()), onSuccess: onChanged, onError: (e) => { toast.error(getApiError(e)); setNama(g.nama) } })
+  if (!bisaTulis) return <li className="rounded-md border px-3 py-2 text-sm">{g.nama}</li>
+  return (
+    <li>
+      <Input
+        aria-label={`Nama kelompok ${g.nama}`}
+        value={nama}
+        maxLength={80}
+        onChange={(e) => setNama(e.target.value)}
+        onBlur={() => (nama.trim().length < 2 ? setNama(g.nama) : nama.trim() !== g.nama && simpan.mutate())}
+        onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+      />
+    </li>
   )
 }
 
@@ -223,7 +277,7 @@ export default function KategoriTransaksiPage() {
 
   const semuaArah = (data?.items ?? []).filter((k) => k.arah === arah).sort((a, b) => a.urut - b.urut)
   const daftar = semuaArah.filter((k) => (tab === 'umum' || tab === 'packing' ? k.operasional === tab : true))
-  const kelompok = data?.kelompok[arah] ?? []
+  const kelompok = data?.kelompok_daftar[arah] ?? []
   /** Swaps with the neighbour in this tab, keeping the other categories of the kind where they are. */
   const geser = (i: number, d: -1 | 1) => {
     const ids = semuaArah.map((k) => k.id)
@@ -282,6 +336,7 @@ export default function KategoriTransaksiPage() {
               </Table>
             </TableShell>
             </div>
+            <PanelKelompok arah={arah} kelompok={kelompok} bisaTulis={bisaTulis} onChanged={segarkan} />
             <p className="teks-kecil text-muted-foreground">Mengubah nama hanya mengganti tulisan: di pilihan kategori Arus Kas, tab Pemasukan/Pengeluaran, dan halaman Operasional. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.</p>
           </CardContent>
         </Card>
