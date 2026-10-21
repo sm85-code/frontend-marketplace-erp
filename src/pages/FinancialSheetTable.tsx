@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from 'lucide-react'
+import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { fmtRp } from '@/api/client'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
+import TombolLipat from '@/components/TombolLipat'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -76,7 +77,7 @@ function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { g
 }
 
 /** Sub-rows (breakdown of a row) are set apart: italic and a different colour. */
-const GAYA_ANAK = 'italic text-indigo-700 dark:text-indigo-300'
+export const GAYA_ANAK = 'italic text-indigo-700 dark:text-indigo-300'
 
 const Amount = ({ value, manual, warisan }: { value: number | null; manual: boolean; warisan?: boolean }) => (
   <span className={manual ? `font-medium ${warisan ? '' : 'text-primary'}` : undefined}>
@@ -94,28 +95,13 @@ function Ket({ teks }: { teks?: string }) {
 /** Keys of the rows that have visible sub-rows. */
 const punyaRincian = (block: Block) => new Set(block.lines.flatMap((l) => (!isGroup(l) && !l.hidden && l.def.induk ? [l.def.induk] : [])))
 
-/** Fold/unfold button of a row with sub-rows, set in the No column like a tree node. */
+/** Fold/unfold node of a row with sub-rows. */
 function Simpul({ line, lipat, onLipat }: { line: Line; lipat: ReadonlySet<string>; onLipat: (key: string) => void }) {
-  const tertutup = lipat.has(line.def.key)
-  return (
-    <button
-      type="button"
-      aria-expanded={!tertutup}
-      aria-label={`${tertutup ? 'Buka' : 'Lipat'} rincian ${line.def.label}`}
-      title={tertutup ? 'Tampilkan rincian' : 'Sembunyikan rincian'}
-      onClick={(e) => {
-        e.stopPropagation() // the row opens its edit pop-up when tapped; the node only folds
-        onLipat(line.def.key)
-      }}
-      className="inline-flex !h-7 !min-h-7 !w-7 !min-w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-    >
-      {tertutup ? <ChevronRight className="size-4" aria-hidden="true" /> : <ChevronDown className="size-4" aria-hidden="true" />}
-    </button>
-  )
+  return <TombolLipat tertutup={lipat.has(line.def.key)} nama={line.def.label} onClick={() => onLipat(line.def.key)} />
 }
 
 /** The number of a sub-row sits inside the name cell, in line with the text of the row it breaks down. */
-const NomorRincian = ({ teks }: { teks?: string }) => (teks ? <span className="mr-2 tabular-nums">{teks}</span> : null)
+export const NomorRincian = ({ teks }: { teks?: string }) => (teks ? <span className="mr-2 tabular-nums">{teks}</span> : null)
 
 function nomorBaris(block: Block): Map<string, string> {
   const out = new Map<string, string>()

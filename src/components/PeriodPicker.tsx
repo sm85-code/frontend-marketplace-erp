@@ -18,10 +18,11 @@ export function useScrollKeAktif(pick: number) {
   return row
 }
 
-export default function PeriodPicker({ options, pick, onPick }: { options: { key: string; label: string; sub?: string }[]; pick: number; onPick: (i: number) => void }) {
+/** `semuaLayar`: also on wide screens (the report tables show every period as a column there, so they leave it off). */
+export default function PeriodPicker({ options, pick, onPick, semuaLayar }: { options: { key: string; label: string; sub?: string }[]; pick: number; onPick: (i: number) => void; semuaLayar?: boolean }) {
   const row = useScrollKeAktif(pick)
   return (
-    <div ref={row} className="relative flex gap-2 overflow-x-auto pb-3 md:hidden" role="tablist" aria-label="Pilih periode">
+    <div ref={row} className={`relative flex gap-2 overflow-x-auto pb-3 ${semuaLayar ? '' : 'md:hidden'}`} role="tablist" aria-label="Pilih periode">
       {options.map((o, i) => (
         <button key={o.key} type="button" role="tab" aria-selected={pick === i} onClick={() => onPick(i)}
           className={`shrink-0 rounded-lg border px-3 py-1.5 text-center text-xs ${pick === i ? 'border-primary bg-primary text-primary-foreground' : 'bg-card'}`}>
