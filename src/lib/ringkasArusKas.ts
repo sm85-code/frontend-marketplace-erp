@@ -1,5 +1,6 @@
 import { applyRinci } from '@/lib/arusKasRinci'
 import { isGroup, type Block, type Cell, type GroupDef, type Lembar, type Line, type RowDef } from '@/lib/sheetEngine'
+import { KATEGORI_BAWAAN, type KategoriTransaksi } from '@/api/kategori'
 import { GRUP_KELUAR, GRUP_MASUK, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuangan'
 
 const round = (n: number) => Math.round(n * 100) / 100
@@ -11,7 +12,7 @@ const sum = (values: (number | null)[]) => round(values.reduce<number>((a, v) =>
  * under its category; a row with sub-rows files each sub-row's figure under that sub-row's category (which follows the
  * row until another is chosen), so one row can feed several components.
  */
-function perKategori(arus: Block, grup: string, lembar: Lembar, w: number) {
+function perKategori(arus: Block, grup: string, lembar: Lembar, w: number, daftar: KategoriTransaksi[]) {
   const out = new Map<string, { n: number; total: number }>()
   const punyaRincian = new Set(arus.lines.flatMap((l) => (!isGroup(l) && l.def.induk ? [l.def.induk] : [])))
   let current = ''
@@ -21,7 +22,7 @@ function perKategori(arus: Block, grup: string, lembar: Lembar, w: number) {
       continue
     }
     if (current !== grup || l.def.emphasis || punyaRincian.has(l.def.key)) continue
-    const id = l.def.induk ? kategoriRincian(lembar, l.def.key, l.def.induk, grup) : kategoriDari(lembar, l.def.key, grup)
+    const id = l.def.induk ? kategoriRincian(lembar, l.def.key, l.def.induk, grup, daftar) : kategoriDari(lembar, l.def.key, grup, daftar)
     const prev = out.get(id) ?? { n: 0, total: 0 }
     out.set(id, { n: prev.n + 1, total: prev.total + (l.cells[w].value ?? 0) })
   }
@@ -39,45 +40,28 @@ type Komponen = {
 }
 type Kelompok = { label: string; komponen: Komponen[] }
 
-const PEMASUKAN: Kelompok[] = [
-  {
-    label: 'Pemasukan',
-    komponen: [
-      { key: 'p:saldo_toko', label: 'Saldo toko', kategori: 'saldo_toko' },
-      { key: 'p:produk', label: 'Penjualan produk', kategori: 'produk' },
-      { key: 'p:cat', label: 'Jasa cat', kategori: 'cat' },
-      { key: 'p:packing', label: 'Jasa packing', kategori: 'packing' },
-      { key: 'p:proses', label: 'Jasa proses pesanan', kategori: 'proses' },
-      // Combined figures some rows are kept in; shown only once a row is filed under them.
-      { key: 'p:produk_proses', label: 'Penjualan produk + proses', kategori: 'produk_proses', autoHide: true },
-      { key: 'p:cat_packing', label: 'Jasa cat + packing', kategori: 'cat_packing', autoHide: true },
-      { key: 'p:lain_masuk', label: 'Pemasukan lainnya', kategori: 'lain_masuk', autoHide: true },
-    ],
-  },
+/** Gaji and iklan keep the keys they had, so figures typed under them before categories became editable stay put. */
+const LAMA_KEY = new Set(['gaji', 'iklan'])
+const komponenDari = (daftar: KategoriTransaksi[], arah: KategoriTransaksi['arah'], kelompok: string): Komponen[] =>
+  daftar
+    .filter((k) => k.arah === arah && k.kelompok === kelompok)
+    .sort((x, y) => x.urut - y.urut)
+    .map((k) => ({ key: LAMA_KEY.has(k.id) ? k.id : `p:${k.id}`, label: k.nama, kategori: k.id, lama: LAMA_KEY.has(k.id) ? k.id : undefined, autoHide: k.auto_sembunyi || !k.aktif }))
+
+const PEMASUKAN = (daftar: KategoriTransaksi[]): Kelompok[] => [
+  { label: 'Pemasukan', komponen: komponenDari(daftar, 'masuk', 'Pemasukan') },
   { label: 'Penyesuaian piutang', komponen: [{ key: 'piutang_chg', label: 'Perubahan piutang (lihat neraca)', lama: 'piutang_chg' }] },
 ]
-const PENGELUARAN = (adaStok: boolean, adaUtang: boolean): Kelompok[] => [
+const PENGELUARAN = (daftar: KategoriTransaksi[], adaStok: boolean, adaUtang: boolean): Kelompok[] => [
   {
     label: 'Harga pokok penjualan',
     komponen: [
-      { key: 'p:tukang', label: 'Tukang', kategori: 'tukang' },
-      { key: 'p:non_kayu', label: 'Produk non kayu', kategori: 'non_kayu' },
-      { key: 'p:bahan_cat', label: 'Bahan dan perlengkapan cat', kategori: 'bahan_cat' },
-      { key: 'p:perl_packing', label: 'Perlengkapan packing', kategori: 'perl_packing' },
-      { key: 'p:ongkir', label: 'Ongkir manual', kategori: 'ongkir' },
+      ...komponenDari(daftar, 'keluar', 'Harga pokok penjualan'),
       ...(adaStok ? [{ key: 'adj_stok', label: 'Penyesuaian persediaan', lama: 'adj_stok' }] : []),
       ...(adaUtang ? [{ key: 'adj_utang', label: 'Penyesuaian utang usaha', lama: 'adj_utang' }] : []),
     ],
   },
-  {
-    label: 'Beban operasional',
-    komponen: [
-      { key: 'gaji', label: 'Gaji', kategori: 'gaji', lama: 'gaji' },
-      { key: 'iklan', label: 'Iklan', kategori: 'iklan', lama: 'iklan' },
-      { key: 'p:langganan', label: 'Langganan', kategori: 'langganan' },
-      { key: 'p:lain_keluar', label: 'Operasional lainnya', kategori: 'lain_keluar', autoHide: true },
-    ],
-  },
+  { label: 'Beban operasional', komponen: komponenDari(daftar, 'keluar', 'Beban operasional') },
 ]
 
 /**
@@ -85,7 +69,7 @@ const PENGELUARAN = (adaStok: boolean, adaUtang: boolean): Kelompok[] => [
  * filed under its category (each Arus Kas row picks one); a component with no such row is filled by hand (a component
  * of the old tables keeps its figure there), which is where the non-cash side of the accrual basis goes.
  */
-export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lembar): Block[] {
+export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lembar, daftar: KategoriTransaksi[] = KATEGORI_BAWAAN): Block[] {
   const kas = plain.find((b) => b.tabel === 'arus_kas')
   if (!kas) return plain
   const arus = applyRinci(kas, days, lembar)
@@ -108,7 +92,7 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
   const bangun = (tabel: string, title: string, kelompok: Kelompok[], sumber: { grup: string }, totalKey: string, totalLabel: string): Block => {
     const lines: (Line | GroupDef)[] = []
     const baris: Line[] = []
-    const perPeriode = days.map((_, w) => perKategori(arus, sumber.grup, lembar, w))
+    const perPeriode = days.map((_, w) => perKategori(arus, sumber.grup, lembar, w, daftar))
     for (const g of kelompok) {
       lines.push({ group: true, label: g.label, tabel })
       for (const k of g.komponen) {
@@ -138,8 +122,8 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     return { title, tabel, lines }
   }
 
-  const pemasukan = bangun('pemasukan', 'A. PEMASUKAN', PEMASUKAN, { grup: GRUP_MASUK }, 'jml_pemasukan', 'Jumlah pemasukan')
-  const pengeluaran = bangun('pengeluaran', 'B. PENGELUARAN', PENGELUARAN(!!lama('adj_stok'), !!lama('adj_utang')), { grup: GRUP_KELUAR }, 'jml_pengeluaran', 'Jumlah pengeluaran')
+  const pemasukan = bangun('pemasukan', 'A. PEMASUKAN', PEMASUKAN(daftar), { grup: GRUP_MASUK }, 'jml_pemasukan', 'Jumlah pemasukan')
+  const pengeluaran = bangun('pengeluaran', 'B. PENGELUARAN', PENGELUARAN(daftar, !!lama('adj_stok'), !!lama('adj_utang')), { grup: GRUP_KELUAR }, 'jml_pengeluaran', 'Jumlah pengeluaran')
   const tot = (b: Block, key: string) => b.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)!
   const masuk = tot(pemasukan, 'jml_pemasukan')
   const keluar = tot(pengeluaran, 'jml_pengeluaran')

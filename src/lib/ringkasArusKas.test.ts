@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Overview, Report } from '@/api/financialReports'
 import { keyKategori, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { kategoriRincian, setKategori } from './kategoriKeuangan'
+import { KATEGORI_BAWAAN, type KategoriTransaksi } from '@/api/kategori'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -165,5 +166,30 @@ describe('summarized tabs from Arus Kas', () => {
     second.sel[`${keyNilaiDasar('k_toko')}|${days[1]}`] = '1'
     const c = build(second)
     expect(val(c, 'n_laba_lalu', 1)).toBe(val(c, 'n_laba_lalu', 0)! + val(c, 'n_laba_ini', 0)!)
+  })
+})
+
+describe('editable categories', () => {
+  const dengan = (ubah: (k: KategoriTransaksi[]) => KategoriTransaksi[], lembar: Lembar = emptyLembar()) => {
+    const daftar = ubah(KATEGORI_BAWAAN.map((k) => ({ ...k })))
+    return ringkasDariArusKas(computeSheet(sheetSections({ laporan: [record] } as unknown as Overview), [record], days, lembar), days, lembar, daftar)
+  }
+  it('a renamed category keeps its figures under the new name', () => {
+    const b = dengan((k) => k.map((x) => (x.id === 'tukang' ? { ...x, nama: 'Upah tukang kayu' } : x)))
+    const baris = b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'p:tukang')
+    expect(baris?.def.label).toBe('Upah tukang kayu')
+    expect(baris?.cells[0].value).toBe(200)
+  })
+  it('a new category lands in the group chosen for it and takes rows filed under it', () => {
+    const baru: KategoriTransaksi = { ...KATEGORI_BAWAAN[0], id: 'sewa', arah: 'keluar', nama: 'Sewa', kelompok: 'Beban operasional', urut: 99, sistem: false, auto_sembunyi: true }
+    const lembar = setKategori(emptyLembar(), 'k_pembelian', 'Kas keluar', 'sewa', 'non_kayu')
+    const b = dengan((k) => [...k, baru], lembar)
+    expect(val(b, 'p:sewa')).toBe(80)
+    expect(val(b, 'p:non_kayu')).toBe(0)
+  })
+  it('a saved `bukan` still means "not an expense" and is kept out of the figures', () => {
+    const lembar = emptyLembar()
+    lembar.baris.push({ id: keyKategori('k_operasional'), tabel: RINCI_TABEL, grup: 'kategori', label: 'bukan' })
+    expect(val(dengan((k) => k, lembar), 'p:lain_keluar')).toBe(0)
   })
 })

@@ -6,6 +6,7 @@ import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { useKategori } from '@/api/kategori'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
@@ -42,6 +43,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     [data, lembar, days.join('|')],
   )
   const block = useMemo(() => namai([applyRinci(plain, days, lembar)], lembar)[0], [plain, days, lembar])
+  const daftarKat = useKategori()
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
@@ -66,7 +68,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const grup = grupDari(line.def.key)
     const adaRincian = anakDari(lembar, line.def.key).length > 0
     // A row with sub-rows has no category of its own: each sub-row (1.1, 1.2, ...) picks where its figure goes.
-    const opsi = line.def.emphasis || adaRincian ? undefined : opsiKategori(grup)
+    const opsi = line.def.emphasis || adaRincian ? undefined : opsiKategori(grup, daftarKat)
     setTarget({
       key: line.def.key,
       label: line.def.label,
@@ -78,8 +80,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       anak: adaRincian,
       total: !!line.def.emphasis,
       opsi,
-      kategori: !opsi ? undefined : line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup) : kategoriDari(lembar, line.def.key, grup),
-      kategoriDiRincian: adaRincian && !!opsiKategori(grup),
+      kategori: !opsi ? undefined : line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup, daftarKat) : kategoriDari(lembar, line.def.key, grup, daftarKat),
+      kategoriDiRincian: adaRincian && !!opsiKategori(grup, daftarKat),
       week,
     })
   }
@@ -87,9 +89,9 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const ketKategori = (line: Line) => {
     if (line.def.emphasis || anakDari(lembar, line.def.key).length > 0) return undefined
     const grup = grupDari(line.def.key)
-    const opsi = opsiKategori(grup)
+    const opsi = opsiKategori(grup, daftarKat)
     if (!opsi) return undefined
-    const id = line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup) : kategoriDari(lembar, line.def.key, grup)
+    const id = line.def.induk ? kategoriRincian(lembar, line.def.key, line.def.induk, grup, daftarKat) : kategoriDari(lembar, line.def.key, grup, daftarKat)
     return opsi.find((o) => o.id === id)?.label
   }
   const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.key)}|${days[t.week]}`)
@@ -108,7 +110,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const next = { ...lembar, sel, baris }
     const grup = grupDari(target.key)
     // A sub-row's default is its row's category; choosing that one again removes its own choice.
-    const bawaan = target.child ? kategoriDari(lembar, indukDari(target.key), grup) : undefined
+    const bawaan = target.child ? kategoriDari(lembar, indukDari(target.key), grup, daftarKat) : undefined
     commit(kategori ? setKategori(next, target.key, grup, kategori, bawaan) : next)
   }
   const onClearValue = () => {

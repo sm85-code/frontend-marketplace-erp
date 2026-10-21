@@ -15,6 +15,7 @@ import { fmtRp, getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { cellKey, computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetSections } from '@/lib/sheetSections'
+import { useKategori } from '@/api/kategori'
 import { ringkasDariArusKas } from '@/lib/ringkasArusKas'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
@@ -67,10 +68,11 @@ export default function FinancialReportSheet({
       void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
     },
   })
+  const daftarKat = useKategori()
   const plain = useMemo(
-    () => ringkasDariArusKas(computeSheet(sheetSections(data), records, days, lembar), days, lembar),
+    () => ringkasDariArusKas(computeSheet(sheetSections(data), records, days, lembar), days, lembar, daftarKat),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, days.join('|')],
+    [data, lembar, daftarKat, days.join('|')],
   )
   const blocks = useMemo(() => namai(plain, lembar), [plain, lembar])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
