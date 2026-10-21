@@ -125,8 +125,8 @@ export function sheetSections(data: Overview): SectionDef[] {
   d.row('k_pembelian', 'Pembelian produk', input('pembelian'), { kind: 'calc', deps: [{ row: 'pembelian' }] })
   d.row('k_operasional', 'Operasional', input('operasional'), { kind: 'calc', deps: [{ row: 'operasional' }] })
   d.row('k_langganan', 'Langganan rutin', input('langganan'), { kind: 'calc', deps: [{ row: 'langganan' }] })
-  // Salary leaves the main cash (a cash-out) from the period it became one; older reports carry no figure here.
-  d.row('k_gaji', 'Gaji', (r) => String(r.hasil.kas_keluar_gaji ?? '0'), { kind: 'calc', deps: [{ row: 'gaji' }] })
+  // The salary set aside into the salary cash account leaves the main cash, so it is a cash-out; older reports list it under Transfer antar kas.
+  d.row('k_gaji', 'Gaji', (r) => String(r.hasil.kas_keluar_gaji ?? '0'))
   d.row('k_topup', 'Top-up iklan', input('topup_iklan'))
   d.row('k_lain_keluar', 'Pengeluaran lainnya (baris manual)', () => '0', {
     kind: 'calc',
@@ -135,10 +135,10 @@ export function sheetSections(data: Overview): SectionDef[] {
   })
   d.row('kas_keluar', 'Jumlah kas keluar', result('kas_keluar'), { ...calcTotal, deps: [G('arus_kas', 'Kas keluar')] })
   d.group('Transfer antar kas')
-  d.row('tr_ops', 'Transfer dari kas operasional (+)', input('transfer_kas_ops'))
+  d.row('tr_ops', 'Transfer dari kas operasional packing (+)', input('transfer_kas_ops'))
   d.row('tr_packing', 'Transfer ke kas operasional packing (−)', (r) => sumAmounts([`-${r.input.transfer_ke_ops_packing ?? '0'}`]))
-  // Only reports saved before salary became a cash-out have this one.
-  d.row('tr_gaji', 'Penyisihan ke kas gaji (−)', (r) => sumAmounts([`-${r.input.transfer_kas_gaji ?? '0'}`]), { autoHide: true })
+  // Only reports saved before the set-aside salary moved to Kas keluar list it here.
+  d.row('tr_gaji', 'Penyisihan ke kas gaji (−)', (r) => (r.hasil.kas_keluar_gaji === undefined ? sumAmounts([`-${r.input.transfer_kas_gaji ?? '0'}`]) : '0'), { autoHide: true })
   if (anyNonZero((r) => String(r.input.tambahan_modal ?? 0))) d.row('tr_modal', 'Tambahan modal', input('tambahan_modal'))
   d.row('transfer', 'Jumlah transfer antar kas', result('transfer_antar_kas'), { ...calcTotal, deps: [G('arus_kas', 'Transfer antar kas')] })
   d.row('akhir', 'Saldo akhir kas utama', end('kas_utama'), {
@@ -151,15 +151,14 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.group('Aset')
   e.row('n_kas', 'Kas utama', end('kas_utama'), { total: 'last', deps: [{ row: 'akhir' }] })
   e.row('n_stok', 'Stok produk', end('stok'), { total: 'last', deps: [cum('adj_stok', -1)] })
-  e.row('n_kas_ops', 'Kas operasional', end('kas_operasional'), { total: 'last', deps: [cum('tr_ops', -1)] })
-  e.row('n_kas_ops_packing', 'Kas operasional packing', end('kas_operasional_packing'), { total: 'last', deps: [cum('tr_packing', -1)] })
+  e.row('n_kas_ops', 'Kas operasional packing', end('kas_operasional'), { total: 'last', deps: [cum('tr_ops', -1), cum('tr_packing', -1)] })
   e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last', deps: [cum('k_topup'), cum('iklan', -1)] })
   e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last', deps: [cum('piutang_chg'), { ...C('pemasukan', 'Penyesuaian piutang'), mode: 'cum' }] })
   e.row('n_saldo_toko', 'Saldo tertahan toko / Shopee', end('saldo_toko'), { total: 'last' })
-  e.row('n_kas_gaji', 'Kas gaji (disisihkan)', end('kas_gaji'), { total: 'last', deps: [cum('tr_gaji', -1)] })
+  e.row('n_kas_gaji', 'Kas gaji (disisihkan)', end('kas_gaji'), { total: 'last', deps: [cum('k_gaji'), cum('tr_gaji', -1)] })
   e.row('jml_aset', 'Jumlah aset', (r) => r.hasil.neraca.aset, { ...calcTotal, total: 'last', deps: [G('neraca', 'Aset')] })
   e.group('Kewajiban')
-  e.row('n_utang_gaji', 'Utang gaji', end('utang_gaji'), { total: 'last' })
+  e.row('n_utang_gaji', 'Utang gaji', end('utang_gaji'), { total: 'last', deps: [cum('gaji')] })
   e.row('n_utang_usaha', 'Utang usaha / operasional berjalan', end('utang_usaha'), { total: 'last', deps: [cum('adj_utang')] })
   e.row('jml_utang', 'Jumlah kewajiban / utang', (r) => r.hasil.neraca.utang, { ...calcTotal, total: 'last', deps: [G('neraca', 'Kewajiban')] })
   e.group('Ekuitas')

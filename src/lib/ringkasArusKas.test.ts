@@ -198,14 +198,14 @@ describe('salary as a cash-out and transfers to the operational cash accounts', 
   const baru = {
     ...record,
     input: { ...record.input, transfer_ke_ops_packing: '50' },
-    hasil: { ...record.hasil, kas_keluar: '335', kas_keluar_gaji: '40', transfer_antar_kas: '-50', saldo_akhir: { ...zero, kas_utama: '1500', kas_operasional_packing: '50' } },
+    hasil: { ...record.hasil, kas_keluar: '335', kas_keluar_gaji: '40', transfer_antar_kas: '-50', saldo_akhir: { ...zero, kas_utama: '1500', kas_operasional: '50' } },
   } as unknown as Report
   const make = (r: Report) => ringkasDariArusKas(computeSheet(sheetSections({ laporan: [r] } as unknown as Overview), [r], days, emptyLembar()), days, emptyLembar())
   it('shows salary under Kas keluar and the transfer to the packing cash, and the profit side still carries salary once', () => {
     const b = make(baru)
     expect(val(b, 'k_gaji')).toBe(40)
     expect(val(b, 'tr_packing')).toBe(-50)
-    expect(val(b, 'n_kas_ops_packing')).toBe(50)
+    expect(val(b, 'n_kas_ops')).toBe(50)
     expect(val(b, 'gaji')).toBe(40)
     expect(val(b, 'jml_pengeluaran')).toBe(200 + 80 + 40 + 15 + 5 + 10)
   })

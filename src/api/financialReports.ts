@@ -1,6 +1,6 @@
 import api from './client'
 export const balanceLabels = {
-  kas_utama: 'Kas utama', stok: 'Persediaan (nilai biaya)', kas_operasional: 'Kas operasional', kas_operasional_packing: 'Kas operasional packing',
+  kas_utama: 'Kas utama', stok: 'Persediaan (nilai biaya)', kas_operasional: 'Kas operasional packing',
   iklan_prabayar: 'Iklan dibayar di muka', piutang_pengiriman: 'Piutang dalam pengiriman',
   saldo_toko: 'Saldo tertahan toko', kas_gaji: 'Kas gaji', utang_gaji: 'Utang gaji',
   utang_usaha: 'Utang usaha', modal: 'Modal usaha', saldo_laba: 'Saldo laba/rugi',
@@ -14,7 +14,7 @@ export const inputLabels = {
   langganan: 'Langganan rutin', gaji: 'Beban gaji periode ini', biaya_iklan: 'Pemakaian iklan',
   topup_iklan: 'Top-up iklan dari kas utama', transfer_kas_ops: 'Transfer kas operasional ke kas utama',
   transfer_ke_ops_packing: 'Transfer kas utama ke kas operasional packing',
-  transfer_kas_gaji: 'Penyisihan kas utama ke kas gaji (laporan lama)', bayar_gaji: 'Gaji dibayar dari kas gaji (laporan lama)', tambahan_modal: 'Tambahan modal masuk kas',
+  transfer_kas_gaji: 'Penyisihan kas utama ke kas gaji', bayar_gaji: 'Gaji dibayar dari kas gaji', tambahan_modal: 'Tambahan modal masuk kas',
   piutang_pengiriman: 'Saldo akhir piutang pengiriman (bersih)', saldo_toko: 'Saldo akhir tertahan toko',
   stok: 'Saldo akhir persediaan (nilai biaya)', utang_usaha: 'Saldo akhir utang usaha',
 } as const
@@ -32,7 +32,7 @@ export type Sources = {
 export type Result = {
   pemasukan_toko: string; pendapatan_lain: string; perubahan_piutang: string; pemasukan: string;
   hpp: string; penyesuaian_stok: string; penyesuaian_utang: string; biaya_iklan: string;
-  pengeluaran: string; laba: string; kas_masuk: string; kas_keluar: string; /** Salary paid out of the main cash; absent in reports saved before it became a cash-out. */ kas_keluar_gaji?: string; transfer_antar_kas: string;
+  pengeluaran: string; laba: string; kas_masuk: string; kas_keluar: string; /** Salary set aside into the salary cash account (a cash-out of the main cash); absent in reports saved before it was listed there. */ kas_keluar_gaji?: string; transfer_antar_kas: string;
   saldo_awal: Balances; saldo_akhir: Balances; neraca: { aset: string; utang: string; ekuitas: string; selisih: string }
 }
 export type Report = { estimasi_bumi_tani?: string; estimasi_cakupan_drive?: string; catatan_dana_cepat?: string; rincian_toko?: { nama: string; nominal: string }[]; preview_token: string; tanggal: string; mulai: string; jadwal_laporan: string; lengkap?: boolean; calendar_version?: number; imported_historical?: boolean; tutup_bulanan: boolean; input: CloseInput; sumber: Sources; hasil: Result; created_by?: string; created_at?: string }
