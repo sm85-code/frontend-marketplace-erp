@@ -3,8 +3,8 @@ import { useCallback } from 'react'
 import api from '@/api/client'
 
 export const daftarPengaturanUi = () => api.get<{ items: Record<string, string> }>('/pengaturan-ui').then((r) => r.data.items ?? {})
-export const simpanPengaturanUi = (id: string, teks: string) => api.put(`/pengaturan-ui/${id}`, { teks }).then((r) => r.data)
-export const kembalikanPengaturanUi = (id: string) => api.delete(`/pengaturan-ui/${id}`).then((r) => r.data)
+export const simpanPengaturanUi = (id: string, teks: string) => api.put(`/pengaturan-ui/${encodeURIComponent(id)}`, { teks }).then((r) => r.data)
+export const kembalikanPengaturanUi = (id: string) => api.delete(`/pengaturan-ui/${encodeURIComponent(id)}`).then((r) => r.data)
 
 const KUNCI = ['pengaturan-ui']
 
