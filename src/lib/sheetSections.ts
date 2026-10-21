@@ -1,6 +1,6 @@
 import type { Overview, Report } from '@/api/financialReports'
 import { sumAmounts } from '@/lib/financialAmounts'
-import { keyPembagian, PENERIMA_LABA } from '@/config/pembagianLaba'
+import { GRUP_PEMBAGIAN, keyPembagian, PENERIMA_LABA } from '@/config/pembagianLaba'
 import type { Dep, GroupDef, RowDef, SectionDef } from '@/lib/sheetEngine'
 
 const input = (key: keyof Report['input']) => (r: Report) => String(r.input[key] ?? '0')
@@ -142,9 +142,9 @@ export function sheetSections(data: Overview): SectionDef[] {
   if (anyNonZero((r) => String(r.input.tambahan_modal ?? 0))) d.row('tr_modal', 'Tambahan modal', input('tambahan_modal'))
   d.row('transfer', 'Jumlah transfer antar kas', (r) => (r.hasil.kas_keluar_gaji === undefined ? sumAmounts([r.hasil.transfer_antar_kas, r.input.transfer_kas_gaji ?? '0']) : r.hasil.transfer_antar_kas), { ...calcTotal, deps: [G('arus_kas', 'Transfer antar kas')] })
   // The whole month's profit is shared out after the month closes: it leaves the main cash and the retained profit, and is not an expense.
-  d.group('Pembagian laba')
+  d.group(GRUP_PEMBAGIAN)
   for (const p of PENERIMA_LABA) d.row(keyPembagian(p.id), `Pembagian laba ${p.nama.toLowerCase()} (${p.persen}%)`, () => '0')
-  d.row('jml_pembagian', 'Jumlah pembagian laba', () => '0', { ...calcTotal, deps: [G('arus_kas', 'Pembagian laba')] })
+  d.row('jml_pembagian', 'Jumlah pembagian laba', () => '0', { ...calcTotal, deps: [G('arus_kas', GRUP_PEMBAGIAN)] })
   d.row('akhir', 'Saldo akhir kas utama', end('kas_utama'), {
     ...calcTotal,
     total: 'last',

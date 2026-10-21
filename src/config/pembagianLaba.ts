@@ -4,8 +4,14 @@ export const PENERIMA_LABA = [
   { id: 'owner', nama: 'Owner', persen: 60 },
 ] as const
 
+/** Title of the Arus Kas group the shares are filed under (its identity; the shown text can be changed on Kelola Aplikasi). */
+export const GRUP_PEMBAGIAN = 'Pembagian laba'
+
 /** Row key (and Arus Kas row id) of a receiver's share. */
 export const keyPembagian = (id: string) => `pl_${id}`
+
+/** Every row of the profit sharing group: the receivers' shares and their total. */
+export const KEY_PEMBAGIAN: ReadonlySet<string> = new Set([...PENERIMA_LABA.map((p) => keyPembagian(p.id)), 'jml_pembagian'])
 
 /** Splits a month's profit by the shares, whole rupiah; the last receiver takes the rounding so the parts add up exactly. */
 export function bagiLaba(laba: number): { id: string; nama: string; persen: number; jumlah: number }[] {

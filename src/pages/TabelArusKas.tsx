@@ -14,6 +14,7 @@ import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Li
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
+import { GRUP_PEMBAGIAN, KEY_PEMBAGIAN } from '@/config/pembagianLaba'
 import { sheetSections } from '@/lib/sheetSections'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
@@ -170,7 +171,12 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const nameOfKey = (key: string) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? ''
 
   // The Arus Kas page shows the main rows only; the sub-rows (breakdown) are seen and edited in Laporan Keuangan.
-  const tampil = useMemo(() => (hanyaLihat ? { ...block, lines: block.lines.filter((l) => isGroup(l) || !l.def.induk) } : block), [block, hanyaLihat])
+  // The profit sharing is for the admin (Laporan Keuangan): the read-only Arus Kas page, which staff open, leaves its rows out.
+  const tampil = useMemo(() => {
+    if (!hanyaLihat) return block
+    const lines = block.lines.filter((l) => (isGroup(l) ? l.label !== GRUP_PEMBAGIAN : !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key)))
+    return { ...block, lines }
+  }, [block, hanyaLihat])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],

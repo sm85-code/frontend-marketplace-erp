@@ -1,4 +1,4 @@
-import { ChevronsDownUp, ChevronsUpDown, Minus, Pencil, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { fmtRp } from '@/api/client'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
@@ -107,9 +107,9 @@ function Simpul({ line, lipat, onLipat }: { line: Line; lipat: ReadonlySet<strin
         e.stopPropagation() // the row opens its edit pop-up when tapped; the node only folds
         onLipat(line.def.key)
       }}
-      className="inline-flex size-4 shrink-0 items-center justify-center rounded border border-border text-muted-foreground hover:border-primary hover:text-primary"
+      className="inline-flex !h-7 !min-h-7 !w-7 !min-w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
     >
-      {tertutup ? <Plus className="size-3" aria-hidden="true" /> : <Minus className="size-3" aria-hidden="true" />}
+      {tertutup ? <ChevronRight className="size-4" aria-hidden="true" /> : <ChevronDown className="size-4" aria-hidden="true" />}
     </button>
   )
 }
@@ -179,10 +179,10 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   onClick={can ? () => onEdit(line, pick) : rename ? () => onRenameRow!(line) : undefined}
                 >
                   {nomor && !line.def.emphasis && (
-                    <TableCell className="w-12 pr-0 text-center tabular-nums text-muted-foreground">
+                    <TableCell className="w-16 px-1 text-center tabular-nums text-muted-foreground">
                       {!line.def.induk && (
-                        <span className="inline-flex items-center gap-1">
-                          {lipat && onLipat && induk.has(line.def.key) && <Simpul line={line} lipat={lipat} onLipat={onLipat} />}
+                        <span className="inline-flex items-center justify-end gap-0.5">
+                          {lipat && onLipat && induk.has(line.def.key) ? <Simpul line={line} lipat={lipat} onLipat={onLipat} /> : <span className="inline-block w-7" aria-hidden="true" />}
                           {nomor.get(line.def.key) ?? ''}
                         </span>
                       )}
@@ -236,9 +236,9 @@ export default function FinancialSheetTable(props: Props) {
       <CardContent className="min-w-0 space-y-3">
         <PhoneTable {...kembangan} />
         <div className="hidden max-w-full overflow-x-auto rounded-lg border md:block">
-          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': nomor ? '276px' : '220px' } as React.CSSProperties} aria-label={block.title.slice(3)}>
+          <Table className="table-fixed min-w-[calc(var(--lebar)+var(--n)*142px)]" style={{ '--n': days.length + 1, '--lebar': nomor ? '292px' : '220px' } as React.CSSProperties} aria-label={block.title.slice(3)}>
             <colgroup>
-              {nomor && <col className="w-[56px]" />}
+              {nomor && <col className="w-[72px]" />}
               <col className="w-[220px]" />
               {days.map((d) => (
                 <col key={d} className="w-[142px]" />
@@ -248,7 +248,7 @@ export default function FinancialSheetTable(props: Props) {
             <TableHeader className="bg-muted">
               <TableRow>
                 {nomor && <TableHead className="sticky left-0 z-10 bg-muted px-2 text-center">No</TableHead>}
-                <TableHead className={`sticky z-10 bg-muted ${nomor ? 'left-[56px]' : 'left-0'}`}>Uraian</TableHead>
+                <TableHead className={`sticky z-10 bg-muted ${nomor ? 'left-[72px]' : 'left-0'}`}>Uraian</TableHead>
                 {days.map((d, i) => (
                   <TableHead key={d} className="text-center">
                     <span className="block">Periode</span>
@@ -268,10 +268,10 @@ export default function FinancialSheetTable(props: Props) {
                 return (
                   <TableRow key={line.def.key} className={line.def.emphasis ? 'bg-muted/50 font-semibold' : undefined}>
                     {nomor && !line.def.emphasis && (
-                      <TableCell className="sticky left-0 z-10 bg-card px-2 text-center tabular-nums text-muted-foreground">
+                      <TableCell className="sticky left-0 z-10 bg-card px-1 text-center tabular-nums text-muted-foreground">
                         {!line.def.induk && (
-                          <span className="inline-flex items-center gap-1">
-                            {induk.has(line.def.key) && <Simpul line={line} lipat={lipat} onLipat={onLipat} />}
+                          <span className="inline-flex items-center justify-end gap-0.5">
+                            {induk.has(line.def.key) ? <Simpul line={line} lipat={lipat} onLipat={onLipat} /> : <span className="inline-block w-7" aria-hidden="true" />}
                             {nomor.get(line.def.key) ?? ''}
                           </span>
                         )}
@@ -279,7 +279,7 @@ export default function FinancialSheetTable(props: Props) {
                     )}
                     <TableCell
                       colSpan={nomor && line.def.emphasis ? 2 : 1}
-                      className={`sticky z-10 ${line.def.induk ? GAYA_ANAK : ''} ${nomor && !line.def.emphasis ? 'left-[56px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
+                      className={`sticky z-10 ${line.def.induk ? GAYA_ANAK : ''} ${nomor && !line.def.emphasis ? 'left-[72px]' : 'left-0'} ${line.def.emphasis ? 'bg-muted font-semibold' : 'bg-card'} ${can || rename ? 'cursor-pointer hover:text-primary' : ''}`}
                       onClick={can ? () => onEdit(line, lastWithData) : rename ? () => onRenameRow!(line) : undefined}
                     >
                       {line.def.induk && <NomorRincian teks={nomor?.get(line.def.key)} />}
