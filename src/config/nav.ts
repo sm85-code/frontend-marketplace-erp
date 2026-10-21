@@ -19,6 +19,7 @@ import {
   Wallet,
   PackageOpen,
   Tags,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { bisa, type AksesSaya } from '@/lib/akses'
 
@@ -36,7 +37,7 @@ export interface NavItem {
   posisiBawah?: number
 }
 
-export type GrupNav = 'harian' | 'produk' | 'processing' | 'data-produksi' | 'keuangan' | 'iklan' | 'info-toko' | 'pengaturan'
+export type GrupNav = 'harian' | 'produk' | 'processing' | 'data-produksi' | 'keuangan' | 'info-toko' | 'pengaturan'
 
 /** Sidebar sections in the order of the daily workflow: work the orders, manage products, money, then setup. */
 export const GRUP_NAV: { id: GrupNav; label: string }[] = [
@@ -45,7 +46,6 @@ export const GRUP_NAV: { id: GrupNav; label: string }[] = [
   { id: 'processing', label: 'Processing' },
   { id: 'data-produksi', label: 'Data Produksi' },
   { id: 'keuangan', label: 'Keuangan' },
-  { id: 'iklan', label: 'Iklan' },
   { id: 'info-toko', label: 'Info Toko' },
   { id: 'pengaturan', label: 'Pengaturan' },
 ]
@@ -70,20 +70,30 @@ export const NAV: NavItem[] = [
   { to: '/processing/tarif-pengecatan', label: 'Tarif Pengecatan', icon: Hammer, halaman: 'processing', grup: 'data-produksi' },
   { to: '/processing/tarif-packing', label: 'Tarif Packing', icon: Boxes, halaman: 'processing', grup: 'data-produksi' },
   { to: '/processing/template', label: 'Template', icon: FilePenLine, halaman: 'processing', grup: 'data-produksi' },
-  { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
-  { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
   { to: '/operasional-umum', label: 'Operasional Umum', icon: Wallet, halaman: 'operasional_umum', grup: 'keuangan' },
   { to: '/operasional-packing', label: 'Operasional Packing', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
+  { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
+  { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
   { to: '/kategori-transaksi', label: 'Kategori Transaksi', icon: Tags, halaman: 'kategori_transaksi', grup: 'keuangan' },
-  { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: 'settlement', grup: 'keuangan' },
-  { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
-  { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: 'iklan', grup: 'iklan' },
+  { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
+  { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: 'iklan', grup: 'info-toko' },
+  { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: 'settlement', grup: 'info-toko' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/asisten', label: 'Asisten AI', icon: Bot, halaman: 'asisten', grup: 'pengaturan' },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', grup: 'pengaturan' },
+  { to: '/kelola-aplikasi', label: 'Kelola Aplikasi', icon: SlidersHorizontal, halaman: 'kelola_aplikasi', grup: 'pengaturan' },
   { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, halaman: '*', grup: 'pengaturan', bawah: 6, posisiBawah: 6 },
 ]
+
+/** Id of a menu item's / section's text on Kelola Aplikasi (the text itself is only what is shown). */
+export const idMenu = (to: string) => `menu:${to}`
+export const idGrup = (id: GrupNav) => `grup:${id}`
+
+/** The same items and sections with the texts the admin set; nothing but the shown text changes. */
+export function denganLabel(items: NavItem[], t: (id: string, bawaan: string) => string): NavItem[] {
+  return items.map((n) => ({ ...n, label: t(idMenu(n.to), n.label), shortLabel: n.shortLabel === undefined ? undefined : t(idMenu(n.to), n.shortLabel) }))
+}
 
 /** Visible items split into their sidebar sections (empty sections are dropped), keeping NAV order. */
 export function kelompokNav(items: NavItem[]): { grup: (typeof GRUP_NAV)[number]; items: NavItem[] }[] {

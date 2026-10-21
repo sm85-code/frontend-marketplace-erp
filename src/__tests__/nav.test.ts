@@ -9,7 +9,7 @@ describe('filterNav', () => {
 
   it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNav(aksesBawaan('admin')).length).toBe(NAV.length)
-    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/kategori-transaksi', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/pengaturan-toko'].includes(to)))
+    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/kategori-transaksi', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/kelola-aplikasi', '/pengaturan-toko'].includes(to)))
   })
 
   it('staff gets the shared pages and Arus Kas, in workflow order', () => {
@@ -20,20 +20,19 @@ describe('filterNav', () => {
 
 describe('menu order follows the daily workflow', () => {
   it('lists the sections: harian, produk, keuangan, pengaturan', () => {
-    expect(GRUP_NAV.map((g) => g.id)).toEqual(['harian', 'produk', 'processing', 'data-produksi', 'keuangan', 'iklan', 'info-toko', 'pengaturan'])
+    expect(GRUP_NAV.map((g) => g.id)).toEqual(['harian', 'produk', 'processing', 'data-produksi', 'keuangan', 'info-toko', 'pengaturan'])
   })
 
-  it('groups the admin menu as agreed (Toko lives under Pengaturan, Iklan has its own admin-only group)', () => {
+  it('groups the admin menu as agreed (Toko lives under Pengaturan; Iklan and Dana & Saldo Shopee sit in Info Toko)', () => {
     const peta = Object.fromEntries(kelompokNav(filterNav(aksesBawaan('admin'))).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
       harian: ['/dashboard', '/pesanan', '/chat'],
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
-      keuangan: ['/laporan-keuangan', '/arus-kas', '/operasional-umum', '/operasional-packing', '/kategori-transaksi', '/settlement'],
-      iklan: ['/iklan'],
-      'info-toko': ['/performa-toko', '/pengaturan-toko'],
-      pengaturan: ['/toko', '/asisten', '/staff', '/profile'],
+      keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan', '/kategori-transaksi'],
+      'info-toko': ['/pengaturan-toko', '/performa-toko', '/iklan', '/settlement'],
+      pengaturan: ['/toko', '/asisten', '/staff', '/kelola-aplikasi', '/profile'],
     })
   })
 
@@ -47,7 +46,6 @@ describe('menu order follows the daily workflow', () => {
     }
     // owner may only look at the two Operasional pages by default; the rest of Keuangan stays admin-only
     expect(kelompokNav(filterNav(aksesBawaan('owner'))).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/operasional-umum', '/operasional-packing'])
-    expect(kelompokNav(filterNav(aksesBawaan('staff'))).find((g) => g.grup.id === 'iklan')).toBeUndefined()
   })
 
   it('drops sections a role cannot see anything in (staff sees Keuangan for Arus Kas only)', () => {
