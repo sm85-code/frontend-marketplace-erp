@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { labelVarian, namaDenganVarian } from '@/lib/varianProduk'
 import { useState } from 'react'
 import SupplierCatalogPanel from './SupplierCatalogPanel'
@@ -117,7 +118,7 @@ function ProductionPricePicker({ prices, value, onChange, manual }: {
       </div>
     </div>
     <p className="text-xs text-muted-foreground">{matches.length} dari {production.length} produk terstruktur.</p>
-    {value && !production.some(p => p.id === value) && <p className="text-xs text-muted-foreground">Pemetaan ini memakai harga lama yang tersimpan. Pilih produk terstruktur untuk menggantinya.</p>}
+    {value && !production.some(p => p.id === value) && <InfoTip teks={"Pemetaan ini memakai harga lama yang tersimpan. Pilih produk terstruktur untuk menggantinya."} />}
     {!matches.length && search.trim() && <p role="status" className="text-xs text-muted-foreground">Tidak ada produk yang cocok. Coba nama, model, atau ukuran lainnya.</p>}
   </div>
 }
@@ -211,7 +212,7 @@ function MappingEditor({
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-2xl">
+      <DialogContent className="processing-dialog dialog-lega max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>
             {packingOnly ? 'Atur packing' : job.stage === 'draft' ? 'Petakan produk' : 'Edit pemetaan'}
@@ -286,7 +287,7 @@ function MappingEditor({
                     <Field title="SKU supplier (opsional)"><Input maxLength={200} disabled={!!edit.price_id} value={edit.supplier_sku || ''} onChange={e => setEdit(v => ({ ...v, supplier_sku: e.target.value, production_sku: e.target.value }))} /></Field>
                   </>}
                   <Field title="Harga beli per unit (Rp)"><Input required type="number" min="0" step="0.01" disabled={edit.catalog_mode === 'otomatis' || !!edit.price_id} value={edit.production_price ?? ''} onChange={e => set('production_price', e.target.value)} /></Field>
-                  {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <p className="text-xs text-muted-foreground">Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini.</p>}
+                  {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <InfoTip teks={"Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini."} />}
                 </div> : <>
                 <ProductionPricePicker prices={prices} value={edit.price_id} onChange={id => pickPrice(id)} manual={job.source !== 'erp'} />
                 <Field title="Harga produksi / beli per unit (Rp)">
@@ -430,7 +431,7 @@ function MappingEditor({
                 <div className="mt-2 border-t pt-2">
                   <Amount label="Total estimasi" value={String(harga + catPacking + kayu + Number(job.process_fee))} />
                 </div>
-                {termasuk && <p className="mt-2 text-xs text-muted-foreground">Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah.</p>}
+                {termasuk && <InfoTip teks={"Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah."} />}
               </div>
             )
           })()}
@@ -462,7 +463,7 @@ function MappingEditor({
 function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="processing-dialog max-h-[90dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-xl">
+      <DialogContent className="processing-dialog dialog-lega max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Detail pekerjaan</DialogTitle>
           <DialogDescription>
@@ -766,7 +767,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   )
   return (
     <div className="min-w-0 space-y-5 text-left [&_p]:text-left">
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Tabel pekerjaan">
         {(Object.keys(TABLES) as WorkTable[]).map((t) => {
           const Icon = TABLES[t].icon
           const count = all.filter((r) => belongs(r, t) && pending(r, t)).length
@@ -779,43 +780,19 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                 setTable(t)
                 setPage(1)
               }}
-              className={`flex min-w-0 items-center gap-3 rounded-2xl border p-3 text-left transition-colors sm:p-4 ${table === t ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-card hover:border-primary/40'}`}
+              className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors ${table === t ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/40'}`}
             >
-              <span
-                className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${table === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-xs font-medium text-muted-foreground">
-                  {TABLES[t].name}
-                </span>
-                <span className="mt-0.5 block text-xl font-semibold tabular-nums">
-                  {count}
-                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">pekerjaan aktif</span>
-                </span>
-              </span>
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              <span className="whitespace-nowrap">{TABLES[t].name}</span>
+              <span className={`rounded-full px-1.5 text-xs font-semibold tabular-nums ${table === t ? 'bg-primary-foreground/20' : 'bg-muted'}`} title="pekerjaan aktif">{count}</span>
             </button>
           )
         })}
       </div>
       <section className="min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm">
-        <div className="space-y-4 border-b p-4 sm:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold">
-                {table === 'tukang' ? 'Produksi Tukang Kayu' : meta.name}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {table === 'tukang'
-                  ? 'Atur pelaksana dan pantau penyelesaian setiap produk.'
-                  : table === 'supplier'
-                    ? 'Catat penerimaan barang sebelum diteruskan ke packing.'
-                    : table === 'pengecatan'
-                      ? 'Antrean produk berwarna yang telah selesai diproduksi.'
-                      : 'Selesaikan packing biasa atau kayu sebelum barang siap dikirim.'}
-              </p>
-            </div>
+        <div className="space-y-2 border-b p-3 sm:p-4">
+          <div className="flex flex-wrap items-center justify-end gap-2 empty:hidden">
+            <h2 className="sr-only">{table === 'tukang' ? 'Produksi Tukang Kayu' : meta.name}</h2>
             <div className="flex flex-wrap gap-2">
               {sourceTable && (
                 <Button onClick={() => setPicker(table)}>

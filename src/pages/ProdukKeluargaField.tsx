@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
@@ -42,7 +43,7 @@ export default function ProdukKeluargaField({ value, options, onChange }: {
   })
   return <fieldset className="space-y-3 rounded-md border p-3">
     <legend className="px-1 text-sm font-medium">Produk induk dan varian ERP</legend>
-    <p className="text-xs text-muted-foreground">Produk induk mengelompokkan SKU. Stok, harga, berat, ukuran, dan preorder tetap milik setiap SKU.</p>
+    <InfoTip teks={"Produk induk mengelompokkan SKU. Stok, harga, berat, ukuran, dan preorder tetap milik setiap SKU."} />
     <Select value={value || '__simple__'} onValueChange={(id) => {
       const family = families?.find((family) => family.id === id)
       onChange(family?.id ?? '', family?.tiers.map((tier) => ({ tier, opsi: '' })) ?? [])
@@ -65,7 +66,7 @@ export default function ProdukKeluargaField({ value, options, onChange }: {
     <Button type="button" variant="outline" onClick={() => setAdding(!adding)} disabled={create.isPending}>{adding ? 'Batal membuat induk' : 'Buat produk induk'}</Button>
     {adding && <div className="space-y-2 rounded-md border p-2">
       <Label htmlFor="family-name">Nama produk induk</Label><Input id="family-name" value={name} maxLength={255} placeholder="Contoh: Kaos polos" onChange={(e) => setName(e.target.value)} />
-      <p className="text-xs text-muted-foreground">Jenis varian adalah pembeda SKU, misalnya Warna dan Ukuran. Pilihannya diisi pada masing-masing SKU.</p>
+      <InfoTip teks={"Jenis varian adalah pembeda SKU, misalnya Warna dan Ukuran. Pilihannya diisi pada masing-masing SKU."} />
       {tiers.map((tier, i) => <div key={i} className="flex gap-2"><Input aria-label={`Jenis varian ${i + 1}`} value={tier} maxLength={64} onChange={(e) => setTiers((old) => old.map((t, n) => i === n ? e.target.value : t))} /><Button type="button" variant="outline" disabled={tiers.length === 1 || create.isPending} onClick={() => setTiers((old) => old.filter((_, n) => n !== i))}>Hapus</Button></div>)}
       <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={tiers.length >= 5 || create.isPending} onClick={() => setTiers((old) => [...old, ''])}>Tambah jenis varian</Button><Button type="button" disabled={create.isPending || !name.trim() || tiers.some((t) => !t.trim())} onClick={() => create.mutate({ nama: name, tiers })}>Simpan induk</Button></div>
       {create.error && <p role="alert" className="text-sm text-destructive">{getApiError(create.error)}</p>}

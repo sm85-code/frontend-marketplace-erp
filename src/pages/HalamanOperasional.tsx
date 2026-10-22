@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
@@ -233,7 +234,7 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
                 </TableBody>
               </Table>
             </div>
-            {bisaTulis && <p className="teks-kecil text-muted-foreground">Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus.</p>}
+            {bisaTulis && <InfoTip teks={"Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus."} />}
           </CardContent>
         </Card>
       )}

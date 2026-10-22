@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
@@ -119,10 +120,7 @@ export default function KampanyeShopee() {
     <Card>
       <CardHeader>
         <CardTitle>Kampanye di Shopee</CardTitle>
-        <p className="teks-data text-muted-foreground">
-          Daftar iklan produk yang ada di Shopee Ads toko ini. Jeda, ubah anggaran, kata kunci, atau hapus dari sini. Perubahan langsung berlaku di
-          Shopee.
-        </p>
+        <InfoTip teks={"Daftar iklan produk yang ada di Shopee Ads toko ini. Jeda, ubah anggaran, kata kunci, atau hapus dari sini. Perubahan langsung berlaku di Shopee."} />
       </CardHeader>
       <CardContent className="space-y-4">
         <BarFilter aktif={0}>
@@ -145,7 +143,7 @@ export default function KampanyeShopee() {
           <div role="alert" className="space-y-2 rounded-lg border border-destructive/40 p-4 text-sm">
             <p className="font-medium">Kampanye tidak bisa dimuat</p>
             <p className="text-muted-foreground">{getApiError(error)}</p>
-            <p className="teks-kecil text-muted-foreground">Toko tanpa Shopee Ads atau token tanpa izin Ads akan menolak permintaan ini.</p>
+            <InfoTip teks={"Toko tanpa Shopee Ads atau token tanpa izin Ads akan menolak permintaan ini."} />
           </div>
         )}
         {data && (

@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import AksiLainnya from '@/components/AksiLainnya'
 import Bantuan from '@/components/Bantuan'
 import { useLabel } from '@/api/pengaturanUi'
@@ -37,7 +38,7 @@ function PilihRoleTambahan({ pilihan, dipilih, namaRole, onChange }: { pilihan: 
   return (
     <fieldset className="space-y-1.5">
       <legend className="text-sm font-medium">Role tambahan (opsional)</legend>
-      <p className="text-xs text-muted-foreground">Akses digabung dengan role utama: halaman dibuka bila salah satu role mengizinkan, dan tulis mengalahkan baca.</p>
+      <InfoTip teks={"Akses digabung dengan role utama: halaman dibuka bila salah satu role mengizinkan, dan tulis mengalahkan baca."} />
       <div className="grid gap-1.5 sm:grid-cols-2">
         {pilihan.map((r) => (
           <label key={r} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -292,7 +293,7 @@ export default function StaffPage() {
                 autoCapitalize="none"
                 onChange={(e) => setUserForm((f) => ({ ...f, username: e.target.value }))}
               />
-              <p className="text-xs text-muted-foreground">3–32 karakter: huruf, angka, titik, garis bawah, atau strip. Dipakai untuk login.</p>
+              <InfoTip teks={"3–32 karakter: huruf, angka, titik, garis bawah, atau strip. Dipakai untuk login."} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="staff-email-opsional-3">Email (opsional)</Label>
@@ -348,7 +349,7 @@ export default function StaffPage() {
                 autoCapitalize="none"
                 onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
               />
-              <p className="text-xs text-muted-foreground">Hanya admin yang bisa mengubah username. Pengguna masuk dengan username ini.</p>
+              <InfoTip teks={"Hanya admin yang bisa mengubah username. Pengguna masuk dengan username ini."} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="staff-nama-7">Nama</Label>

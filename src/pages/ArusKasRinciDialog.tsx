@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useState } from 'react'
 import { fmtRp } from '@/api/client'
 import MoneyInput from '@/components/MoneyInput'
@@ -74,7 +75,7 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChil
         </div>
       )}
       {target.kategoriDiRincian && !target.total && (
-        <p className="text-xs text-muted-foreground">Baris ini punya rincian. Komponen Pemasukan atau Pengeluaran dipilih di tiap rincian (1.1, 1.2, dst), jadi satu baris bisa masuk ke beberapa komponen.</p>
+        <InfoTip teks={"Baris ini punya rincian. Komponen Pemasukan atau Pengeluaran dipilih di tiap rincian (1.1, 1.2, dst), jadi satu baris bisa masuk ke beberapa komponen."} />
       )}
       {!target.total && <div className="space-y-2">
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>

@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import UbahPromosiForm from './UbahPromosiForm'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -43,7 +44,7 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
     <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{p?.nama ?? `Promosi #${id}`}</h1><Button variant="outline" disabled={end.isPending||barangPending||editPending} onClick={close}>Kembali ke Promosi</Button></div>
     {detail.error ? <QueryError error={detail.error} retry={detail.refetch} /> : !p ? <Spinner column label="Memuat detail…" /> : <div className="space-y-4 text-sm">
       <p>{labelPromosi(p.status)} · {waktuRetur(p.mulai_at)} — {waktuRetur(p.selesai_at)}</p>
-      <p className="text-muted-foreground">Harga dalam mata uang toko Shopee. Pilih produk/varian tepat sebelum mengubah diskon. Gunakan pencarian jika produk belum terlihat.</p>
+      <InfoTip teks={"Harga dalam mata uang toko Shopee. Pilih produk/varian tepat sebelum mengubah diskon. Gunakan pencarian jika produk belum terlihat."} />
       {p.barang.length === 0 ? <p className="rounded-lg border bg-card p-3">Belum ada produk dalam promosi ini. Gunakan formulir di bawah untuk menambahkan produk/varian dan harga diskonnya.</p> : <TabelData label="Produk promosi" items={p.barang} kolom={columns} idDari={(b) => `${b.item_id}:${b.model_id}`} namaDari={(b) => b.nama} />}
       <div className="flex justify-between gap-2"><Button variant="outline" disabled={halaman <= 1 || detail.isFetching} onClick={() => setHalaman(halaman - 1)}>Sebelumnya</Button><span>Halaman produk {halaman}</span><Button variant="outline" disabled={!p.ada_lagi || detail.isFetching} onClick={() => setHalaman(halaman + 1)}>Berikutnya</Button></div>
       {!finished && <BarangPromosiForm akun={akun} id={id} blocked={end.isPending || editPending} onPending={setBarangPending} />}
@@ -53,7 +54,7 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
         <Button variant="destructive" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(true)}>Hapus Promosi</Button>
         <Button variant="outline" disabled={detail.isFetching || end.isPending || barangPending || editPending} onClick={() => { void detail.refetch() }}>Refresh Detail</Button>
       </div>
-      <p className="text-muted-foreground">Hapus dipakai untuk promosi yang belum dimulai. Shopee memeriksa kelayakan tindakan; bila ditolak, pesan dan request ID ditampilkan.</p>
+      <InfoTip teks={"Hapus dipakai untuk promosi yang belum dimulai. Shopee memeriksa kelayakan tindakan; bila ditolak, pesan dan request ID ditampilkan."} />
     </div>}
     {end.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(end.error)} Refresh sebelum mencoba ulang.</p>}
     {end.data && <p role="status" className="text-sm">Perubahan dikonfirmasi Shopee. {end.data.warnings.join(' ')}</p>}

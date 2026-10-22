@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
 import { useState } from 'react'
@@ -73,7 +74,7 @@ export default function PromosiPage() {
     <FormDialog open={creating} values={{nama,jadwal}} busy={create.isPending} onOpenChange={setCreating}><DialogContent><DialogHeader><DialogTitle>Buat Promosi · Jadwal</DialogTitle></DialogHeader><form className="space-y-3 rounded-lg border bg-card p-4" onSubmit={(e) => { e.preventDefault(); void submit() }}>
       <div><Label htmlFor="promosi-nama">Nama promosi</Label><Input id="promosi-nama" required maxLength={255} value={nama} onChange={(e) => setNama(e.target.value)} disabled={create.isPending} /></div>
       <div className="grid gap-3 sm:grid-cols-2">{(['mulai', 'selesai'] as const).map((key) => <div key={key}><Label htmlFor={`promosi-${key}`}>{key === 'mulai' ? 'Mulai' : 'Selesai'} (WIB)</Label><Input id={`promosi-${key}`} type="datetime-local" required value={jadwal[key]} onChange={(e) => setJadwal({ ...jadwal, [key]: e.target.value })} disabled={create.isPending} /></div>)}</div>
-      <p className="text-xs text-muted-foreground">Mulai minimal 1 jam lagi; durasi minimal 1 jam dan kurang dari 180 hari.</p>
+      <InfoTip teks={"Mulai minimal 1 jam lagi; durasi minimal 1 jam dan kurang dari 180 hari."} />
       <div className="flex gap-2"><Button type="submit" disabled={create.isPending || !nama.trim()}>Buat di Shopee</Button><Button type="button" variant="outline" disabled={create.isPending} onClick={() => setCreating(false)}>Batal</Button></div>
     </form></DialogContent></FormDialog>
     {create.error && <p role="alert" className="break-words text-sm text-destructive">{getApiError(create.error)} Refresh sebelum mencoba ulang.</p>}

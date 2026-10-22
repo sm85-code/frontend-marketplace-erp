@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { DropdownMenu } from 'radix-ui'
 import Spinner from '@/components/Spinner'
 import { useTokoAktif } from '@/lib/tokoAktif'
@@ -470,10 +471,7 @@ export default function ChatPage() {
                 </DropdownMenu.Root>
               </div>
               {newConversation && (
-                <p className="my-2 text-sm text-muted-foreground">
-                  Tulis pesan untuk pembeli pesanan ini. Riwayat dimuat setelah Shopee mengembalikan identitas percakapan. Tidak ada pesan
-                  yang dikirim otomatis.
-                </p>
+                <InfoTip teks={"Tulis pesan untuk pembeli pesanan ini. Riwayat dimuat setelah Shopee mengembalikan identitas percakapan. Tidak ada pesan yang dikirim otomatis."} />
               )}
               {orderStart.data && orderId && (
                 <div className="shrink-0 space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">

@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { BarHalaman } from '@/components/daftar'
 import { useMutation } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
@@ -52,7 +53,7 @@ export default function ProfilePage() {
           <div>
             <div className="text-xs text-muted-foreground">Username</div>
             <div className="font-mono font-medium">{user.username ?? '—'}</div>
-            <p className="text-xs text-muted-foreground">Dipakai untuk login. Hanya admin yang bisa mengubahnya.</p>
+            <InfoTip teks={"Dipakai untuk login. Hanya admin yang bisa mengubahnya."} />
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Role</div>
@@ -82,9 +83,7 @@ export default function ProfilePage() {
               {emailSalah ? (
                 <p className="text-xs text-destructive">Format email belum benar.</p>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  Email dicek saat disimpan (format dan domainnya harus bisa menerima email). Bisa dipakai untuk login. Kosongkan untuk menghapus.
-                </p>
+                <InfoTip teks={"Email dicek saat disimpan (format dan domainnya harus bisa menerima email). Bisa dipakai untuk login. Kosongkan untuk menghapus."} />
               )}
             </div>
             <Button type="submit" disabled={!berubah || emailSalah || !nama.trim() || simpan.isPending}>
