@@ -8,6 +8,7 @@ import type { KatalogDetail } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
 import Spinner from '@/components/Spinner'
+import Lipat from '@/components/Lipat'
 
 export function ErrorDetails({ error, result }: { error?: unknown; result?: api.EngagementResult }) {
   const diagnostic = useMemo(() => result?.diagnostic || shopeeDiagnostic(error), [error, result?.diagnostic])
@@ -35,19 +36,19 @@ export default function ShopeeEngagement({ detail }: { detail: KatalogDetail }) 
     else toast.warning('Shopee menolak boost. Periksa rincian di bawah.')
     void qc.invalidateQueries({ queryKey: ['boosted-products', detail.akun_id] })
   } })
-  return <div className="space-y-3">
-    <div className="space-y-2 rounded-lg border p-3"><div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-medium">Boost produk</h3><p className="text-xs text-muted-foreground">{cooldown > 0 ? `Bisa dicoba lagi dalam ${Math.ceil(cooldown / 60)} menit.` : 'Minta Shopee menaikkan visibilitas produk ini.'}</p></div><Button variant="outline" size="sm" disabled={boost.isPending || cooldown > 0 || detail.status === 'SELLER_DELETE'} onClick={async () => { if (await confirm({ title: 'Boost produk ini?', description: `${detail.nama} di ${detail.nama_toko}. Shopee menentukan ketersediaan boost dan cooldown.` })) boost.mutate() }}>{boost.isPending ? 'Mengirim…' : 'Boost produk'}</Button></div>
+  return <div>
+    <div className="space-y-2 border-y py-3"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-medium">Boost produk</h3><p className="text-xs text-muted-foreground">{cooldown > 0 ? `Bisa dicoba lagi dalam ${Math.ceil(cooldown / 60)} menit.` : 'Minta Shopee menaikkan visibilitas produk ini.'}</p></div><Button variant="outline" size="sm" disabled={boost.isPending || cooldown > 0 || detail.status === 'SELLER_DELETE'} onClick={async () => { if (await confirm({ title: 'Boost produk ini?', description: `${detail.nama} di ${detail.nama_toko}. Shopee menentukan ketersediaan boost dan cooldown.` })) boost.mutate() }}>{boost.isPending ? 'Mengirim…' : 'Boost produk'}</Button></div>
       {boosted.error && <><ErrorDetails error={boosted.error} /><Button variant="ghost" size="sm" onClick={() => void boosted.refetch()}>Muat ulang status boost</Button></>}
       <ErrorDetails error={boost.error} result={boost.data} />
     </div>
-    <details onToggle={e => setReviewsOpen(e.currentTarget.open)}><summary className="cursor-pointer py-2 font-medium">Ulasan pembeli & balasan</summary>{reviewsOpen && <div className="space-y-3">
+    <Lipat judul="Ulasan pembeli & balasan" onBuka={setReviewsOpen}>{reviewsOpen && <div className="space-y-3">
       {reviews.isPending && <Spinner column label="Memuat ulasan…" />}
       {reviews.error && <><ErrorDetails error={reviews.error} /><Button variant="outline" size="sm" onClick={() => void reviews.refetch()}>Muat ulang ulasan</Button></>}
       {reviews.data?.items.map(row => <Review key={row.comment_id} productId={detail.id} row={row} />)}
       {reviews.data && !reviews.data.items.length && <p className="text-sm text-muted-foreground">Tidak ada ulasan pada halaman ini.</p>}
       <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={!previous.length || reviews.isFetching} onClick={() => { setCursor(previous.at(-1) || ''); setPrevious(p => p.slice(0, -1)) }}>Sebelumnya</Button><Button variant="outline" size="sm" disabled={!reviews.data?.more || !reviews.data.next_cursor || reviews.data.next_cursor === cursor || reviews.isFetching} onClick={() => { setPrevious(p => [...p, cursor]); setCursor(reviews.data!.next_cursor) }}>Berikutnya</Button></div>
       {reviews.data?.more && (!reviews.data.next_cursor || reviews.data.next_cursor === cursor) && <p className="text-xs text-muted-foreground">Shopee belum menyediakan halaman berikutnya. API dapat membatasi ulasan hingga 500; periksa ulasan lain di Seller Centre.</p>}
-    </div>}</details>
+    </div>}</Lipat>
   </div>
 }
 

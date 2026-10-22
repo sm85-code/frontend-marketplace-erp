@@ -2,10 +2,11 @@ import EditProdukLanjutan from './EditProdukLanjutan'
 import KualitasProduk from './KualitasProduk'
 import StatistikProduk from './StatistikProduk'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
-import Bantuan from '@/components/Bantuan'
+import Lipat from '@/components/Lipat'
 import { useAuth } from '@/lib/auth'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
 import ShopeeProductTools from './ShopeeProductTools'
@@ -33,22 +34,28 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{detail?.nama ?? 'Detail Produk'}</h1><Button variant="outline" onClick={onTutup}>Kembali ke Katalog</Button></div>
+        <div className="flex items-start gap-3"><Button variant="outline" size="icon" className="size-10 shrink-0" onClick={onTutup} aria-label="Kembali ke Katalog" title="Kembali ke Katalog"><ArrowLeft className="size-5" aria-hidden="true" /></Button><h1 className="min-w-0 flex-1 break-words text-lg leading-snug font-semibold sm:text-xl">{detail?.nama ?? 'Detail Produk'}</h1></div>
         {error ? <QueryError error={error} retry={refetch} /> : isLoading || !detail ? (
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
-            {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
-            {manage && <SalinMasterProduk ids={[detail.id]} />}
-            {bisa('katalog_lanjutan', 'tulis') && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
+            {/* The things to do with the product, all the same size, two to a row on a phone. */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 [&_button]:h-[44px] [&_button]:min-h-[44px] [&_button]:w-full [&_a]:h-[44px] [&_a]:min-h-[44px] [&_a]:w-full [&>*]:min-w-0">
+              {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
+              {manage && <SalinMasterProduk ids={[detail.id]} />}
+              {bisa('katalog_lanjutan', 'tulis') && <EditProdukLanjutan detail={detail} />}
+              <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
+            </div>
+            {bisa('katalog_lanjutan', 'tulis') && <><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
             {bisa('katalog_lanjutan', 'tulis') && <ShopeeProductTools detail={detail} close={onTutup} />}
-            <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
-            {manage && <Bantuan rincian judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
-            <div className="flex flex-wrap items-center gap-2">
+            {manage && <section className="rounded-xl border px-4"><Lipat judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Lipat></section>}
+            <div className="space-y-2">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
-              <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>
-              <span className="text-muted-foreground">stok Shopee: {detail.stok_shopee ?? '—'}</span>
-              {detail.sku && <span className="font-mono">SKU {detail.sku}</span>}
+              <dl className="grid grid-cols-3 gap-3 text-sm">
+                <div><dt className="text-xs text-muted-foreground">Harga</dt><dd className="font-semibold">{rentangHarga(detail.harga_min, detail.harga_max)}</dd></div>
+                <div><dt className="text-xs text-muted-foreground">Stok Shopee</dt><dd className="font-semibold">{detail.stok_shopee ?? '—'}</dd></div>
+                <div className="min-w-0"><dt className="text-xs text-muted-foreground">SKU</dt><dd className="break-all font-mono">{detail.sku || '—'}</dd></div>
+              </dl>
             </div>
             {detail.foto.length > 0 && (
               <div className="flex gap-2 overflow-x-auto">
