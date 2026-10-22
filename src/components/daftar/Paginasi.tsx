@@ -42,3 +42,17 @@ export default function Paginasi({
     </nav>
   )
 }
+
+/**
+ * Pager for lists that only know "is there a next page" (Shopee cursor lists): same look as Paginasi,
+ * previous · page label · next.
+ */
+export function PaginasiLanjut({ halaman, bisaMundur, bisaMaju, onMundur, onMaju, nama = 'Halaman' }: { halaman?: number; bisaMundur: boolean; bisaMaju: boolean; onMundur: () => void; onMaju: () => void; nama?: string }) {
+  return (
+    <nav aria-label={nama} className="paginasi">
+      <Button variant="outline" disabled={!bisaMundur} onClick={onMundur}>Sebelumnya</Button>
+      {halaman !== undefined && <span className="px-2 text-sm text-muted-foreground">Halaman {halaman}</span>}
+      <Button variant="outline" disabled={!bisaMaju} onClick={onMaju}>Berikutnya</Button>
+    </nav>
+  )
+}

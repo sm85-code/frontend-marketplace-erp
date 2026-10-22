@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -46,7 +47,7 @@ export default function ShopeeEngagement({ detail, bagian }: { detail: KatalogDe
       {reviews.error && <><ErrorDetails error={reviews.error} /><Button variant="outline" size="sm" onClick={() => void reviews.refetch()}>Refresh ulasan</Button></>}
       {reviews.data?.items.map(row => <Review key={row.comment_id} productId={detail.id} row={row} />)}
       {reviews.data && !reviews.data.items.length && <p className="text-sm text-muted-foreground">Tidak ada ulasan pada halaman ini.</p>}
-      <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={!previous.length || reviews.isFetching} onClick={() => { setCursor(previous.at(-1) || ''); setPrevious(p => p.slice(0, -1)) }}>Sebelumnya</Button><Button variant="outline" size="sm" disabled={!reviews.data?.more || !reviews.data.next_cursor || reviews.data.next_cursor === cursor || reviews.isFetching} onClick={() => { setPrevious(p => [...p, cursor]); setCursor(reviews.data!.next_cursor) }}>Berikutnya</Button></div>
+      <div className="flex flex-wrap gap-2"><PaginasiLanjut bisaMundur={!(!previous.length || reviews.isFetching)} bisaMaju={!(!reviews.data?.more || !reviews.data.next_cursor || reviews.data.next_cursor === cursor || reviews.isFetching)} onMundur={() => { setCursor(previous.at(-1) || ''); setPrevious(p => p.slice(0, -1)) }} onMaju={() => { setPrevious(p => [...p, cursor]); setCursor(reviews.data!.next_cursor) }} /></div>
       {reviews.data?.more && (!reviews.data.next_cursor || reviews.data.next_cursor === cursor) && <p className="text-xs text-muted-foreground">Shopee belum menyediakan halaman berikutnya. API dapat membatasi ulasan hingga 500; periksa ulasan lain di Seller Centre.</p>}
     </div>}
   </div>

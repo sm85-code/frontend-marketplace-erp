@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getProcessingCandidates, selectProcessingItems, releaseProcessingJob, type CandidateStatus, type ProcessingCandidateItem } from '@/api/processing'
@@ -207,15 +208,7 @@ export function OrderPicker({
           )}
         </div>
         <div className="flex shrink-0 items-center justify-between gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1 || q.isFetching} onClick={() => setPage((p) => p - 1)}>
-            Sebelumnya
-          </Button>
-          <span className="text-center text-xs">
-            Halaman {page} · {q.data?.total || 0} item
-          </span>
-          <Button variant="outline" size="sm" disabled={!q.data || page * perPage >= q.data.total || q.isFetching} onClick={() => setPage((p) => p + 1)}>
-            Berikutnya
-          </Button>
+          <PaginasiLanjut halaman={page} bisaMundur={!(page === 1 || q.isFetching)} bisaMaju={!(!q.data || page * perPage >= q.data.total || q.isFetching)} onMundur={() => setPage((p) => p - 1)} onMaju={() => setPage((p) => p + 1)} />
         </div>
         {error && (
           <p role="alert" className="shrink-0 text-sm text-destructive">

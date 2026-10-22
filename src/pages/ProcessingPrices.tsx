@@ -1,3 +1,4 @@
+import Paginasi from '@/components/daftar/Paginasi'
 import AksiLainnya from '@/components/AksiLainnya'
 import InfoTip from '@/components/InfoTip'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -290,25 +291,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               )}
               {filtered.length > 15 && (
                 <div className="flex items-center justify-between gap-2 pt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={current === 1}
-                    onClick={() => setPage(current - 1)}
-                  >
-                    Sebelumnya
-                  </Button>
-                  <span className="text-xs">
-                    {current} / {pages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={current === pages}
-                    onClick={() => setPage(current + 1)}
-                  >
-                    Berikutnya
-                  </Button>
+                  <Paginasi halaman={current} totalHalaman={pages} onUbah={setPage} />
                 </div>
               )}
             </div>

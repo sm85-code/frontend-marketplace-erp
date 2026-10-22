@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import Spinner from '@/components/Spinner'
 import { useState } from 'react'
 import { Package, ReceiptText, Plus } from 'lucide-react'
@@ -108,12 +109,7 @@ export default function AttachmentPicker({
           )}
           {tab === 'item' && (
             <div className="mt-2 flex flex-wrap gap-2">
-              <Button variant="outline" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 20))}>
-                Sebelumnya
-              </Button>
-              <Button variant="outline" disabled={!data.produk_ada_lagi} onClick={() => setOffset(offset + 20)}>
-                Berikutnya
-              </Button>
+              <PaginasiLanjut bisaMundur={!(offset === 0)} bisaMaju={!(!data.produk_ada_lagi)} onMundur={() => setOffset(Math.max(0, offset - 20))} onMaju={() => setOffset(offset + 20)} />
             </div>
           )}
         </>

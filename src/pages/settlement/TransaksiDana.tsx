@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import PilihNative from '@/components/PilihNative'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
@@ -169,26 +170,13 @@ export default function TransaksiDana() {
           />
           {!rows.data.items.length && <p className="text-sm text-muted-foreground">Tidak ada transaksi pada rentang ini.</p>}
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={!previous.length || rows.isFetching}
-              onClick={() => {
+            <PaginasiLanjut bisaMundur={!(!previous.length || rows.isFetching)} bisaMaju={!(!rows.data.ada_lagi || rows.isFetching)} onMundur={() => {
                 setFilter({ ...filter, offset: previous[previous.length - 1] })
                 setPrevious(previous.slice(0, -1))
-              }}
-            >
-              Sebelumnya
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!rows.data.ada_lagi || rows.isFetching}
-              onClick={() => {
+              }} onMaju={() => {
                 setPrevious([...previous, filter.offset])
                 setFilter({ ...filter, offset: rows.data.next_offset })
-              }}
-            >
-              Berikutnya
-            </Button>
+              }} />
             <Button
               variant="outline"
               disabled={rows.isFetching}

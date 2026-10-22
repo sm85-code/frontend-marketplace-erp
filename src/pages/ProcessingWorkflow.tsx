@@ -1,3 +1,4 @@
+import Paginasi from '@/components/daftar/Paginasi'
 import AksiLainnya from '@/components/AksiLainnya'
 import RekapPemetaan from '@/pages/RekapPemetaan'
 import InfoTip from '@/components/InfoTip'
@@ -978,22 +979,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
               {(current - 1) * 15 + 1}–{Math.min(current * 15, items.length)} dari {items.length} item
             </span>
             <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={current === 1}
-                onClick={() => setPage(current - 1)}
-              >
-                Sebelumnya
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={current === maxPage}
-                onClick={() => setPage(current + 1)}
-              >
-                Berikutnya
-              </Button>
+              <Paginasi halaman={current} totalHalaman={maxPage} onUbah={setPage} />
             </div>
           </div>
         )}

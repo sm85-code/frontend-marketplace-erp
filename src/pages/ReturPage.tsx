@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import InfoTip from '@/components/InfoTip'
 import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
@@ -87,9 +88,7 @@ export default function ReturPage() {
         aksi={(r) => <Button variant="outline" size="sm" onClick={() => setSelected({ akunId: r.akun_id, nomor: r.nomor_retur })}>Detail</Button>} />
       {list.data.items.length === 0 && <p className="text-sm text-muted-foreground">Tidak ada retur pada halaman dan rentang pengajuan ini.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Button variant="outline" disabled={filter.halaman <= 1 || list.isFetching} onClick={() => setFilter({ ...filter, halaman: filter.halaman - 1 })}>Sebelumnya</Button>
-        <span className="text-sm">Halaman {filter.halaman}{list.data.ada_lagi ? ' · Masih ada hasil berikutnya' : ' · Halaman terakhir'}</span>
-        <Button variant="outline" disabled={!list.data.ada_lagi || list.isFetching} onClick={() => setFilter({ ...filter, halaman: filter.halaman + 1 })}>Berikutnya</Button>
+        <PaginasiLanjut halaman={filter.halaman} bisaMundur={!(filter.halaman <= 1 || list.isFetching)} bisaMaju={!(!list.data.ada_lagi || list.isFetching)} onMundur={() => setFilter({ ...filter, halaman: filter.halaman - 1 })} onMaju={() => setFilter({ ...filter, halaman: filter.halaman + 1 })} />
       </div>
     </>}
     {selected && <DetailRetur key={`${selected.akunId}:${selected.nomor}`} selected={selected} close={() => setSelected(null)} />}
