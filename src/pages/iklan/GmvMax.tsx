@@ -13,6 +13,8 @@ import QueryError from '@/components/QueryError'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 const field = 'w-full rounded-lg border bg-background p-2'
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+/** WIB date `n` days ago. Reports default to the last 7 complete days: Shopee rejects start = end and today is partial. */
+export const hariLalu = (n: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() - n * 86400000))
 const actions: Record<api.GmvAction, string> = { change_budget: 'Ubah anggaran', change_duration: 'Ubah jadwal', change_roas_target: 'Ubah target ROAS', pause: 'Jeda', resume: 'Lanjutkan', start: 'Mulai' }
 export default function GmvMax() {
   const [akun, setAkun] = useTokoAktif(true)
@@ -25,8 +27,8 @@ function Manage({ akun }: { akun: string }) {
   const [id, setId] = useState('')
   const [budget, setBudget] = useState('')
   const [roas, setRoas] = useState('0')
-  const [start, setStart] = useState(today)
-  const [end, setEnd] = useState(today)
+  const [start, setStart] = useState(() => hariLalu(7))
+  const [end, setEnd] = useState(() => hariLalu(1))
   const [action, setAction] = useState<api.GmvAction>('change_budget')
   const [itemAction, setItemAction] = useState<'add'|'remove'>('add')
   const [items, setItems] = useState('')
@@ -51,7 +53,7 @@ function Manage({ akun }: { akun: string }) {
   const busy = mutation.isPending || report.isPending
   const data = report.data
   return <section className="space-y-4 rounded-xl border bg-card p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold">Shop GMV Max</h2><Button variant="outline" disabled={eligible.isFetching||busy} onClick={()=>void eligible.refetch()}>Periksa kelayakan</Button></div>{eligible.error&&<QueryError error={eligible.error} retry={eligible.refetch}/ >}{eligible.data&&<p className="text-sm">{eligible.data.is_eligible?'Toko memenuhi syarat untuk membuat kampanye.':`Belum memenuhi syarat pembuatan: ${eligible.data.reason ?? 'Tidak tersedia'}`}</p>}
-    <div className="space-y-2"><Label htmlFor="gmv-mode">Tindakan</Label><select id="gmv-mode" className={field} value={mode} disabled={busy} onChange={e=>{setMode(e.target.value as typeof mode);mutation.reset();report.reset();setError('')}}><option value="report">Lihat performa</option><option value="create">Buat kampanye</option><option value="edit">Kelola kampanye</option><option value="items">Kelola produk kampanye</option></select></div>
+    <div className="space-y-2"><Label htmlFor="gmv-mode">Tindakan</Label><select id="gmv-mode" className={field} value={mode} disabled={busy} onChange={e=>{const next=e.target.value as typeof mode;setMode(next);if(next==='report'){setStart(hariLalu(7));setEnd(hariLalu(1))}else if(mode==='report'){setStart(today());setEnd(today())}mutation.reset();report.reset();setError('')}}><option value="report">Lihat performa</option><option value="create">Buat kampanye</option><option value="edit">Kelola kampanye</option><option value="items">Kelola produk kampanye</option></select></div>
     <form className="grid gap-4 sm:grid-cols-2" onSubmit={e=>{e.preventDefault();setError('');if(mode==='report'){if(!start||!end){setError('Isi periode laporan.');return}report.mutate(0)}else void submit()}}>
       {mode!=='create'&&<div className="space-y-2"><Label htmlFor="gmv-id">ID Kampanye{mode==='report'?' · opsional':''}</Label><Input id="gmv-id" inputMode="numeric" pattern="[1-9][0-9]*" required={mode!=='report'} placeholder={mode==='report'?'Otomatis dari Shopee':undefined} value={id} disabled={busy} onChange={e=>{setId(e.target.value);report.reset()}}/></div>}
       {mode==='edit'&&<div className="space-y-2"><Label htmlFor="gmv-action">Perubahan</Label><select id="gmv-action" className={field} disabled={busy} value={action} onChange={e=>setAction(e.target.value as api.GmvAction)}>{Object.entries(actions).map(([a,label])=><option key={a} value={a}>{label}</option>)}</select></div>}
@@ -65,6 +67,13 @@ function Manage({ akun }: { akun: string }) {
     {(error||mutation.error||report.error)&&<p role="alert" className="break-words text-sm text-destructive">{error||getApiError(mutation.error||report.error)}{mutation.error ? ' Periksa hasil di Shopee sebelum mengulang perubahan.' : ''}</p>}
     {mutation.data&&<p role="status">Perubahan dikonfirmasi · Kampanye {mutation.data.campaign_id}. {mutation.data.warnings.join(' ')}</p>}
     {data&&<div className="overflow-x-auto rounded-lg border"><Table><TableHeader><TableRow><TableHead>Produk / Kampanye</TableHead><TableHead>Biaya</TableHead><TableHead>GMV (luas)</TableHead><TableHead>ROAS (luas)</TableHead><TableHead>Pesanan (luas)</TableHead></TableRow></TableHeader><TableBody>{(data.result_list??[{item_id:data.campaign_id,report:data.report??{}}]).map(r=><TableRow key={r.item_id}><TableCell className="whitespace-nowrap">{r.item_id}</TableCell><TableCell className="whitespace-nowrap">{r.report.expense==null?'—':fmtRp(r.report.expense)}</TableCell><TableCell className="whitespace-nowrap">{r.report.broad_gmv==null?'—':fmtRp(r.report.broad_gmv)}</TableCell><TableCell>{r.report.broad_roi??'—'}</TableCell><TableCell>{r.report.broad_order??'—'}</TableCell></TableRow>)}</TableBody></Table></div>}
+    {data&&laporanKosong(data)&&<p role="status" className="text-sm text-muted-foreground">Belum ada data performa GMV Max untuk periode ini. Pastikan kampanye GMV Max berjalan pada tanggal tersebut, atau isi ID Kampanye dari Seller Centre.</p>}
     {data&&perItem&&<div className="flex justify-between"><Button variant="outline" disabled={busy||offset===0} onClick={()=>report.mutate(Math.max(0,offset-50))}>Sebelumnya</Button><Button variant="outline" disabled={busy||!data.has_next_page} onClick={()=>report.mutate(offset+50)}>Berikutnya</Button></div>}
   </section>
+}
+
+/** True when Shopee answered but there is nothing to show (no product rows, or a campaign report without any figure). */
+export function laporanKosong(data: api.GmvReport) {
+  if (data.result_list) return data.result_list.length === 0
+  return !data.report || Object.values(data.report).every(v => v == null || v === 0)
 }

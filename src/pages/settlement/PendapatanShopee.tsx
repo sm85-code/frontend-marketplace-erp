@@ -32,7 +32,7 @@ const eventTime = (data: api.Tracking | undefined, codes: string[]) => {
 interface Row {
   key: string; shop: string; number: string; products: string[]; variants: string[]
   shipping: string | null; amount: number | null; currency?: string
-  shipped: number | null; received: number | null; payout: number | null; dariDaftar: boolean; statusErp: string | null
+  shipped: number | null; received: number | null; payout: number | null; dariDaftar: boolean; danaCepat: number | null; statusErp: string | null
 }
 
 export default function PendapatanShopee() {
@@ -68,7 +68,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
       amount: b.amount, currency: b.currency, dariDaftar: b.dariDaftar,
       shipped: stamp(b.detail?.pickup_done_time) ?? (shipped.length ? Math.min(...shipped) : null),
       received: received.length && received.every((v): v is number => v != null) ? Math.max(...received) : null,
-      payout: stamp(b.payoutTime), statusErp: b.statusErp }
+      payout: stamp(b.payoutTime), danaCepat: b.danaCepat, statusErp: b.statusErp }
   })
   const names = (values: string[]) => values.length ? <div className="space-y-2">{values.map((v, i) => <div key={i}>{v}</div>)}</div> : '—'
   const columns: KolomTabel<Row>[] = [
@@ -81,7 +81,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
     { kunci: 'amount', judul: 'Estimasi Dana Cair', sel: r => <>{r.amount == null ? '—' : fmtMoney(r.amount, r.currency)}{!r.dariDaftar && <span className="block text-xs font-normal text-muted-foreground">belum tampil di daftar Shopee</span>}</>, nilai: r => r.amount, rata: 'kanan', kelas: 'whitespace-nowrap' },
     { kunci: 'shipped', judul: 'Tanggal Dikirim', sel: r => time(r.shipped), nilai: r => r.shipped, kelas: 'whitespace-nowrap' },
     { kunci: 'received', judul: 'Tanggal Diterima', sel: r => time(r.received), nilai: r => r.received, kelas: 'whitespace-nowrap' },
-    { kunci: 'payout', judul: 'Estimasi Tgl. Pencairan', sel: r => time(r.payout), nilai: r => r.payout, kelas: 'whitespace-nowrap' },
+    { kunci: 'payout', judul: 'Estimasi Tgl. Pencairan', sel: r => <>{r.payout != null ? time(r.payout) : <span className="text-xs text-muted-foreground">{alasanTanpaEstimasi(r.dariDaftar)}</span>}{r.danaCepat != null && <span className="block text-xs text-muted-foreground">Dana Cepat: {fmtMoney(r.danaCepat, r.currency)} sudah dicairkan awal</span>}</>, nilai: r => r.payout, kelas: 'whitespace-nowrap' },
   ]
   const unknownStatus = 'Status belum diketahui'
   const statusesOf = (r: Row) => r.shipping ? r.shipping.split(' · ') : [unknownStatus]
@@ -119,4 +119,9 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
       <div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? 'Memuat…' : 'Perbarui'}</Button></div>
     </>}
   </div>
+}
+
+/** Why a pending row has no estimated payout date, instead of a bare dash. */
+export function alasanTanpaEstimasi(dariDaftar: boolean) {
+  return dariDaftar ? 'Shopee tidak mengirim estimasi' : 'Belum ada di daftar Shopee'
 }

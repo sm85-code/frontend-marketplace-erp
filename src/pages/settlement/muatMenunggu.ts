@@ -15,6 +15,8 @@ export interface BarisCair {
   amount: number | null
   currency?: string
   payoutTime: number | null
+  /** Amount Shopee already paid early through Dana Cepat (null: not a Dana Cepat order). */
+  danaCepat: number | null
   detail: api.IncomeOrderDetail | undefined
   /** Status in the Pesanan menu (null: the order is not in the menu). */
   statusErp: string | null
@@ -47,6 +49,15 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       for (const row of result.items) if (row.order_sn) daftar.set(`${shop.id}:${row.order_sn}`, row)
       if (!result.ada_lagi || !result.next_cursor) break
       cursor = result.next_cursor
+    }
+  }
+  const cepat = new Map<string, number>()
+  for (const shop of shops) {
+    try {
+      const r = await api.danaCepat(shop.id)
+      if (r.aktif) for (const [sn, v] of Object.entries(r.pesanan)) cepat.set(`${shop.id}:${sn}`, Number(v))
+    } catch {
+      // Dana Cepat is a label only; the list still loads without it.
     }
   }
   const erp = new Map<string, { id: string; status: string }>()
@@ -89,6 +100,7 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       amount: row?.estimated_escrow_amount == null ? null : Number(row.estimated_escrow_amount),
       currency: row?.currency,
       payoutTime: row?.estimated_payout_time ?? null,
+      danaCepat: cepat.get(k) ?? null,
       detail: d,
       statusErp: erp.get(k)?.status ?? null,
     })
