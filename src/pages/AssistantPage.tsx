@@ -120,7 +120,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
   function selectConversation(id:string){if(embedded)setFloatingConversation(id);else setParams(id?{percakapan:id}:{},{replace:true});setHistoryPage(1);mutation.reset()}
   const pre=embedded?'floating-':''
   const kirimMati=!!(embedded&&resource&&!detail.data)||mutation.isPending||busy||!status.data?.available||(!pending&&(!prompt.trim()||(mode==='perintah'&&!selectedShop)))
-  return <div className={`mx-auto flex max-w-3xl flex-col gap-3 ${embedded?'':'pb-24'}`}>
+  return <div className={`mx-auto flex max-w-5xl flex-col gap-3 ${embedded?'':'pb-24'}`}>
     <div className="flex flex-wrap items-center justify-between gap-2">
       {!embedded&&<BarHalaman judul="Asisten AI" />}
       {status.data&&<p className="text-xs text-muted-foreground">AI hari ini {aiMoney(status.data.spent_usd,status.data.usd_idr)} / {aiMoney(status.data.daily_usd,status.data.usd_idr)} · {status.data.used_turns}/{status.data.daily_turns} pesan</p>}

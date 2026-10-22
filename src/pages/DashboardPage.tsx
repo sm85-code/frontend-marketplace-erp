@@ -30,7 +30,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
     <Card>
       <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
         <CardTitle>{judul}</CardTitle>
-        {deskripsi && <CardDescription>{deskripsi}</CardDescription>}
+        {deskripsi && <CardDescription className="sr-only">{deskripsi}</CardDescription>}
       </CardHeader>
       <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">{children}</CardContent>
     </Card>
@@ -70,6 +70,7 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
 ]
 
 export default function DashboardPage() {
+  const [semuaBaris, setSemuaBaris] = useState(false)
   const { user } = useAuth()
   const { data: semuaToko } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const [preset, setPreset] = useState<PresetTanggal>('14')
@@ -117,9 +118,15 @@ export default function DashboardPage() {
 
           <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button></section>
           <Bagian judul="Ringkasan per Toko">
+            {d.per_toko.some((t) => !t.pesanan) && (
+              <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <input type="checkbox" className="size-4" checked={semuaBaris} onChange={(e) => setSemuaBaris(e.target.checked)} />
+                Tampilkan toko tanpa pesanan ({d.per_toko.filter((t) => !t.pesanan).length})
+              </label>
+            )}
             <TabelLokal
               label="Ringkasan pesanan per toko"
-              items={d.per_toko}
+              items={semuaBaris ? d.per_toko : d.per_toko.filter((t) => t.pesanan > 0)}
               kolom={KOLOM_TOKO}
               idDari={(t) => t.akun_id ?? 'none'}
               namaDari={(t) => t.nama_toko}

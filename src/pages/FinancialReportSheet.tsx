@@ -23,7 +23,6 @@ import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
-import KartuMetrik from '@/components/KartuMetrik'
 import KartuPembagianLaba from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -161,14 +160,15 @@ export default function FinancialReportSheet({
   const periodeAwal = periodeBerjalan(month, days.length)
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
+      <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border bg-card px-4 py-2 text-sm" aria-label={`Rekap ${months[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`}>
         {summaries.map((s) => (
-          <KartuMetrik key={s.label} label={s.label} icon={s.icon} nilai={s.value === null ? '—' : fmtRp(s.value)} catatan={s.note} />
+          <div key={s.label} className="flex items-baseline gap-1.5" title={s.note}>
+            <dt className="text-muted-foreground">{s.label}</dt>
+            <dd className="font-semibold tabular-nums">{s.value === null ? '—' : fmtRp(s.value)}</dd>
+          </div>
         ))}
-      </div>
-      <h2 className="text-lg font-semibold">
-        Rekap {months[Number(month.slice(5)) - 1]} {month.slice(0, 4)}
-      </h2>
+      </dl>
       <AksiHalaman>
         <Button variant="outline" onClick={exportReport} disabled={!records.length}>
           <Download className="h-4 w-4" /> Unduh laporan

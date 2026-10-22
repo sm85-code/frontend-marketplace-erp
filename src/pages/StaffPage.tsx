@@ -230,9 +230,11 @@ export default function StaffPage() {
                           Ubah
                         </Button>
                         {u.id !== saya?.id && (
-                          <Button size="sm" variant="destructive" onClick={() => onDeleteUser(u)} disabled={deleteUserMut.isPending}>
-                            Hapus
-                          </Button>
+                          <AksiLainnya>
+                            <Button size="sm" variant="destructive" onClick={() => onDeleteUser(u)} disabled={deleteUserMut.isPending}>
+                              Hapus akun
+                            </Button>
+                          </AksiLainnya>
                         )}
                       </div>
                     )
@@ -258,9 +260,11 @@ export default function StaffPage() {
               namaDari={(r) => r.id}
               urutAwal={{ kunci: 'staff', arah: 'asc' }}
               aksi={(row) => (
-                <Button size="sm" variant="destructive" onClick={() => onRemove(row.id)}>
-                  Hapus
-                </Button>
+                <AksiLainnya>
+                  <Button size="sm" variant="destructive" onClick={() => onRemove(row.id)}>
+                    Hapus penugasan
+                  </Button>
+                </AksiLainnya>
               )}
               minWidth={460}
             />
