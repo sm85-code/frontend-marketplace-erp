@@ -54,7 +54,7 @@ export default function ProdukKeluargaField({ value, options, onChange }: {
     {error && <div role="alert" className="text-sm text-destructive">{getApiError(error)} <Button type="button" variant="outline" onClick={() => refetch()}>Coba lagi</Button></div>}
     {value && <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled={manage.isPending} onClick={() => { setRename(families?.find((f) => f.id === value)?.nama ?? ''); setRenaming(true) }}>Ubah nama induk</Button>
+        <Button type="button" variant="outline" disabled={manage.isPending} onClick={() => { setRename(families?.find((f) => f.id === value)?.nama ?? ''); setRenaming(true) }}>Edit nama induk</Button>
         <Button type="button" variant="outline" disabled={manage.isPending} onClick={async () => {
           if (await confirm({ title: 'Hapus produk induk?', description: 'Hanya induk tanpa SKU varian yang dapat dihapus. Stok SKU tidak dihapus.', confirmLabel: 'Hapus', destructive: true })) manage.mutate({ id: value })
         }}>Hapus induk kosong</Button>

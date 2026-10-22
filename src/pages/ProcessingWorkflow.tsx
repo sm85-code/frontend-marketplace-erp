@@ -17,7 +17,6 @@ import {
   ClipboardList,
   Pencil,
   ArrowRight,
-  CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -999,12 +998,6 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           </div>
         )}
       </section>
-      <div className="flex items-start gap-2 px-1 text-xs text-muted-foreground">
-        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        <p>
-          Waktu penyelesaian dicatat otomatis dalam WIB. Satu item diselesaikan untuk seluruh jumlah unitnya.
-        </p>
-      </div>
       {picker && (
         <OrderPicker
           route={picker}
