@@ -60,9 +60,9 @@ const Status = ({ k }: { k: KategoriTransaksi }) => (!k.aktif ? <Badge variant="
 function Aksi({ k, simpan, geser, atur, awal, akhir }: PropsBaris) {
   const tetap = k.kelompok === '' // "not income / expense" lands nowhere and stays on offer
   return (
-    <div className="flex items-center gap-1.5 md:justify-end">
-      <Button type="button" size="sm" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
-      <Button type="button" size="sm" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
+    <div className="flex shrink-0 items-center gap-1 md:justify-end">
+      <Button type="button" size="icon" className="h-8 w-8" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
+      <Button type="button" size="icon" className="h-8 w-8" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
       {!tetap && (
         <AksiLainnya>
           <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur penempatan</Button>
@@ -97,14 +97,16 @@ function Kartu(p: PropsBaris) {
   const { k, bisaTulis } = p
   const n = useNama(k, p.simpan)
   return (
-    <li className={`space-y-2 rounded-lg border p-3 ${k.aktif ? '' : 'opacity-60'}`}>
-      <KolomNama k={k} bisaTulis={bisaTulis} n={n} />
-      <p className="text-sm text-muted-foreground">{penempatan(k, halaman)}</p>
-      <div className="flex items-center justify-between gap-2 teks-kecil text-muted-foreground">
+    <li className={`space-y-1 rounded-lg border p-2 ${k.aktif ? '' : 'opacity-60'}`}>
+      <div className="flex items-center gap-1">
+        <div className="min-w-0 flex-1"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /></div>
+        {bisaTulis && <Aksi {...p} />}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 teks-kecil text-muted-foreground">
+        <span>{penempatan(k, halaman)}</span>
         <Status k={k} />
         <span>{k.dipakai > 0 ? `${k.dipakai} baris` : 'Belum dipakai'}</span>
       </div>
-      {bisaTulis && <Aksi {...p} />}
     </li>
   )
 }

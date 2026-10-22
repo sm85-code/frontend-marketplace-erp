@@ -18,7 +18,7 @@ import { BarHalaman, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -262,10 +262,7 @@ export default function AkunPage() {
         <TabsContent value="toko" className="space-y-4">
 
       <Card>
-        <CardHeader>
-          <CardTitle>Daftar Toko Marketplace</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {isLoading ? (
             <Spinner column label="Memuat toko…" />
           ) : (
@@ -279,7 +276,7 @@ export default function AkunPage() {
               urutAwal={{ kunci: 'nama', arah: 'asc' }}
               aksi={actions}
               minWidth={980}
-              kartu={akun => <article key={akun.id} className="min-w-0 space-y-3 rounded-xl border p-4"><h2 className="break-words font-semibold">{akun.nama_toko}</h2><p className="text-xs text-muted-foreground">{PLATFORM_LABELS[akun.platform]} · {akun.id_toko_eksternal??'Belum terhubung'}</p>{columns.find(c=>c.kunci==='koneksi')?.sel(akun)}<div className="text-sm"><p className="text-xs text-muted-foreground">Sinkronisasi pesanan terakhir</p><p className="mt-1">{columns.find(c=>c.kunci==='sinkron')?.sel(akun)}</p></div><div className="flex justify-end border-t pt-3">{actions(akun)}</div></article>}
+              kartu={akun => <article key={akun.id} className="min-w-0 space-y-1 rounded-xl border p-3"><div className="flex items-start gap-2"><div className="min-w-0 flex-1"><h2 className="break-words text-sm font-semibold">{akun.nama_toko}</h2><p className="text-xs text-muted-foreground">{PLATFORM_LABELS[akun.platform]} · {akun.id_toko_eksternal??'Belum terhubung'}</p></div>{actions(akun)}</div><div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">{columns.find(c=>c.kunci==='koneksi')?.sel(akun)}<span>Sinkron: {columns.find(c=>c.kunci==='sinkron')?.sel(akun)}</span></div></article>}
             />
 
             {(akunList ?? []).length === 0 && (
@@ -295,7 +292,7 @@ export default function AkunPage() {
         {bisa('otomasi') && <>
           <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><AutoOrderSettings /></TabsContent>
           <TabsContent value="otomasi">
-            <div className="grid gap-3 md:grid-cols-2">{(akunList ?? []).filter(a => a.platform === 'shopee').map(a => <Card key={a.id}><CardHeader><CardTitle>{a.nama_toko}</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=rating`}>Balasan Rating Otomatis</Link></Button><Button variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=boost`}>Boost Otomatis</Link></Button></CardContent></Card>)}</div>
+            <div className="divide-y rounded-xl border bg-card">{(akunList ?? []).filter(a => a.platform === 'shopee').map(a => <div key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{a.nama_toko}</span><div className="flex gap-1"><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=rating`}>Balasan Rating</Link></Button><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=boost`}>Boost</Link></Button></div></div>)}</div>
             {!isLoading && !(akunList ?? []).some(a => a.platform === 'shopee') && <p className="py-8 text-center text-muted-foreground">Belum ada toko Shopee.</p>}
           </TabsContent>
         </>}
