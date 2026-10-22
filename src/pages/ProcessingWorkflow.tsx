@@ -415,17 +415,20 @@ function MappingEditor({
           </section>
           {job.source === 'reseller' && (() => {
             const cat = edit.color !== POL0S ? Number(edit.paint_price || 0) : 0
+            const harga = Number(edit.production_price || 0) * job.qty
             const termasuk = job.route === 'tukang' && edit.color !== POL0S && edit.packing_type === 'biasa' && edit.packing_by !== 'supplier'
-            const kayu = edit.packing_type === 'kayu' || edit.packing_by === 'supplier' ? Number(edit.packing_price || 0) * job.qty : 0
-            const harga = (Number(edit.production_price || 0) + cat) * job.qty
+            const packing = Number(edit.packing_price || 0)
+            const catPacking = (cat + (edit.packing_type === 'biasa' && !termasuk ? packing : 0)) * job.qty
+            const kayu = edit.packing_type === 'kayu' ? packing * job.qty : 0
             return (
               <div className="rounded-xl bg-muted/40 p-4">
                 <p className="mb-2 text-sm font-semibold">Ringkasan tagihan · {job.qty} unit</p>
                 <Amount label="Harga produk" value={String(harga)} />
-                {kayu > 0 && <Amount label={edit.packing_type === 'kayu' ? 'Packing kayu' : 'Packing'} value={String(kayu)} />}
+                <Amount label="Cat + packing" value={String(catPacking)} />
+                {kayu > 0 && <Amount label="Packing kayu" value={String(kayu)} />}
                 <Amount label="Biaya proses" value={job.process_fee} />
                 <div className="mt-2 border-t pt-2">
-                  <Amount label="Total estimasi" value={String(harga + kayu + Number(job.process_fee))} />
+                  <Amount label="Total estimasi" value={String(harga + catPacking + kayu + Number(job.process_fee))} />
                 </div>
                 {termasuk && <p className="mt-2 text-xs text-muted-foreground">Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah.</p>}
               </div>
@@ -496,7 +499,8 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
           <Amount label={job.packing_termasuk_cat ? 'Total packing (termasuk di cat)' : 'Total packing'} value={job.packing_total} />
           {job.source === 'reseller' && (
             <>
-              <Amount label="Harga produk (produksi + cat)" value={job.harga_produk_total || '0'} />
+              <Amount label="Harga produk" value={job.harga_produk_total || '0'} />
+              <Amount label="Cat + packing" value={job.cat_packing_total || '0'} />
               {Number(job.packing_kayu_total || 0) > 0 && <Amount label="Packing kayu" value={job.packing_kayu_total || '0'} />}
               <Amount label="Biaya proses" value={job.process_fee} />
               <Amount label="Tagihan reseller" value={job.reseller_total || '0'} />

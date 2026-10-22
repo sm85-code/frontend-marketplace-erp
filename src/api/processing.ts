@@ -117,7 +117,9 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   process_fee: string
   /** Ordinary packing of a painted wood product for a reseller is inside the paint price: not paid or billed apart. */
   packing_termasuk_cat?: boolean
+  /** Reseller bill in components: the product, paint with ordinary packing, wood packing, and the process fee. */
   harga_produk_total?: string | null
+  cat_packing_total?: string | null
   packing_kayu_total?: string
   reseller_total: string | null
   order_cancelled: boolean
