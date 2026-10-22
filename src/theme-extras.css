@@ -436,3 +436,8 @@ tr[data-anak]:hover > .sel-tetap {
 @media (max-width: 47.99rem) {
   [data-slot="table"] > colgroup > col:first-child { width: 40vw !important; }
 }
+
+/* Logo di layar pemuatan: berdenyut pelan, diam bila pengguna meminta gerak dikurangi. */
+.logo-denyut { animation: logo-denyut 1.8s ease-in-out infinite; }
+@keyframes logo-denyut { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .logo-denyut { animation: none; } }
