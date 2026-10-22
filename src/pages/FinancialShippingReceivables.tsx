@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { Fragment, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
@@ -239,9 +240,7 @@ export default function FinancialShippingReceivables({
       <span>
         {fmtRp(value)}
         {cell[metric.unknown] > 0 && (
-          <span className="mt-1 block text-xs font-normal text-muted-foreground">
-            + {cell[metric.unknown]} belum terpetakan
-          </span>
+          <InfoTip className="ml-1" teks={`+${cell[metric.unknown]} pesanan belum terpetakan`} />
         )}
       </span>
     );
@@ -250,15 +249,11 @@ export default function FinancialShippingReceivables({
     <Card className="mt-4 min-w-0">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Pesanan Dalam Pengiriman</CardTitle>
+          <CardTitle className="flex items-center gap-1.5">Pesanan Dalam Pengiriman <InfoTip teks="Sumber: Menunggu cair Shopee. Barang yang sudah diterima tetap menjadi piutang sampai dana cair." /></CardTitle>
           <Button variant="outline" disabled={fetching} onClick={refresh}>
             {fetching ? "Memuat…" : "Refresh"}
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Sumber: Menunggu cair Shopee. Barang yang sudah diterima tetap menjadi
-          piutang sampai dana cair.
-        </p>
       </CardHeader>
       <CardContent className="min-w-0 space-y-3">
         {q.isLoading && <Spinner label="Memuat piutang pengiriman…" />}
@@ -330,7 +325,7 @@ export default function FinancialShippingReceivables({
                           {index === 0 && (
                             <div className="mb-3">
                               <span className="font-semibold">{shop.nama}</span>
-                              {shop.fast && <span className="mt-1 block text-xs text-muted-foreground">Dana Cepat · mutasi saldo</span>}
+                              {shop.fast && <span className="ml-1 text-xs text-muted-foreground">· Dana Cepat</span>}
                               
                               {shop.loading && (
                                 <span className="mt-1 block text-xs text-muted-foreground">
@@ -342,21 +337,8 @@ export default function FinancialShippingReceivables({
                                   Gagal membaca Shopee · klik Refresh
                                 </span>
                               )}
-                              {shop.partial && (
-                                <span className="mt-1 block text-xs text-muted-foreground">
-                                  Sebagian halaman belum terkonfirmasi
-                                </span>
-                              )}
-                              {shop.unmapped > 0 && (
-                                <span className="mt-1 block text-xs text-muted-foreground">
-                                  {shop.unmapped} pesanan belum memiliki tanggal
-                                  kirim
-                                </span>
-                              )}
-                              {!shop.akun_ditemukan && (
-                                <span className="mt-1 block text-xs text-muted-foreground">
-                                  Akun toko belum ditemukan
-                                </span>
+                              {(shop.partial || shop.unmapped > 0 || !shop.akun_ditemukan) && (
+                                <InfoTip className="ml-1" teks={[shop.partial && 'Sebagian halaman belum terkonfirmasi', shop.unmapped > 0 && `${shop.unmapped} pesanan belum memiliki tanggal kirim`, !shop.akun_ditemukan && 'Akun toko belum ditemukan'].filter(Boolean).join('. ')} />
                               )}
                             </div>
                           )}
@@ -419,9 +401,7 @@ export default function FinancialShippingReceivables({
                                 data.toko.some(
                                   (shop) => shop.partial || shop.unmapped,
                                 )) && (
-                                <span className="mt-1 block whitespace-normal text-xs font-normal text-muted-foreground">
-                                  Subtotal data terbaca
-                                </span>
+                                <InfoTip className="ml-1" teks="Subtotal data terbaca" />
                               )}
                             </span>
                           ) : (
@@ -435,13 +415,13 @@ export default function FinancialShippingReceivables({
                   </TableRow>
                 ))}
                 {[
-                  { label: "Total piutang (untuk neraca)", values: totalPiutang, change: false, reasons: totalReasons },
-                  { label: "Perubahan piutang (untuk pemasukan)", values: changePiutang, change: true, reasons: totalReasons.map((r, i) => r ?? (i > 0 ? totalReasons[i - 1] : null)) },
+                  { label: "Total piutang", values: totalPiutang, change: false, reasons: totalReasons },
+                  { label: "Perubahan piutang", values: changePiutang, change: true, reasons: totalReasons.map((r, i) => r ?? (i > 0 ? totalReasons[i - 1] : null)) },
                   ...(fastShops.length > 0
                     ? [
-                        { label: "Utang Dana Cepat (untuk neraca)", values: utangDanaCepat, change: false },
-                        { label: "Perubahan utang Dana Cepat (untuk pemasukan, dikurangkan)", values: changeUtang, change: true },
-                        { label: "Biaya Dana Cepat 0,5% (beban)", values: biayaDanaCepat, change: false },
+                        { label: "Utang Dana Cepat", values: utangDanaCepat, change: false },
+                        { label: "Perubahan utang Dana Cepat", values: changeUtang, change: true },
+                        { label: "Biaya Dana Cepat 0,5%", values: biayaDanaCepat, change: false },
                         ...danaCepatRincian,
                       ]
                     : []),
@@ -457,7 +437,7 @@ export default function FinancialShippingReceivables({
                         ) : (
                           <span className="text-xs font-normal text-muted-foreground">
                             Belum lengkap
-                            {"reasons" in row && row.reasons?.[i] ? <span className="block whitespace-normal">{row.reasons[i]}</span> : null}
+                            {"reasons" in row && row.reasons?.[i] ? <InfoTip className="ml-1" teks={row.reasons[i]!} /> : null}
                           </span>
                         )}
                       </TableCell>
@@ -468,9 +448,9 @@ export default function FinancialShippingReceivables({
             </Table>
           </div>
           {fastShops.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Rincian Dana Cepat: mutasi dompet dibaca sejak {earliestMovement.find((d) => d) ?? "—"}.
-              {ignoredMovements.length > 0 && ` Mutasi lain yang diabaikan (jenis/tab × jumlah): ${ignoredMovements.map(([label, n]) => `${label} × ${n}`).join(", ")}.`}
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              Rincian Dana Cepat
+              <InfoTip teks={`Mutasi dompet dibaca sejak ${earliestMovement.find((d) => d) ?? "—"}.${ignoredMovements.length > 0 ? ` Mutasi lain yang diabaikan (jenis/tab × jumlah): ${ignoredMovements.map(([label, n]) => `${label} × ${n}`).join(", ")}.` : ""}`} />
             </p>
           )}
           </>

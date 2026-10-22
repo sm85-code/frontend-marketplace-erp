@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import * as commerce from "@/api/commerce";
@@ -51,7 +52,6 @@ async function loadPending(accountId: string, today: string): Promise<PendingOrd
 
 const sum = (orders: PendingOrder[], bucket?: Bucket) =>
   orders.filter((o) => !bucket || o.bucket === bucket).reduce((n, o) => n + (o.amount ?? 0), 0);
-const count = (orders: PendingOrder[], bucket: Bucket) => orders.filter((o) => o.bucket === bucket).length;
 
 function columnsOf(month: string) {
   const first = new Date(`${month}-01T12:00:00Z`);
@@ -110,11 +110,8 @@ export default function FinancialPendingReconciliation({ month }: { month: strin
 
   return (
     <details className="rounded-xl border bg-card p-3 text-sm" onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
-      <summary className="cursor-pointer font-medium">Cocokkan dengan Menunggu Pencairan (cek selisih)</summary>
+      <summary className="cursor-pointer font-medium">Cek selisih dengan Menunggu Pencairan <InfoTip teks={`Hanya membaca, tidak mengubah tabel di atas. Kedua sisi dibaca ulang per hari ini (${today}). Pesanan tanpa tanggal kirim bisa menjelaskan selisih. Selisih = Pesanan Dalam Pengiriman − "Bisa dibandingkan"; positif berarti tabel pengiriman lebih besar.`} /></summary>
       <div className="mt-3 space-y-3">
-        <p className="text-xs text-muted-foreground">
-          Hanya membaca, tidak mengubah tabel di atas. Kedua sisi dibaca ulang per hari ini ({today}) supaya tanggal acuannya sama.
-        </p>
         {!current && <p className="text-xs text-muted-foreground">Hanya tersedia untuk bulan berjalan.</p>}
         {open && current && busy && <Spinner label="Membaca Menunggu Pencairan dan Pesanan Dalam Pengiriman…" />}
         {meta.error && <p role="alert">{getApiError(meta.error)}</p>}
@@ -144,10 +141,10 @@ export default function FinancialPendingReconciliation({ month }: { month: strin
                         {r.shop.nama}
                         {r.error ? <span className="block text-xs text-destructive">{getApiError(r.error)}</span> : null}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders) : null)}<span className="block text-xs text-muted-foreground">{r.pendingReady ? `${r.orders.length} pesanan` : ""}</span></TableCell>
-                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "belum_dikirim") : null)}<span className="block text-xs text-muted-foreground">{r.pendingReady ? `${count(r.orders, "belum_dikirim")} pesanan` : ""}</span></TableCell>
-                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "minggu") : null)}<span className="block text-xs text-muted-foreground">{r.pendingReady ? `${count(r.orders, "minggu")} pesanan` : ""}</span></TableCell>
-                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "tanpa_tanggal") : null)}<span className="block text-xs text-muted-foreground">{r.pendingReady ? `${count(r.orders, "tanpa_tanggal")} pesanan` : ""}</span></TableCell>
+                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders) : null)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "belum_dikirim") : null)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "minggu") : null)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{money(r.pendingReady ? sum(r.orders, "tanpa_tanggal") : null)}</TableCell>
                       <TableCell className="text-right tabular-nums font-medium">{money(cmp)}</TableCell>
                       <TableCell className="text-right tabular-nums">{money(r.reportTotal)}</TableCell>
                       <TableCell className={`text-right tabular-nums font-semibold ${diff != null && Math.abs(diff) >= 1 ? "text-destructive" : ""}`}>{money(diff)}</TableCell>
@@ -168,10 +165,6 @@ export default function FinancialPendingReconciliation({ month }: { month: strin
             </Table>
           </div>
         )}
-        <p className="text-xs text-muted-foreground">
-          *Pesanan tanpa tanggal kirim di rincian: Pesanan Dalam Pengiriman melacak kurirnya untuk menemukan tanggal itu, pencocokan ini tidak, jadi
-          kolom ini bisa menjelaskan selisih. Selisih = Pesanan Dalam Pengiriman − "Bisa dibandingkan"; positif berarti tabel pengiriman lebih besar.
-        </p>
       </div>
     </details>
   );
