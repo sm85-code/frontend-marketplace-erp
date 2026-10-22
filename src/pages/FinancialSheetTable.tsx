@@ -149,7 +149,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
   return (
     <div className="space-y-3 md:hidden">
       <PeriodPicker options={options} pick={pick} onPick={setPick} />
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <Table aria-label={block.title.slice(3)}>
           <TableBody>
             {block.lines.map((line) => {
