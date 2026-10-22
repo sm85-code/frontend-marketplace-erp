@@ -407,34 +407,30 @@ function MappingEditor({
             )}
             <p className="text-xs text-muted-foreground">
               {job.source === 'reseller'
-                ? 'Packing masuk ke tagihan reseller.'
+                ? job.route === 'tukang' && edit.color !== POL0S && edit.packing_type === 'biasa' && edit.packing_by !== 'supplier'
+                  ? 'Packing biasa sudah termasuk di biaya cat; tidak dibayar dan tidak ditagihkan terpisah.'
+                  : 'Packing masuk ke tagihan reseller.'
                 : 'Dicatat sebagai biaya packing internal.'}
             </p>
           </section>
-          {job.source === 'reseller' && (
-            <div className="rounded-xl bg-muted/40 p-4">
-              <p className="mb-2 text-sm font-semibold">Ringkasan tagihan · {job.qty} unit</p>
-              <Amount label="Produksi" value={String(Number(edit.production_price || 0) * job.qty)} />
-              <Amount
-                label="Pengecatan"
-                value={String((edit.color !== POL0S ? Number(edit.paint_price || 0) : 0) * job.qty)}
-              />
-              <Amount label="Packing" value={String(Number(edit.packing_price || 0) * job.qty)} />
-              <Amount label="Proses" value={job.process_fee} />
-              <div className="mt-2 border-t pt-2">
-                <Amount
-                  label="Total estimasi"
-                  value={String(
-                    (Number(edit.production_price || 0) +
-                      (edit.color !== POL0S ? Number(edit.paint_price || 0) : 0) +
-                      Number(edit.packing_price || 0)) *
-                      job.qty +
-                      Number(job.process_fee),
-                  )}
-                />
+          {job.source === 'reseller' && (() => {
+            const cat = edit.color !== POL0S ? Number(edit.paint_price || 0) : 0
+            const termasuk = job.route === 'tukang' && edit.color !== POL0S && edit.packing_type === 'biasa' && edit.packing_by !== 'supplier'
+            const kayu = edit.packing_type === 'kayu' || edit.packing_by === 'supplier' ? Number(edit.packing_price || 0) * job.qty : 0
+            const harga = (Number(edit.production_price || 0) + cat) * job.qty
+            return (
+              <div className="rounded-xl bg-muted/40 p-4">
+                <p className="mb-2 text-sm font-semibold">Ringkasan tagihan · {job.qty} unit</p>
+                <Amount label="Harga produk" value={String(harga)} />
+                {kayu > 0 && <Amount label={edit.packing_type === 'kayu' ? 'Packing kayu' : 'Packing'} value={String(kayu)} />}
+                <Amount label="Biaya proses" value={job.process_fee} />
+                <div className="mt-2 border-t pt-2">
+                  <Amount label="Total estimasi" value={String(harga + kayu + Number(job.process_fee))} />
+                </div>
+                {termasuk && <p className="mt-2 text-xs text-muted-foreground">Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah.</p>}
               </div>
-            </div>
-          )}
+            )
+          })()}
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}
@@ -497,9 +493,11 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
         <div>
           <Amount label="Total produksi / beli" value={job.production_total} />
           <Amount label="Total pengecatan" value={job.paint_total} />
-          <Amount label="Total packing" value={job.packing_total} />
+          <Amount label={job.packing_termasuk_cat ? 'Total packing (termasuk di cat)' : 'Total packing'} value={job.packing_total} />
           {job.source === 'reseller' && (
             <>
+              <Amount label="Harga produk (produksi + cat)" value={job.harga_produk_total || '0'} />
+              {Number(job.packing_kayu_total || 0) > 0 && <Amount label="Packing kayu" value={job.packing_kayu_total || '0'} />}
               <Amount label="Biaya proses" value={job.process_fee} />
               <Amount label="Tagihan reseller" value={job.reseller_total || '0'} />
             </>
