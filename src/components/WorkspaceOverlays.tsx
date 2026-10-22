@@ -3,6 +3,7 @@ import { ArrowLeft, Bot, Maximize2, X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import Spinner from './Spinner'
+import AiUsageBadge from './AiUsageBadge'
 import { Button } from './ui/button'
 import { useNamaMenu } from '@/lib/namaMenu'
 const AssistantPage=lazy(()=>import('@/pages/AssistantPage'))
@@ -45,7 +46,7 @@ function FloatingAssistant() {
   return mounted ? <section hidden={!visible} role="dialog" aria-label="Panel AI asisten" onKeyDown={e=>{if(e.key==='Escape')tutup()}} className={`fixed inset-0 z-50 ${visible?'flex':'hidden'} flex-col overflow-hidden bg-background shadow-xl sm:inset-x-2 sm:top-20 sm:bottom-24 sm:rounded-2xl sm:border sm:left-auto sm:w-[min(36rem,calc(100vw-1rem))] lg:top-4 lg:right-4 lg:bottom-4`}>
     <header className="flex shrink-0 items-center gap-1 border-b bg-card px-2 pt-[max(.5rem,env(safe-area-inset-top))] pb-2">
       <Button variant="ghost" size="icon" className="size-11 sm:hidden" aria-label="Kembali" onClick={tutup}><ArrowLeft className="size-5"/></Button>
-      <span className="flex flex-1 items-center gap-2 px-2 font-semibold"><Bot className="size-4"/>{menu('/asisten')}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2 px-2 font-semibold"><Bot className="size-4 shrink-0"/><span className="truncate">{menu('/asisten')}</span></span><AiUsageBadge/>
       <Button variant="ghost" size="icon" asChild aria-label="Buka layar penuh" title="Buka layar penuh"><Link to="/asisten" onClick={()=>setOpen(false)}><Maximize2 className="size-4"/></Link></Button>
       <Button variant="ghost" size="icon" className="size-11" aria-label="Tutup AI asisten" onClick={tutup}><X className="size-5"/></Button>
     </header>
