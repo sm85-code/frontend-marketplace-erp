@@ -77,8 +77,10 @@ export default function TabelData<T>({
   const bisaCentang = (item: T) => !!pilihan && (pilihan.bisaDipilih?.(item) ?? true)
   // Frozen columns (checkbox + the identity column) need an opaque background so scrolled cells slide under them.
   const kiriTetap = pilihan ? LEBAR_CENTANG : '0px'
-  const gayaTetap = (k: KolomTabel<T>) => (k.tetap ? { position: 'sticky' as const, left: kiriTetap, zIndex: 1 } : undefined)
-  const kelasTetap = (k: KolomTabel<T>) => (k.tetap ? 'sel-tetap shadow-[1px_0_0_var(--border)]' : '')
+  // Only the first column can be frozen at the left edge; a frozen column further right would cover the columns before it.
+  const beku = (k: KolomTabel<T>) => !!k.tetap && kolom[0]?.kunci === k.kunci
+  const gayaTetap = (k: KolomTabel<T>) => (beku(k) ? { position: 'sticky' as const, left: kiriTetap, zIndex: 1 } : undefined)
+  const kelasTetap = (k: KolomTabel<T>) => (beku(k) ? 'sel-tetap shadow-[1px_0_0_var(--border)]' : '')
 
   return (
     <>
