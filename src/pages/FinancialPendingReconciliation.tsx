@@ -1,3 +1,4 @@
+import { hariIniWib } from '@/lib/tanggal'
 import InfoTip from '@/components/InfoTip'
 import { useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
  * lines both sides up as of today, one row per shop.
  */
 
-const wibToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+const wibToday = hariIniWib;
 const isSundayWib = (seconds: number) =>
   new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Jakarta", weekday: "short" }).format(new Date(seconds * 1000)) === "Sun";
 const NOT_SHIPPED = new Set(["UNPAID", "READY_TO_SHIP", "PROCESSED"]);

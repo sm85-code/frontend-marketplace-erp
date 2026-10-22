@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import { qk } from '@/api/keys'
 import {
   BarFilter,
@@ -195,10 +195,10 @@ export default function PerformaShopee() {
                     <TableRow>
                       <TableCell className="font-semibold">Total</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(total.expense)}</TableCell>
-                      <TableCell className="text-right font-semibold">{total.impression.toLocaleString('id-ID')}</TableCell>
-                      <TableCell className="text-right font-semibold">{total.clicks.toLocaleString('id-ID')}</TableCell>
+                      <TableCell className="text-right font-semibold">{fmtAngka(total.impression)}</TableCell>
+                      <TableCell className="text-right font-semibold">{fmtAngka(total.clicks)}</TableCell>
                       <TableCell className="text-right font-semibold">{persen(total.ctr)}</TableCell>
-                      <TableCell className="text-right font-semibold">{total.direct_order.toLocaleString('id-ID')}</TableCell>
+                      <TableCell className="text-right font-semibold">{fmtAngka(total.direct_order)}</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(total.direct_gmv)}</TableCell>
                       <TableCell className="text-right font-semibold">{kali(total.roas_langsung)}</TableCell>
                       <TableCell className="text-right font-semibold whitespace-nowrap">{fmtRp(total.saldo)}</TableCell>

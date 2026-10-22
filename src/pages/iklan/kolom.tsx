@@ -1,8 +1,8 @@
-import { fmtDate, fmtRp } from '@/api/client'
+import { fmtDate, fmtRp, fmtAngka } from '@/api/client'
 import type { IklanHarianToko, IklanRingkasan } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 
-const angka = (v: number) => v.toLocaleString('id-ID')
+const angka = (v: number) => fmtAngka(v)
 /** 0.0512 -> "5,12%" ; null (no impressions) -> "—". */
 export const persen = (v: string | null) => (v == null ? '—' : `${(Number(v) * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}%`)
 /** 4.25 -> "4,25×" ; null (no spend) -> "—". */

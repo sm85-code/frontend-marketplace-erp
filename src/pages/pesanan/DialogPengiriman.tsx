@@ -1,3 +1,4 @@
+import { fmtDate } from '@/api/client'
 import PilihNative from '@/components/PilihNative'
 import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
@@ -106,7 +107,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
               <PilihNative className={selectClass} value={s.pickup_time_id ?? ''} onChange={(e) => update(p.id, { pickup_time_id: e.target.value })}>
                 <option value="">Pilih jadwal</option>
                 {a?.jadwal.map((t) => <option key={t.pickup_time_id} value={t.pickup_time_id}>
-                  {t.tanggal ? `${new Date(t.tanggal * 1000).toLocaleDateString('id-ID')} — ` : ''}{t.label}{t.rekomendasi ? ' (rekomendasi)' : ''}
+                  {t.tanggal ? `${fmtDate(new Date(t.tanggal * 1000).toISOString())} — ` : ''}{t.label}{t.rekomendasi ? ' (rekomendasi)' : ''}
                 </option>)}
               </PilihNative>
             </label>}

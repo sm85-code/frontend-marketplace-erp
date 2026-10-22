@@ -1,8 +1,9 @@
+import { fmtAngka } from '@/api/client'
 import { useQuery } from '@tanstack/react-query'
 import { getProcessingRekap } from '@/api/processing'
 import TabelLaporan from '@/components/TabelLaporan'
 
-const angka = (n: number) => n.toLocaleString('id-ID')
+const angka = (n: number) => fmtAngka(n)
 
 /** Items mapped vs not yet mapped per shop, in the report-table pattern; folded by default so the work list keeps the space. */
 export default function RekapPemetaan() {

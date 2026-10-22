@@ -57,6 +57,13 @@ export function fmtMoney(n: string | number | null | undefined, currency?: strin
   return `${currency} ${number}`
 }
 
+/** Plain number in Indonesian format (1.234,5); '—' when empty. The one helper for counts and amounts without "Rp". */
+export function fmtAngka(n: string | number | null | undefined, desimal = 2): string {
+  if (n == null || n === '') return '—'
+  const value = Number(n)
+  return Number.isFinite(value) ? value.toLocaleString('id-ID', { maximumFractionDigits: desimal }) : '—'
+}
+
 export function fmtDate(s: string | null | undefined): string {
   if (!s) return '-'
   try {

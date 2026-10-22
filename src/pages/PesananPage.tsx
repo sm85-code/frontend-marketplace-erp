@@ -1,3 +1,4 @@
+import { fmtTime } from '@/api/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { tahapDariTautan } from '@/lib/tautanPesanan'
@@ -266,7 +267,7 @@ export default function PesananPage() {
     if (sinkron.isError) return 'Sinkron Shopee gagal.'
     if (!sinkronData?.aktif) return 'Sinkron otomatis Shopee belum aktif di server.'
     const gagal = sinkronData.toko.filter((t) => t.hasil === 'gagal')
-    const jam = new Date(sinkron.dataUpdatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    const jam = fmtTime(new Date(sinkron.dataUpdatedAt).toISOString())
     return gagal.length
       ? `Sinkron ${jam} — ${gagal.length} toko gagal: ${gagal[0].nama_toko} (${gagal[0].pesan ?? 'error'})`
       : `Tersinkron dari Shopee pukul ${jam}`

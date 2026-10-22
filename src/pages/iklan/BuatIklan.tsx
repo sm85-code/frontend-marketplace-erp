@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -155,7 +155,7 @@ export default function BuatIklan({ akunId, onTutup }: { akunId: string; onTutup
                     <li key={w.kata} className="flex flex-wrap items-center gap-2 p-2">
                       <span className="min-w-[8rem] flex-1 font-medium">{w.kata}</span>
                       <span className="teks-kecil text-muted-foreground">
-                        cari {w.volume?.toLocaleString('id-ID') ?? '—'} · skor {w.skor ?? '—'} · bid {w.bid != null ? fmtRp(w.bid) : '—'}
+                        cari {(w.volume == null ? undefined : fmtAngka(w.volume)) ?? '—'} · skor {w.skor ?? '—'} · bid {w.bid != null ? fmtRp(w.bid) : '—'}
                       </span>
                       <Button size="sm" variant="outline" disabled={kata.some((x) => x.kata === w.kata)} onClick={() => tambah({ kata: w.kata, bid: w.bid ?? 0, tipe: 'broad' })}>
                         Tambah

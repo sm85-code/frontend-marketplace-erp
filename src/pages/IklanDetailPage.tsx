@@ -7,7 +7,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtDate, fmtRp, getApiError } from '@/api/client'
+import { fmtDate, fmtRp, getApiError, fmtAngka } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { IklanMetrikHarian, StatusIklan } from '@/api/types'
 import Spinner from '@/components/Spinner'
@@ -33,8 +33,8 @@ function isoDaysAgo(days: number) {
 
 const kolomMetrik: KolomTabel<IklanMetrikHarian>[] = [
   { kunci: 'tanggal', judul: 'Tanggal', kelas: 'whitespace-nowrap', sel: (m) => fmtDate(m.tanggal), nilai: (m) => new Date(m.tanggal) },
-  { kunci: 'impression', judul: 'Impression', rata: 'kanan', sel: (m) => m.impression.toLocaleString('id-ID'), nilai: (m) => m.impression },
-  { kunci: 'klik', judul: 'Klik', rata: 'kanan', sel: (m) => m.klik.toLocaleString('id-ID'), nilai: (m) => m.klik },
+  { kunci: 'impression', judul: 'Impression', rata: 'kanan', sel: (m) => fmtAngka(m.impression), nilai: (m) => m.impression },
+  { kunci: 'klik', judul: 'Klik', rata: 'kanan', sel: (m) => fmtAngka(m.klik), nilai: (m) => m.klik },
   { kunci: 'biaya', judul: 'Biaya', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (m) => fmtRp(m.biaya), nilai: (m) => Number(m.biaya) },
 ]
 

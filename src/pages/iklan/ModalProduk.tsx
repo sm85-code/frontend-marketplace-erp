@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import type { KampanyeProduk } from '@/api/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,7 +42,7 @@ export default function ModalProduk({ akunId, produk: p, biayaShopee }: { akunId
           <p className="font-medium">{p.nama ?? `Produk ${p.item_id} (belum ada di Katalog)`}</p>
           <p className="teks-kecil text-muted-foreground">
             {harga ? `Harga ${fmtRp(p.harga_min)}${p.harga_max && p.harga_max !== p.harga_min ? ` – ${fmtRp(p.harga_max)}` : ''}` : 'Harga belum diketahui'}
-            {p.stok != null ? ` · stok ${p.stok.toLocaleString('id-ID')}` : ''}
+            {p.stok != null ? ` · stok ${fmtAngka(p.stok)}` : ''}
           </p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function ModalProduk({ akunId, produk: p, biayaShopee }: { akunId
       {mode === 'rp' && !harga && nilai !== '' && <p className="teks-kecil text-muted-foreground">Harga produk belum diketahui, pakai satuan % atau tarik Katalog dulu.</p>}
       {hasil && (
         <p className="teks-kecil text-muted-foreground" aria-live="polite">
-          Margin kotor sekitar {hasil.margin.toLocaleString('id-ID')}%
+          Margin kotor sekitar {fmtAngka(hasil.margin)}%
           {hasil.impas ? `, iklan impas di ROAS ${kali(String(hasil.impas))}` : ', iklan tidak akan untung berapa pun ROAS-nya'}
           {biayaShopee == null ? ' (biaya Shopee belum dihitung: belum ada data settlement)' : ` (sudah termasuk biaya Shopee ${(biayaShopee * 100).toFixed(1)}%)`}.
         </p>

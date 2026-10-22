@@ -1,3 +1,4 @@
+import { hariIniWib } from '@/lib/tanggal'
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import PilihNative from '@/components/PilihNative'
 import { useState } from 'react'
@@ -14,7 +15,7 @@ import MoneyInput from '@/components/MoneyInput'
 import QueryError from '@/components/QueryError'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 const field = 'w-full rounded-lg border bg-background p-2'
-const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+const today = hariIniWib
 /** WIB date `n` days ago. Reports default to the last 7 complete days: Shopee rejects start = end and today is partial. */
 export const hariLalu = (n: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() - n * 86400000))
 const actions: Record<api.GmvAction, string> = { change_budget: 'Ubah anggaran', change_duration: 'Ubah jadwal', change_roas_target: 'Ubah target ROAS', pause: 'Jeda', resume: 'Lanjutkan', start: 'Mulai' }
