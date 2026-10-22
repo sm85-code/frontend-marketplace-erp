@@ -147,9 +147,9 @@ function Baris({ t, sekarang, bisaUbah }: PropsBaris) {
 function Kartu({ t, sekarang, bisaUbah }: PropsBaris) {
   const k = useTeks(t, sekarang)
   return (
-    <li className="space-y-2 rounded-lg border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{t.judul ?? t.bawaan}</span>
+    <li className="space-y-1 rounded-lg border p-2">
+      <div className="flex min-h-6 items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">{t.judul ?? t.bawaan}</span>
         {bisaUbah && k.diubah && <Button type="button" size="sm" variant="outline" aria-label={`Kembalikan ${t.judul ?? t.bawaan}`} onClick={k.kembalikan}>Kembalikan</Button>}
       </div>
       <Isian t={t} k={k} bisaUbah={bisaUbah} />
