@@ -1,7 +1,6 @@
 import { DropdownMenu } from 'radix-ui'
 import Spinner from '@/components/Spinner'
 import { useTokoAktif } from '@/lib/tokoAktif'
-import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
 import { useEffect, useRef, useState } from 'react'
@@ -330,14 +329,8 @@ export default function ChatPage() {
     setParams({})
   }
   return (
-    <div className={`space-y-3 ${selected ? 'max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col' : ''}`} data-chat-terbuka={selected ? '' : undefined}>
-      <div className={selected ? "hidden md:block" : ""}><BarHalaman judul="Chat">
-        {shop && (
-          <Button variant="secondary" disabled={syncChat.isPending || upload.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
-            {syncChat.isPending ? 'Menyinkronkan Chat…' : 'Sinkronisasi seluruh toko'}
-          </Button>
-        )}
-      </BarHalaman></div>
+    <div className={`space-y-2 md:space-y-3 ${selected ? 'max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col' : ''}`} data-chat-terbuka={selected ? '' : undefined}>
+      <div className={selected ? "hidden md:block" : ""}><BarHalaman judul="Chat" /></div>
       {syncedAt && (
         <p role="status" className="text-xs text-muted-foreground">
           Pemeriksaan data terbaru selesai {syncedAt} WIB. Kendala tiap toko ditampilkan di bawah.
@@ -368,45 +361,22 @@ export default function ChatPage() {
           <RefreshCw className={`size-4 ${syncChat.isPending ? 'animate-spin' : ''}`}/><span className="hidden sm:inline">{shop ? 'Sinkronisasi toko' : 'Sinkronisasi semua'}</span><span className="sr-only sm:hidden">{shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}</span>
         </Button>
 
-        <div className="col-span-2 flex flex-wrap gap-x-4 gap-y-2 text-sm"><label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={unread}
-            onChange={(e) => {
-              setUnread(e.target.checked)
-              setCursor('')
-            }}
+        <div className="col-span-2 flex items-center gap-2">
+          <Input
+            aria-label="Cari pembeli"
+            placeholder="Cari pembeli"
+            className="min-w-0 flex-1"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-          Belum dibaca
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={unreplied}
-            onChange={(e) => {
-              setUnreplied(e.target.checked)
-              setCursor('')
-            }}
-          />
-          Belum dibalas
-        </label>
-        </div><Input
-          aria-label="Cari pembeli"
-          placeholder="Cari pembeli dalam data termuat"
-          className="col-span-2 w-full"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+          <Button type="button" size="sm" variant={unread ? 'default' : 'outline'} aria-pressed={unread} className="shrink-0" onClick={() => { setUnread(!unread); setCursor('') }}>Belum dibaca</Button>
+          <Button type="button" size="sm" variant={unreplied ? 'default' : 'outline'} aria-pressed={unreplied} className="shrink-0" onClick={() => { setUnreplied(!unreplied); setCursor('') }}>Belum dibalas</Button>
+        </div>
       </div>
       {(search||unreplied)&&<div className="flex flex-wrap items-center gap-2"><Button variant="outline" disabled={searchHistory.isPending} onClick={()=>searchHistory.mutate()}>{searchHistory.isPending?'Menelusuri…':'Cari dalam riwayat toko'}</Button><small className="text-muted-foreground">Maks. 10 halaman per toko setiap penelusuran.</small></div>}
       {historySearch?.scope===searchScope&&historySearch.more&&<p role="status" className="text-xs">Hasil belum mencakup semua riwayat. Pilih toko dan buka percakapan lebih lama untuk melanjutkan.</p>}
       {historySearch?.scope===searchScope&&historySearch.errors.map(error=><p key={error} role="alert" className="text-sm text-destructive">{error}</p>)}
-      <div className={selected ? 'hidden md:block' : ''}><Bantuan judul="Bantuan chat"><p>Pilih percakapan untuk membalas atau melampirkan produk/pesanan dari toko tersebut. Daftar diurutkan dari pesan terbaru. Kota pembeli berasal dari pesanan tersinkron; konten yang tidak disertakan Shopee tetap ditandai.</p></Bantuan></div>
-      {unreplied && (
-        <p className="text-xs text-muted-foreground">
-          Belum dibalas: pesan terakhir berasal dari pembeli pada halaman yang dimuat. Gunakan Berikutnya untuk menelusuri riwayat.
-        </p>
-      )}
+            
       {orderStart.isFetching && <Spinner column label="Menyiapkan percakapan pembeli…" />}
       {linkedChat.isFetching && <Spinner column/>}
       {linkedChat.error && <QueryError error={linkedChat.error} retry={linkedChat.refetch}/>}
@@ -465,14 +435,16 @@ export default function ChatPage() {
             </Button>
           )}
         </section>
-        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card p-3 ${!selected ? 'hidden md:block' : 'max-md:flex max-md:min-h-0 max-md:flex-col'}`} aria-label="Percakapan">
+        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card p-3 ${!selected ? 'hidden md:block' : 'max-md:flex max-md:min-h-0 max-md:flex-col max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:p-0'}`} aria-label="Percakapan">
           {!selected ? (
             <p>Pilih percakapan untuk membaca dan membalas.</p>
           ) : (
             <>
-              <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
+              <div className="mb-1 flex shrink-0 items-center gap-2 md:mb-3">
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
                   disabled={upload.isPending}
                   onClick={() => {
                     setSelected(null)
@@ -515,7 +487,7 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <Spinner column label="Memuat pesan…" />}
-              <div ref={daftarPesan} className="my-2 min-h-0 flex-1 space-y-3 overflow-y-auto md:min-h-[40dvh] md:max-h-[64dvh] md:flex-none rounded-xl bg-muted/40 p-3" aria-live="polite">
+              <div ref={daftarPesan} className="my-1 min-h-0 flex-1 space-y-3 overflow-y-auto md:h-[calc(100dvh-15rem)] md:min-h-[24rem] md:flex-none rounded-xl bg-muted/40 p-3" aria-live="polite">
                 {messages.filter(m => !chatClosedNotice(m.content, m.message_type)).map((m) => (
                   <div
                     key={m.message_id}
@@ -554,7 +526,7 @@ export default function ChatPage() {
                 ))}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
-              <section aria-label="Form balas chat" className="mt-2 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2">
+              <section aria-label="Form balas chat" className="mt-1 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2">
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               {upload.isPending && <p role="status" className="px-1 text-xs">Mengunggah foto… Pesan belum dikirim.</p>}
