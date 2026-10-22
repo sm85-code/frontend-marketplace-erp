@@ -1,4 +1,6 @@
-import { Menu } from 'lucide-react'
+import { Menu, RotateCcw } from 'lucide-react'
+import InfoTip from '@/components/InfoTip'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
@@ -13,7 +15,7 @@ import { denganLabel, filterNav, idNavBawah, itemBawahDipilih, NAV, SLOT_BAWAH }
 
 const akses = (r: RoleDef): AksesSaya => ({ role: r.id, nama: r.nama, akses_toko: r.akses_toko, halaman: r.halaman })
 
-const selectCls = 'h-10 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
+const KOSONG = '__kosong'
 
 /** The bottom bar of one role: which of its menus take the slots of the phone bar, in what order. */
 function KartuRole({ role, pilihan, bisaUbah }: { role: RoleDef; pilihan: string | undefined; bisaUbah: boolean }) {
@@ -32,28 +34,31 @@ function KartuRole({ role, pilihan, bisaUbah }: { role: RoleDef; pilihan: string
   const nama = t(`role:${role.id}`, role.nama)
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 p-3 pb-2 sm:p-4 sm:pb-2">
         <CardTitle className="text-base">{nama}</CardTitle>
         {bisaUbah && pilihan !== undefined && (
-          <Button type="button" size="sm" variant="outline" onClick={() => simpan([])}>
-            Kembalikan ke bawaan
+          <Button type="button" size="icon" variant="outline" className="h-8 w-8" aria-label={`Kembalikan menu bawah ${nama} ke bawaan`} title="Kembalikan ke bawaan" onClick={() => simpan([])}>
+            <RotateCcw className="size-4" aria-hidden="true" />
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="space-y-2 p-3 pt-0 sm:p-4 sm:pt-0">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {Array.from({ length: SLOT_BAWAH }, (_, i) => {
             const dipakai = new Set(sekarang.map((n) => n.to))
             const isi = sekarang[i]?.to ?? ''
             return (
               <div key={i} className="space-y-1">
-                <label htmlFor={`bawah-${role.id}-${i}`} className="text-sm font-medium">Posisi {i + 1}</label>
-                <select id={`bawah-${role.id}-${i}`} className={selectCls} value={isi} disabled={!bisaUbah || ubah.isPending} onChange={(e) => ganti(i, e.target.value)}>
-                  <option value="">— kosong —</option>
-                  {menu.map((n) => (
-                    <option key={n.to} value={n.to} disabled={dipakai.has(n.to) && n.to !== isi}>{n.label}</option>
-                  ))}
-                </select>
+                <label htmlFor={`bawah-${role.id}-${i}`} className="text-xs text-muted-foreground">Posisi {i + 1}</label>
+                <Select value={isi || KOSONG} disabled={!bisaUbah || ubah.isPending} onValueChange={(v) => ganti(i, v === KOSONG ? '' : v)}>
+                  <SelectTrigger id={`bawah-${role.id}-${i}`} className="h-9 w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={KOSONG}>— kosong —</SelectItem>
+                    {menu.map((n) => (
+                      <SelectItem key={n.to} value={n.to} disabled={dipakai.has(n.to) && n.to !== isi}>{n.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )
           })}
@@ -84,8 +89,8 @@ export default function KelolaMenuBawah({ data, bisaUbah }: { data: Record<strin
   if (roles.isLoading) return <Spinner label="Memuat role…" />
   if (roles.error) return <QueryError error={roles.error} retry={roles.refetch} />
   return (
-    <div className="space-y-4">
-      <p className="teks-kecil text-muted-foreground">Pilih sampai {SLOT_BAWAH} menu yang tampil di bilah bawah layar HP untuk tiap role. Menu lain ada di tombol Lainnya. Hanya menu yang boleh dibuka role itu yang bisa dipilih.</p>
+    <div className="space-y-3">
+      <InfoTip teks={`Pilih sampai ${SLOT_BAWAH} menu yang tampil di bilah bawah layar HP untuk tiap role. Menu lain ada di tombol Lainnya. Hanya menu yang boleh dibuka role itu yang bisa dipilih.`} />
       {roles.data?.roles.map((r) => <KartuRole key={r.id} role={r} pilihan={data?.[idNavBawah(r.id)]} bisaUbah={bisaUbah} />)}
     </div>
   )
