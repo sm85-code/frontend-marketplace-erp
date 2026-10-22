@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { TabelLokal, type KolomTabel } from '@/components/daftar'
 import { Field } from './processingShared'
+import { useNamaMenu } from '@/lib/namaMenu'
 
 export default function ProcessingParties({
   kind,
@@ -24,7 +25,8 @@ export default function ProcessingParties({
   kind: 'tukang' | 'supplier'
   items: ProcessingParty[]
 }) {
-  const title = kind === 'tukang' ? 'Tukang Kayu' : 'Supplier'
+  const menu = useNamaMenu()
+  const title = menu(kind === 'tukang' ? '/processing/tukang-kayu' : '/processing/supplier')
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [edit, setEdit] = useState<ProcessingParty | null>(null)

@@ -22,9 +22,10 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/lib/auth'
+import { namaMenuBawaan, tabKategori, useNamaTab } from '@/lib/namaMenu'
 
-const NAMA_ARAH: Record<ArahKategori, string> = { masuk: 'Pemasukan', keluar: 'Pengeluaran' }
-const NAMA_HALAMAN = { umum: 'Operasional Umum', packing: 'Operasional Packing' } as const
+const TABEL_ARAH: Record<ArahKategori, string> = { masuk: 'pemasukan', keluar: 'pengeluaran' }
+const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing') } as const
 const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing' } as const
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
@@ -159,6 +160,7 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
 
 function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKategori; kelompok: Kelompok[]; buka: boolean; onClose: () => void; onSaved: () => void }) {
   const halaman = useNamaHalaman()
+  const tab = useNamaTab()
   const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
   useEffect(() => {
     if (buka) setIsi({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
@@ -183,7 +185,7 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
           }}
         >
           <DialogHeader>
-            <DialogTitle>Tambah kategori {NAMA_ARAH[arah].toLowerCase()}</DialogTitle>
+            <DialogTitle>Tambah kategori {tab(TABEL_ARAH[arah]).toLowerCase()}</DialogTitle>
             <DialogDescription>Pilih jalur penempatannya: kelompok di laporan{arah === 'keluar' ? ' dan halaman operasional yang menawarkannya' : ''}.</DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
@@ -217,6 +219,7 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
 
 /** Names of the groups of the Pemasukan / Pengeluaran tabs: change them or add one. Categories point at the id, so nothing breaks. */
 function PanelKelompok({ arah, kelompok, bisaTulis, onChanged }: { arah: ArahKategori; kelompok: Kelompok[]; bisaTulis: boolean; onChanged: () => void }) {
+  const tab = useNamaTab()
   const [baru, setBaru] = useState('')
   const tambah = useMutation({
     mutationFn: () => buatKelompok(arah, baru.trim()),
@@ -229,8 +232,7 @@ function PanelKelompok({ arah, kelompok, bisaTulis, onChanged }: { arah: ArahKat
   })
   return (
     <section aria-label="Kelompok laporan" className="space-y-2">
-      <h2 className="text-sm font-semibold">Kelompok di laporan</h2>
-      <p className="teks-kecil text-muted-foreground">Judul kelompok di tab {NAMA_ARAH[arah]} dan pilihan penempatan di atas. Ganti nama kapan saja; kategori yang sudah ditempatkan tetap di kelompoknya.</p>
+      <h2 className="flex items-center gap-1 text-sm font-semibold">Kelompok di laporan <InfoTip teks={`Judul kelompok di tab ${tab(TABEL_ARAH[arah])} dan pilihan penempatan di atas. Ganti nama kapan saja; kategori yang sudah ditempatkan tetap di kelompoknya.`} /></h2>
       <ul className="grid gap-2 sm:grid-cols-2">
         {kelompok.map((g) => <ItemKelompok key={g.id} g={g} bisaTulis={bisaTulis} onChanged={onChanged} />)}
       </ul>
@@ -270,12 +272,6 @@ function ItemKelompok({ g, bisaTulis, onChanged }: { g: Kelompok; bisaTulis: boo
 }
 
 type Tab = 'masuk' | 'keluar' | 'umum' | 'packing'
-const TAB: { id: Tab; label: string }[] = [
-  { id: 'masuk', label: 'Arus Kas · Pemasukan' },
-  { id: 'keluar', label: 'Arus Kas · Pengeluaran' },
-  { id: 'umum', label: 'Operasional Umum' },
-  { id: 'packing', label: 'Operasional Packing' },
-]
 const arahTab = (t: Tab): ArahKategori => (t === 'masuk' ? 'masuk' : 'keluar')
 
 /** Kategori Transaksi: rename, add, hide and reorder the categories of money in and out. Ids never change, so nothing already filed breaks. */
@@ -287,6 +283,7 @@ export default function KategoriTransaksiPage() {
   const [baru, setBaru] = useState(false)
   const [atur, setAtur] = useState<KategoriTransaksi | null>(null)
   const arah = arahTab(tab)
+  const TAB = tabKategori(useLabel())
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['kategori-transaksi'], queryFn: daftarKategori })
   const segarkan = () => qc.invalidateQueries({ queryKey: ['kategori-transaksi'] })
   const ubah = useMutation({
@@ -309,7 +306,7 @@ export default function KategoriTransaksiPage() {
   }
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
-      <BarHalaman judul="Kategori Transaksi" deskripsi="Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat tetap di kategori yang sama dan ikut memakai nama baru.">
+      <BarHalaman judul="Kategori Transaksi" deskripsi="Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.">
         {bisaTulis && (
           <Button onClick={() => setBaru(true)} disabled={!data}>
             <Plus /> Tambah kategori
@@ -317,7 +314,7 @@ export default function KategoriTransaksiPage() {
         )}
       </BarHalaman>
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="section-tabs">
+        <TabsList className="section-tabs max-md:flex max-md:w-full max-md:justify-start max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
           {TAB.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}
         </TabsList>
       </Tabs>
@@ -358,7 +355,6 @@ export default function KategoriTransaksiPage() {
             </TableShell>
             </div>
             <PanelKelompok arah={arah} kelompok={kelompok} bisaTulis={bisaTulis} onChanged={segarkan} />
-            <InfoTip teks={"Mengubah nama hanya mengganti tulisan: di pilihan kategori Arus Kas, tab Pemasukan/Pengeluaran, dan halaman Operasional. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru."} />
           </CardContent>
         </Card>
       )}
