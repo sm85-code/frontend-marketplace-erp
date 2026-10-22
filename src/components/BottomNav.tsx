@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Menu } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { NavItem } from '@/config/nav'
@@ -22,9 +23,24 @@ export default function BottomNav({
 }) {
   const location = useLocation()
   const primaryPaths = items.map((i) => i.to)
+  const bar = useRef<HTMLElement>(null)
+  // Pages that fill the screen (an open chat) need the real height of this bar, safe area included.
+  useEffect(() => {
+    const el = bar.current
+    if (!el) return
+    const tulis = () => document.documentElement.style.setProperty('--tinggi-bawah', `${el.offsetHeight}px`)
+    tulis()
+    const pengamat = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(tulis)
+    pengamat?.observe(el)
+    return () => {
+      pengamat?.disconnect()
+      document.documentElement.style.removeProperty('--tinggi-bawah')
+    }
+  }, [])
 
   return (
     <nav
+      ref={bar}
       data-testid="bottom-nav"
       className="bottom-nav-shell fixed inset-x-0 bottom-0 z-30 flex items-stretch lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

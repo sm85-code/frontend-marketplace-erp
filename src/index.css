@@ -671,6 +671,12 @@ h4,
 
 /* Shared ERP rhythm without changing table layouts or theme preferences. */
 .erp-content { overflow-wrap: anywhere; }
+/* An open chat on a phone fills the space between the top bar and the bottom menu: the list of messages takes what is left,
+   the reply box stays under it, and the page itself does not scroll. --tinggi-bawah is the real height of the bottom menu. */
+@media (max-width: 767.98px) {
+  main:has([data-chat-terbuka]) { height: 100dvh; display: flex; flex-direction: column; padding-bottom: var(--tinggi-bawah, 6rem); }
+  main:has([data-chat-terbuka]) > .erp-content { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+}
 .erp-content .bar-halaman { margin-bottom: 1rem; align-items: flex-start; }
 .erp-content .bar-halaman h1, .erp-content .page-h1 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); line-height: 1.35; }
 .erp-content .bar-halaman p { margin-top: .25rem; max-width: 70ch; }

@@ -306,6 +306,14 @@ export default function ChatPage() {
   const messages = [...new Map([...older, ...(history.data?.messages ?? [])].map((m) => [m.message_id, m])).values()].sort(
     (a, b) => chatTimestamp(a.created_timestamp) - chatTimestamp(b.created_timestamp),
   )
+  // The newest message is what to read: open at the bottom of the list, and follow a new message. Loading older messages
+  // (which come in above) leaves the place as it is.
+  const daftarPesan = useRef<HTMLDivElement>(null)
+  const pesanTerbaru = messages.at(-1)?.message_id
+  useEffect(() => {
+    const el = daftarPesan.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [selected?.conversation_id, pesanTerbaru])
   function open(c: Conversation, akunId: string) {
     setPhotoError('')
     setThreadShop(akunId)
@@ -322,7 +330,7 @@ export default function ChatPage() {
     setParams({})
   }
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${selected ? 'max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col' : ''}`} data-chat-terbuka={selected ? '' : undefined}>
       <div className={selected ? "hidden md:block" : ""}><BarHalaman judul="Chat">
         {shop && (
           <Button variant="secondary" disabled={syncChat.isPending || upload.isPending} onClick={() => syncChat.mutate({ shopId: '' })}>
@@ -411,7 +419,7 @@ export default function ChatPage() {
             {r.shop.nama_toko}: {r.error}
           </p>
         ))}
-      <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)]">
+      <div className={`grid min-w-0 gap-4 md:grid-cols-[minmax(220px,1fr)_minmax(0,2fr)] ${selected ? 'max-md:min-h-0 max-md:flex-1 max-md:grid-rows-[minmax(0,1fr)]' : ''}`}>
         <section className={`min-w-0 overflow-hidden rounded-xl border bg-card ${selected ? 'hidden md:block' : ''}`} aria-label="Daftar percakapan">
           {inbox.isFetching && <Spinner column label="Memuat percakapan…" />}
           {rows.map((c) => (
@@ -457,12 +465,12 @@ export default function ChatPage() {
             </Button>
           )}
         </section>
-        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card p-3 ${!selected ? 'hidden md:block' : ''}`} aria-label="Percakapan">
+        <section className={`min-w-0 overflow-hidden rounded-xl border bg-card p-3 ${!selected ? 'hidden md:block' : 'max-md:flex max-md:min-h-0 max-md:flex-col'}`} aria-label="Percakapan">
           {!selected ? (
             <p>Pilih percakapan untuk membaca dan membalas.</p>
           ) : (
             <>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="mb-3 flex shrink-0 flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   disabled={upload.isPending}
@@ -496,7 +504,7 @@ export default function ChatPage() {
                 </p>
               )}
               {orderStart.data && orderId && (
-                <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
+                <div className="shrink-0 space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
                   <ChatCardView card={orderStart.data.order} />
                 </div>
               )}
@@ -507,7 +515,7 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <Spinner column label="Memuat pesan…" />}
-              <div className="my-2 min-h-[40dvh] max-h-[64dvh] space-y-3 overflow-y-auto rounded-xl bg-muted/40 p-3" aria-live="polite">
+              <div ref={daftarPesan} className="my-2 min-h-0 flex-1 space-y-3 overflow-y-auto md:min-h-[40dvh] md:max-h-[64dvh] md:flex-none rounded-xl bg-muted/40 p-3" aria-live="polite">
                 {messages.filter(m => !chatClosedNotice(m.content, m.message_type)).map((m) => (
                   <div
                     key={m.message_id}
@@ -546,7 +554,7 @@ export default function ChatPage() {
                 ))}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
-              <section aria-label="Form balas chat" className="mt-2 min-w-0 space-y-2 rounded-2xl border border-border bg-background p-2">
+              <section aria-label="Form balas chat" className="mt-2 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2">
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               {upload.isPending && <p role="status" className="px-1 text-xs">Mengunggah foto… Pesan belum dikirim.</p>}
