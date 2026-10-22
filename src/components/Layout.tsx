@@ -1,3 +1,4 @@
+import TombolAI from '@/components/TombolAI'
 import NotificationsBell from '@/components/NotificationsBell'
 import { LogOut, X } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
@@ -61,6 +62,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center">
+          <TombolAI />
           <AppearancePopover />
           <PanduanFitur path={location.pathname} />
           <NotificationsBell />
@@ -155,6 +157,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {open && <div className="fixed inset-0 z-40 bg-black/20 lg:hidden" onClick={() => setOpen(false)} />}
       <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-0 lg:pb-0">
         <div className="hidden h-14 items-center justify-end px-6 lg:flex">
+          <TombolAI />
           <AppearancePopover />
           <PanduanFitur path={location.pathname} />
           <NotificationsBell />

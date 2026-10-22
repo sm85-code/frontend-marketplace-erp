@@ -214,7 +214,7 @@ function MappingEditor({
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="processing-dialog dialog-lega max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-4xl">
+      <DialogContent className="processing-dialog max-sm:top-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-screen max-sm:max-w-none max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:border-0 max-sm:p-3 max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>
             {packingOnly ? 'Atur packing' : job.stage === 'draft' ? 'Petakan produk' : 'Edit pemetaan'}
@@ -465,7 +465,7 @@ function MappingEditor({
 function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="processing-dialog dialog-lega max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-2xl">
+      <DialogContent className="processing-dialog max-sm:top-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-screen max-sm:max-w-none max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:border-0 max-sm:p-3 max-h-[96dvh] overflow-y-auto text-left [&_p]:text-left sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Detail pekerjaan</DialogTitle>
           <DialogDescription>
