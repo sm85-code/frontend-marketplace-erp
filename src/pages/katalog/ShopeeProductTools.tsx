@@ -6,7 +6,6 @@ import * as management from '@/api/management'
 import { fmtDateTime, fmtRp, getApiError } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
-import AksiLainnya from '@/components/AksiLainnya'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
@@ -15,18 +14,35 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import MoneyInput from '@/components/MoneyInput'
 import ShopeeEngagement from './ShopeeEngagement'
+import { BarisAksi } from './bagian'
 const field = 'w-full rounded-lg border bg-background p-2'
 const time = (value?: number) => value ? fmtDateTime(new Date(value * 1000).toISOString()) : '—'
 
+/** The rarer, riskier actions on a product at Shopee: its variants and taking it off Shopee. One row each. */
 export default function ShopeeProductTools({ detail, close }: { detail: KatalogDetail; close: () => void }) {
   const [variantsOpen, setVariantsOpen] = useState(false)
-  const [promotionsOpen, setPromotionsOpen] = useState(false)
-  const [violationsOpen, setViolationsOpen] = useState(false)
   const confirm = useConfirm(), qc = useQueryClient()
-  const promotions = useQuery({ queryKey: ['product-promotions', detail.id], queryFn: () => api.productPromotions(detail.id), enabled: promotionsOpen, retry: false })
-  const violations = useQuery({ queryKey: ['product-violations', detail.id], queryFn: () => api.productViolations(detail.id), enabled: violationsOpen, retry: false })
   const remove = useMutation({ retry: false, mutationFn: () => api.deleteProduct(detail.id), onSuccess: result => { toast.success('Produk dihapus dari Shopee'); result.warnings.forEach(w => toast.warning(w)); void qc.invalidateQueries({ queryKey: ['katalog'] }); void qc.invalidateQueries({ queryKey: ['listing'] }); close() } })
-  return <section className="space-y-2 rounded-xl border p-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-medium">Pengelolaan produk Shopee</h2><AksiLainnya><Button variant="outline" size="sm" onClick={() => setVariantsOpen(true)}>Tambah / hapus varian</Button><Button variant="destructive" size="sm" disabled={remove.isPending || detail.status === 'SELLER_DELETE'} onClick={async () => { if (await confirm({ title: 'Hapus produk dari Shopee?', description: `${detail.nama}. Produk akan dihapus di ${detail.nama_toko}; riwayat pesanan dan stok ERP tetap tersimpan.`, destructive: true })) remove.mutate() }}>Hapus produk Shopee</Button></AksiLainnya></div>{remove.error && <p role="alert" className="text-sm text-destructive">{getApiError(remove.error)}</p>}<ShopeeEngagement key={detail.id} detail={detail} /><details onToggle={e => setPromotionsOpen(e.currentTarget.open)}><summary className="cursor-pointer py-2">Promosi produk</summary>{promotionsOpen && <div className="space-y-2">{promotions.isPending && <Spinner column />}{promotions.error && <QueryError error={promotions.error} retry={promotions.refetch} />}{promotions.data?.promotion.map((p, i) => <div key={`${p.promotion_id}:${i}`} className="rounded-lg bg-muted p-3"><p className="font-medium">{p.promotion_type} · {p.promotion_staging}</p><p className="text-sm">{time(p.start_time)} – {time(p.end_time)} WIB</p>{p.promotion_price_info?.map((price, j) => <p key={j} className="font-medium">{fmtRp(price.promotion_price)}</p>)}</div>)}{promotions.data && !promotions.data.promotion.length && <p className="text-sm text-muted-foreground">Tidak ada promosi untuk produk ini.</p>}</div>}</details><details onToggle={e => setViolationsOpen(e.currentTarget.open)}><summary className="cursor-pointer py-2">Pelanggaran &amp; pembatasan pencarian</summary>{violationsOpen && <div className="space-y-2">{violations.isPending && <Spinner column />}{violations.error && <QueryError error={violations.error} retry={violations.refetch} />}{violations.data && <><p className="text-sm">Status Shopee: {violations.data.item_status}{violations.data.deboost ? ' · Peringkat pencarian diturunkan' : ''}</p>{[...(violations.data.item_status_details ?? []), ...(violations.data.deboost_details ?? [])].map((v, i) => <div key={i} className="rounded-lg bg-muted p-3"><p className="font-medium">{v.violation_type}</p><p>{v.violation_reason}</p><p className="mt-1 text-sm">{v.suggestion}</p>{v.fix_deadline_time ? <p className="mt-1 text-xs text-muted-foreground">Batas perbaikan: {time(v.fix_deadline_time)} WIB</p> : null}</div>)}</>}</div>}</details><Dialog open={variantsOpen} onOpenChange={setVariantsOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Kelola varian Shopee</DialogTitle></DialogHeader>{variantsOpen && <Variants id={detail.id} />}</DialogContent></Dialog></section>
+  return <section className="rounded-xl border px-4">
+    <h2 className="pt-4 font-semibold">Varian dan penghapusan</h2>
+    <BarisAksi judul="Varian di Shopee" ket="Tambah atau hapus varian produk ini."><Button variant="outline" size="sm" onClick={() => setVariantsOpen(true)}>Kelola</Button></BarisAksi>
+    <BarisAksi judul="Hapus dari Shopee" ket={`Produk dihapus di ${detail.nama_toko}. Riwayat pesanan dan stok ERP tetap tersimpan.`}>
+      <Button variant="destructive" size="sm" disabled={remove.isPending || detail.status === 'SELLER_DELETE'} onClick={async () => { if (await confirm({ title: 'Hapus produk dari Shopee?', description: `${detail.nama}. Produk akan dihapus di ${detail.nama_toko}; riwayat pesanan dan stok ERP tetap tersimpan.`, destructive: true })) remove.mutate() }}>Hapus</Button>
+    </BarisAksi>
+    {remove.error && <p role="alert" className="pb-3 text-sm text-destructive">{getApiError(remove.error)}</p>}
+    <Dialog open={variantsOpen} onOpenChange={setVariantsOpen}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Kelola varian Shopee</DialogTitle></DialogHeader>{variantsOpen && <Variants id={detail.id} />}</DialogContent></Dialog>
+  </section>
+}
+
+/** The promotion segment of a product: boost, running promotions, and violations. Each loads when the segment opens. */
+export function PromosiProduk({ detail }: { detail: KatalogDetail }) {
+  const promotions = useQuery({ queryKey: ['product-promotions', detail.id], queryFn: () => api.productPromotions(detail.id), retry: false })
+  const violations = useQuery({ queryKey: ['product-violations', detail.id], queryFn: () => api.productViolations(detail.id), retry: false })
+  return <div className="space-y-4">
+    <section className="rounded-xl border p-4"><ShopeeEngagement key={detail.id} detail={detail} bagian="boost" /></section>
+    <section className="space-y-3 rounded-xl border p-4"><h2 className="font-semibold">Promosi produk</h2>{promotions.isPending && <Spinner column />}{promotions.error && <QueryError error={promotions.error} retry={promotions.refetch} />}{promotions.data?.promotion.map((p, i) => <div key={`${p.promotion_id}:${i}`} className="rounded-lg bg-muted p-3"><p className="font-medium">{p.promotion_type} · {p.promotion_staging}</p><p className="text-sm">{time(p.start_time)} – {time(p.end_time)} WIB</p>{p.promotion_price_info?.map((price, j) => <p key={j} className="font-medium">{fmtRp(price.promotion_price)}</p>)}</div>)}{promotions.data && !promotions.data.promotion.length && <p className="text-sm text-muted-foreground">Tidak ada promosi untuk produk ini.</p>}</section>
+    <section className="space-y-3 rounded-xl border p-4"><h2 className="font-semibold">Pelanggaran dan pembatasan pencarian</h2>{violations.isPending && <Spinner column />}{violations.error && <QueryError error={violations.error} retry={violations.refetch} />}{violations.data && <><p className="text-sm">Status Shopee: {violations.data.item_status}{violations.data.deboost ? ' · Peringkat pencarian diturunkan' : ''}</p>{[...(violations.data.item_status_details ?? []), ...(violations.data.deboost_details ?? [])].map((v, i) => <div key={i} className="rounded-lg bg-muted p-3"><p className="font-medium">{v.violation_type}</p><p>{v.violation_reason}</p><p className="mt-1 text-sm">{v.suggestion}</p>{v.fix_deadline_time ? <p className="mt-1 text-xs text-muted-foreground">Batas perbaikan: {time(v.fix_deadline_time)} WIB</p> : null}</div>)}{!violations.data.item_status_details?.length && !violations.data.deboost_details?.length && <p className="text-sm text-muted-foreground">Tidak ada pelanggaran.</p>}</>}</section>
+  </div>
 }
 
 function Variants({ id }: { id: string }) {

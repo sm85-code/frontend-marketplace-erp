@@ -2,13 +2,16 @@ import EditProdukLanjutan from './EditProdukLanjutan'
 import KualitasProduk from './KualitasProduk'
 import StatistikProduk from './StatistikProduk'
 import SalinMasterProduk from '@/components/SalinMasterProduk'
-import Bantuan from '@/components/Bantuan'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ShopeeEngagement from './ShopeeEngagement'
+import { BarisAksi } from './bagian'
 import { useAuth } from '@/lib/auth'
 import Sinkronisasi from '@/components/Sinkronisasi'
 import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
-import ShopeeProductTools from './ShopeeProductTools'
+import ShopeeProductTools, { PromosiProduk } from './ShopeeProductTools'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
@@ -25,6 +28,7 @@ import { labelStatusVarian, labelVarian, namaTier, nilaiVarian, rentangHarga, te
 export default function DetailProduk({ id, onTutup }: { id: string | null; onTutup: () => void }) {
   const { bisa } = useAuth()
   const manage = bisa('katalog', 'tulis')
+  const lanjutan = bisa('katalog_lanjutan', 'tulis')
   const { data: detail, isLoading, error, refetch } = useQuery({
     queryKey: qk.katalogOne(id ?? ''),
     queryFn: () => endpoints.getKatalog(id as string),
@@ -33,38 +37,61 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-xl font-semibold">{detail?.nama ?? 'Detail Produk'}</h1><Button variant="outline" onClick={onTutup}>Kembali ke Katalog</Button></div>
+        <div className="flex items-start gap-3"><Button variant="outline" size="icon" className="size-10 shrink-0" onClick={onTutup} aria-label="Kembali ke Katalog" title="Kembali ke Katalog"><ArrowLeft className="size-5" aria-hidden="true" /></Button><h1 className="min-w-0 flex-1 break-words text-lg leading-snug font-semibold sm:text-xl">{detail?.nama ?? 'Detail Produk'}</h1></div>
         {error ? <QueryError error={error} retry={refetch} /> : isLoading || !detail ? (
           <Spinner column label="Memuat detail…" />
         ) : (
           <div className="teks-data space-y-4">
-            {manage && <Button asChild variant="outline"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin ke Toko Lain</Link></Button>}
-            {manage && <SalinMasterProduk ids={[detail.id]} />}
-            {bisa('katalog_lanjutan', 'tulis') && <><EditProdukLanjutan detail={detail} /><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></>}
-            {bisa('katalog_lanjutan', 'tulis') && <ShopeeProductTools detail={detail} close={onTutup} />}
-            <Sinkronisasi jenis="katalog" ids={[detail.id]} satu />
-            {manage && <Bantuan rincian judul="Kelola produk di Shopee"><KelolaProdukShopee key={detail.id} detail={detail} /></Bantuan>}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <Badge variant="secondary">{detail.nama_toko}</Badge>
-              <span className="font-medium">{rentangHarga(detail.harga_min, detail.harga_max)}</span>
-              <span className="text-muted-foreground">stok Shopee: {detail.stok_shopee ?? '—'}</span>
-              {detail.sku && <span className="font-mono">SKU {detail.sku}</span>}
+              <span className="font-semibold">{rentangHarga(detail.harga_min, detail.harga_max)}</span>
+              <span className="text-sm text-muted-foreground">Stok {detail.stok_shopee ?? '—'}</span>
+              {detail.sku && <span className="font-mono text-sm text-muted-foreground">{detail.sku}</span>}
             </div>
-            {detail.foto.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {detail.foto.map((u) => (
-                  <img key={u} src={u} alt="" loading="lazy" className="size-28 shrink-0 rounded-md border object-cover" />
-                ))}
+            {/* One segment at a time, so a page of many tools does not pile everything on one screen. */}
+            <Tabs defaultValue="ringkasan" className="gap-4">
+              <TabsList className="section-tabs">
+                <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
+                {lanjutan && <TabsTrigger value="statistik">Statistik</TabsTrigger>}
+                {lanjutan && <TabsTrigger value="ulasan">Ulasan</TabsTrigger>}
+                {lanjutan && <TabsTrigger value="promosi">Promosi</TabsTrigger>}
+                {(manage || lanjutan) && <TabsTrigger value="kelola">Kelola</TabsTrigger>}
+              </TabsList>
+              <TabsContent value="ringkasan" className="space-y-4">
+              {detail.foto.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto">
+                  {detail.foto.map((u) => (
+                    <img key={u} src={u} alt="" loading="lazy" className="size-28 shrink-0 rounded-md border object-cover" />
+                  ))}
+                </div>
+              )}
+              <p className="whitespace-pre-wrap">{detail.deskripsi || <em className="text-muted-foreground">Tanpa deskripsi</em>}</p>
+              <div className="flex flex-wrap gap-2 text-sm"><Badge variant="secondary">Preorder: {detail.is_pre_order == null ? '—' : detail.is_pre_order ? 'Ya' : 'Tidak'}</Badge>{detail.days_to_ship != null && <span>Waktu proses: {detail.days_to_ship} hari</span>}</div>
+              {detail.size_chart_id != null && <p className="text-sm">Template panduan ukuran: {detail.size_chart_id}</p>}
+              {detail.varian.length > 0 && <TabelVarian detail={detail} />}
+              <div className="text-muted-foreground">
+                {detail.varian.length > 0 ? 'Berat dan ukuran produk (dipakai varian yang tidak mengaturnya sendiri): ' : 'Berat '}
+                {teksBerat(detail.berat_gram)} · {ukuranPaket(detail.panjang_cm, detail.lebar_cm, detail.tinggi_cm)}
               </div>
-            )}
-            <p className="whitespace-pre-wrap">{detail.deskripsi || <em className="text-muted-foreground">Tanpa deskripsi</em>}</p>
-            <div className="flex flex-wrap gap-2 text-sm"><Badge variant="secondary">Preorder: {detail.is_pre_order == null ? '—' : detail.is_pre_order ? 'Ya' : 'Tidak'}</Badge>{detail.days_to_ship != null && <span>Waktu proses: {detail.days_to_ship} hari</span>}</div>
-            {detail.size_chart_id != null && <p className="text-sm">Template panduan ukuran: {detail.size_chart_id}</p>}
-            {detail.varian.length > 0 && <TabelVarian detail={detail} />}
-            <div className="text-muted-foreground">
-              {detail.varian.length > 0 ? 'Berat dan ukuran produk (dipakai varian yang tidak mengaturnya sendiri): ' : 'Berat '}
-              {teksBerat(detail.berat_gram)} · {ukuranPaket(detail.panjang_cm, detail.lebar_cm, detail.tinggi_cm)}
-            </div>
+
+              </TabsContent>
+              {lanjutan && <TabsContent value="statistik" className="space-y-4"><StatistikProduk id={detail.id} /><KualitasProduk id={detail.id} /></TabsContent>}
+              {lanjutan && <TabsContent value="ulasan"><section className="space-y-3 rounded-xl border p-4"><h2 className="font-semibold">Ulasan pembeli dan balasan</h2><ShopeeEngagement key={detail.id} detail={detail} bagian="ulasan" /></section></TabsContent>}
+              {lanjutan && <TabsContent value="promosi"><PromosiProduk detail={detail} /></TabsContent>}
+              {(manage || lanjutan) && (
+                <TabsContent value="kelola" className="space-y-4">
+                  <section className="rounded-xl border px-4">
+                    <h2 className="pt-4 font-semibold">Tindakan produk</h2>
+                    {lanjutan && <BarisAksi judul="Edit informasi dan varian" ket="Ubah nama, deskripsi, foto, SKU, dan pengiriman di Shopee."><EditProdukLanjutan detail={detail} label="Edit" /></BarisAksi>}
+                    {manage && <BarisAksi judul="Salin ke toko lain" ket="Buat produk yang sama di toko lain."><Button asChild variant="outline" size="sm"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin</Link></Button></BarisAksi>}
+                    {manage && <BarisAksi judul="Salin ke Master Produk" ket="Simpan produk dan variannya sebagai SKU master."><SalinMasterProduk ids={[detail.id]} label="Salin" /></BarisAksi>}
+                    <BarisAksi judul="Sinkronisasi dari Shopee" ket="Perbarui data produk ini dari Shopee."><Sinkronisasi jenis="katalog" ids={[detail.id]} satu label="Sinkronkan" /></BarisAksi>
+                  </section>
+                  {manage && <section className="rounded-xl border px-4"><KelolaProdukShopee key={detail.id} detail={detail} /></section>}
+                  {lanjutan && <ShopeeProductTools detail={detail} close={onTutup} />}
+                </TabsContent>
+              )}
+            </Tabs>
           </div>
         )}
     </div>
@@ -91,7 +118,7 @@ function TabelVarian({ detail }: { detail: KatalogDetail }) {
       <p className="text-xs text-muted-foreground">Nilai bercetak miring mengikuti produk induk.</p>
       {!lengkap && (
         <p role="note" className="rounded-md border border-dashed p-2 text-muted-foreground">
-          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi item ini di atas untuk memperbarui produk tanpa menarik seluruh toko.
+          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi di tab Kelola untuk memperbarui produk tanpa menarik seluruh toko.
         </p>
       )}
       <div className="overflow-x-auto rounded-md border">
