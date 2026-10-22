@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react'
 import Bantuan from '@/components/Bantuan'
 import PerformaJam from './PerformaJam'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -107,16 +108,24 @@ export default function PerformaShopee() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="sr-only">
         <CardTitle>Performa Iklan Shopee</CardTitle>
-        <Bantuan><p className="teks-data text-muted-foreground">
+      </CardHeader>
+      <CardContent className="space-y-3 pt-4">
+        <BarFilter
+          aktif={f.jumlahAktif}
+          utama={
+            <div className="flex items-center gap-1">
+              <Button size="icon" aria-label={sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'} title="Sinkronisasi dari Shopee" onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
+                <RefreshCw className={`size-4 ${sinkronMut.isPending ? 'animate-spin' : ''}`} aria-hidden="true" />
+              </Button>
+              <Bantuan><p className="teks-data text-muted-foreground">
           Diambil dari Shopee Ads per toko dan per hari. Pesanan, GMV, dan ROAS dihitung dari klik iklan dalam 7 hari (angka terkini bisa
           berubah di hari-hari berikutnya).
         </p></Bantuan>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <PerformaJam />
-        <BarFilter aktif={f.jumlahAktif}>
+            </div>
+          }
+        >
           <FilterPilih
             id="iklan-toko-filter"
             label="Toko"
@@ -136,6 +145,7 @@ export default function PerformaShopee() {
           <Medan>
             <PemilihKolom semua={semuaKolom} tampil={kolom.tampil} onUbah={kolom.ubah} onReset={kolom.reset} />
           </Medan>
+          <FilterPilih id="iklan-hari" label="Tarik dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           {f.berubah && (
             <FilterAksi>
               <Button variant="ghost" onClick={f.reset}>
@@ -144,15 +154,6 @@ export default function PerformaShopee() {
             </FilterAksi>
           )}
         </BarFilter>
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[12rem]">
-            <FilterPilih id="iklan-hari" label="Tarik dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
-          </div>
-          <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoShopee.length === 0}>
-            {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
-          </Button>
-        </div>
-
         {progres && (
           <PanelProgres
             judul="Sinkronisasi iklan dari Shopee"
@@ -235,6 +236,7 @@ export default function PerformaShopee() {
             </div>
           </>
         )}
+        <PerformaJam />
       </CardContent>
     </Card>
   )
