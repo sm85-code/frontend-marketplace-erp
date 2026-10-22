@@ -23,13 +23,14 @@
     </script>
     <style>
       #splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #f4f6f5; color: #1d2a22; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-      .splash-logo { width: 220px; height: 122px; animation: splash-denyut 1.8s ease-in-out infinite; }
+      .splash-logo { width: 220px; height: 122px; animation: splash-masuk 0.6s ease-out both, splash-denyut 1.8s ease-in-out 0.6s infinite; }
       .splash-gelap { display: none; }
       .splash-nama { font-size: 20px; font-weight: 700; letter-spacing: 0.01em; }
       .splash-ket { font-size: 13px; opacity: 0.65; }
       html.dark #splash { background: #0f1713; color: #e8efe9; }
       html.dark .splash-terang { display: none; }
       html.dark .splash-gelap { display: block; }
+      @keyframes splash-masuk { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
       @keyframes splash-denyut { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
       @media (prefers-reduced-motion: reduce) { .splash-logo { animation: none; } }
     </style>

@@ -36,3 +36,23 @@ export function pasangPendengarNotifikasi(buka: (alamat: string) => void): () =>
   wadah.startMessages?.() // messages wait in a queue until this is called (setting onmessage would do it, addEventListener does not)
   return () => wadah.removeEventListener('message', pesan)
 }
+
+const PENANDA_PEMBUKA = 'mpe-pembuka'
+export const LAMA_PEMBUKA_MS = 1100
+
+/**
+ * How long to keep the opening screen (index.html) up before the app takes over. Opened from the home screen the app starts
+ * from cached files within a fraction of a second, so the opening screen would flash by with its animation unseen. Only
+ * the first start of a session as an installed app waits (never a page change, a reload in a tab, or a later start).
+ * `sekarang` is the time since the page began loading, in ms.
+ */
+export function tundaanPembuka(sekarang: number): number {
+  try {
+    const terpasang = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true
+    if (!terpasang || sessionStorage.getItem(PENANDA_PEMBUKA)) return 0
+    sessionStorage.setItem(PENANDA_PEMBUKA, '1')
+    return Math.max(0, LAMA_PEMBUKA_MS - sekarang)
+  } catch {
+    return 0
+  }
+}
