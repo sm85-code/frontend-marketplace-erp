@@ -1,3 +1,4 @@
+import { BarHalaman } from '@/components/daftar'
 import { useEffect, useRef, useState } from 'react'
 import AssistantActionDraft from '@/components/AssistantActionDraft'
 import AssistantInternalData from '@/components/AssistantInternalData'
@@ -120,7 +121,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
   const kirimMati=!!(embedded&&resource&&!detail.data)||mutation.isPending||busy||!status.data?.available||(!pending&&(!prompt.trim()||(mode==='perintah'&&!selectedShop)))
   return <div className={`mx-auto flex max-w-3xl flex-col gap-3 ${embedded?'':'pb-24'}`}>
     <div className="flex flex-wrap items-center justify-between gap-2">
-      {!embedded&&<h1 className="page-h1 text-2xl font-semibold">Asisten AI</h1>}
+      {!embedded&&<BarHalaman judul="Asisten AI" />}
       {status.data&&<p className="text-xs text-muted-foreground">AI hari ini {aiMoney(status.data.spent_usd,status.data.usd_idr)} / {aiMoney(status.data.daily_usd,status.data.usd_idr)} · {status.data.used_turns}/{status.data.daily_turns} pesan</p>}
       <div className="ml-auto flex items-center gap-2">
         {!embedded&&<Button variant="ghost" size="sm" onClick={()=>window.dispatchEvent(new Event('erp-restore-ai'))}>Tombol AI mengambang</Button>}
