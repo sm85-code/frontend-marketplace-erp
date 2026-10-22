@@ -51,6 +51,13 @@ const OPSI_TAMPILAN = [
 ] as const
 type Tampilan = (typeof OPSI_TAMPILAN)[number]['value']
 
+/** Desktop table: hide columns that are empty for every row on this page (still selectable in Tampilan). */
+const kosong = (v: unknown) => v == null || v === false || v === '' || v === '—' || v === '-' || (Array.isArray(v) && v.every(kosong))
+function kolomBerisi<T, K extends { kunci: string; tetap?: boolean; sel: (item: T) => unknown }>(kolom: K[], items: T[] | undefined): K[] {
+  if (!items?.length) return kolom
+  return kolom.filter((k, i) => i === 0 || k.tetap || items.some((it) => { try { return !kosong(k.sel(it)) } catch { return true } }))
+}
+
 export default function KatalogPage() {
   const { bisa } = useAuth()
   const manage = bisa('katalog', 'tulis')
@@ -258,7 +265,7 @@ export default function KatalogPage() {
         <TabelData
           label="Produk Shopee dari semua toko"
           items={items}
-          kolom={kolomTampil}
+          kolom={kolomBerisi(kolomTampil, items)}
           idDari={(p) => p.id}
           namaDari={(p) => p.nama}
           urut={urutSekarang}
