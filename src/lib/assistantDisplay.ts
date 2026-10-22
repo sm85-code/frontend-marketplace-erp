@@ -53,8 +53,27 @@ export function usd(value: string | number): string {
 /** "Sonnet 5.5 · 3.2k/1.1k token · $0.04 (riset $0.02 · foto $0.10)": one muted line under each AI reply. */
 export function turnUsage(turn: { model: string; input_tokens: number; output_tokens: number; cost_usd: string; actions: { tool: string; result: unknown }[] }): string {
   const extra = (tool: string) => turn.actions.filter(a => a.tool === tool).reduce((s, a) => s + (Number((a.result as {biaya_usd?: string} | null)?.biaya_usd) || 0), 0)
-  const riset = extra('riset_web'), foto = extra('buat_gambar_produk')
+  const riset = extra('riset_web') + extra('kompetitor_shopee'), foto = extra('buat_gambar_produk')
   const parts = [riset > 0 && `riset ${usd(riset)}`, foto > 0 && `foto ${usd(foto)}`].filter(Boolean)
   const internal = turn.model.startsWith('internal')
   return `${modelName(turn.model)} · ${internal ? 'tanpa token' : `${compactTokens(turn.input_tokens)}/${compactTokens(turn.output_tokens)} token · ${usd(turn.cost_usd)}`}${parts.length ? ` (${parts.join(' · ')})` : ''}`
+}
+
+/** One friendly line per work-log step, e.g. "3 pesaing Shopee ditemukan". Raw data stays behind "detail teknis". */
+export function stepSummary(a: { tool: string; status: string; result: unknown }): string {
+  const r = (a.result && typeof a.result === 'object' ? a.result : {}) as Record<string, unknown>
+  if (typeof r.error === 'string' && r.error) return r.error.length > 140 ? r.error.slice(0, 140) + '…' : r.error
+  if (a.status === 'draft') return 'Menunggu persetujuan Anda'
+  if (a.status !== 'succeeded') return ''
+  const n = (v: unknown) => (Array.isArray(v) ? v.length : null)
+  switch (a.tool) {
+    case 'kompetitor_shopee': return `${n(r.pesaing) ?? 0} pesaing Shopee ditemukan`
+    case 'riset_web': return `${n(r.sumber) ?? 0} sumber relevan`
+    case 'buat_gambar_produk': return `${n(r.gambar_ids) ?? 0} foto dibuat`
+    case 'buat_draf_produk': return 'Draf produk tersimpan (belum dipublikasikan)'
+    case 'daftar_toko': return `${n(a.result) ?? 0} toko`
+  }
+  const items = n(r.items) ?? n(a.result)
+  if (items !== null) return `${items} data dibaca`
+  return 'Selesai'
 }

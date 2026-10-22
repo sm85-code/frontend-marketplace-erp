@@ -5,6 +5,7 @@ import { aiImage, type AiAction } from '@/api/assistant'
 import { Button } from '@/components/ui/button'
 
 type Sumber = { judul: string; url: string }
+type Pesaing = { nama: string; toko: string | null; harga: number | null; terjual: string | null; rating: number | null; url: string }
 const obj = (v: unknown) => (v && typeof v === 'object' ? (v as Record<string, unknown>) : {})
 
 /** One AI photo, loaded through the authenticated API client. */
@@ -25,7 +26,8 @@ export default function AssistantDesigner({ actions }: { actions: AiAction[] }) 
   for (const a of ok.filter((a) => a.tool === 'riset_web')) for (const s of (obj(a.result).sumber as Sumber[] | undefined) ?? []) if (safeUrl(s.url)) sumber.set(s.url, s.judul || s.url)
   const foto = ok.filter((a) => a.tool === 'buat_gambar_produk').flatMap((a) => (obj(a.result).gambar_ids as string[] | undefined) ?? [])
   const draf = ok.filter((a) => a.tool === 'buat_draf_produk').map((a): Record<string, unknown> & { args: Record<string, unknown> } => ({ ...obj(a.result), args: obj(a.arguments) }))
-  if (!sumber.size && !foto.length && !draf.length) return null
+  const pesaing = ok.filter((a) => a.tool === 'kompetitor_shopee').flatMap((a) => (obj(a.result).pesaing as Pesaing[] | undefined) ?? []).filter((p) => safeUrl(p.url))
+  if (!sumber.size && !foto.length && !draf.length && !pesaing.length) return null
   return <div className="space-y-3">
     {foto.length > 0 && !draf.length && <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{foto.map((id) => <FotoAI key={id} id={id} />)}</div>}
     {draf.map((d) => {
@@ -43,6 +45,10 @@ export default function AssistantDesigner({ actions }: { actions: AiAction[] }) 
         <Button asChild className="w-full sm:w-auto"><Link to={String(d.tautan ?? '/publikasi')}>Buka draf</Link></Button>
       </div>
     })}
+    {pesaing.length > 0 && <ul aria-label="Pesaing Shopee" className="divide-y rounded-xl border text-sm">{pesaing.map((p) => <li key={p.url} className="flex items-start justify-between gap-3 p-3">
+      <div className="min-w-0"><a href={p.url} target="_blank" rel="noreferrer noopener" className="line-clamp-2 font-medium text-primary underline-offset-2 hover:underline">{p.nama || 'Listing Shopee'}</a>
+        <p className="text-xs text-muted-foreground">{[p.toko, p.terjual && `${p.terjual} terjual`, p.rating != null && `★ ${p.rating}`].filter(Boolean).join(' · ')}</p></div>
+      <span className="shrink-0 font-medium tabular-nums">{p.harga != null ? 'Rp ' + p.harga.toLocaleString('id-ID') : '—'}</span></li>)}</ul>}
     {sumber.size > 0 && <details className="rounded-xl border p-3 text-sm"><summary className="cursor-pointer font-medium">Sumber riset ({sumber.size})</summary>
       <ul className="mt-2 space-y-1">{[...sumber].map(([url, judul]) => <li key={url}><a href={url} target="_blank" rel="noreferrer noopener" className="inline-flex max-w-full items-center gap-1 text-primary underline-offset-2 hover:underline"><ExternalLink className="size-3 shrink-0" /><span className="truncate">{judul}</span></a></li>)}</ul>
     </details>}

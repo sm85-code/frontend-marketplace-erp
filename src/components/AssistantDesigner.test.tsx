@@ -29,6 +29,11 @@ describe('Desainer produk di chat', () => {
     expect(html).toContain('https://a.example/1')
     expect(html).not.toContain('javascript:')
   })
+  it('lists Shopee competitors with price, sold, rating and link', () => {
+    const html = render([act('kompetitor_shopee', { pesaing: [{ nama: 'Tas A', toko: 'Toko A', harga: 85000, terjual: '1rb+', rating: 4.8, url: 'https://shopee.co.id/a' }, { nama: 'X', toko: null, harga: null, terjual: null, rating: null, url: 'javascript:x' }] })])
+    expect(html).toContain('Tas A'); expect(html).toContain('Rp 85.000'); expect(html).toContain('1rb+ terjual'); expect(html).toContain('★ 4.8')
+    expect(html).toContain('href="https://shopee.co.id/a"'); expect(html).not.toContain('javascript:')
+  })
   it('renders nothing for other tools or failed actions', () => {
     expect(render([act('cari_produk', {}), act('buat_draf_produk', { draf_id: 'x' }, {}, 'failed')])).toBe('')
   })
