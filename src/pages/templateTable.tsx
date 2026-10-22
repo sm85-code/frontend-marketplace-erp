@@ -1,3 +1,5 @@
+import { fmtAngka, fmtRp } from "@/api/client";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { TemplateBlock, TemplateColumn } from "@/api/documentTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +66,7 @@ export function previewAmounts(item: TemplateBlock): Record<string, string> {
   const values = Object.fromEntries(
     Object.entries(amounts).map(([key, value]) => [
       `total_${key}`,
-      (value * rows).toLocaleString("id-ID"),
+      fmtAngka(value * rows),
     ]),
   );
   return {
@@ -87,7 +89,7 @@ export function TemplateTable({
   const numeric = sampleAmounts(item);
   const sample = (field: string, n: number) =>
     money.has(field)
-      ? `Rp ${numeric[field].toLocaleString("id-ID")}`
+      ? fmtRp(numeric[field])
       : field === "qty"
         ? "1"
         : field === "tanggal"
@@ -96,7 +98,8 @@ export function TemplateTable({
             ? "100x20x200"
             : `Produk contoh ${n}`;
   return (
-    <table
+    <Table
+      className="leading-normal"
       style={{
         width: "100%",
         borderCollapse: "collapse",
@@ -110,11 +113,12 @@ export function TemplateTable({
           <col key={i} style={{ width: `${(c.width / weight) * 100}%` }} />
         ))}
       </colgroup>
-      <thead>
-        <tr>
+      <TableHeader className="[&_tr]:border-0">
+        <TableRow className="border-0 hover:bg-transparent">
           {columns.map((c, i) => (
-            <th
+            <TableHead
               key={i}
+              className="h-auto normal-case tracking-normal text-[length:inherit] font-bold"
               style={{
                 background: c.header_background,
                 color: c.header_color,
@@ -126,16 +130,17 @@ export function TemplateTable({
               }}
             >
               {c.label}
-            </th>
+            </TableHead>
           ))}
-        </tr>
-      </thead>
-      <tbody>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {Array.from({ length: rows }, (_, n) => (
-          <tr key={n}>
+          <TableRow key={n} className="border-0 hover:bg-transparent">
             {columns.map((c, i) => (
-              <td
+              <TableCell
                 key={i}
+                className="p-0"
                 style={{
                   textAlign: c.align,
                   padding: "5px 4px",
@@ -144,17 +149,18 @@ export function TemplateTable({
                 }}
               >
                 {preview ? sample(c.field, n + 1) : `{{${c.field}}}`}
-              </td>
+              </TableCell>
             ))}
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
+      </TableBody>
       {item.show_totals && (
-        <tfoot>
-          <tr>
+        <TableFooter className="border-0 bg-transparent">
+          <TableRow className="border-0 hover:bg-transparent">
             {columns.map((c, i) => (
-              <td
+              <TableCell
                 key={i}
+                className="p-0"
                 style={{
                   textAlign: c.align,
                   padding: "6px 4px",
@@ -168,17 +174,17 @@ export function TemplateTable({
                   ? "Grand Total"
                   : c.total
                     ? preview
-                      ? `Rp ${((numeric[c.field] || 0) * rows).toLocaleString("id-ID")}`
+                      ? fmtRp((numeric[c.field] || 0) * rows)
                       : c.field === "total"
                         ? "{{grand_total}}"
                         : `{{total_${c.field}}}`
                     : ""}
-              </td>
+              </TableCell>
             ))}
-          </tr>
-        </tfoot>
+          </TableRow>
+        </TableFooter>
       )}
-    </table>
+    </Table>
   );
 }
 export function TableSettings({
