@@ -23,7 +23,7 @@ import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -195,14 +195,7 @@ export default function ProdukPage() {
         <Button onClick={openCreate}>Tambah Produk</Button>
       </BarHalaman>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cari Produk</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Input placeholder="Cari nama atau SKU…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
-        </CardContent>
-      </Card>
+      <Input aria-label="Cari produk" placeholder="Cari nama atau SKU…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />
 
       <Card>
         <CardContent className="pt-6">

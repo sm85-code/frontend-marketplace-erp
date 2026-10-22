@@ -506,7 +506,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
             }}
           >
             <Eye size={16} />
-            {preview ? "Kembali edit" : "Pratinjau"}
+            <span className="max-sm:sr-only">{preview ? "Kembali edit" : "Pratinjau"}</span>
           </Button>
           <Button
             type="button"
@@ -514,7 +514,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
             onClick={() => void save()}
           >
             <Save size={16} />
-            {busy ? "Menyimpan…" : "Simpan desain"}
+            {busy ? "Menyimpan…" : "Simpan"}
           </Button>
         </div>
       </div>
@@ -526,7 +526,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2 xl:hidden">
+      <div className="flex flex-wrap items-center gap-2 xl:hidden">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
             <Button variant="outline" disabled={busy || preview}>
@@ -564,7 +564,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           onClick={() => setMobilePanel("layers")}
         >
           <Layers size={16} />
-          Layer
+          <span className="max-sm:sr-only">Layer</span>
         </Button>
         <Button
           variant="outline"
@@ -572,7 +572,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           onClick={() => setMobilePanel("properties")}
         >
           <SlidersHorizontal size={16} />
-          Properti
+          <span className="max-sm:sr-only">Properti</span>
         </Button>
       </div>
       <div className="grid min-w-0 items-start gap-3 xl:grid-cols-[170px_minmax(0,1fr)_280px]">
@@ -594,7 +594,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
                     ? elementName(current)
                     : "Kanvas A4"}
               </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="mt-0.5 text-[11px] text-muted-foreground max-sm:hidden">
                 {preview
                   ? "Data contoh"
                   : current?.locked
@@ -699,7 +699,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
               </Button>
             </div>
           ) : (
-            <div className="flex h-14 items-center rounded-xl border bg-card px-3 text-xs text-muted-foreground">
+            <div className="flex h-14 items-center rounded-xl border bg-card px-3 text-xs text-muted-foreground max-sm:hidden">
               Pilih elemen untuk mengatur posisi dan tampilannya.
             </div>
           )}
