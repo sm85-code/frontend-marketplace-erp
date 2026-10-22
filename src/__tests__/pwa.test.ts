@@ -14,7 +14,7 @@ describe('PWA', () => {
     expect(manifest.start_url).toBe('/')
     const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes)
     expect(sizes).toEqual(expect.arrayContaining(['192x192', '512x512']))
-    for (const icon of manifest.icons) expect(berkas).toContain(`../../public${icon.src}`)
+    for (const icon of manifest.icons) expect(berkas).toContain(`../../public${icon.src.split("?")[0]}`)
     expect(manifest.icons.some((i: { purpose: string }) => i.purpose === 'maskable')).toBe(true)
   })
 
