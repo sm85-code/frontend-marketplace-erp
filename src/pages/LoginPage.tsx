@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import WallpaperLayer from '@/components/WallpaperLayer'
+import LogoApp from '@/components/LogoApp'
 import { useAuth } from '@/lib/auth'
 
 export default function LoginPage() {
@@ -42,11 +43,9 @@ export default function LoginPage() {
       <WallpaperLayer />
       <Card className="relative w-full max-w-md gap-5 py-6 shadow-soft sm:py-8">
         <CardHeader className="space-y-3 px-6 text-center sm:px-8">
-          <img
-            src="/logo-ampel-bulat.png"
-            alt="Ampel Kuning"
-            className="mx-auto size-24 object-contain sm:size-28"
-          />
+          <div className="flex justify-center">
+            <LogoApp besar alt="Ampel Kuning" className="size-24 sm:size-28" />
+          </div>
           <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">
             Ampel Kuning
             <span className="block text-base font-medium sm:text-lg" style={{ color: 'var(--text-muted)' }}>

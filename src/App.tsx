@@ -5,6 +5,7 @@ import { pasangPendengarNotifikasi } from '@/lib/pwa'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
+import LogoApp from '@/components/LogoApp'
 import Spinner from '@/components/Spinner'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Tingkat } from '@/api/types'
@@ -49,7 +50,10 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 function PageFallback() {
   return (
     <div className="page-loader">
-      <Spinner column size={56} label="Menyiapkan panel..." />
+      <div className="logo-denyut">
+        <LogoApp besar alt="Ampel Kuning" className="size-20" />
+      </div>
+      <Spinner column size={32} label="Menyiapkan panel..." />
     </div>
   )
 }
