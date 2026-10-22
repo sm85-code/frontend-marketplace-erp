@@ -36,3 +36,15 @@ export function pasangPendengarNotifikasi(buka: (alamat: string) => void): () =>
   wadah.startMessages?.() // messages wait in a queue until this is called (setting onmessage would do it, addEventListener does not)
   return () => wadah.removeEventListener('message', pesan)
 }
+
+export const LAMA_PEMBUKA_MS = 1100
+
+/**
+ * How long to keep the opening screen (index.html) up before the app takes over. From cached files the app starts within
+ * a fraction of a second, so the opening screen would flash by with its animation unseen, in the installed app and in a
+ * browser tab alike. Every full page load therefore lasts at least this long (a move between pages inside the app is not a
+ * page load). `sekarang` is the time since the page began loading, in ms.
+ */
+export function tundaanPembuka(sekarang: number): number {
+  return Math.max(0, LAMA_PEMBUKA_MS - sekarang)
+}
