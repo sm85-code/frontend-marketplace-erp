@@ -124,7 +124,7 @@ export default function ListingPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Pemetaan Produk Toko" deskripsi="Hubungkan master produk dengan produk dan varian toko.">
+      <BarHalaman judul="Pemetaan Produk Toko">
         <Sinkronisasi jenis="listing" ids={pilih.daftar.map(p => p.id)} />
         <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing

@@ -343,7 +343,7 @@ export default function PublicationPage() {
   ]
   return (
     <div className="min-w-0 space-y-4">
-      <BarHalaman judul="Buat / Salin Produk" deskripsi="Produk baru di toko tujuan, dengan pilihan varian terpisah.">
+      <BarHalaman judul="Buat / Salin Produk">
         <Button asChild variant="outline">
           <Link to="/katalog">Kembali ke Katalog</Link>
         </Button>
