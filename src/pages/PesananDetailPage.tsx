@@ -1,3 +1,4 @@
+import HapusPesananManual from '@/components/HapusPesananManual'
 import { Copy } from 'lucide-react'
 import api from '@/api/client'
 import ShopeeOrderTools from './pesanan/ShopeeOrderTools'
@@ -165,15 +166,6 @@ export default function PesananDetailPage() {
     onError: (e) => toast.error(getApiError(e)),
   })
 
-  const deleteMut = useMutation({
-    mutationFn: () => endpoints.deletePesanan(id!),
-    onSuccess: () => {
-      toast.success('Pesanan dihapus')
-      navigate('/pesanan', { replace: true })
-    },
-    onError: (e) => toast.error(getApiError(e)),
-  })
-
   if (error) return <QueryError error={error} retry={refetch} />
   if (isLoading || !pesanan) return <Spinner column label="Memuat pesanan…" />
 
@@ -214,11 +206,6 @@ export default function PesananDetailPage() {
   async function onCancel() {
     const ok = await confirm({ title: 'Batalkan pesanan?', description: 'Reservasi stok akan dilepas.', destructive: true })
     if (ok) statusMut.mutate('cancelled')
-  }
-
-  async function onDelete() {
-    const ok = await confirm({ title: 'Hapus pesanan?', description: 'Hanya pesanan belum bayar yang bisa dihapus.', destructive: true })
-    if (ok) deleteMut.mutate()
   }
 
   return (
@@ -367,11 +354,7 @@ export default function PesananDetailPage() {
             Batalkan
           </Button>
         )}
-        {!ikutMp && pesanan.status === 'unpaid' && (
-          <Button variant="outline" onClick={onDelete} disabled={deleteMut.isPending}>
-            Hapus
-          </Button>
-        )}
+        <HapusPesananManual p={pesanan} size="default" onDihapus={() => navigate('/pesanan', { replace: true })} />
         {ikutMp && bisaDiproses(pesanan) && (
           <Button onClick={onProses} disabled={prosesMut.isPending}>
             {labelProses(pesanan)}

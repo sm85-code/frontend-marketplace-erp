@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button'
 import { PLATFORM_LABELS } from '@/config/roles'
 import { bisaDicetak, bisaDiproses, labelProses, labelStatus, sudahDicetak } from '@/lib/pesanan'
 import { ItemRingkas } from './ItemRingkas'
+import AksiLainnya from '@/components/AksiLainnya'
+import HapusPesananManual, { bisaHapusManual } from '@/components/HapusPesananManual'
+import { useAuth } from '@/lib/auth'
 
 function varianStatus(status: string): 'default' | 'secondary' | 'destructive' {
   if (status === 'completed') return 'default'
@@ -157,6 +160,7 @@ export function AksiPesanan({
   onProses: (p: Pesanan) => void
   cetakSibuk: boolean
 }) {
+  const { user } = useAuth()
   return (
     <div className="flex items-stretch justify-end gap-2">
       {bisaDiproses(p) && <Button size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onProses(p)} disabled={cetakSibuk}>{labelProses(p)}</Button>}
@@ -168,6 +172,7 @@ export function AksiPesanan({
       <Button asChild size="sm" variant="outline" className="h-auto min-h-11 shrink-0 px-4">
         <Link to={`/pesanan/${p.id}`}>Detail</Link>
       </Button>
+      {bisaHapusManual(p, user?.role) && <AksiLainnya><HapusPesananManual p={p} /></AksiLainnya>}
     </div>
   )
 }

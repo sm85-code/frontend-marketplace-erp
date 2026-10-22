@@ -331,7 +331,7 @@ export const cetakResiGabungan = (pesananIds: string[], tipe: TemplateResi = 'TH
 export const setPengiriman = (id: string, payload: { kurir: string; nomor_resi: string; tanggal_kirim?: string }) =>
   api.post<Pesanan>(`/pesanan/${id}/pengiriman`, payload).then((r) => r.data)
 
-export const deletePesanan = (id: string) => api.delete(`/pesanan/${id}`)
+export const deletePesanan = (id: string, konfirmasi: string) => api.delete(`/pesanan/${id}`, { params: { konfirmasi } })
 
 // --- Staff-akun scoping ----------------------------------------------------------
 
