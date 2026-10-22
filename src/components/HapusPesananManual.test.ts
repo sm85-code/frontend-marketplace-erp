@@ -15,3 +15,10 @@ describe('bisaHapusManual', () => {
     expect(bisaHapusManual({ ...base, status: 'cancelled', nomor_resi: 'JX1' } as never, 'owner')).toBe(true)
   })
 })
+
+describe('label seragam', () => {
+  it('detail dan menu memakai label yang sama', async () => {
+    const m = await import('./HapusPesananManual')
+    expect(m.LABEL_HAPUS_MANUAL).toBe('Hapus pesanan manual')
+  })
+})

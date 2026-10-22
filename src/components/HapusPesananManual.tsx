@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
@@ -17,10 +18,33 @@ export function bisaHapusManual(p: Pick<Pesanan, 'platform' | 'status' | 'nomor_
   return p.status !== 'shipped' && p.status !== 'completed' && !p.nomor_resi && !p.resi_dicetak_at && !p.tanggal_kirim
 }
 
-export default function HapusPesananManual({ p, onDihapus, size = 'sm' }: { p: Pesanan; onDihapus?: () => void; size?: 'sm' | 'default' }) {
+export const LABEL_HAPUS_MANUAL = 'Hapus pesanan manual'
+
+/** Same trigger look everywhere (detail page and the row's "Aksi lainnya" menu). */
+export function TombolHapusManual({ onClick, size = 'default', className = '' }: { onClick: () => void; size?: 'sm' | 'default'; className?: string }) {
+  return (
+    <Button size={size} variant="outline" className={`text-destructive hover:text-destructive ${className}`} onClick={onClick}>
+      <Trash2 className="mr-2 h-4 w-4" />
+      {LABEL_HAPUS_MANUAL}
+    </Button>
+  )
+}
+
+export default function HapusPesananManual({ p, onDihapus, size = 'default' }: { p: Pesanan; onDihapus?: () => void; size?: 'sm' | 'default' }) {
   const { user } = useAuth()
-  const qc = useQueryClient()
   const [buka, setBuka] = useState(false)
+  if (!bisaHapusManual(p, user?.role)) return null
+  return (
+    <>
+      <TombolHapusManual size={size} onClick={() => setBuka(true)} />
+      <DialogHapusManual p={p} buka={buka} setBuka={setBuka} onDihapus={onDihapus} />
+    </>
+  )
+}
+
+/** The confirmation lives outside any popover so closing the menu never closes the dialog. */
+export function DialogHapusManual({ p, buka, setBuka, onDihapus }: { p: Pesanan; buka: boolean; setBuka: (b: boolean) => void; onDihapus?: () => void }) {
+  const qc = useQueryClient()
   const [ketik, setKetik] = useState('')
   const mut = useMutation({
     mutationFn: () => endpoints.deletePesanan(p.id, ketik.trim()),
@@ -31,12 +55,9 @@ export default function HapusPesananManual({ p, onDihapus, size = 'sm' }: { p: P
       onDihapus?.()
     },
   })
-  if (!bisaHapusManual(p, user?.role)) return null
+  useEffect(() => { if (buka) { setKetik(''); mut.reset() } }, [buka]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <>
-      <Button size={size} variant="outline" className="text-destructive" onClick={() => { setKetik(''); mut.reset(); setBuka(true) }}>
-        Hapus pesanan manual
-      </Button>
       <Dialog open={buka} onOpenChange={setBuka}>
         <DialogContent>
           <DialogHeader>

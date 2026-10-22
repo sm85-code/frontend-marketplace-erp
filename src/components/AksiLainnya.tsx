@@ -5,11 +5,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-export default function AksiLainnya({ children }: { children: ReactNode }) {
+export default function AksiLainnya({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" className={className}>
           Aksi lainnya
         </Button>
       </PopoverTrigger>
