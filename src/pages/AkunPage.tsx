@@ -1,3 +1,4 @@
+import { varianStatus } from '@/lib/warnaStatus'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import AutoOrderSettings from '@/components/AutoOrderSettings'
 import TokoPenjualanTab from '@/components/TokoPenjualanTab'
@@ -32,11 +33,7 @@ import { fmtDateTime } from '@/api/client'
 
 const PLATFORMS: Platform[] = ['shopee', 'tiktokshop', 'lazada', 'blibli']
 
-function statusVariant(status: string): 'default' | 'secondary' | 'destructive' {
-  if (status === 'aktif' || status === 'terhubung') return 'default'
-  if (status === 'token_kadaluarsa' || status === 'nonaktif') return 'destructive'
-  return 'secondary'
-}
+const statusVariant = varianStatus
 
 const kolomToko: KolomTabel<AkunMarketplace>[] = [
   { kunci: 'platform', judul: 'Platform', sel: (a) => PLATFORM_LABELS[a.platform], nilai: (a) => a.platform },
