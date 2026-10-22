@@ -1,3 +1,5 @@
+import AksiLainnya from '@/components/AksiLainnya'
+import InfoTip from '@/components/InfoTip'
 import { useEffect, useId, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -98,11 +100,11 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
     } catch (err) { toast.error(getApiError(err)) }
     finally { await qc.invalidateQueries({queryKey: ['processing-prices']}); setChanging(false) }
   }
-  const rowActions = (price: ProcessingPrice) => <div className="flex flex-wrap gap-2">
+  const rowActions = (price: ProcessingPrice) => <div className="flex items-center gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
       setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setCariModel(''); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
     }}>Edit</Button>
-    {catalogProduct && <Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button>}
+    {catalogProduct && <AksiLainnya><Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button></AksiLainnya>}
   </div>
   const baseColumns: KolomTabel<ProcessingPrice>[] = [
     {
@@ -164,8 +166,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       {(selectedKind ? [selectedKind] : (['produksi', 'pengecatan'] as const)).map((kind) => (
         <Card className="min-w-0" key={kind}>
           <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle>{titleOf(kind)}</CardTitle>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <CardTitle className={selectedKind ? 'sr-only' : 'mr-auto'}>{titleOf(kind)}</CardTitle>
               <Button
                 variant="default"
                 onClick={() => {
@@ -190,12 +192,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               >
                 {kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
               </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {kind === 'produksi'
+              <InfoTip teks={kind === 'produksi'
                 ? 'Perubahan harga tidak mengubah pemetaan order yang sudah tersimpan.'
-                : kind === 'packing' ? 'Tarif packing biasa dan kayu. Biaya pada pesanan bisa disesuaikan menurut ukuran.' : kind === 'non_kayu' ? 'Produk dan harga beli supplier yang dicatat manual.' : 'Tarif tagihan reseller, sudah termasuk jasa. Pengecatan internal tidak menimbulkan tagihan jasa karyawan.'}
-            </p>
+                : kind === 'packing' ? 'Tarif packing biasa dan kayu. Biaya pada pesanan bisa disesuaikan menurut ukuran.' : kind === 'non_kayu' ? 'Produk dan harga beli supplier yang dicatat manual.' : 'Tarif tagihan reseller, sudah termasuk jasa. Pengecatan internal tidak menimbulkan tagihan jasa karyawan.'} />
+              {kind === 'produksi' && <AksiLainnya><Button variant="outline" size="sm" disabled={changing || !filtered.some(p => p.active !== false)} onClick={() => setSelected(new Set(filtered.filter(p => p.active !== false).slice(0,100).map(p => p.id)))}>Pilih hasil pencarian</Button></AksiLainnya>}
+            </div>
+
           </CardHeader>
           <CardContent className="space-y-3">
             {q.error && (
@@ -206,12 +208,12 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </Button>
               </p>
             )}
-            {kind === 'produksi' && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-3">
+            {kind === 'produksi' && selection.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-2">
               <span className="mr-auto text-sm">{selection.length} produk dipilih · maksimal 100</span>
-              <Button variant="outline" size="sm" disabled={changing || !filtered.some(p => p.active !== false)} onClick={() => setSelected(new Set(filtered.filter(p => p.active !== false).slice(0,100).map(p => p.id)))}>Pilih hasil pencarian</Button>
               <Button variant="ghost" size="sm" disabled={!selected.size} onClick={() => setSelected(new Set())}>Bersihkan pilihan</Button>
               <Button size="sm" disabled={!selection.length || changing} onClick={() => setBulk(selection.map(p => ({...p})))}>Susun Struktur Massal</Button>
             </div>}
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] [&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1">
             <Input
               aria-label={`Cari harga ${kind}`}
               placeholder={kind === 'pengecatan' ? 'Cari model, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
@@ -240,6 +242,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 ))}
               </SelectField>
             )}
+            </div>
             <div className="hidden md:block">
               <TabelLokal
                 label={titleOf(kind)}
