@@ -47,7 +47,7 @@ export default function LoginPage() {
             <LogoApp besar alt="Ampel Kuning" className="h-20 sm:h-24" tinggi={96} />
           </div>
           <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">
-            <span className="sr-only">Ampel Kuning </span>
+            Ampel Kuning
             <span className="block text-base font-medium sm:text-lg" style={{ color: 'var(--text-muted)' }}>
               ERP System
             </span>

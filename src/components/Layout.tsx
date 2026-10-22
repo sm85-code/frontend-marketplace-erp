@@ -7,7 +7,7 @@ import AppearancePopover from '@/components/AppearancePopover'
 import BottomNav from '@/components/BottomNav'
 import WallpaperLayer from '@/components/WallpaperLayer'
 import { Button } from '@/components/ui/button'
-import { APP_BAWAAN, useIdentitas, useLabel } from '@/api/pengaturanUi'
+import { useIdentitas, useLabel } from '@/api/pengaturanUi'
 import LogoApp from '@/components/LogoApp'
 import { denganLabel, filterNav, idGrup, idNavBawah, itemBawahDipilih, kelompokNav } from '@/config/nav'
 import { ROLE_LABELS } from '@/config/roles'
@@ -29,7 +29,6 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const t = useLabel()
   const app = useIdentitas()
-  const bawaan = app.logo === APP_BAWAAN.logo // the built-in wordmark already spells the name
   const visible = useMemo(() => denganLabel(filterNav(akses), t), [akses, t])
   const allPaths = useMemo(() => visible.map((n) => n.to), [visible])
 
@@ -55,7 +54,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <LogoApp src={app.logo} alt={app.nama} className="h-9" tinggi={36} />
           <div className="min-w-0 leading-tight">
-            <div className={bawaan ? 'sr-only' : 'font-heading truncate text-sm font-semibold'}>{app.nama}</div>
+            <div className="font-heading truncate text-sm font-semibold">{app.nama}</div>
             <div className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
               {app.subjudul}
             </div>
@@ -81,7 +80,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="flex shrink-0 items-center gap-3 px-4 pt-5 pb-4">
             <LogoApp src={app.logo} alt={app.nama} className="h-12" tinggi={48} />
             <div className="min-w-0 flex-1">
-              <div className={bawaan ? 'sr-only' : 'font-heading text-sm leading-6 font-semibold whitespace-nowrap'}>{app.nama}</div>
+              <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">{app.nama}</div>
               <div className="text-xs leading-5 font-medium" style={{ color: 'var(--text-muted)' }}>
                 {app.subjudul}
               </div>
