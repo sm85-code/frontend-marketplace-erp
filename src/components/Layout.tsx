@@ -126,6 +126,13 @@ export default function Layout({ children }: { children: ReactNode }) {
             ))}
           </nav>
           <div className="shrink-0 space-y-2 border-t p-3" style={{ borderColor: 'var(--legacy-border)' }}>
+            {/* Desktop: the tool icons live here instead of a separate row above every page. */}
+            <div className="hidden items-center justify-between lg:flex" aria-label="Alat">
+              <TombolAI />
+              <AppearancePopover />
+              <PanduanFitur path={location.pathname} />
+              <NotificationsBell />
+            </div>
             <div className="flex items-center gap-2.5">
               <div
                 className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full font-heading text-sm font-semibold text-primary-foreground"
@@ -155,13 +162,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {open && <div className="fixed inset-0 z-40 bg-black/20 lg:hidden" onClick={() => setOpen(false)} />}
-      <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-0 lg:pb-0">
-        <div className="hidden h-14 items-center justify-end px-6 lg:flex">
-          <TombolAI />
-          <AppearancePopover />
-          <PanduanFitur path={location.pathname} />
-          <NotificationsBell />
-        </div>
+      <main className="min-w-0 flex-1 pt-20 pb-24 lg:pt-4 lg:pb-0">
         <div className="fade-in mx-auto max-w-[1400px] p-3 sm:p-5 lg:p-6 erp-content">
           {children}
         </div>
