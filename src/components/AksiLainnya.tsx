@@ -1,3 +1,4 @@
+import { MoreHorizontal } from 'lucide-react'
 import type { ReactNode } from 'react'
 import {
   Popover,
@@ -9,8 +10,8 @@ export default function AksiLainnya({ children, className }: { children: ReactNo
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className={className}>
-          Aksi lainnya
+        <Button size="icon" variant="outline" className={className} aria-label="Aksi lainnya" title="Aksi lainnya">
+          <MoreHorizontal className="size-4" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
