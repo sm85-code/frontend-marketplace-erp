@@ -135,7 +135,7 @@ export default function KampanyeShopee() {
             Buat iklan baru
           </Button>
           <Button variant="outline" onClick={() => refetch()} disabled={!akunId || isFetching}>
-            {isFetching ? 'Memuat…' : 'Muat ulang'}
+            {isFetching ? 'Memuat…' : 'Refresh'}
           </Button>
         </div>
 

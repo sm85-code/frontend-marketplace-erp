@@ -50,7 +50,7 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
       <div className="flex flex-wrap gap-2">
         <UbahPromosiForm akun={akun} promosi={p} blocked={end.isPending || barangPending || finished} onPending={setEditPending} />
         <Button variant="destructive" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(false)}>Akhiri Promosi</Button>
-        <Button variant="outline" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(true)}>Hapus Promosi</Button>
+        <Button variant="destructive" disabled={end.isPending || barangPending || editPending || finished} onClick={() => finish(true)}>Hapus Promosi</Button>
         <Button variant="outline" disabled={detail.isFetching || end.isPending || barangPending || editPending} onClick={() => { void detail.refetch() }}>Refresh Detail</Button>
       </div>
       <p className="text-muted-foreground">Hapus dipakai untuk promosi yang belum dimulai. Shopee memeriksa kelayakan tindakan; bila ditolak, pesan dan request ID ditampilkan.</p>

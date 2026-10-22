@@ -38,12 +38,12 @@ export default function ShopeeEngagement({ detail, bagian }: { detail: KatalogDe
   } })
   return <div>
     {bagian === 'boost' && <div className="space-y-2"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><h3 className="text-sm font-medium">Boost produk</h3><p className="text-xs text-muted-foreground">{cooldown > 0 ? `Bisa dicoba lagi dalam ${Math.ceil(cooldown / 60)} menit.` : 'Minta Shopee menaikkan visibilitas produk ini.'}</p></div><Button variant="outline" size="sm" disabled={boost.isPending || cooldown > 0 || detail.status === 'SELLER_DELETE'} onClick={async () => { if (await confirm({ title: 'Boost produk ini?', description: `${detail.nama} di ${detail.nama_toko}. Shopee menentukan ketersediaan boost dan cooldown.` })) boost.mutate() }}>{boost.isPending ? 'Mengirim…' : 'Boost produk'}</Button></div>
-      {boosted.error && <><ErrorDetails error={boosted.error} /><Button variant="ghost" size="sm" onClick={() => void boosted.refetch()}>Muat ulang status boost</Button></>}
+      {boosted.error && <><ErrorDetails error={boosted.error} /><Button variant="ghost" size="sm" onClick={() => void boosted.refetch()}>Refresh status boost</Button></>}
       <ErrorDetails error={boost.error} result={boost.data} />
     </div>}
     {bagian === 'ulasan' && <div className="space-y-3">
       {reviews.isPending && <Spinner column label="Memuat ulasan…" />}
-      {reviews.error && <><ErrorDetails error={reviews.error} /><Button variant="outline" size="sm" onClick={() => void reviews.refetch()}>Muat ulang ulasan</Button></>}
+      {reviews.error && <><ErrorDetails error={reviews.error} /><Button variant="outline" size="sm" onClick={() => void reviews.refetch()}>Refresh ulasan</Button></>}
       {reviews.data?.items.map(row => <Review key={row.comment_id} productId={detail.id} row={row} />)}
       {reviews.data && !reviews.data.items.length && <p className="text-sm text-muted-foreground">Tidak ada ulasan pada halaman ini.</p>}
       <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" disabled={!previous.length || reviews.isFetching} onClick={() => { setCursor(previous.at(-1) || ''); setPrevious(p => p.slice(0, -1)) }}>Sebelumnya</Button><Button variant="outline" size="sm" disabled={!reviews.data?.more || !reviews.data.next_cursor || reviews.data.next_cursor === cursor || reviews.isFetching} onClick={() => { setPrevious(p => [...p, cursor]); setCursor(reviews.data!.next_cursor) }}>Berikutnya</Button></div>

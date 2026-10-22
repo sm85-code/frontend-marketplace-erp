@@ -55,7 +55,7 @@ export default function ProdukKeluargaField({ value, options, onChange }: {
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" disabled={manage.isPending} onClick={() => { setRename(families?.find((f) => f.id === value)?.nama ?? ''); setRenaming(true) }}>Ubah nama induk</Button>
         <Button type="button" variant="outline" disabled={manage.isPending} onClick={async () => {
-          if (await confirm({ title: 'Hapus produk induk?', description: 'Hanya induk tanpa SKU varian yang dapat dihapus. Stok SKU tidak dihapus.' })) manage.mutate({ id: value })
+          if (await confirm({ title: 'Hapus produk induk?', description: 'Hanya induk tanpa SKU varian yang dapat dihapus. Stok SKU tidak dihapus.', confirmLabel: 'Hapus', destructive: true })) manage.mutate({ id: value })
         }}>Hapus induk kosong</Button>
       </div>
       {renaming && <div className="flex gap-2"><Input aria-label="Nama baru produk induk" value={rename} maxLength={255} onChange={(e) => setRename(e.target.value)} /><Button type="button" disabled={manage.isPending || !rename.trim()} onClick={() => manage.mutate({ id: value, nama: rename })}>Simpan nama</Button></div>}

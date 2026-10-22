@@ -117,7 +117,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
         </TableRow>} />
       {!rows.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan yang sedang menunggu pencairan.</p>}
       {rows.length > 0 && !shown.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan dengan status pengiriman yang dipilih.</p>}
-      <div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? 'Memuat…' : 'Perbarui'}</Button></div>
+      <div><Button variant="outline" size="sm" disabled={q.isFetching} onClick={() => void q.refetch()}>{q.isFetching ? 'Memuat…' : 'Refresh'}</Button></div>
     </>}
   </div>
 }

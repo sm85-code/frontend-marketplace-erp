@@ -252,7 +252,7 @@ export default function FinancialShippingReceivables({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Pesanan Dalam Pengiriman</CardTitle>
           <Button variant="outline" disabled={fetching} onClick={refresh}>
-            {fetching ? "Memuat…" : "Perbarui data"}
+            {fetching ? "Memuat…" : "Refresh"}
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -339,7 +339,7 @@ export default function FinancialShippingReceivables({
                               )}
                               {shop.failed && (
                                 <span className="mt-1 block text-xs text-destructive">
-                                  Gagal membaca Shopee · klik Perbarui data
+                                  Gagal membaca Shopee · klik Refresh
                                 </span>
                               )}
                               {shop.partial && (
