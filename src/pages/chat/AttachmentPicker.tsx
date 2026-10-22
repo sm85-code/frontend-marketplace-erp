@@ -8,11 +8,13 @@ import { FotoItem } from '../pesanan/ItemRingkas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export function ChatCardView({ card }: { card: ChatCard }) {
+/** `rujukan` shows the card as what a message refers to (quoted, with a label), so the message text stands apart from it. */
+export function ChatCardView({ card, rujukan }: { card: ChatCard; rujukan?: string }) {
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-border/70 bg-muted/70 p-3">
+    <div className={`flex min-w-0 items-start gap-3 rounded-xl border bg-muted/70 p-3 ${rujukan ? 'border-l-4 border-border/70 border-l-primary/60' : 'border-border/70'}`}>
       <FotoItem item={{ nama_produk: card.nama, foto: card.foto }} />
       <div className="min-w-0 flex-1 text-sm">
+        {rujukan && <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary/80">{rujukan}</div>}
         <div className="break-words font-medium">{card.order_sn ? `Pesanan #${card.order_sn}` : card.nama}</div>
         {card.varian && <div className="mt-1 text-xs font-medium text-muted-foreground">Varian: {card.varian}</div>}
         {card.total !== undefined && <div>Total: {fmtMoney(card.total)}</div>}

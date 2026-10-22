@@ -507,13 +507,13 @@ export default function ChatPage() {
                     className={['notification', 'system'].includes(m.message_type) ? 'mx-auto max-w-[90%] rounded-lg bg-background/80 px-3 py-2 text-center text-muted-foreground' : `w-fit max-w-[90%] rounded-2xl p-3 shadow-sm ${String(m.from_shop_id) === active?.id_toko_eksternal ? 'ml-auto rounded-tr-sm bg-primary/15' : 'rounded-tl-sm border bg-card'}`}
                   >
                     <>
-                      {m.message_type === 'text' && (m.context?.order || m.context?.product) && <div className="mb-2"><MessageContent content={m.content} type="text"/></div>}
+                      {m.message_type === 'text' && (m.context?.order || m.context?.product) && <div className="mb-2.5 text-[15px] leading-relaxed"><MessageContent content={m.content} type="text"/></div>}
                       {chatVariationCard(m.content, m.message_type) ? (
                         <ChatCardView card={chatVariationCard(m.content, m.message_type)!}/>
                       ) : m.context?.order ? (
-                        <ChatCardView card={m.context.order} />
+                        <ChatCardView card={m.context.order} rujukan="Pesanan terkait" />
                       ) : m.context?.product ? (
-                        <ChatCardView card={m.context.product} />
+                        <ChatCardView card={m.context.product} rujukan="Produk terkait" />
                       ) : (
                         <MessageContent
                           outgoing={String(m.from_shop_id) === active?.id_toko_eksternal}
