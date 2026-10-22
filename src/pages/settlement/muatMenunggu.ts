@@ -43,43 +43,54 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
   const dari = wibDate(new Date(Date.now() - 13 * 86400000))
   const sampai = wibDate(new Date())
   const daftar = new Map<string, api.IncomeRow>()
-  for (const shop of shops) {
-    let cursor = ''
-    for (let page = 0; page < 40; page++) {
-      const result = await api.income(shop.id, { dari, sampai, income_status: 2, cursor, page_size: 100 })
-      for (const row of result.items) if (row.order_sn) daftar.set(`${shop.id}:${row.order_sn}`, row)
-      if (!result.ada_lagi || !result.next_cursor) break
-      cursor = result.next_cursor
-    }
-  }
   const cepat = new Map<string, number>()
-  const catatanDanaCepat: string[] = []
-  for (const shop of shops) {
-    try {
-      const r = await api.danaCepat(shop.id)
-      if (r.aktif) for (const [sn, v] of Object.entries(r.pesanan)) cepat.set(`${shop.id}:${sn}`, Number(v))
-      if (r.aktif && r.tanpa_pesanan) catatanDanaCepat.push(`${shop.nama_toko}: ${r.tanpa_pesanan} pencairan Dana Cepat tidak mencantumkan nomor pesanan di Shopee.`)
-    } catch (e) {
-      // Dana Cepat is a label only; the list still loads, but say why the label is missing.
-      catatanDanaCepat.push(`${shop.nama_toko}: keterangan Dana Cepat belum bisa dimuat (${getApiError(e)}).`)
-    }
-  }
   const erp = new Map<string, { id: string; status: string }>()
   const ids = new Set(shops.map((s) => s.id))
-  for (let halaman = 1; halaman <= 20; halaman++) {
-    const page = await daftarPesanan({ tahap: 'dikirim', akun_id: semuaToko ? undefined : shops[0]?.id, halaman, per_halaman: 100 })
-    for (const o of page.items) if (o.akun_id && ids.has(o.akun_id)) erp.set(`${o.akun_id}:${o.id_eksternal}`, { id: o.id, status: labelStatus(o) })
-    if (halaman * page.per_halaman >= page.total) break
-  }
+  // Shops are independent (each has its own Shopee token), so they are read side by side instead of one after another;
+  // the Pesanan menu is read at the same time. The result is the same, only the waiting is shorter.
+  const pendapatan = Promise.all(
+    shops.map(async (shop) => {
+      let cursor = ''
+      for (let page = 0; page < 40; page++) {
+        const result = await api.income(shop.id, { dari, sampai, income_status: 2, cursor, page_size: 100 })
+        for (const row of result.items) if (row.order_sn) daftar.set(`${shop.id}:${row.order_sn}`, row)
+        if (!result.ada_lagi || !result.next_cursor) break
+        cursor = result.next_cursor
+      }
+    }),
+  )
+  const catatanPerToko = Promise.all(
+    shops.map(async (shop): Promise<string | null> => {
+      try {
+        const r = await api.danaCepat(shop.id)
+        if (r.aktif) for (const [sn, v] of Object.entries(r.pesanan)) cepat.set(`${shop.id}:${sn}`, Number(v))
+        return r.aktif && r.tanpa_pesanan ? `${shop.nama_toko}: ${r.tanpa_pesanan} pencairan Dana Cepat tidak mencantumkan nomor pesanan di Shopee.` : null
+      } catch (e) {
+        // Dana Cepat is a label only; the list still loads, but say why the label is missing.
+        return `${shop.nama_toko}: keterangan Dana Cepat belum bisa dimuat (${getApiError(e)}).`
+      }
+    }),
+  )
+  const pesananErp = (async () => {
+    for (let halaman = 1; halaman <= 20; halaman++) {
+      const page = await daftarPesanan({ tahap: 'dikirim', akun_id: semuaToko ? undefined : shops[0]?.id, halaman, per_halaman: 100 })
+      for (const o of page.items) if (o.akun_id && ids.has(o.akun_id)) erp.set(`${o.akun_id}:${o.id_eksternal}`, { id: o.id, status: labelStatus(o) })
+      if (halaman * page.per_halaman >= page.total) break
+    }
+  })()
+  const [, catatan] = await Promise.all([pendapatan, catatanPerToko, pesananErp])
+  const catatanDanaCepat = catatan.filter((c): c is string => c !== null)
   const kunci = [...new Set([...daftar.keys(), ...erp.keys()])]
   const detail = new Map<string, api.IncomeOrderDetail>()
-  for (const shop of shops) {
-    const nomor = kunci.filter((k) => k.startsWith(`${shop.id}:`)).map((k) => k.slice(shop.id.length + 1)).filter((n) => /^[A-Za-z0-9]{1,50}$/.test(n))
-    for (let i = 0; i < nomor.length; i += BATCH) {
-      const batch = await api.incomeOrders(shop.id, nomor.slice(i, i + BATCH))
-      for (const item of batch.items) detail.set(`${shop.id}:${item.order_sn}`, item)
-    }
-  }
+  await Promise.all(
+    shops.map(async (shop) => {
+      const nomor = kunci.filter((k) => k.startsWith(`${shop.id}:`)).map((k) => k.slice(shop.id.length + 1)).filter((n) => /^[A-Za-z0-9]{1,50}$/.test(n))
+      for (let i = 0; i < nomor.length; i += BATCH) {
+        const batch = await api.incomeOrders(shop.id, nomor.slice(i, i + BATCH))
+        for (const item of batch.items) detail.set(`${shop.id}:${item.order_sn}`, item)
+      }
+    }),
+  )
   const dikecualikan: Ringkasan = ringkasanKosong()
   const tidakDihitung: TidakDihitung[] = []
   const baris: BarisCair[] = []
@@ -115,9 +126,9 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
     ...baris.filter((b) => b.statusErp == null).map((b) => ({ shopId: b.shopId, number: b.number, set: (s: string | null) => { b.statusErp = s } })),
     ...tidakDihitung.filter((t) => t.statusErp == null).map((t) => ({ shopId: [...nama].find(([, n]) => n === t.shopName)?.[0] ?? '', number: t.number, set: (s: string | null) => { t.statusErp = s } })),
   ].filter((x) => x.shopId && !erp.has(kunciErp(x.shopId, x.number)))
-  for (let i = 0; i < belumDiketahui.length; i += 4) {
+  for (let i = 0; i < belumDiketahui.length; i += 8) {
     await Promise.all(
-      belumDiketahui.slice(i, i + 4).map(async (x) => {
+      belumDiketahui.slice(i, i + 8).map(async (x) => {
         try {
           const page = await daftarPesanan({ q: x.number, akun_id: x.shopId, halaman: 1, per_halaman: 5 })
           const ketemu = page.items.find((o) => o.id_eksternal === x.number)
@@ -130,9 +141,9 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
   }
   // Shipped but not in Shopee's list: the estimated payout lives in the order's escrow detail.
   const tanpaDaftar = baris.filter((b) => !b.dariDaftar && b.erpId)
-  for (let i = 0; i < tanpaDaftar.length; i += 4) {
+  for (let i = 0; i < tanpaDaftar.length; i += 8) {
     await Promise.all(
-      tanpaDaftar.slice(i, i + 4).map(async (b) => {
+      tanpaDaftar.slice(i, i + 8).map(async (b) => {
         try {
           const income = (await api.orderIncome(b.erpId!)).order_income
           const jumlah = Number(income.escrow_amount_after_adjustment ?? income.escrow_amount)
