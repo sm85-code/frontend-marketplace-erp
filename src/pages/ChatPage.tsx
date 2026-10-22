@@ -526,8 +526,8 @@ export default function ChatPage() {
                     </>
                     <div className="mt-1 text-right text-[11px] text-muted-foreground">{shortTime(m.created_timestamp)}</div>
                     {m.context?.order_id && (
-                      <Link className="text-sm underline" to={`/pesanan/${encodeURIComponent(m.context.order_id)}`}>
-                        Buka pesanan terkait
+                      <Link className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/70 text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring" to={`/pesanan/${encodeURIComponent(m.context.order_id)}`} aria-label="Buka pesanan terkait" title="Buka pesanan">
+                        <ArrowUpRight className="size-4" aria-hidden="true" />
                       </Link>
                     )}
                     {m.context?.katalog_id && (
