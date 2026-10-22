@@ -1,6 +1,6 @@
 import Spinner from '@/components/Spinner'
 import { useState } from 'react'
-import { Package, ReceiptText, Paperclip, Plus } from 'lucide-react'
+import { Package, ReceiptText, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { fmtMoney } from '@/api/client'
 import type { ChatAttachment, ChatCard, ChatContext } from '@/lib/chat'
@@ -44,6 +44,8 @@ export default function AttachmentPicker({
   setOffset,
   choose,
   disabled,
+  open,
+  onOpenChange,
 }: {
   data?: ChatContext
   search: string
@@ -52,12 +54,13 @@ export default function AttachmentPicker({
   setOffset: (value: number) => void
   choose: (value: ChatAttachment) => void
   disabled: boolean
+  /** Opened from the "Lampirkan" menu of the reply box, which owns the button. */
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'item' | 'order'>('order')
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button type="button" variant="outline" className="min-h-10 gap-1.5 whitespace-normal rounded-xl px-2 text-xs sm:text-sm" aria-label="Lampirkan produk atau pesanan" disabled={disabled} onClick={() => setOpen(true)}><Paperclip className="size-4"/>Produk<span className="hidden sm:inline"> / Pesanan</span></Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>Lampirkan produk atau pesanan</DialogTitle><DialogDescription>Pilih kartu dari toko percakapan, lalu periksa sebelum dikirim.</DialogDescription></DialogHeader>
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" className="h-auto min-h-11 whitespace-normal px-2 text-xs sm:text-sm" variant={tab === 'order' ? 'default' : 'outline'} onClick={() => setTab('order')}>
@@ -90,7 +93,7 @@ export default function AttachmentPicker({
                 aria-label={`Lampirkan ${tab === 'order' ? 'pesanan' : 'produk'} ${card.nama}`}
                 disabled={disabled}
                 className="flex items-center gap-3 rounded-xl border bg-card p-3 text-left hover:border-primary/60 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                onClick={() => {choose({ type: tab, card });setOpen(false)}}
+                onClick={() => {choose({ type: tab, card });onOpenChange(false)}}
               >
                 <div className="min-w-0 flex-1"><ChatCardView card={card} /></div><Plus className="size-4 shrink-0 text-primary"/>
               </button>
