@@ -71,38 +71,70 @@ function HolidayForm({ id, initial }: { id: string; initial: api.Holiday }) {
   return <form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (await confirm({ title: enabled ? 'Aktifkan libur toko?' : 'Nonaktifkan libur toko?', description: enabled && type === 0 ? 'Pembeli tidak dapat membuat pesanan baru selama toko libur.' : enabled ? 'Pembeli tetap dapat memesan; Shopee menyesuaikan batas waktu pengiriman.' : 'Toko kembali menerima pesanan sesuai pengaturan Shopee.' })) m.mutate() }}><label className="flex items-center gap-2"><input type="checkbox" checked={enabled} disabled={m.isPending} onChange={e => setEnabled(e.target.checked)} />Mode libur</label>{enabled && <><select aria-label="Jenis libur" className={field} value={type} disabled={m.isPending} onChange={e => setType(Number(e.target.value) as 0 | 1)}><option value={0}>Libur penuh · tidak menerima pesanan</option><option value={1}>Libur sebagian · tetap menerima pesanan</option></select>{type === 0 && <label className="flex items-center gap-2"><input type="checkbox" checked={scheduled} disabled={m.isPending} onChange={e => setScheduled(e.target.checked)} />Jadwalkan libur</label>}{(scheduled || type === 1) && <div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="holiday-start">Mulai (WIB)</Label><Input id="holiday-start" required type="datetime-local" step={3600} disabled={m.isPending} value={start} onChange={e => setStart(e.target.value)} /></div><div><Label htmlFor="holiday-end">Berakhir pada (WIB)</Label><Input id="holiday-end" required type="datetime-local" step={3600} disabled={m.isPending} value={end} onChange={e => setEnd(e.target.value)} /></div></div>}<Label htmlFor="holiday-description">Keterangan libur</Label><Input id="holiday-description" maxLength={500} disabled={m.isPending} value={description} onChange={e => setDescription(e.target.value)} /></>}{m.error && <p role="alert" className="text-sm text-destructive">{getApiError(m.error)}</p>}<Button type="submit" disabled={m.isPending}>Simpan ke Shopee</Button></form>
 }
 
-function Channels({ id }: { id: string }) {
-  const q = useQuery({ queryKey: ['shop-settings', id, 'jasa-kirim'], queryFn: () => api.channels(id), retry: false })
-  return <div className="space-y-3">{q.isPending && <Spinner column />}{q.error && <QueryError error={q.error} retry={q.refetch} />}{q.data?.logistics_channel_list.map(c => <ChannelForm key={JSON.stringify(c)} id={id} initial={c} />)}</div>
-}
-function ChannelForm({ id, initial: c }: { id: string; initial: api.Channel }) {
-  const [enabled, setEnabled] = useState(c.enabled)
-  const [cod, setCod] = useState(c.cod_enabled)
-  const [driver, setDriver] = useState(c.auto_call_driver_setting?.auto_call_driver_enabled ?? false)
-  const [minutes, setMinutes] = useState(c.auto_call_driver_setting?.preparation_time ?? 0)
-  const confirm = useConfirm()
-  const m = useMutation({ retry: false, mutationFn: () => {
-    const body: api.ChannelEdit = {}
-    if (enabled !== c.enabled) body.enabled = enabled
-    if (cod !== c.cod_enabled) body.cod_enabled = cod
-    if (driver !== !!c.auto_call_driver_setting?.auto_call_driver_enabled || (driver && minutes !== c.auto_call_driver_setting?.preparation_time)) body.auto_call_driver_setting = { auto_call_driver_enabled: driver, ...(driver ? { preparation_time: minutes } : {}) }
-    return api.editChannel(id, c.logistics_channel_id, body)
-  }, onSuccess: useSave(id, 'jasa-kirim') })
-  const changed = enabled !== c.enabled || cod !== c.cod_enabled || driver !== !!c.auto_call_driver_setting?.auto_call_driver_enabled || (driver && minutes !== c.auto_call_driver_setting?.preparation_time)
-  return <form className="space-y-3 rounded-xl border p-3" onSubmit={async e => { e.preventDefault(); if (await confirm({ title: 'Ubah jasa kirim di Shopee?', description: c.logistics_channel_name })) m.mutate() }}><h3 className="font-medium">{c.logistics_channel_name}</h3><div className="flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="checkbox" checked={enabled} disabled={m.isPending || c.force_enable} onChange={e => setEnabled(e.target.checked)} />Aktif{c.force_enable ? ' · wajib Shopee' : ''}</label><label className="flex items-center gap-2"><input type="checkbox" checked={cod} disabled={m.isPending} onChange={e => setCod(e.target.checked)} />COD</label>{c.auto_call_driver_setting?.auto_call_driver_eligible && <label className="flex items-center gap-2"><input type="checkbox" checked={driver} disabled={m.isPending} onChange={e => setDriver(e.target.checked)} />Penjemputan otomatis</label>}</div>{driver && c.auto_call_driver_setting?.auto_call_driver_eligible && <div><Label htmlFor={`driver-${c.logistics_channel_id}`}>Persiapan (menit)</Label><Input id={`driver-${c.logistics_channel_id}`} type="number" required min={c.auto_call_driver_setting.preparation_time_limit?.min_preparation_time} max={c.auto_call_driver_setting.preparation_time_limit?.max_preparation_time} value={minutes} disabled={m.isPending} onChange={e => setMinutes(Number(e.target.value))} /></div>}{m.error && <p role="alert" className="text-sm text-destructive">{getApiError(m.error)}</p>}<Button type="submit" size="sm" disabled={!changed || m.isPending}>Simpan</Button></form>
+type DraftKirim = { enabled: boolean; cod: boolean; driver: boolean; minutes: number }
+const draftDari = (c: api.Channel): DraftKirim => ({ enabled: c.enabled, cod: c.cod_enabled, driver: c.auto_call_driver_setting?.auto_call_driver_enabled ?? false, minutes: c.auto_call_driver_setting?.preparation_time ?? 0 })
+function bodyKirim(c: api.Channel, d: DraftKirim): api.ChannelEdit | null {
+  const body: api.ChannelEdit = {}
+  if (d.enabled !== c.enabled) body.enabled = d.enabled
+  if (d.cod !== c.cod_enabled) body.cod_enabled = d.cod
+  if (d.driver !== !!c.auto_call_driver_setting?.auto_call_driver_enabled || (d.driver && d.minutes !== c.auto_call_driver_setting?.preparation_time)) body.auto_call_driver_setting = { auto_call_driver_enabled: d.driver, ...(d.driver ? { preparation_time: d.minutes } : {}) }
+  return Object.keys(body).length ? body : null
 }
 
-function Addresses({ id }: { id: string }) {
-  const q = useQuery({ queryKey: ['shop-settings', id, 'alamat'], queryFn: () => api.addresses(id), retry: false })
-  return <div className="space-y-3">{q.isPending && <Spinner column />}{q.error && <QueryError error={q.error} retry={q.refetch} />}{q.data?.address_list.map(a => <AddressForm key={JSON.stringify(a)} id={id} address={a} />)}{q.data && !q.data.address_list.length && <p className="text-sm text-muted-foreground">Belum ada alamat di Shopee.</p>}</div>
+/** All couriers in one list with ONE save button; only changed couriers are sent to Shopee. */
+function Channels({ id }: { id: string }) {
+  const q = useQuery({ queryKey: ['shop-settings', id, 'jasa-kirim'], queryFn: () => api.channels(id), retry: false })
+  const [draft, setDraft] = useState<Record<number, DraftKirim>>({})
+  const confirm = useConfirm()
+  const selesai = useSave(id, 'jasa-kirim')
+  const list = q.data?.logistics_channel_list ?? []
+  const ubah = list.map(c => ({ c, body: draft[c.logistics_channel_id] ? bodyKirim(c, draft[c.logistics_channel_id]) : null })).filter((x): x is { c: api.Channel; body: api.ChannelEdit } => !!x.body)
+  const m = useMutation({ retry: false, mutationFn: async () => {
+    const warnings: string[] = []
+    for (const { c, body } of ubah) { const r = await api.editChannel(id, c.logistics_channel_id, body); warnings.push(...(r?.warnings ?? [])) }
+    return { warnings }
+  }, onSuccess: r => { setDraft({}); selesai(r) } })
+  const set = (c: api.Channel, patch: Partial<DraftKirim>) => setDraft(v => ({ ...v, [c.logistics_channel_id]: { ...(v[c.logistics_channel_id] ?? draftDari(c)), ...patch } }))
+  return <form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (await confirm({ title: 'Ubah jasa kirim di Shopee?', description: ubah.map(x => x.c.logistics_channel_name).join(', ') })) m.mutate() }}>
+    {q.isPending && <Spinner column />}{q.error && <QueryError error={q.error} retry={q.refetch} />}
+    {!!list.length && <ul className="divide-y rounded-xl border">{list.map(c => { const d = draft[c.logistics_channel_id] ?? draftDari(c); const eligible = c.auto_call_driver_setting?.auto_call_driver_eligible; return <li key={c.logistics_channel_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 text-sm">
+      <span className="min-w-0 basis-full font-medium sm:basis-40">{c.logistics_channel_name}</span>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={d.enabled} disabled={m.isPending || c.force_enable} onChange={e => set(c, { enabled: e.target.checked })} />Aktif{c.force_enable ? ' · wajib Shopee' : ''}</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={d.cod} disabled={m.isPending} onChange={e => set(c, { cod: e.target.checked })} />COD</label>
+      {eligible && <label className="flex items-center gap-2"><input type="checkbox" checked={d.driver} disabled={m.isPending} onChange={e => set(c, { driver: e.target.checked })} />Penjemputan otomatis</label>}
+      {eligible && d.driver && <label className="flex items-center gap-2"><span>Persiapan (menit)</span><Input id={`driver-${c.logistics_channel_id}`} className="h-8 w-20" type="number" required min={c.auto_call_driver_setting?.preparation_time_limit?.min_preparation_time} max={c.auto_call_driver_setting?.preparation_time_limit?.max_preparation_time} value={d.minutes} disabled={m.isPending} onChange={e => set(c, { minutes: Number(e.target.value) })} /></label>}
+    </li> })}</ul>}
+    {m.error && <p role="alert" className="text-sm text-destructive">{getApiError(m.error)}</p>}
+    {!!list.length && <Button type="submit" disabled={!ubah.length || m.isPending}>{m.isPending ? 'Menyimpan…' : 'Simpan'}</Button>}
+  </form>
 }
 
 const addressLabels: Record<api.AddressRole, string> = { DEFAULT_ADDRESS: 'Alamat utama', PICKUP_ADDRESS: 'Penjemputan', RETURN_ADDRESS: 'Pengembalian', INBOUND_PICKUP_ADDRESS: 'Penjemputan inbound' }
-function AddressForm({ id, address: a }: { id: string; address: api.PickupAddress }) {
-  const initial = (a.address_type ?? []).map(v => v === 'PICK_UP_ADDRESS' ? 'PICKUP_ADDRESS' : v).filter((v): v is api.AddressRole => v in addressLabels)
-  const [roles, setRoles] = useState<api.AddressRole[]>(initial)
+const peranAwal = (a: api.PickupAddress) => (a.address_type ?? []).map(v => v === 'PICK_UP_ADDRESS' ? 'PICKUP_ADDRESS' : v).filter((v): v is api.AddressRole => v in addressLabels)
+const sama = (x: api.AddressRole[], y: api.AddressRole[]) => [...x].sort().join(',') === [...y].sort().join(',')
+
+/** All pickup/return addresses with ONE save button; only changed addresses are sent. */
+function Addresses({ id }: { id: string }) {
+  const q = useQuery({ queryKey: ['shop-settings', id, 'alamat'], queryFn: () => api.addresses(id), retry: false })
+  const [draft, setDraft] = useState<Record<number, api.AddressRole[]>>({})
   const confirm = useConfirm()
-  const m = useMutation({ retry: false, mutationFn: () => api.setAddress(id, a.address_id, roles), onSuccess: useSave(id, 'alamat') })
-  const changed = [...roles].sort().join(',') !== [...initial].sort().join(',')
-  return <form className="space-y-3 rounded-xl border p-3" onSubmit={async e => { e.preventDefault(); if (await confirm({ title: 'Ubah penggunaan alamat di Shopee?', description: [a.address, a.city].filter(Boolean).join(', ') })) m.mutate() }}><p className="break-words">{[a.address, a.district, a.city, a.state, a.zipcode].filter(Boolean).join(', ')}</p><div className="grid gap-2 sm:grid-cols-2">{(Object.keys(addressLabels) as api.AddressRole[]).map(role => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={roles.includes(role)} disabled={m.isPending} onChange={e => setRoles(v => e.target.checked ? [...v, role] : v.filter(r => r !== role))} />{addressLabels[role]}</label>)}</div>{m.error && <p role="alert" className="text-sm text-destructive">{getApiError(m.error)}</p>}<Button type="submit" size="sm" disabled={m.isPending || !changed || !roles.length}>Simpan penggunaan alamat</Button></form>
+  const selesai = useSave(id, 'alamat')
+  const list = q.data?.address_list ?? []
+  const ubah = list.filter(a => draft[a.address_id] && !sama(draft[a.address_id], peranAwal(a)))
+  const m = useMutation({ retry: false, mutationFn: async () => {
+    const warnings: string[] = []
+    for (const a of ubah) { const r = await api.setAddress(id, a.address_id, draft[a.address_id]); warnings.push(...(r?.warnings ?? [])) }
+    return { warnings }
+  }, onSuccess: r => { setDraft({}); selesai(r) } })
+  const kosong = ubah.some(a => !draft[a.address_id].length)
+  return <form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (await confirm({ title: 'Ubah penggunaan alamat di Shopee?', description: ubah.map(a => [a.address, a.city].filter(Boolean).join(', ')).join(' · ') })) m.mutate() }}>
+    {q.isPending && <Spinner column />}{q.error && <QueryError error={q.error} retry={q.refetch} />}
+    {q.data && !list.length && <p className="text-sm text-muted-foreground">Belum ada alamat di Shopee.</p>}
+    {!!list.length && <ul className="divide-y rounded-xl border">{list.map(a => { const roles = draft[a.address_id] ?? peranAwal(a); return <li key={a.address_id} className="space-y-1 px-3 py-2">
+      <p className="break-words text-sm">{[a.address, a.district, a.city, a.state, a.zipcode].filter(Boolean).join(', ')}</p>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">{(Object.keys(addressLabels) as api.AddressRole[]).map(role => <label key={role} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={roles.includes(role)} disabled={m.isPending} onChange={e => setDraft(v => ({ ...v, [a.address_id]: e.target.checked ? [...roles, role] : roles.filter(r => r !== role) }))} />{addressLabels[role]}</label>)}</div>
+    </li> })}</ul>}
+    {m.error && <p role="alert" className="text-sm text-destructive">{getApiError(m.error)}</p>}
+    {!!list.length && <Button type="submit" disabled={!ubah.length || kosong || m.isPending}>{m.isPending ? 'Menyimpan…' : 'Simpan'}</Button>}
+  </form>
 }
