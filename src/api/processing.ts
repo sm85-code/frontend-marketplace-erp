@@ -259,3 +259,6 @@ export const disconnectSupplierCatalog = async () => (await api.delete('/process
 export type PaintColor = { id: string; name: string; version: number }
 export const getPaintColors = async () => (await api.get<{ items: PaintColor[] }>('/processing/paint-colors')).data
 export const savePaintColor = async ({id, ...body}: PaintColor) => (await api.put(`/processing/paint-colors/${encodeURIComponent(id)}`, body)).data
+/** Items already mapped vs still waiting, per shop (same scope as the Cek Pesanan list). */
+export const getProcessingRekap = async () =>
+  (await api.get<{ items: { toko: string; belum: number; sudah: number }[]; belum: number; sudah: number }>('/processing/candidates/rekap')).data
