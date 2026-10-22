@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
 import * as endpoints from '@/api/endpoints'
@@ -91,30 +92,30 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
           {!excluded && o?.tersedia && s && <>
             {metode === 'pickup' && o.alamat.length > 0 && <label className="block space-y-1 text-sm">
               <span>Alamat penjemputan</span>
-              <select className={selectClass} value={s.address_id ?? ''} onChange={(e) => {
+              <PilihNative className={selectClass} value={s.address_id ?? ''} onChange={(e) => {
                 const addr = o.alamat.find((a) => a.address_id === Number(e.target.value))
                 update(p.id, { address_id: addr?.address_id, pickup_time_id: o.wajib.includes('pickup_time_id')
                   ? (addr?.jadwal.find((t) => t.rekomendasi) ?? addr?.jadwal[0])?.pickup_time_id : undefined })
               }}>
                 <option value="">Pilih alamat</option>
                 {o.alamat.map((a) => <option key={a.address_id} value={a.address_id}>{a.label}{a.rekomendasi ? ' (rekomendasi)' : ''}</option>)}
-              </select>
+              </PilihNative>
             </label>}
             {metode === 'pickup' && o.wajib.includes('pickup_time_id') && <label className="block space-y-1 text-sm">
               <span>Jadwal penjemputan</span>
-              <select className={selectClass} value={s.pickup_time_id ?? ''} onChange={(e) => update(p.id, { pickup_time_id: e.target.value })}>
+              <PilihNative className={selectClass} value={s.pickup_time_id ?? ''} onChange={(e) => update(p.id, { pickup_time_id: e.target.value })}>
                 <option value="">Pilih jadwal</option>
                 {a?.jadwal.map((t) => <option key={t.pickup_time_id} value={t.pickup_time_id}>
                   {t.tanggal ? `${new Date(t.tanggal * 1000).toLocaleDateString('id-ID')} — ` : ''}{t.label}{t.rekomendasi ? ' (rekomendasi)' : ''}
                 </option>)}
-              </select>
+              </PilihNative>
             </label>}
             {metode === 'dropoff' && o.wajib.includes('branch_id') && <label className="block space-y-1 text-sm">
               <span>Gerai/cabang tujuan</span>
-              <select className={selectClass} value={s.branch_id ?? ''} onChange={(e) => update(p.id, { branch_id: Number(e.target.value) || undefined })}>
+              <PilihNative className={selectClass} value={s.branch_id ?? ''} onChange={(e) => update(p.id, { branch_id: Number(e.target.value) || undefined })}>
                 <option value="">Pilih cabang</option>
                 {o.cabang.map((b) => <option key={b.branch_id} value={b.branch_id}>{b.label}</option>)}
-              </select>
+              </PilihNative>
             </label>}
             {metode === 'dropoff' && o.wajib.includes('sender_real_name') && <label className="block space-y-1 text-sm">
               <span>Nama pengirim</span>

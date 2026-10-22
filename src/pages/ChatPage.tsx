@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import { DropdownMenu } from 'radix-ui'
 import Spinner from '@/components/Spinner'
@@ -338,7 +339,7 @@ export default function ChatPage() {
         </p>
       )}
       <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 ${selected ? "hidden md:grid" : ""}`}>
-        <select
+        <PilihNative
           aria-label="Toko Chat"
           disabled={upload.isPending}
           className="w-full min-w-0 rounded-md border p-2"
@@ -357,7 +358,7 @@ export default function ChatPage() {
               {a.nama_toko}
             </option>
           ))}
-        </select>
+        </PilihNative>
         <Button variant="secondary" className="gap-2" disabled={syncChat.isPending || upload.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
           <RefreshCw className={`size-4 ${syncChat.isPending ? 'animate-spin' : ''}`}/><span className="hidden sm:inline">{shop ? 'Sinkronisasi toko' : 'Sinkronisasi semua'}</span><span className="sr-only sm:hidden">{shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}</span>
         </Button>

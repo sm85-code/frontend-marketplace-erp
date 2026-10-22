@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import AksiLainnya from '@/components/AksiLainnya'
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -136,17 +137,17 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
       </DialogHeader>
       <div className="space-y-1.5">
         <Label htmlFor="atur-kelompok">Kelompok di laporan</Label>
-        <select id="atur-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
+        <PilihNative id="atur-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
           {kelompok.map((g) => <option key={g.id} value={g.id}>{g.nama}</option>)}
-        </select>
+        </PilihNative>
       </div>
       {k.arah === 'keluar' && (
         <div className="space-y-1.5">
           <Label htmlFor="atur-operasional">Ditawarkan di halaman</Label>
-          <select id="atur-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
+          <PilihNative id="atur-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
             <option value="">Tidak ditawarkan</option>
             {Object.entries(halaman).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
+          </PilihNative>
         </div>
       )}
       <DialogFooter>
@@ -191,17 +192,17 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="kat-kelompok">Kelompok di laporan</Label>
-            <select id="kat-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
+            <PilihNative id="kat-kelompok" className={selectCls} value={isi.kelompok} onChange={(e) => setIsi({ ...isi, kelompok: e.target.value })}>
               {kelompok.map((g) => <option key={g.id} value={g.id}>{g.nama}</option>)}
-            </select>
+            </PilihNative>
           </div>
           {arah === 'keluar' && (
             <div className="space-y-1.5">
               <Label htmlFor="kat-operasional">Ditawarkan di halaman</Label>
-              <select id="kat-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
+              <PilihNative id="kat-operasional" className={selectCls} value={isi.operasional} onChange={(e) => setIsi({ ...isi, operasional: e.target.value })}>
                 <option value="">Tidak ditawarkan</option>
                 {Object.entries(halaman).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
+              </PilihNative>
             </div>
           )}
           <DialogFooter>

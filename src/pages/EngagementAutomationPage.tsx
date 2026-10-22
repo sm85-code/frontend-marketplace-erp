@@ -1,4 +1,5 @@
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
+import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -20,7 +21,7 @@ export default function EngagementAutomationPage() {
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => endpoints.listAkun() })
   const query = useQuery({ queryKey: ['engagement-automation', shopId], queryFn: () => api.settings(shopId), enabled: !!shopId, refetchInterval: 30000, retry: false })
   return <div className="space-y-4"><h1 className="text-2xl font-semibold">Otomasi produk Shopee</h1>
-    <label className="block">Toko<select aria-label="Toko otomasi" className="ml-2 max-w-full rounded-lg border bg-background p-2" value={shopId} onChange={e => setParams({ toko: e.target.value, tab })}><option value="">Pilih toko</option>{shops.data?.filter(s => s.platform === 'shopee').map(s => <option key={s.id} value={s.id}>{s.nama_toko}</option>)}</select></label>
+    <label className="block">Toko<PilihNative aria-label="Toko otomasi" className="ml-2 max-w-full rounded-lg border bg-background p-2" value={shopId} onChange={e => setParams({ toko: e.target.value, tab })}><option value="">Pilih toko</option>{shops.data?.filter(s => s.platform === 'shopee').map(s => <option key={s.id} value={s.id}>{s.nama_toko}</option>)}</PilihNative></label>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     <div className="flex flex-wrap gap-2"><Button variant={tab === 'rating' ? 'default' : 'outline'} onClick={() => setParams({ toko: shopId, tab: 'rating' })}>Balasan rating otomatis</Button><Button variant={tab === 'boost' ? 'default' : 'outline'} onClick={() => setParams({ toko: shopId, tab: 'boost' })}>Boost otomatis</Button></div>
     {shopId && query.isPending && <Spinner column label="Memuat pengaturan toko…" />}{query.error && <QueryError error={query.error} retry={query.refetch} />}

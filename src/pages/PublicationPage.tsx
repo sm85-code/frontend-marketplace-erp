@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
 import MoneyInput from '@/components/MoneyInput'
@@ -300,7 +301,7 @@ export default function PublicationPage() {
       judul: 'Preorder / DTS',
       sel: (m) => (
         <div className="space-y-1">
-          <select
+          <PilihNative
             className={fieldClass}
             aria-label={`Preorder ${modelLabel(form.tiers, m.tier_index)}`}
             value={m.pre_order ? String(m.pre_order.is_pre_order) : ''}
@@ -315,7 +316,7 @@ export default function PublicationPage() {
             <option value="">Ikuti induk</option>
             <option value="false">Ready stock</option>
             <option value="true">Preorder</option>
-          </select>
+          </PilihNative>
           {m.pre_order && (
             <Input
               aria-label={`Hari kirim ${modelLabel(form.tiers, m.tier_index)}`}
@@ -362,7 +363,7 @@ export default function PublicationPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label className="leading-5" htmlFor="publish-shop">Toko tujuan</Label>
-              <select
+              <PilihNative
                 id="publish-shop"
                 className={fieldClass}
                 value={shop}
@@ -380,11 +381,11 @@ export default function PublicationPage() {
                       {s.nama_toko}
                     </option>
                   ))}
-              </select>
+              </PilihNative>
             </div>
             <div className="grid gap-2">
               <Label className="leading-5" htmlFor="source-shop">Toko sumber (opsional)</Label>
-              <select
+              <PilihNative
                 id="source-shop"
                 className={fieldClass}
                 value={source}
@@ -401,21 +402,21 @@ export default function PublicationPage() {
                       {s.nama_toko}
                     </option>
                   ))}
-              </select>
+              </PilihNative>
             </div>
           </div>
           {source && (
             <div className="flex flex-wrap items-end gap-2">
               <div className="grid flex-1 gap-2">
                 <Label className="leading-5" htmlFor="source-product">Produk sumber</Label>
-                <select id="source-product" className={fieldClass} value={item} onChange={(e) => setItem(e.target.value)}>
+                <PilihNative id="source-product" className={fieldClass} value={item} onChange={(e) => setItem(e.target.value)}>
                   <option value="">Pilih produk</option>
                   {products.data?.items.map((p) => (
                     <option key={p.item_id} value={p.item_id}>
                       {p.nama} · {p.item_id}
                     </option>
                   ))}
-                </select>
+                </PilihNative>
                 <Input
                   className="mt-2"
                   aria-label="ID produk sumber jika tidak ada di daftar"
@@ -452,7 +453,7 @@ export default function PublicationPage() {
           </div>
           <div className="grid gap-2">
             <Label className="leading-5" htmlFor="publish-category">Kategori toko tujuan</Label>
-            <select
+            <PilihNative
               id="publish-category"
               className={fieldClass}
               value={form.category_id || ''}
@@ -469,7 +470,7 @@ export default function PublicationPage() {
                     {c.display_category_name || c.original_category_name} · {c.category_id}
                   </option>
                 ))}
-            </select>
+            </PilihNative>
           </div>
           {meta.error && <QueryError error={meta.error} retry={meta.refetch} />}
           {meta.isFetching && <Spinner column label="Memuat kategori, atribut dan batas toko…" />}
@@ -482,7 +483,7 @@ export default function PublicationPage() {
           )}
           <div className="grid gap-2">
             <Label className="leading-5" htmlFor="publish-brand">Merek</Label>
-            <select
+            <PilihNative
               id="publish-brand"
               className={fieldClass}
               value={form.brand_id}
@@ -500,7 +501,7 @@ export default function PublicationPage() {
                   {b.original_brand_name}
                 </option>
               ))}
-            </select>
+            </PilihNative>
             <div className="flex gap-2 mt-1">
               <Button size="sm" variant="outline" disabled={brandOffset === 0} onClick={() => setBrandOffset(0)}>
                 Merek awal
@@ -518,7 +519,7 @@ export default function PublicationPage() {
           </div>
           <div className="grid gap-2">
             <Label className="leading-5" htmlFor="publish-condition">Kondisi</Label>
-            <select
+            <PilihNative
               id="publish-condition"
               className={fieldClass}
               value={form.condition}
@@ -526,7 +527,7 @@ export default function PublicationPage() {
             >
               <option value="NEW">Baru</option>
               <option value="USED">Bekas</option>
-            </select>
+            </PilihNative>
           </div>
           <div className="grid gap-2">
             <Label className="leading-5" htmlFor="publish-photo">Foto JPG/PNG (maks. 10 MB/foto, 9 foto)</Label>
@@ -702,7 +703,7 @@ export default function PublicationPage() {
                     />
                   )}
                   {(l || c.force_enable) && c.fee_type === 'SIZE_SELECTION' && (
-                    <select
+                    <PilihNative
                       className={fieldClass}
                       aria-label={`Ukuran ${c.logistics_channel_name}`}
                       value={l?.size_id ?? ''}
@@ -723,7 +724,7 @@ export default function PublicationPage() {
                           {s.name || s.size_id}
                         </option>
                       ))}
-                    </select>
+                    </PilihNative>
                   )}
                 </div>
               )

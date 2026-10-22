@@ -1,4 +1,5 @@
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
+import PilihNative from '@/components/PilihNative'
 import Spinner from '@/components/Spinner'
 import { exportCsv } from '@/lib/exportData'
 import { useTokoAktif } from '@/lib/tokoAktif'
@@ -117,7 +118,7 @@ export default function TransaksiDana() {
       >
         <div className="grid gap-2">
           <Label className="leading-5" htmlFor="wallet-shop">Toko</Label>
-          <select
+          <PilihNative
             id="wallet-shop"
             className="w-full rounded-md border bg-background p-2 text-sm"
             value={draft.shop}
@@ -131,7 +132,7 @@ export default function TransaksiDana() {
                   {s.nama_toko}
                 </option>
               ))}
-          </select>
+          </PilihNative>
         </div>
         <div className="grid gap-2">
           <Label className="leading-5" htmlFor="wallet-from">Tanggal awal (WIB)</Label>

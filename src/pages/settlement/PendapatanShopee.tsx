@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import { useState } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import * as api from '@/api/commerce'
@@ -41,7 +42,7 @@ export default function PendapatanShopee() {
   const available = (shops.data ?? []).filter(a => a.platform === 'shopee' && a.id_toko_eksternal)
   const selected = shop === 'all' ? available : available.filter(a => a.id === shop)
   return <div className="space-y-4">
-    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><select id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="all">Semua toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select></div>
+    <div className="space-y-2"><Label htmlFor="income-shop">Toko Shopee</Label><PilihNative id="income-shop" className={field} value={shop} onChange={e => setShop(e.target.value)}><option value="all">Semua toko</option>{available.map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</PilihNative></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     {selected.length > 0 && <Income key={shop} shops={selected} semuaToko={shop === 'all'} />}
     {!shops.isPending && !available.length && <p className="text-sm text-muted-foreground">Belum ada toko Shopee terhubung.</p>}

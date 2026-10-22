@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import Bantuan from '@/components/Bantuan'
 import { toast } from 'sonner'
 import { Minimize2, Maximize2 } from 'lucide-react'
@@ -148,11 +149,11 @@ function SinkronisasiProvider({ children }: { children: ReactNode }) {
     </div>}
     <Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Sinkronisasi {jenis === 'pesanan' ? 'Pesanan' : 'Produk'}</DialogTitle></DialogHeader><Button size="sm" variant="outline" className="justify-self-start" onClick={() => setOpen(false)}><Minimize2 className="size-4" />Minimize</Button>
       <Bantuan>Membaca data terbaru dari marketplace. Harga dan stok master ERP tidak ditimpa. Pesanan seluruh toko membaca perubahan 14 hari terakhir.</Bantuan>
-      <label className="space-y-1">Cakupan<select aria-label="Cakupan sinkronisasi" className="w-full rounded-md border p-2" value={scope} onChange={e => setScope(e.target.value)} disabled={busy || !!job?.tersisa}>
+      <label className="space-y-1">Cakupan<PilihNative aria-label="Cakupan sinkronisasi" className="w-full rounded-md border p-2" value={scope} onChange={e => setScope(e.target.value)} disabled={busy || !!job?.tersisa}>
         {!!ids.length && <option value="pilihan">{satu ? 'Item ini' : `${ids.length} item terpilih`}</option>}
         {!satu && <><option value="toko">Satu toko</option><option value="semua">Seluruh toko yang diizinkan</option></>}
-      </select></label>
-      {scope === 'toko' && <select aria-label="Toko sinkronisasi" className="w-full rounded-md border p-2" value={shop} onChange={e => setShop(e.target.value)} disabled={busy}><option value="">Pilih toko</option>{shops.filter(a => a.platform === 'shopee' && a.id_toko_eksternal).map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</select>}
+      </PilihNative></label>
+      {scope === 'toko' && <PilihNative aria-label="Toko sinkronisasi" className="w-full rounded-md border p-2" value={shop} onChange={e => setShop(e.target.value)} disabled={busy}><option value="">Pilih toko</option>{shops.filter(a => a.platform === 'shopee' && a.id_toko_eksternal).map(a => <option key={a.id} value={a.id}>{a.nama_toko}</option>)}</PilihNative>}
       {job?.cakupan && <p className="text-sm">Antrean: {job.cakupan.ids.length ? `${job.cakupan.ids.length} item pilihan` : job.cakupan.akun_id ? shops.find(a => a.id === job.cakupan!.akun_id)?.nama_toko : 'Seluruh toko'}</p>}
       {paused && <p role="status">Dijeda setelah langkah saat ini. Klik Lanjutkan untuk meneruskan antrean tersimpan.</p>}
       {job && total > 0 && <progress aria-label="Kemajuan sinkronisasi" className="h-2 w-full accent-primary" value={percent} max={100} />}
