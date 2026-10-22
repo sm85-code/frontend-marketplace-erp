@@ -125,7 +125,6 @@ export default function GudangPage() {
             </Button>
           </AksiLainnya>
       </BarHalaman>
-      {!warehouseEnabled && <Card><CardHeader><CardTitle>Stok dikelola per toko</CardTitle></CardHeader><CardContent>Gudang ERP belum digunakan. Stok master hanya angka referensi; stok marketplace dan Toko Web berdiri sendiri. Riwayat Gudang tetap tersedia. Pengelolaan stok terpusat menunggu keputusan Anda.</CardContent></Card>}
       {gudangError && <QueryError error={gudangError} retry={retryGudang} />}
       {produkError && <QueryError error={produkError} retry={retryProduk} />}
       {ledgerError && <QueryError error={ledgerError} retry={retryLedger} />}

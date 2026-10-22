@@ -1,3 +1,4 @@
+import AksiLainnya from '@/components/AksiLainnya'
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -59,11 +60,15 @@ const Status = ({ k }: { k: KategoriTransaksi }) => (!k.aktif ? <Badge variant="
 function Aksi({ k, simpan, geser, atur, awal, akhir }: PropsBaris) {
   const tetap = k.kelompok === '' // "not income / expense" lands nowhere and stays on offer
   return (
-    <div className="flex flex-wrap gap-1.5 md:flex-nowrap md:justify-end">
+    <div className="flex items-center gap-1.5 md:justify-end">
       <Button type="button" size="sm" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
       <Button type="button" size="sm" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
-      {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur</Button>}
-      {!tetap && <Button type="button" size="sm" variant="outline" aria-label={`${k.aktif ? 'Sembunyikan' : 'Tampilkan'} ${k.nama}`} onClick={() => void simpan(isiDari(k), !k.aktif)}>{k.aktif ? 'Sembunyikan' : 'Tampilkan'}</Button>}
+      {!tetap && (
+        <AksiLainnya>
+          <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur penempatan</Button>
+          <Button type="button" size="sm" variant="outline" aria-label={`${k.aktif ? 'Sembunyikan' : 'Tampilkan'} ${k.nama}`} onClick={() => void simpan(isiDari(k), !k.aktif)}>{k.aktif ? 'Sembunyikan' : 'Tampilkan'}</Button>
+        </AksiLainnya>
+      )}
     </div>
   )
 }
