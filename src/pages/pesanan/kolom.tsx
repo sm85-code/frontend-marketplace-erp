@@ -176,7 +176,7 @@ export function AksiPesanan({
       </Button>
       {bisaHapusManual(p, user?.role) && (
         <>
-          <AksiLainnya className="h-auto min-h-11 shrink-0 px-4">
+          <AksiLainnya className="h-auto min-h-11 w-11 shrink-0">
             <TombolHapusManual size="sm" className="w-full" onClick={() => setHapusBuka(true)} />
           </AksiLainnya>
           <DialogHapusManual p={p} buka={hapusBuka} setBuka={setHapusBuka} />
