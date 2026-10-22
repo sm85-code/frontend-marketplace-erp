@@ -46,7 +46,7 @@ function Settings({ shopId, initial, tab }: { shopId: string; initial: api.Autom
     save.mutate()
   }
   return <div className="space-y-4">
-    {!initial.worker_enabled && <p role="status" className="rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">Shopee live sync belum aktif. Pengaturan bisa disimpan dalam keadaan nonaktif.</p>}
+    {!initial.worker_enabled && <p role="status" className="rounded border border-warning bg-warning/10 p-3 text-sm">Shopee live sync belum aktif. Pengaturan bisa disimpan dalam keadaan nonaktif.</p>}
     <section className="space-y-4 rounded-xl border p-4">
       {tab === 'rating' ? <><h2 className="font-semibold">Template balasan rating · {initial.nama_toko}</h2><label className="flex gap-2"><input type="checkbox" checked={form.replies_enabled} onChange={e => setForm(f => ({ ...f, replies_enabled: e.target.checked }))} />Aktifkan balasan otomatis</label>
         <label className="block">Balasan rating 4–5<textarea className="mt-1 min-h-28 w-full rounded-lg border bg-background p-2" maxLength={5000} value={form.high_template} onChange={e => setForm(f => ({ ...f, high_template: e.target.value }))} placeholder="Terima kasih atas penilaiannya. Semoga produknya bermanfaat!" /></label>

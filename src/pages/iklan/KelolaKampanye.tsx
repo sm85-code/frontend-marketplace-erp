@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import ModalProduk from './ModalProduk'
 import { aksiTersedia, angkaDari, anggaranTeks, jenisKampanye, saranKampanye, statusKampanye } from '@/lib/iklanKampanye'
 
-const WARNA = { bahaya: 'border-destructive/50 bg-destructive/10', peringatan: 'border-amber-500/50 bg-amber-500/10', baik: 'border-emerald-500/50 bg-emerald-500/10', info: 'bg-muted' }
+const WARNA = { bahaya: 'border-destructive/50 bg-destructive/10', peringatan: 'border-warning/50 bg-warning/10', baik: 'border-success/50 bg-success/10', info: 'bg-muted' }
 
 /** Settings of one Shopee campaign: pause/resume/stop/delete, daily budget, ROAS target, and (manual) keywords. */
 export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee, onTutup }: { akunId: string; kampanye: KampanyeIklan; hari: number; biayaShopee: number | null; onTutup: () => void }) {

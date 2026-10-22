@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge'
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -165,7 +166,7 @@ export function OrderPicker({
                             {r.job && (
                               <p className="mt-1 flex flex-wrap gap-1.5 text-xs">
                                 <span className="rounded-full bg-secondary px-2 py-0.5">{ROUTE_LABEL[r.job.route]}</span>
-                                {r.job.cancelled && <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive">Dibatalkan</span>}
+                                {r.job.cancelled && <Badge variant="destructive">Dibatalkan</Badge>}
                               </p>
                             )}
                           </div>

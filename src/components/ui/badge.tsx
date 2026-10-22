@@ -9,6 +9,8 @@ const badgeVariants = cva(
         default: 'bg-primary/15 text-[color-mix(in_oklab,var(--primary)_65%,black)] dark:text-[color-mix(in_oklab,var(--primary)_65%,white)]',
         secondary: 'bg-muted text-foreground',
         outline: 'border border-border text-foreground',
+        success: 'bg-success/15 text-[color-mix(in_oklab,var(--success)_65%,black)] dark:text-[color-mix(in_oklab,var(--success)_65%,white)]',
+        warning: 'bg-warning/20 text-[color-mix(in_oklab,var(--warning)_55%,black)] dark:text-[color-mix(in_oklab,var(--warning)_65%,white)]',
         destructive: 'bg-destructive/15 text-[color-mix(in_oklab,var(--destructive)_65%,black)] dark:text-[color-mix(in_oklab,var(--destructive)_65%,white)]',
       },
     },

@@ -1,3 +1,4 @@
+import { varianStatus } from '@/lib/warnaStatus'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import SaldoToko from './settlement/SaldoToko'
 import FormDialog from '@/components/FormDialog'
@@ -38,11 +39,7 @@ const emptyForm = {
   catatan: '',
 }
 
-function statusVariant(status: string): 'default' | 'secondary' | 'destructive' {
-  if (status === 'matched' || status === 'paid') return 'default'
-  if (status === 'discrepancy') return 'destructive'
-  return 'secondary'
-}
+const statusVariant = varianStatus
 
 const potongan = (s: Settlement) => Number(s.fee_platform) + Number(s.fee_payment) + Number(s.ongkir_subsidi) + Number(s.penalti)
 
