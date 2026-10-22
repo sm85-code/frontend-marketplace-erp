@@ -89,3 +89,15 @@ describe('bottom bar chosen on Kelola Aplikasi', () => {
     expect(itemBawahDipilih(menu, '/settlement').map((n) => n.to)).toEqual(itemBawah(menu).map((n) => n.to))
   })
 })
+
+describe('Pemetaan Order and Data Produksi are separate pages', () => {
+  it('shows each staff member only the menu they were given', () => {
+    const akses = (halaman: Record<string, 'baca' | 'tulis'>) => ({ role: 'x', nama: 'x', akses_toko: 'semua', halaman }) as never
+    const proses = filterNav(akses({ processing: 'tulis' })).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
+    expect(proses).toEqual(['/processing/pemetaan'])
+    const data = filterNav(akses({ data_produksi: 'tulis' })).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
+    expect(data).not.toContain('/processing/pemetaan')
+    expect(data).toContain('/processing/tukang-kayu')
+    expect(data).toContain('/processing/template')
+  })
+})
