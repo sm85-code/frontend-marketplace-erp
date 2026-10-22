@@ -1,3 +1,5 @@
+import { useLabel } from '@/api/pengaturanUi'
+import { idMenu } from '@/config/nav'
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
@@ -94,7 +96,9 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
 }
 
 /** Operasional Umum and Operasional Packing: dated entries kept by weekly period (the same periods as Arus Kas), grouped by category; each is added and changed in a pop-up. */
-export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis: JenisOperasional; judul: string; deskripsi: string }) {
+export default function HalamanOperasional({ jenis, judul: judulBawaan, deskripsi }: { jenis: JenisOperasional; judul: string; deskripsi: string }) {
+  // The menu name set on Kelola Aplikasi names the page everywhere on it (title, table, total row).
+  const judul = useLabel()(idMenu(jenis === 'umum' ? '/operasional-umum' : '/operasional-packing'), judulBawaan)
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [periode, setPeriode] = useState(bulanIni)
@@ -165,7 +169,7 @@ export default function HalamanOperasional({ jenis, judul, deskripsi }: { jenis:
       {data && (
         <Card className="min-w-0 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle>{judul}</CardTitle>
+            <CardTitle>Transaksi</CardTitle>
             {adaRincian && (
               <Button type="button" variant="outline" size="sm" onClick={lipatSemua}>
                 {semuaTertutup ? <ChevronsUpDown className="size-4" aria-hidden="true" /> : <ChevronsDownUp className="size-4" aria-hidden="true" />}
