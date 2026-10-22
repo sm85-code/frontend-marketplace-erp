@@ -161,7 +161,7 @@ function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
   const alamat = data?.[ID_APP.logo] ?? APP_BAWAAN.logo
   return (
     <div className="flex items-center gap-3 rounded-lg border p-3">
-      <LogoApp src={alamat} alt="Pratinjau logo" className="size-14" />
+      <LogoApp src={alamat} alt="Pratinjau logo" className="h-12" tinggi={48} />
       <div className="min-w-0">
         <div className="font-heading truncate text-sm font-semibold">{data?.[ID_APP.nama] ?? APP_BAWAAN.nama}</div>
         <div className="truncate text-xs text-muted-foreground">{data?.[ID_APP.subjudul] ?? APP_BAWAAN.subjudul}</div>

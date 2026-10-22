@@ -44,10 +44,10 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-md gap-5 py-6 shadow-soft sm:py-8">
         <CardHeader className="space-y-3 px-6 text-center sm:px-8">
           <div className="flex justify-center">
-            <LogoApp besar alt="Ampel Kuning" className="size-24 sm:size-28" />
+            <LogoApp besar alt="Ampel Kuning" className="h-20 sm:h-24" tinggi={96} />
           </div>
           <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">
-            Ampel Kuning
+            <span className="sr-only">Ampel Kuning </span>
             <span className="block text-base font-medium sm:text-lg" style={{ color: 'var(--text-muted)' }}>
               ERP System
             </span>
