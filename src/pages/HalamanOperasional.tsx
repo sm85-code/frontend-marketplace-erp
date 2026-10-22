@@ -78,7 +78,7 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
       </div>
       <DialogFooter className="gap-2 sm:justify-between">
         {item ? (
-          <Button type="button" variant="outline" onClick={onHapus} disabled={sibuk}>
+          <Button type="button" variant="destructive" onClick={onHapus} disabled={sibuk}>
             Hapus
           </Button>
         ) : (

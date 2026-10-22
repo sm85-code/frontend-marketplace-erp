@@ -176,12 +176,14 @@ export default function StaffPage() {
     const ok = await confirm({
       title: `Hapus akun ${u.nama}?`,
       description: 'Akun ini tidak bisa login lagi dan penugasan tokonya ikut dihapus. Tindakan ini tidak bisa dibatalkan.',
+      confirmLabel: 'Hapus',
+      destructive: true,
     })
     if (ok) deleteUserMut.mutate(u.id)
   }
 
   async function onRemove(id: string) {
-    const ok = await confirm({ title: 'Hapus penugasan?', description: 'Staff ini tidak akan lagi bisa mengakses toko tersebut.' })
+    const ok = await confirm({ title: 'Hapus penugasan?', description: 'Staff ini tidak akan lagi bisa mengakses toko tersebut.', confirmLabel: 'Hapus', destructive: true })
     if (ok) removeMut.mutate(id)
   }
 

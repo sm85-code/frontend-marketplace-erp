@@ -8,7 +8,7 @@ interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
 
 export default function Spinner({
   size = 32,
-  label = 'Memuat...',
+  label = 'Memuat…',
   column = false,
   className = '',
   ...rest
@@ -41,7 +41,7 @@ export default function Spinner({
           }}
         />
       </span>
-      {label ? <span className={column ? 'sr-only' : 'spinner-label'}>{label}</span> : <span className="sr-only">Memuat...</span>}
+      {label ? <span className={column ? 'sr-only' : 'spinner-label'}>{label}</span> : <span className="sr-only">Memuat…</span>}
     </span>
   )
 }

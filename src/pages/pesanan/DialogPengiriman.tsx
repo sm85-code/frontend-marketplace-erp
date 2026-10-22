@@ -127,7 +127,7 @@ export default function DialogPengiriman({ pesanan, cetak = false, onClose, onCo
       {metode && <p className="text-sm">{ready} siap, {selected.length - ready} perlu diperiksa, {targets.length - selected.length} dikecualikan.</p>}
       <p className="text-sm text-muted-foreground">Konfirmasi akan mengatur pengiriman di Shopee. Status Dikirim mengikuti Shopee setelah paket diserahkan. Jika hasil tidak pasti, sinkronkan status sebelum mencoba lagi.</p>
       <DialogFooter>
-        <Button variant="ghost" onClick={reload} disabled={loading > 0}>Muat ulang opsi</Button>
+        <Button variant="ghost" onClick={reload} disabled={loading > 0}>Refresh opsi</Button>
         <Button variant="outline" onClick={onClose}>Batal</Button>
         <Button disabled={!canSubmit} onClick={() => onConfirm(selected.map((p) => p.id), Object.fromEntries(selected.map((p) => [p.id, pengaturan[p.id]])))}>
           {cetak ? 'Proses & cetak resi' : ulang === targets.length ? 'Jadwalkan ulang pickup' : 'Proses Pesanan'}
