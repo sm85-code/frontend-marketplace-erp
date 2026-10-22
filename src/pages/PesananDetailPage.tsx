@@ -324,7 +324,7 @@ export default function PesananDetailPage() {
           {pesanan.items.map((item) => (
             <div key={item.id} className="grid grid-cols-1 items-start gap-2 py-3 text-sm sm:grid-cols-[minmax(0,1fr)_auto]">
               <div className="flex min-w-0 items-start gap-3">
-                <FotoItem item={item} ukuran={64} />
+                <FotoItem item={item} ukuran={64} buka />
                 <div className="min-w-0">
                   <div className="font-medium">{item.nama_produk}</div>
                   {item.model_name && <div className="text-xs text-muted-foreground">{item.model_name}</div>}
