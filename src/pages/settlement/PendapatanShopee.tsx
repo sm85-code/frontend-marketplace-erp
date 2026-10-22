@@ -97,6 +97,7 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
     {q.error && <QueryError error={q.error} retry={q.refetch} />}
     {trackingFailure?.error && <QueryError error={trackingFailure.error} retry={() => { tracking.filter(t => t.error).forEach(t => { void t.refetch() }) }} />}
     {q.data && <>
+      {q.data.catatanDanaCepat.map(c => <p key={c} role="status" className="text-xs text-muted-foreground">{c}</p>)}
       {tracking.some(t => t.isFetching) && <p role="status" className="text-xs text-muted-foreground">Memuat rincian pengiriman…</p>}
       {statusCounts.size > 0 && <div role="group" aria-label="Filter status pengiriman" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
         {[['', rows.length] as const, ...[...statusCounts].sort(([a], [b]) => a.localeCompare(b, 'id-ID'))].map(([label, count]) => {
