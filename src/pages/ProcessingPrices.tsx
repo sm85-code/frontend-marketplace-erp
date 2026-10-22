@@ -253,6 +253,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 namaDari={(p) => namaOf(p)}
                 minWidth={selectedKind === 'produksi' ? 950 : 580}
               />
+              {!filtered.length && (
+                <p className="py-8 text-center text-sm text-muted-foreground">Belum ada harga yang sesuai. Tambahkan tarif baru untuk mulai.</p>
+              )}
             </div>
             <div className="divide-y md:hidden">
               {filtered.slice((current - 1) * 15, current * 15).map((r) => (

@@ -792,7 +792,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                 </span>
                 <span className="mt-0.5 block text-xl font-semibold tabular-nums">
                   {count}
-                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">aktif</span>
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">pekerjaan aktif</span>
                 </span>
               </span>
             </button>
