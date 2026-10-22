@@ -6,7 +6,7 @@ import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
-import { fmtDateTime, fmtRp } from '@/api/client'
+import { fmtDateTime, fmtRp, fmtAngka } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { Dashboard, DashboardProduk, DashboardToko, TahapPesanan } from '@/api/types'
 import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
@@ -22,7 +22,7 @@ const PRESET_DASHBOARD: PresetTanggal[] = ['7', '14', '30', '90', 'bulan_ini']
 
 
 const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
-  <span className={n === 0 ? 'text-muted-foreground' : tebal ? 'font-semibold' : ''}>{n.toLocaleString('id-ID')}</span>
+  <span className={n === 0 ? 'text-muted-foreground' : tebal ? 'font-semibold' : ''}>{fmtAngka(n)}</span>
 )
 
 function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: string; children: React.ReactNode }) {
@@ -58,8 +58,8 @@ const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
 
 const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
   { kunci: 'nama', judul: 'Produk', kelas: 'min-w-[260px] max-w-[480px] break-words', sel: (p) => p.nama_produk, nilai: (p) => p.nama_produk },
-  { kunci: 'qty', judul: 'Terjual', rata: 'kanan', kelas: 'font-semibold', sel: (p) => p.qty_terjual.toLocaleString('id-ID'), nilai: (p) => p.qty_terjual },
-  { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (p) => p.pesanan.toLocaleString('id-ID'), nilai: (p) => p.pesanan },
+  { kunci: 'qty', judul: 'Terjual', rata: 'kanan', kelas: 'font-semibold', sel: (p) => fmtAngka(p.qty_terjual), nilai: (p) => p.qty_terjual },
+  { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (p) => fmtAngka(p.pesanan), nilai: (p) => p.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.omzet), nilai: (p) => Number(p.omzet) },
   {
     kunci: 'toko',

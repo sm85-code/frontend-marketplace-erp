@@ -1,3 +1,4 @@
+import { fmtTime } from '@/api/client'
 import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
@@ -133,7 +134,7 @@ export default function PublicationPage() {
   const locked = busy || !!operation
   useEffect(() => {
     if (operation || result?.ok) return
-    const timer=setTimeout(()=>{ try { sessionStorage.setItem(draftKey,JSON.stringify({shop,payload:{...form,operation_id:''}}));setDraftAt(new Date().toLocaleTimeString('id-ID')) } catch { setDraftAt('') } },600)
+    const timer=setTimeout(()=>{ try { sessionStorage.setItem(draftKey,JSON.stringify({shop,payload:{...form,operation_id:''}}));setDraftAt(fmtTime(new Date().toISOString()) + ' WIB') } catch { setDraftAt('') } },600)
     return ()=>clearTimeout(timer)
   },[draftKey,shop,form,operation,result?.ok])
   function validateStep(index: number) {

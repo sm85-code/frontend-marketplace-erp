@@ -1,3 +1,4 @@
+import { hariIniWib } from '@/lib/tanggal'
 import PilihNative from '@/components/PilihNative'
 import TableShell from '@/components/TableShell'
 import { useState } from 'react'
@@ -18,7 +19,7 @@ export default function PerformaJam() {
 }
 function Report() {
   const [shop, setShop] = useState('')
-  const [day, setDay] = useState(() => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()))
+  const [day, setDay] = useState(hariIniWib)
   const [campaign, setCampaign] = useState('')
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => listAkun() })
   const m = useMutation({ retry: false, mutationFn: () => api.hourlyAds(shop, day, campaign) })

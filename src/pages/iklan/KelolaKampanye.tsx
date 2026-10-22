@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import type { AksiKampanye, KampanyeIklan, PerubahanKataKunci } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Badge } from '@/components/ui/badge'
@@ -80,8 +80,8 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
           <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
             {[
               ['Biaya', fmtRp(k.kinerja.expense)],
-              ['Klik', k.kinerja.clicks.toLocaleString('id-ID')],
-              ['Pesanan', k.kinerja.direct_order.toLocaleString('id-ID')],
+              ['Klik', fmtAngka(k.kinerja.clicks)],
+              ['Pesanan', fmtAngka(k.kinerja.direct_order)],
               ['GMV', fmtRp(k.kinerja.direct_gmv)],
             ].map(([a, b]) => (
               <div key={a} className="rounded-md border p-2">
@@ -111,7 +111,7 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
             <h3 className="text-sm font-semibold">Produk diiklankan ({k.jumlah_produk})</h3>
             <p className="teks-kecil text-muted-foreground">
               Isi modal supaya Asisten AI tahu kapan iklan ini untung atau rugi.
-              {k.margin.roas_impas != null && ` ROAS impas kampanye ini ${k.margin.roas_impas.toLocaleString('id-ID')}× (rata-rata ${k.margin.terisi} dari ${k.margin.total} produk yang modalnya terisi).`}
+              {k.margin.roas_impas != null && ` ROAS impas kampanye ini ${fmtAngka(k.margin.roas_impas)}× (rata-rata ${k.margin.terisi} dari ${k.margin.total} produk yang modalnya terisi).`}
             </p>
             <ul className="divide-y rounded-md border">
               {k.produk.map((p) => (

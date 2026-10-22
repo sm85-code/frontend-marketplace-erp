@@ -3,7 +3,7 @@ import InfoTip from '@/components/InfoTip'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { KampanyeIklan } from '@/api/types'
 import { BarFilter, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
@@ -34,7 +34,7 @@ const STATUS = [
 const HIDUP = new Set(['ongoing', 'paused', 'scheduled'])
 const cocokStatus = (pilihan: string, status: string | null) =>
   pilihan === 'semua' ? true : pilihan === 'hidup' ? HIDUP.has(status ?? '') : status === pilihan
-const angka = (v: number) => v.toLocaleString('id-ID')
+const angka = (v: number) => fmtAngka(v)
 
 function kolomKampanye(): KolomTabel<KampanyeIklan>[] {
   const a = 'whitespace-nowrap'

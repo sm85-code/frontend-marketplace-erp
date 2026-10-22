@@ -2,7 +2,7 @@ import InfoTip from '@/components/InfoTip'
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
-import { fmtRp, getApiError } from '@/api/client'
+import { fmtRp, getApiError, fmtAngka } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { SaranAiHasil, SaranAiItem } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
@@ -109,8 +109,8 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
             <InfoTip teks={"Semua saran kali ini berupa catatan, jadi tidak ada tombol Terapkan: tidak ada perubahan yang bisa dilakukan dari ERP untuk itu (misalnya isi saldo iklan dilakukan di Seller Centre)."} />
           )}
           <p className="teks-kecil text-muted-foreground">
-            Biaya analisis ini sekitar {fmtRp(h.pemakaian.biaya_rp)} ({h.pemakaian.token_masuk.toLocaleString('id-ID')} token masuk,{' '}
-            {h.pemakaian.token_keluar.toLocaleString('id-ID')} keluar
+            Biaya analisis ini sekitar {fmtRp(h.pemakaian.biaya_rp)} ({fmtAngka(h.pemakaian.token_masuk)} token masuk,{' '}
+            {fmtAngka(h.pemakaian.token_keluar)} keluar
             {h.bulan_ini_usd != null ? `; bulan ini $${h.bulan_ini_usd.toFixed(2)}` : ''}
             {h.kuota_sisa != null ? `; sisa kuota hari ini ${h.kuota_sisa}` : ''}). Saran AI bisa keliru, periksa alasannya sebelum menerapkan.
           </p>
