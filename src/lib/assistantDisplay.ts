@@ -38,3 +38,23 @@ export function mentionedProducts(answer: string, actions: { tool: string; statu
   }
   return [...cards.values()].slice(0, 6)
 }
+
+const MODEL_NAMES: Record<string,string> = {'claude-sonnet-5-5':'Sonnet 5.5','claude-opus-5-5':'Opus 5.5','claude-sonnet-4-6':'Sonnet 4.6','gpt-6.1-sol':'GPT-6.1 Sol','gpt-6-luna':'GPT-6 Luna','gpt-6-astra':'GPT-6 Astra','internal-v1':'Internal','internal-execution':'Internal'}
+export const modelName = (m: string) => MODEL_NAMES[m] ?? m
+export function compactTokens(n: number): string {
+  if (!Number.isFinite(n) || n < 0) return '0'
+  return n < 1000 ? String(n) : (n / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 }) + 'k'
+}
+export function usd(value: string | number): string {
+  const v = Number(value)
+  if (!Number.isFinite(v)) return '$—'
+  return '$' + (v > 0 && v < 0.01 ? v.toFixed(3) : v.toFixed(2))
+}
+/** "Sonnet 5.5 · 3.2k/1.1k token · $0.04 (riset $0.02 · foto $0.10)": one muted line under each AI reply. */
+export function turnUsage(turn: { model: string; input_tokens: number; output_tokens: number; cost_usd: string; actions: { tool: string; result: unknown }[] }): string {
+  const extra = (tool: string) => turn.actions.filter(a => a.tool === tool).reduce((s, a) => s + (Number((a.result as {biaya_usd?: string} | null)?.biaya_usd) || 0), 0)
+  const riset = extra('riset_web'), foto = extra('buat_gambar_produk')
+  const parts = [riset > 0 && `riset ${usd(riset)}`, foto > 0 && `foto ${usd(foto)}`].filter(Boolean)
+  const internal = turn.model.startsWith('internal')
+  return `${modelName(turn.model)} · ${internal ? 'tanpa token' : `${compactTokens(turn.input_tokens)}/${compactTokens(turn.output_tokens)} token · ${usd(turn.cost_usd)}`}${parts.length ? ` (${parts.join(' · ')})` : ''}`
+}
