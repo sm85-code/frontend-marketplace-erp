@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import type { Attribute, AttributeNode, AttributeValue } from '@/api/workflows'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,7 +35,7 @@ export default function Attributes({
               {node.mandatory ? ' *' : ''}
             </Label>
             {node.attribute_value_list.length > 0 && (
-              <select
+              <PilihNative
                 id={`attribute-${node.attribute_id}`}
                 className={selectClass}
                 multiple={multiple}
@@ -57,7 +58,7 @@ export default function Attributes({
                     {v.name}
                   </option>
                 ))}
-              </select>
+              </PilihNative>
             )}
             {multiple && (
               <p className="text-xs text-muted-foreground">Boleh pilih beberapa; maksimal {info.max_value_count || 50} nilai.</p>
@@ -77,7 +78,7 @@ export default function Attributes({
               />
             )}
             {!!info.attribute_unit_list?.length && (
-              <select
+              <PilihNative
                 aria-label={`Satuan ${node.name}`}
                 className={selectClass}
                 value={chosen[0]?.value_unit ?? ''}
@@ -92,7 +93,7 @@ export default function Attributes({
                 {info.attribute_unit_list.map((u) => (
                   <option key={u}>{u}</option>
                 ))}
-              </select>
+              </PilihNative>
             )}
             {!!children.length && (
               <div className="border-l pl-3">

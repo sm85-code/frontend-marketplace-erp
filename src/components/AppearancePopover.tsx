@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import { Palette } from 'lucide-react'
 import {
   BASE_COLORS,
@@ -46,7 +47,7 @@ export default function AppearancePopover({
           <label className="label" htmlFor="theme-switcher">
             Tema
           </label>
-          <select
+          <PilihNative
             id="theme-switcher"
             data-testid="theme-switcher"
             className={selectClass}
@@ -58,13 +59,13 @@ export default function AppearancePopover({
                 {t.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
         <div>
           <label className="label" htmlFor="base-color-switcher">
             Base Warna
           </label>
-          <select
+          <PilihNative
             id="base-color-switcher"
             data-testid="base-color-switcher"
             className={selectClass}
@@ -76,13 +77,13 @@ export default function AppearancePopover({
                 {b.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
         <div>
           <label className="label" htmlFor="wallpaper-switcher">
             Wallpaper
           </label>
-          <select
+          <PilihNative
             id="wallpaper-switcher"
             data-testid="wallpaper-switcher"
             className={selectClass}
@@ -94,13 +95,13 @@ export default function AppearancePopover({
                 {w.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
         <div>
           <label className="label" htmlFor="mode-switcher">
             Mode
           </label>
-          <select
+          <PilihNative
             id="mode-switcher"
             data-testid="mode-switcher"
             className={selectClass}
@@ -112,13 +113,13 @@ export default function AppearancePopover({
                 {m.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
         <div>
           <label className="label" htmlFor="font-switcher">
             Font
           </label>
-          <select
+          <PilihNative
             id="font-switcher"
             data-testid="font-switcher"
             className={selectClass}
@@ -130,13 +131,13 @@ export default function AppearancePopover({
                 {f.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
         <div>
           <label className="label" htmlFor="huruf-switcher">
             Ukuran huruf
           </label>
-          <select
+          <PilihNative
             id="huruf-switcher"
             data-testid="huruf-switcher"
             className={selectClass}
@@ -148,7 +149,7 @@ export default function AppearancePopover({
                 {h.label}
               </option>
             ))}
-          </select>
+          </PilihNative>
         </div>
       </PopoverContent>
     </Popover>
