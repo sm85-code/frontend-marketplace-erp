@@ -16,19 +16,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Spinner from '@/components/Spinner'
 
 function NonKayuTabs() {
+  const { bisa } = useAuth()
+  const otomatis = bisa('data_katalog_otomatis')
+  const manual = bisa('data_katalog_manual')
   return (
-    <Tabs defaultValue="otomatis">
-      <TabsList className="section-tabs"><TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger><TabsTrigger value="manual">Katalog Manual</TabsTrigger></TabsList>
-      <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>
-      <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>
+    <Tabs defaultValue={otomatis ? 'otomatis' : 'manual'}>
+      <TabsList className="section-tabs">
+        {otomatis && <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>}
+        {manual && <TabsTrigger value="manual">Katalog Manual</TabsTrigger>}
+      </TabsList>
+      {otomatis && <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>}
+      {manual && <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>}
     </Tabs>
   )
 }
 
+/** The page of the role settings behind each screen: Pemetaan Order, and one page per menu of Data Produksi. */
+const HALAMAN_LAYAR: Record<string, string> = {
+  pemetaan: 'processing',
+  'tukang-kayu': 'data_tukang',
+  supplier: 'data_supplier',
+  'produk-kayu': 'data_produk_kayu',
+  'produk-non-kayu': 'data_katalog_otomatis|data_katalog_manual',
+  'tarif-pengecatan': 'data_tarif_pengecatan',
+  'tarif-packing': 'data_tarif_packing',
+}
+
 export default function ProcessingPage() {
   const { bisa } = useAuth()
-  const bolehPemetaan = bisa('processing')
-  const allowed = bolehPemetaan || bisa('data_produksi')
+  const pertama = Object.keys(HALAMAN_LAYAR).find((k) => bisa(HALAMAN_LAYAR[k]))
+  const allowed = !!pertama
   const location = useLocation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -72,12 +89,11 @@ export default function ProcessingPage() {
     'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan model, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
     'tarif-packing': { title: 'Tarif Packing', description: 'Kelola tarif packing biasa dan packing kayu.', content: <ProcessingPrices kind="packing" /> },
   }
-  // Pemetaan Order and Data Produksi are separate pages in the role settings; send a user to the one they have.
-  const bolehData = bisa('data_produksi')
-  if (page === 'pemetaan' ? !bolehPemetaan : !bolehData) return <Navigate to={bolehPemetaan ? '/processing/pemetaan' : '/processing/tukang-kayu'} replace />
+  // A user is sent to the first screen their role has, when the one asked for is not theirs.
+  if (pertama && HALAMAN_LAYAR[page] && !bisa(HALAMAN_LAYAR[page])) return <Navigate to={`/processing/${pertama}`} replace />
   if (page === 'katalog-siabumdes' || page === 'katalog-manual') return <Navigate to="/processing/produk-non-kayu" replace />
   const selected = pages[page as keyof typeof pages]
-  if (!selected && !privateKey) return <Navigate to="/processing/pemetaan" replace />
+  if (!selected && !privateKey) return <Navigate to={`/processing/${pertama}`} replace />
   const current = selected || pages['produk-kayu']
   return (
     <div className="processing-page min-w-0 space-y-4 text-left [&_p]:text-left">
