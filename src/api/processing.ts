@@ -103,6 +103,10 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   paint_price: string
   packing_type: 'biasa' | 'kayu'
   packing_price: string
+  /** Packing is done once, by us or by a supplier (any supplier); a supplier is named so it gets paid. */
+  packing_by?: 'internal' | 'supplier'
+  packing_party_id?: string
+  packing_party_name?: string
   production_done_at: string | null
   received_at: string | null
   painting_done_at: string | null
@@ -144,6 +148,8 @@ export type ProcessingJobEdit = Pick<
   | 'paint_price'
   | 'packing_type'
   | 'packing_price'
+  | 'packing_by'
+  | 'packing_party_id'
 >
 export const getProcessingPrices = async () =>
   (await api.get<{ items: ProcessingPrice[] }>('/processing/prices')).data
@@ -202,8 +208,10 @@ export const editProcessingPacking = async (
   job: ProcessingJob,
   packing_type: 'biasa' | 'kayu',
   packing_price: string,
+  packing_by: 'internal' | 'supplier' = 'internal',
+  packing_party_id = '',
 ) =>
-  (await api.put(`/processing/jobs/${job.id}/packing`, { version: job.version, packing_type, packing_price }))
+  (await api.put(`/processing/jobs/${job.id}/packing`, { version: job.version, packing_type, packing_price, packing_by, packing_party_id }))
     .data
 
 export const saveProcessingParty = async (kind: 'tukang' | 'supplier', party: ProcessingParty) =>
