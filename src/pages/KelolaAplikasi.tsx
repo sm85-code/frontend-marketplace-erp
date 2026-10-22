@@ -160,7 +160,7 @@ function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
   const alamat = data?.[ID_APP.logo] ?? APP_BAWAAN.logo
   return (
     <div className="flex items-center gap-3 rounded-lg border p-3">
-      <img src={alamat} alt="Pratinjau logo" className="h-12 w-16 shrink-0 rounded-md bg-white object-contain" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = APP_BAWAAN.logo }} />
+      <img src={alamat} alt="Pratinjau logo" className="size-14 shrink-0 rounded-full object-contain" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = APP_BAWAAN.logo }} />
       <div className="min-w-0">
         <div className="font-heading truncate text-sm font-semibold">{data?.[ID_APP.nama] ?? APP_BAWAAN.nama}</div>
         <div className="truncate text-xs text-muted-foreground">{data?.[ID_APP.subjudul] ?? APP_BAWAAN.subjudul}</div>

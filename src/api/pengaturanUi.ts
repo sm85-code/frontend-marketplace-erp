@@ -20,7 +20,7 @@ export function useLabel() {
 }
 
 export const ID_APP = { nama: 'app:nama', subjudul: 'app:subjudul', logo: 'app:logo' } as const
-export const APP_BAWAAN = { nama: 'Ampel Kuning', subjudul: 'ERP System', logo: '/logo-ampel-kuning.png' }
+export const APP_BAWAAN = { nama: 'Ampel Kuning', subjudul: 'ERP System', logo: '/logo-ampel-bulat.png' }
 
 /** Name, subtitle and logo shown in the sidebar and the phone header. */
 export function useIdentitas() {

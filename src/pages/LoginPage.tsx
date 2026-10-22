@@ -43,9 +43,9 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-md gap-5 py-6 shadow-soft sm:py-8">
         <CardHeader className="space-y-3 px-6 text-center sm:px-8">
           <img
-            src="/logo-ampel-kuning.png"
+            src="/logo-ampel-bulat.png"
             alt="Ampel Kuning"
-            className="mx-auto h-16 w-32 rounded-lg bg-white object-contain sm:h-20 sm:w-40"
+            className="mx-auto size-24 object-contain sm:size-28"
           />
           <CardTitle className="modern-brand-title text-xl leading-tight sm:text-2xl">
             Ampel Kuning

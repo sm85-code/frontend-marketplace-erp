@@ -57,7 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <img src={app.logo} onError={logoCadangan} alt={app.nama} className="h-9 w-auto flex-shrink-0 rounded-md bg-white" />
+          <img src={app.logo} onError={logoCadangan} alt={app.nama} className="size-9 flex-shrink-0 rounded-full object-contain" />
           <div className="min-w-0 leading-tight">
             <div className="font-heading truncate text-sm font-semibold">{app.nama}</div>
             <div className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -83,7 +83,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
         >
           <div className="flex shrink-0 items-center gap-3 px-4 pt-5 pb-4">
-            <img src={app.logo} onError={logoCadangan} alt={app.nama} className="h-10 w-14 shrink-0 rounded-md bg-white object-contain" />
+            <img src={app.logo} onError={logoCadangan} alt={app.nama} className="size-11 shrink-0 rounded-full object-contain" />
             <div className="min-w-0 flex-1">
               <div className="font-heading text-sm leading-6 font-semibold whitespace-nowrap">{app.nama}</div>
               <div className="text-xs leading-5 font-medium" style={{ color: 'var(--text-muted)' }}>
