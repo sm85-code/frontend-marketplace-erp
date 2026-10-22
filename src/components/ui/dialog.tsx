@@ -52,8 +52,8 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close data-slot="dialog-close" className="absolute top-2 right-2 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:outline-none focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
+        <DialogPrimitive.Close data-slot="dialog-close" aria-label="Tutup" className="absolute top-[max(0.25rem,env(safe-area-inset-top))] right-1 z-10 flex size-9 items-center justify-center rounded-md bg-background/80 opacity-80 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:outline-none focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="size-5" />
           <span className="sr-only">Tutup</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
