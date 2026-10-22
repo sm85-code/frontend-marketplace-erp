@@ -16,8 +16,10 @@ import QueryError from '@/components/QueryError'
 export default function SalinMasterProduk({
   ids,
   disabled = false,
+  label = 'Salin ke Master Produk',
 }: {
   ids: string[]
+  label?: string
   disabled?: boolean
 }) {
   const confirm = useConfirm()
@@ -62,7 +64,7 @@ export default function SalinMasterProduk({
         disabled={!ids.length || disabled || mutation.isPending}
         onClick={() => void copy()}
       >
-        Salin ke Master Produk
+        {label}
       </Button>
       <Dialog
         open={open}
