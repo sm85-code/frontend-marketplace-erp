@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import * as api from '@/api/management'
@@ -68,7 +69,7 @@ function Manage({ akun }: { akun: string }) {
     {mutation.data&&<p role="status">Perubahan dikonfirmasi · Kampanye {mutation.data.campaign_id}. {mutation.data.warnings.join(' ')}</p>}
     {data&&<div className="overflow-x-auto rounded-lg border"><Table><TableHeader><TableRow><TableHead>Produk / Kampanye</TableHead><TableHead>Biaya</TableHead><TableHead>GMV (luas)</TableHead><TableHead>ROAS (luas)</TableHead><TableHead>Pesanan (luas)</TableHead></TableRow></TableHeader><TableBody>{(data.result_list??[{item_id:data.campaign_id,report:data.report??{}}]).map(r=><TableRow key={r.item_id}><TableCell className="whitespace-nowrap">{r.item_id}</TableCell><TableCell className="whitespace-nowrap">{r.report.expense==null?'—':fmtRp(r.report.expense)}</TableCell><TableCell className="whitespace-nowrap">{r.report.broad_gmv==null?'—':fmtRp(r.report.broad_gmv)}</TableCell><TableCell>{r.report.broad_roi??'—'}</TableCell><TableCell>{r.report.broad_order??'—'}</TableCell></TableRow>)}</TableBody></Table></div>}
     {data&&laporanKosong(data)&&<p role="status" className="text-sm text-muted-foreground">Belum ada data performa GMV Max untuk periode ini. Pastikan kampanye GMV Max berjalan pada tanggal tersebut, atau isi ID Kampanye dari Seller Centre.</p>}
-    {data&&perItem&&<div className="flex justify-between"><Button variant="outline" disabled={busy||offset===0} onClick={()=>report.mutate(Math.max(0,offset-50))}>Sebelumnya</Button><Button variant="outline" disabled={busy||!data.has_next_page} onClick={()=>report.mutate(offset+50)}>Berikutnya</Button></div>}
+    {data&&perItem&&<div className="flex justify-between"><PaginasiLanjut bisaMundur={!(busy||offset===0)} bisaMaju={!(busy||!data.has_next_page)} onMundur={()=>report.mutate(Math.max(0,offset-50))} onMaju={()=>report.mutate(offset+50)} /></div>}
   </section>
 }
 

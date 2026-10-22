@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import { useState } from 'react'
 import { Bell, CheckCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -45,7 +46,7 @@ export default function NotificationsBell() {
         {chats.data?.some(s=>s.more)&&<Link className="block p-3 text-sm underline" to="/chat" onClick={()=>setOpen(false)}>Lihat percakapan lainnya</Link>}
         {orders.data&&!orders.data.items.length&&!chatItems.length&&!chats.isPending&&!chats.data?.some(s=>s.error)&&<p className="p-6 text-center text-sm text-muted-foreground">Tidak ada pekerjaan tertunda pada data yang dimuat.</p>}
       </div>
-      {(orders.data?.ada_lagi||page>1)&&<footer className="flex items-center justify-between border-t p-2"><Button size="sm" variant="ghost" disabled={page===1} onClick={()=>setPage(p=>p-1)}>Sebelumnya</Button><span className="text-xs">Halaman {page}</span><Button size="sm" variant="ghost" disabled={!orders.data?.ada_lagi} onClick={()=>setPage(p=>p+1)}>Berikutnya</Button></footer>}
+      {(orders.data?.ada_lagi||page>1)&&<footer className="flex items-center justify-between border-t p-2"><PaginasiLanjut halaman={page} bisaMundur={!(page===1)} bisaMaju={!(!orders.data?.ada_lagi)} onMundur={()=>setPage(p=>p-1)} onMaju={()=>setPage(p=>p+1)} /></footer>}
     </PopoverContent>
   </Popover>
 }

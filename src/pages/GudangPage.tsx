@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import AksiLainnya from '@/components/AksiLainnya'
 import { useStockSettings } from '@/lib/stock-settings'
 import PilihProduk from '@/components/PilihProduk'
@@ -191,7 +192,7 @@ export default function GudangPage() {
                 urutAwal={{ kunci: 'waktu', arah: 'desc' }}
                 minWidth={640}
               />
-              <div className="flex items-center gap-3"><Button variant="outline" disabled={!ledgerPage||ledgerLoading} onClick={()=>setLedgerPage(p=>p-1)}>Sebelumnya</Button><span>Halaman {ledgerPage+1}</span><Button variant="outline" disabled={(ledger?.length??0)<=10||ledgerLoading} onClick={()=>setLedgerPage(p=>p+1)}>Berikutnya</Button></div>
+              <div className="flex items-center gap-3"><PaginasiLanjut halaman={ledgerPage+1} bisaMundur={!(!ledgerPage||ledgerLoading)} bisaMaju={!((ledger?.length??0)<=10||ledgerLoading)} onMundur={()=>setLedgerPage(p=>p-1)} onMaju={()=>setLedgerPage(p=>p+1)} /></div>
               {(ledger ?? []).length === 0 && <p className="py-8 text-center text-muted-foreground">Belum ada pergerakan stok.</p>}
             </>
           )}

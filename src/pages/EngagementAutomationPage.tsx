@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import InfoTip from '@/components/InfoTip'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -60,7 +61,7 @@ function Settings({ shopId, initial, tab }: { shopId: string; initial: api.Autom
         <ul className="space-y-2">{form.boost_catalog_ids.map((id, index) => <li key={id} className="flex items-center justify-between gap-2 rounded border p-2 text-sm"><span>{selected[index]?.data?.akun_id === shopId ? selected[index].data?.nama : id}</span><Button variant="ghost" size="sm" onClick={() => setForm(f => ({ ...f, boost_catalog_ids: f.boost_catalog_ids.filter(value => value !== id) }))}>Hapus pilihan</Button></li>)}</ul>
         <div className="max-h-96 space-y-2 overflow-auto">{products.data?.items.map(p => <label key={p.id} className="flex items-start gap-3 rounded-lg border p-3"><input type="checkbox" className="mt-1" checked={form.boost_catalog_ids.includes(p.id)} disabled={!form.boost_catalog_ids.includes(p.id) && form.boost_catalog_ids.length >= 5} onChange={e => setForm(f => ({ ...f, boost_catalog_ids: e.target.checked ? [...f.boost_catalog_ids, p.id] : f.boost_catalog_ids.filter(id => id !== p.id) }))} /><span>{p.nama}<small className="block text-muted-foreground">{p.sku || 'Tanpa SKU'} · ID Shopee {p.item_id}</small></span></label>)}</div>
         {products.data && !products.data.items.length && <p className="text-sm">Tidak ada produk yang cocok. Sinkronkan produk dari halaman Kelola Toko bila katalog belum tersedia.</p>}
-        <div className="flex gap-2"><Button variant="outline" disabled={page <= 1 || products.isFetching} onClick={() => setPage(p => p - 1)}>Sebelumnya</Button><Button variant="outline" disabled={!products.data || page * products.data.per_halaman >= products.data.total || products.isFetching} onClick={() => setPage(p => p + 1)}>Berikutnya</Button><Button variant="ghost" onClick={() => setForm(f => ({ ...f, boost_catalog_ids: [] }))}>Kosongkan pilihan</Button></div>
+        <div className="flex gap-2"><PaginasiLanjut bisaMundur={!(page <= 1 || products.isFetching)} bisaMaju={!(!products.data || page * products.data.per_halaman >= products.data.total || products.isFetching)} onMundur={() => setPage(p => p - 1)} onMaju={() => setPage(p => p + 1)} /><Button variant="ghost" onClick={() => setForm(f => ({ ...f, boost_catalog_ids: [] }))}>Kosongkan pilihan</Button></div>
         {initial.next_boost_at && <p className="text-xs text-muted-foreground">Jadwal berikutnya: {fmtDateTime(initial.next_boost_at)}</p>}
       </>}
       {save.error && <p role="alert" className="text-sm text-destructive">{getApiError(save.error)}</p>}

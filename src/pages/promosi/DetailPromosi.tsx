@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import InfoTip from '@/components/InfoTip'
 import UbahPromosiForm from './UbahPromosiForm'
 import { useState } from 'react'
@@ -46,7 +47,7 @@ export default function DetailPromosi({ akun, id, close }: { akun: string; id: s
       <p>{labelPromosi(p.status)} · {waktuRetur(p.mulai_at)} — {waktuRetur(p.selesai_at)}</p>
       <InfoTip teks={"Harga dalam mata uang toko Shopee. Pilih produk/varian tepat sebelum mengubah diskon. Gunakan pencarian jika produk belum terlihat."} />
       {p.barang.length === 0 ? <p className="rounded-lg border bg-card p-3">Belum ada produk dalam promosi ini. Gunakan formulir di bawah untuk menambahkan produk/varian dan harga diskonnya.</p> : <TabelData label="Produk promosi" items={p.barang} kolom={columns} idDari={(b) => `${b.item_id}:${b.model_id}`} namaDari={(b) => b.nama} />}
-      <div className="flex justify-between gap-2"><Button variant="outline" disabled={halaman <= 1 || detail.isFetching} onClick={() => setHalaman(halaman - 1)}>Sebelumnya</Button><span>Halaman produk {halaman}</span><Button variant="outline" disabled={!p.ada_lagi || detail.isFetching} onClick={() => setHalaman(halaman + 1)}>Berikutnya</Button></div>
+      <div className="flex justify-between gap-2"><PaginasiLanjut halaman={halaman} bisaMundur={!(halaman <= 1 || detail.isFetching)} bisaMaju={!(!p.ada_lagi || detail.isFetching)} onMundur={() => setHalaman(halaman - 1)} onMaju={() => setHalaman(halaman + 1)} /></div>
       {!finished && <BarangPromosiForm akun={akun} id={id} blocked={end.isPending || editPending} onPending={setBarangPending} />}
       <div className="flex flex-wrap gap-2">
         <UbahPromosiForm akun={akun} promosi={p} blocked={end.isPending || barangPending || finished} onPending={setEditPending} />

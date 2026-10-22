@@ -1,3 +1,4 @@
+import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import InfoTip from '@/components/InfoTip'
 import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
@@ -86,7 +87,7 @@ export default function PromosiPage() {
       {list.data.items.length===0 && <p>Belum ada promosi sesuai filter. Buat promosi atau ubah status.</p>}
       <div className="hidden lg:block"><TabelData label="Promosi diskon Shopee" items={list.data.items} kolom={columns} idDari={(p) => p.id} namaDari={(p) => p.nama} aksi={(p) => <Button variant="outline" size="sm" onClick={() => setSelected(p.id)}>Detail</Button>} /></div>
       <DaftarKartu label="Promosi diskon Shopee" items={list.data.items} kolom={columns} idDari={(p) => p.id} aksi={(p) => <Button variant="outline" size="sm" onClick={() => setSelected(p.id)}>Detail</Button>} />
-      <div className="flex items-center justify-between gap-2"><Button variant="outline" disabled={halaman <= 1 || list.isFetching} onClick={() => setHalaman(halaman - 1)}>Sebelumnya</Button><span className="text-sm">Halaman {halaman}</span><Button variant="outline" disabled={!list.data.ada_lagi || list.isFetching} onClick={() => setHalaman(halaman + 1)}>Berikutnya</Button></div>
+      <div className="flex items-center justify-between gap-2"><PaginasiLanjut halaman={halaman} bisaMundur={!(halaman <= 1 || list.isFetching)} bisaMaju={!(!list.data.ada_lagi || list.isFetching)} onMundur={() => setHalaman(halaman - 1)} onMaju={() => setHalaman(halaman + 1)} /></div>
     </>}
 
   </div>
