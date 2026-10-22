@@ -36,7 +36,7 @@ function FloatingAssistant() {
   useEffect(()=>{const restore=()=>setHidden(false);window.addEventListener('erp-restore-ai',restore);return()=>window.removeEventListener('erp-restore-ai',restore)},[])
   function minimize(){setOpen(false);trigger.current?.focus()}
   return <>
-    <div className={`fixed right-4 bottom-24 z-40 pointer-events-none lg:bottom-6 ${position?'max-sm:left-[var(--ai-x)] max-sm:top-[var(--ai-y)] max-sm:right-auto max-sm:bottom-auto':''} ${hidden||visible||pathname==='/asisten'?'hidden':'block'}`} style={position ? {'--ai-x':`${position.x}px`,'--ai-y':`${position.y}px`} as CSSProperties : undefined}>
+    <div className={`fixed right-4 bottom-24 z-40 pointer-events-none lg:bottom-6 ${pathname.startsWith('/chat')?'max-sm:bottom-44':''} ${position?'max-sm:left-[var(--ai-x)] max-sm:top-[var(--ai-y)] max-sm:right-auto max-sm:bottom-auto':''} ${hidden||visible||pathname==='/asisten'?'hidden':'block'}`} style={position ? {'--ai-x':`${position.x}px`,'--ai-y':`${position.y}px`} as CSSProperties : undefined}>
       <Button ref={trigger} className="pointer-events-auto touch-none rounded-full shadow-lg"
         onPointerDown={e=>{
           if(window.matchMedia('(min-width: 640px)').matches)return

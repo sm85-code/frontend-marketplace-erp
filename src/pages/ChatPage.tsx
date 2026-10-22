@@ -4,8 +4,8 @@ import { useTokoAktif } from '@/lib/tokoAktif'
 import Bantuan from '@/components/Bantuan'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
-import { useRef, useState } from 'react'
-import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight, MoreVertical, CheckCheck, History } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight, MoreVertical, CheckCheck, History, Plus, Paperclip } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
 import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
@@ -98,6 +98,13 @@ export default function ChatPage() {
   const [text, setText] = useState('')
   const [readError, setReadError] = useState('')
   const [delivery, setDelivery] = useState<Delivery | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  // A sent message needs no standing banner: the message itself shows up in the list.
+  useEffect(() => {
+    if (delivery?.status !== 'terkirim') return
+    const t = setTimeout(() => setDelivery(null), 2500)
+    return () => clearTimeout(t)
+  }, [delivery])
   const { data: shops = [] } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
   const orderStart = useQuery({
     queryKey: ['chat', 'order-start', orderId],
@@ -500,7 +507,7 @@ export default function ChatPage() {
               )}
               {history.error && <QueryError error={history.error} retry={history.refetch} />}
               {history.isFetching && <Spinner column label="Memuat pesan…" />}
-              <div className="my-3 min-h-[32dvh] max-h-[55dvh] space-y-3 overflow-y-auto rounded-xl bg-muted/40 p-3" aria-live="polite">
+              <div className="my-2 min-h-[40dvh] max-h-[64dvh] space-y-3 overflow-y-auto rounded-xl bg-muted/40 p-3" aria-live="polite">
                 {messages.filter(m => !chatClosedNotice(m.content, m.message_type)).map((m) => (
                   <div
                     key={m.message_id}
@@ -539,44 +546,33 @@ export default function ChatPage() {
                 ))}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
-              <section aria-label="Form balas chat" className="mt-4 min-w-0 space-y-4 rounded-2xl border border-border bg-background p-3 sm:p-4">
-              <div><h3 className="text-sm font-semibold">Balas chat</h3><p className="mt-1 text-xs text-muted-foreground">Tulis pesan atau pilih lampiran untuk pembeli.</p></div>
-              <div role="group" aria-label="Lampiran"><div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+              <section aria-label="Form balas chat" className="mt-2 min-w-0 space-y-2 rounded-2xl border border-border bg-background p-2">
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
-              <Button type="button" variant="outline" className="min-h-10 gap-1.5 rounded-xl px-2 text-xs sm:text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>galleryInput.current?.click()}><ImagePlus className="size-4"/>Galeri</Button>
-              <Button type="button" variant="outline" className="min-h-10 gap-1.5 rounded-xl px-2 text-xs sm:text-sm" disabled={send.isPending || upload.isPending || !!pending || !!attachment} onClick={()=>cameraInput.current?.click()}><Camera className="size-4"/>Kamera</Button>
-              <AttachmentPicker
-                data={context.data}
-                search={productSearch}
-                setSearch={setProductSearch}
-                offset={productOffset}
-                setOffset={setProductOffset}
-                choose={setAttachment}
-                disabled={send.isPending || upload.isPending || !!pending || !!attachment}
-              />
-              </div></div>
-              {upload.isPending && <p role="status" className="mt-2 text-sm">Mengunggah foto… Pesan belum dikirim.</p>}
-              {photoError && <p role="alert" className="mt-2 text-sm text-destructive">{photoError}</p>}
+              {upload.isPending && <p role="status" className="px-1 text-xs">Mengunggah foto… Pesan belum dikirim.</p>}
+              {photoError && <p role="alert" className="px-1 text-xs text-destructive">{photoError}</p>}
               {attachment && (
-                <div className="space-y-3 rounded-xl border border-primary/25 bg-primary/5 p-3">
-                  <p className="text-xs font-semibold text-primary">Pratinjau lampiran</p>
-                  {attachment.type === 'image' ? <img src={attachment.card.foto ?? ''} alt="Pratinjau foto yang akan dikirim" className="max-h-64 max-w-full rounded-xl object-contain" referrerPolicy="no-referrer"/> : <ChatCardView card={attachment.card}/> }
-                  <Button variant="outline" className="gap-2" disabled={send.isPending || !!pending} onClick={() => setAttachment(null)}>
-                    <X className="mr-2 size-4"/>Hapus lampiran
+                <div className="flex items-start gap-2 rounded-xl border border-primary/25 bg-primary/5 p-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-1 text-[11px] font-semibold text-primary">Lampiran, dikirim terpisah dari teks</p>
+                    {attachment.type === 'image' ? <img src={attachment.card.foto ?? ''} alt="Pratinjau foto yang akan dikirim" className="max-h-40 max-w-full rounded-lg object-contain" referrerPolicy="no-referrer"/> : <ChatCardView card={attachment.card}/> }
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Hapus lampiran" title="Hapus lampiran" disabled={send.isPending || !!pending} onClick={() => setAttachment(null)}>
+                    <X className="size-4"/>
                   </Button>
                 </div>
               )}
               {delivery && (
-                <p role="status" className={delivery.status === 'terkirim' ? 'rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary' : 'rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive'}>
+                <p role="status" className={delivery.status === 'terkirim' ? 'px-1 text-xs text-primary' : 'rounded-lg border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive'}>
                   {delivery.status === 'terkirim' ? 'Pesan terkirim.' : delivery.error || 'Hasil kirim belum pasti; periksa riwayat.'}
                 </p>
               )}
               {pending && !send.isPending && (
-                <div className="space-y-2 rounded-md border p-2 text-sm">
+                <div className="space-y-2 rounded-lg border p-2 text-xs">
                   <p>Pengiriman sebelumnya belum dipastikan. Periksa riwayat sebelum membuat balasan baru.</p>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => {
                       localStorage.removeItem(storageKey)
                       setDelivery(null)
@@ -587,44 +583,71 @@ export default function ChatPage() {
                   </Button>
                 </div>
               )}
-              <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3"><label htmlFor="chat-reply-text" className="text-sm font-medium">Pesan</label><span className="text-xs tabular-nums text-muted-foreground">{text.length}/1.000</span></div>
-              <Textarea id="chat-reply-text" style={{ minHeight: '7rem' }}
-                className="min-h-28 w-full resize-y rounded-xl bg-card px-3 py-3 text-base leading-relaxed sm:text-sm"
-                rows={4}
-                aria-label="Balasan Chat"
-                placeholder="Tulis balasan…"
-                maxLength={1000}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                disabled={send.isPending || !!pending || !!attachment}
-              />
-              {attachment && <p className="text-xs text-muted-foreground">Lampiran dikirim terpisah. Kirim atau hapus lampiran untuk menulis pesan.</p>}
+              <div className="flex items-end gap-2">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button type="button" variant="outline" size="icon" className="size-11 shrink-0 rounded-full" aria-label="Lampirkan" title="Lampirkan foto, produk, atau pesanan" disabled={send.isPending || upload.isPending || !!pending || !!attachment}>
+                      <Plus className="size-5"/>
+                    </Button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal><DropdownMenu.Content side="top" align="start" sideOffset={8} className="z-50 min-w-52 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg">
+                    <DropdownMenu.Item onSelect={()=>galleryInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted"><ImagePlus className="size-4"/>Galeri</DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={()=>cameraInput.current?.click()} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted"><Camera className="size-4"/>Kamera</DropdownMenu.Item>
+                    <DropdownMenu.Item onSelect={()=>setPickerOpen(true)} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted"><Paperclip className="size-4"/>Produk atau pesanan</DropdownMenu.Item>
+                  </DropdownMenu.Content></DropdownMenu.Portal>
+                </DropdownMenu.Root>
+                <AttachmentPicker
+                  open={pickerOpen}
+                  onOpenChange={setPickerOpen}
+                  data={context.data}
+                  search={productSearch}
+                  setSearch={setProductSearch}
+                  offset={productOffset}
+                  setOffset={setProductOffset}
+                  choose={setAttachment}
+                  disabled={send.isPending || upload.isPending || !!pending || !!attachment}
+                />
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="chat-reply-text" className="sr-only">Pesan</label>
+                  <Textarea id="chat-reply-text"
+                    className="min-h-11 max-h-36 w-full resize-none overflow-y-auto rounded-2xl bg-card px-3.5 py-2.5 text-base leading-snug sm:text-sm"
+                    rows={1}
+                    aria-label="Balasan Chat"
+                    placeholder={attachment ? 'Kirim atau hapus lampiran dulu' : 'Tulis balasan…'}
+                    maxLength={1000}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    disabled={send.isPending || !!pending || !!attachment}
+                  />
+                  {text.length >= 800 && <div className="mt-0.5 text-right text-[11px] tabular-nums text-muted-foreground">{text.length}/1.000</div>}
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  className="size-11 shrink-0 rounded-full"
+                  aria-label={attachment ? "Kirim lampiran" : "Kirim balasan"}
+                  title={attachment ? "Kirim lampiran" : "Kirim balasan"}
+                  onClick={() =>
+                    send.mutate({
+                      key: storageKey,
+                      path: newConversation ? `/pesanan/${encodeURIComponent(orderId)}/chat/pesan` : path,
+                      newConversation,
+                      text,
+                      attachment,
+                    })
+                  }
+                  disabled={
+                    (!attachment && !text.trim()) ||
+                    send.isPending ||
+                    upload.isPending ||
+                    !!pending ||
+                    (!newConversation && (!history.data || !!history.error)) ||
+                    (newConversation && !orderStart.data)
+                  }
+                >
+                  {send.isPending ? <Spinner size={18} label="Mengirim…" /> : <Send className="size-5"/>}
+                </Button>
               </div>
-              <div className="flex flex-wrap items-center gap-3 border-t pt-3">
-              <Button
-                className="min-h-11 min-w-36 shrink-0 gap-2 rounded-xl px-5"
-                aria-label={attachment ? "Kirim lampiran" : "Kirim balasan"}
-                onClick={() =>
-                  send.mutate({
-                    key: storageKey,
-                    path: newConversation ? `/pesanan/${encodeURIComponent(orderId)}/chat/pesan` : path,
-                    newConversation,
-                    text,
-                    attachment,
-                  })
-                }
-                disabled={
-                  (!attachment && !text.trim()) ||
-                  send.isPending ||
-                  upload.isPending ||
-                  !!pending ||
-                  (!newConversation && (!history.data || !!history.error)) ||
-                  (newConversation && !orderStart.data)
-                }
-              >
-                {send.isPending ? 'Mengirim…' : <><Send className="size-4"/><span>{attachment ? 'Kirim lampiran' : 'Kirim pesan'}</span></>}
-              </Button></div>
               </section>
             </>
           )}
