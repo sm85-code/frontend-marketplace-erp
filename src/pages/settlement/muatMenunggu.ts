@@ -1,4 +1,5 @@
 import * as api from '@/api/commerce'
+import { getApiError } from '@/api/client'
 import { daftarPesanan } from '@/api/endpoints'
 import type { AkunMarketplace } from '@/api/types'
 import { putusan, ringkasanKosong, type Ringkasan } from '@/lib/menungguPencairan'
@@ -52,12 +53,15 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
     }
   }
   const cepat = new Map<string, number>()
+  const catatanDanaCepat: string[] = []
   for (const shop of shops) {
     try {
       const r = await api.danaCepat(shop.id)
       if (r.aktif) for (const [sn, v] of Object.entries(r.pesanan)) cepat.set(`${shop.id}:${sn}`, Number(v))
-    } catch {
-      // Dana Cepat is a label only; the list still loads without it.
+      if (r.aktif && r.tanpa_pesanan) catatanDanaCepat.push(`${shop.nama_toko}: ${r.tanpa_pesanan} pencairan Dana Cepat tidak mencantumkan nomor pesanan di Shopee.`)
+    } catch (e) {
+      // Dana Cepat is a label only; the list still loads, but say why the label is missing.
+      catatanDanaCepat.push(`${shop.nama_toko}: keterangan Dana Cepat belum bisa dimuat (${getApiError(e)}).`)
     }
   }
   const erp = new Map<string, { id: string; status: string }>()
@@ -140,5 +144,5 @@ export async function muatMenunggu(shops: AkunMarketplace[], semuaToko: boolean)
       }),
     )
   }
-  return { baris, dikecualikan, tidakDihitung }
+  return { baris, dikecualikan, tidakDihitung, catatanDanaCepat }
 }

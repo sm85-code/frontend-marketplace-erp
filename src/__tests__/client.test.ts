@@ -8,7 +8,7 @@ describe('getApiError', () => {
 
   it('turns an opaque proxy 504 into a readable message', () => {
     const e = { message: 'Request failed with status code 504', response: { status: 504, data: '<html>' } }
-    expect(getApiError(e)).toBe('Server sedang lambat atau tidak menjawab. Coba lagi sebentar.')
+    expect(getApiError(e)).toMatch(/^Server sedang lambat atau tidak menjawab \(HTTP 50\d\)\. Coba lagi sebentar\.$/)
   })
 
   it('falls back to the axios message, then the default', () => {
