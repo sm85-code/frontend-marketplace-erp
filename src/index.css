@@ -674,7 +674,10 @@ h4,
 /* An open chat on a phone fills the space between the top bar and the bottom menu: the list of messages takes what is left,
    the reply box stays under it, and the page itself does not scroll. --tinggi-bawah is the real height of the bottom menu. */
 @media (max-width: 767.98px) {
-  main:has([data-chat-terbuka]) { height: 100dvh; display: flex; flex-direction: column; padding-bottom: var(--tinggi-bawah, 6rem); }
+  /* An open conversation takes the whole phone screen: the app header and bottom menu step aside (the back arrow returns). */
+  body:has([data-chat-terbuka]) .kepala-hp, body:has([data-chat-terbuka]) .bottom-nav-shell { display: none; }
+  main:has([data-chat-terbuka]) { height: 100dvh; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  main:has([data-chat-terbuka]) > .erp-content { padding: .5rem; }
   main:has([data-chat-terbuka]) > .erp-content { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; }
 }
 .erp-content .bar-halaman { margin-bottom: 1rem; align-items: flex-start; }

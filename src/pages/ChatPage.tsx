@@ -365,13 +365,13 @@ export default function ChatPage() {
         <div className="col-span-2 flex items-center gap-2">
           <Input
             aria-label="Cari pembeli"
-            placeholder="Cari pembeli"
+            placeholder="Cari"
             className="min-w-0 flex-1"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button type="button" size="sm" variant={unread ? 'default' : 'outline'} aria-pressed={unread} className="shrink-0" onClick={() => { setUnread(!unread); setCursor('') }}>Belum dibaca</Button>
-          <Button type="button" size="sm" variant={unreplied ? 'default' : 'outline'} aria-pressed={unreplied} className="shrink-0" onClick={() => { setUnreplied(!unreplied); setCursor('') }}>Belum dibalas</Button>
+          <Button type="button" size="sm" variant={unread ? 'default' : 'outline'} aria-pressed={unread} className="shrink-0 px-2.5" onClick={() => { setUnread(!unread); setCursor('') }}>Belum baca</Button>
+          <Button type="button" size="sm" variant={unreplied ? 'default' : 'outline'} aria-pressed={unreplied} className="shrink-0 px-2.5" onClick={() => { setUnreplied(!unreplied); setCursor('') }}>Belum balas</Button>
         </div>
       </div>
       {(search||unreplied)&&<div className="flex flex-wrap items-center gap-2"><Button variant="outline" disabled={searchHistory.isPending} onClick={()=>searchHistory.mutate()}>{searchHistory.isPending?'Menelusuri…':'Cari dalam riwayat toko'}</Button><small className="text-muted-foreground">Maks. 10 halaman per toko setiap penelusuran.</small></div>}

@@ -49,7 +49,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="app-shell flex min-h-screen">
       <WallpaperLayer />
       <div
-        className="fixed inset-x-3 top-3 z-40 flex h-14 items-center rounded-2xl px-4 lg:hidden"
+        className="kepala-hp fixed inset-x-3 top-3 z-40 flex h-14 items-center rounded-2xl px-4 lg:hidden"
         style={{ background: 'var(--surface)', border: '1px solid var(--legacy-border)', boxShadow: 'var(--shadow-soft)' }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
