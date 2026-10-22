@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
 import { idGrupAkses } from '@/config/roles'
@@ -164,7 +165,7 @@ export default function RoleAkses() {
 
           <div className="space-y-1.5">
             <h3 className="text-sm font-medium">Akses halaman</h3>
-            <p className="teks-kecil text-muted-foreground">Baca: melihat data. Tulis: juga menambah, mengubah, dan menghapus. Menulis otomatis boleh membaca.</p>
+            <InfoTip teks={"Baca: melihat data. Tulis: juga menambah, mengubah, dan menghapus. Menulis otomatis boleh membaca."} />
             <TableShell label="Akses halaman per role" minWidth={420}>
               <Table>
                 <TableHeader>

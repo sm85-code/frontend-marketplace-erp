@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
 import MoneyInput from '@/components/MoneyInput'
 import Bantuan from '@/components/Bantuan'
@@ -730,10 +731,7 @@ export default function PublicationPage() {
         </section>
         <section hidden={step!==2} className="rounded-lg border bg-card p-4 space-y-3">
           <h2 className="font-semibold">3. Variasi produk</h2>
-          <p className="text-sm text-muted-foreground">
-            Maksimal 2 jenis variasi dan 50 kombinasi. Contoh: Warna → Merah, Biru. Mengubah pilihan membentuk ulang tabel, jadi atur
-            pilihan sebelum mengisi SKU/harga. Kosongkan fisik/DTS varian untuk mengikuti induk.
-          </p>
+          <InfoTip teks={"Maksimal 2 jenis variasi dan 50 kombinasi. Contoh: Warna → Merah, Biru. Mengubah pilihan membentuk ulang tabel, jadi atur pilihan sebelum mengisi SKU/harga. Kosongkan fisik/DTS varian untuk mengikuti induk."} />
           {form.tiers.map((t, i) => (
             <div className="grid gap-2 sm:grid-cols-2" key={i}>
               <div className="grid gap-2">

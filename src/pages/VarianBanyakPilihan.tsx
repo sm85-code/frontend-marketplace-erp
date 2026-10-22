@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -77,7 +78,7 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
     <div className="space-y-4">
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">Varian</legend>
-        <p className="text-xs text-muted-foreground">Kosongkan jika produk tidak punya varian. Beri nama varian (misalnya Jenis), lalu isi pilihannya (Basah, Kering). Setiap kombinasi pilihan menjadi satu produk.</p>
+        <InfoTip teks={"Kosongkan jika produk tidak punya varian. Beri nama varian (misalnya Jenis), lalu isi pilihannya (Basah, Kering). Setiap kombinasi pilihan menjadi satu produk."} />
         <datalist id={saran}>{SARAN_NAMA_VARIAN.map((n) => <option key={n} value={n} />)}</datalist>
         {grup.map((g, i) => (
           <div key={i} className="space-y-2 rounded-xl border p-3">
@@ -149,7 +150,7 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
               ))}
             </ul>
           )}
-          {caraNyata === 'kombinasi' && <p className="text-xs text-muted-foreground">Isi harga tiap kombinasi di daftar di bawah. Harga awalnya diambil dari pilihan sebelumnya.</p>}
+          {caraNyata === 'kombinasi' && <InfoTip teks={"Isi harga tiap kombinasi di daftar di bawah. Harga awalnya diambil dari pilihan sebelumnya."} />}
         </fieldset>
       )}
 

@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import MoneyInput from '@/components/MoneyInput'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -70,6 +71,6 @@ export default function BarangPromosiForm({ akun, id, blocked, onPending }: { ak
       {mutation.data.gagal.map((f, i) => <p key={i}>{f.fail_error} {f.fail_message} · Item {f.item_id} · Model {f.model_id}</p>)}
       {mutation.data.warnings.map((w) => <p key={w}>{w}</p>)}
     </div>}
-    <p className="text-xs text-muted-foreground">Pilihan berasal dari katalog toko ini. Jika belum lengkap, sinkronkan katalog. Pengaturan stok promo dikirim ke Shopee; pencatatan stok ERP tidak diubah oleh formulir ini.</p>
+    <InfoTip teks={"Pilihan berasal dari katalog toko ini. Jika belum lengkap, sinkronkan katalog. Pengaturan stok promo dikirim ke Shopee; pencatatan stok ERP tidak diubah oleh formulir ini."} />
   </section>
 }

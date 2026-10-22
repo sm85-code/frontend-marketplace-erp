@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import GmvMax from './iklan/GmvMax'
 import FormDialog from '@/components/FormDialog'
 import MoneyInput from '@/components/MoneyInput'
@@ -111,7 +112,7 @@ export default function IklanPage() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <CardTitle>Catatan kampanye</CardTitle>
-                  <p className="text-sm text-muted-foreground">Pengingat pribadi di ERP. Tidak membuat atau mengubah iklan di Shopee.</p>
+                  <InfoTip teks={"Pengingat pribadi di ERP. Tidak membuat atau mengubah iklan di Shopee."} />
                 </div>
                 <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
                   Tambah catatan

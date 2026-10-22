@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Rnd } from "react-rnd";
@@ -577,9 +578,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
       <div className="grid min-w-0 items-start gap-3 xl:grid-cols-[170px_minmax(0,1fr)_280px]">
         <aside className="hidden space-y-4 rounded-2xl border bg-card p-3 xl:sticky xl:top-24 xl:block">
           <h3 className="text-sm font-semibold">Tambah elemen</h3>
-          <p className="text-xs text-muted-foreground">
-            Tambah elemen baru. Pilih yang sudah ada langsung di kanvas.
-          </p>
+          <InfoTip teks={"Tambah elemen baru. Pilih yang sudah ada langsung di kanvas."} />
           <div className="grid gap-2">{addButtons}</div>
         </aside>
         <div className="min-w-0 space-y-2">
@@ -968,10 +967,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           {mobilePanel === "layers" ? layerContent : propertyContent}
         </DialogContent>
       </Dialog>
-      <p className="text-xs text-muted-foreground">
-        Pratinjau memakai data contoh. Simpan desain untuk menggunakan kembali
-        pengaturan INV/PO.
-      </p>
+      <InfoTip teks={"Pratinjau memakai data contoh. Simpan desain untuk menggunakan kembali pengaturan INV/PO."} />
     </div>
   );
 }

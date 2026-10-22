@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import EditProdukLanjutan from './EditProdukLanjutan'
 import KualitasProduk from './KualitasProduk'
 import StatistikProduk from './StatistikProduk'
@@ -115,7 +116,7 @@ function TabelVarian({ detail }: { detail: KatalogDetail }) {
   return (
     <div className="space-y-2">
       <div className="font-medium">Varian ({detail.varian.length})</div>
-      <p className="text-xs text-muted-foreground">Nilai bercetak miring mengikuti produk induk.</p>
+      <InfoTip teks={"Nilai bercetak miring mengikuti produk induk."} />
       {!lengkap && (
         <p role="note" className="rounded-md border border-dashed p-2 text-muted-foreground">
           Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi di tab Kelola untuk memperbarui produk tanpa menarik seluruh toko.

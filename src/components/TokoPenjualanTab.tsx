@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -132,7 +133,7 @@ export default function TokoPenjualanTab() {
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="teks-kecil text-muted-foreground">Toko sendiri dan reseller yang tidak terhubung ke marketplace. Kode penjual dipakai di kode pesanan produksi. Toko tidak dihapus, hanya dinonaktifkan.</p>
+        <InfoTip teks={"Toko sendiri dan reseller yang tidak terhubung ke marketplace. Kode penjual dipakai di kode pesanan produksi. Toko tidak dihapus, hanya dinonaktifkan."} />
         {isLoading && <Spinner column label="Memuat toko…" />}
         {error && <QueryError error={error} retry={refetch} />}
         {data && (

@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { biayaProduksiBulan, type PembayaranProduksi } from '@/api/financialReports'
@@ -63,9 +64,7 @@ export default function RujukanBiayaProduksi({ month }: { month: string }) {
   return (
     <details className="min-w-0 rounded-xl border bg-card p-3 sm:p-4">
       <summary className="cursor-pointer text-sm font-semibold">Rujukan pembayaran produksi & tagihan reseller</summary>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Dari Pemetaan Order. Pembayaran dihitung pada tanggal tahap selesai (tukang hanya menerima harga produk), tagihan pada tanggal packing selesai. Hanya rujukan: tidak masuk ke tabel arus kas.
-      </p>
+      <InfoTip teks={"Dari Pemetaan Order. Pembayaran dihitung pada tanggal tahap selesai (tukang hanya menerima harga produk), tagihan pada tanggal packing selesai. Hanya rujukan: tidak masuk ke tabel arus kas."} />
       {q.isLoading && <Spinner label="Memuat data produksi…" />}
       {q.error && <p role="alert" className="mt-2 text-sm text-destructive">{getApiError(q.error)}</p>}
       {q.data && (

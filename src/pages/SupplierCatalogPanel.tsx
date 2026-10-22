@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { connectSupplierCatalog, getSupplierCatalog, getSupplierCatalogConnection, type SupplierCatalogProduct } from '@/api/processing'
@@ -38,7 +39,7 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
     {connection.isLoading && <p className="text-sm text-muted-foreground">Memeriksa koneksi…</p>}
     {connection.error && <p role="alert" className="text-sm text-destructive">{getApiError(connection.error)}</p>}
     {login && <div className="space-y-3 rounded-xl bg-muted/30 p-3">
-      <p className="text-sm text-muted-foreground">Masuk sekali dengan akun admin sumber katalog untuk menghubungkan katalog. Kata sandi tidak disimpan.</p>
+      <InfoTip teks={"Masuk sekali dengan akun admin sumber katalog untuk menghubungkan katalog. Kata sandi tidak disimpan."} />
       <Field title="Username akun katalog"><Input autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} /></Field>
       <Field title="Kata sandi akun katalog"><Input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></Field>
       <Button type="button" disabled={busy || !username.trim() || !password} onClick={async () => {

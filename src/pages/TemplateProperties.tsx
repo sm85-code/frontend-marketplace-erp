@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Lock, Unlock, Eye, EyeOff, Minus, Plus } from "lucide-react";
 import type { TemplateBlock } from "@/api/documentTemplates";
@@ -173,9 +174,7 @@ export default function TemplateProperties({
                 onChange={(e) => update({ text: e.target.value })}
               />
             </Field>
-            <p className="text-xs text-muted-foreground">
-              Klik dua kali teks di kanvas untuk mengedit langsung.
-            </p>
+            <InfoTip teks={"Klik dua kali teks di kanvas untuk mengedit langsung."} />
             <Field title="Sisipkan data">
               <SelectField
                 value=""
@@ -275,10 +274,7 @@ export default function TemplateProperties({
                 </Field>
               </div>
             </details>
-            <p className="text-xs text-muted-foreground">
-              Pilih gambar untuk elemen ini. Menambah logo lagi dilakukan lewat
-              Duplikat.
-            </p>
+            <InfoTip teks={"Pilih gambar untuk elemen ini. Menambah logo lagi dilakukan lewat Duplikat."} />
           </div>
         )}
         {item.kind === "table" && (

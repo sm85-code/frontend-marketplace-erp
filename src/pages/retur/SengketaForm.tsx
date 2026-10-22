@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -82,10 +83,7 @@ export default function SengketaForm({
       </Button>
       {open && (
         <>
-          <p className="text-sm text-muted-foreground">
-            Pilih alasan yang tersedia langsung dari Shopee, baca persyaratan tiap bagian, lalu unggah foto. Jika sengketa memerlukan video
-            atau negosiasi lanjutan, gunakan Seller Centre. Hak dan status pengajuan tetap ditentukan Shopee.
-          </p>
+          <InfoTip teks={"Pilih alasan yang tersedia langsung dari Shopee, baca persyaratan tiap bagian, lalu unggah foto. Jika sengketa memerlukan video atau negosiasi lanjutan, gunakan Seller Centre. Hak dan status pengajuan tetap ditentukan Shopee."} />
           {reasons.error && <QueryError error={reasons.error} retry={reasons.refetch} />}
           {reasons.isFetching && <Spinner column label="Memuat persyaratan sengketa…" />}
           <form

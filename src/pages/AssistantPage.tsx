@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { BarHalaman } from '@/components/daftar'
 import { useEffect, useRef, useState } from 'react'
 import AssistantActionDraft from '@/components/AssistantActionDraft'
@@ -143,7 +144,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
         <div><Label className="sr-only" htmlFor={`${pre}assistant-shop`}>Toko</Label><select id={`${pre}assistant-shop`} className={selectClass} value={selectedShop} disabled={locked||!!(embedded&&detail.data?.akun_id)} onChange={e=>embedded?setActiveShop(e.target.value):setAkun(e.target.value)}><option value="">Seluruh toko</option>{shops.data?.filter(s=>s.platform==='shopee').map(s=><option key={s.id} value={s.id}>{s.nama_toko}</option>)}</select></div>
         <div><Label className="sr-only" htmlFor={`${pre}assistant-mode`}>Mode</Label><select id={`${pre}assistant-mode`} className={selectClass} value={mode} disabled={locked} onChange={e=>setMode(e.target.value as ai.AiMode)}><option value="tanya">Tanya</option><option value="perintah">Perintah</option></select></div>
       </div>
-      {mode==='perintah'&&<p className="text-xs text-muted-foreground">Perintah menghasilkan draf pada toko terpilih (pilih tokonya). Periksa sasaran dan nilai, lalu konfirmasi sebelum data diubah.</p>}
+      {mode==='perintah'&&<InfoTip teks={"Perintah menghasilkan draf pada toko terpilih (pilih tokonya). Periksa sasaran dan nilai, lalu konfirmasi sebelum data diubah."} />}
       <Label className="sr-only" htmlFor={`${pre}assistant-prompt`}>Pertanyaan atau perintah</Label><Textarea id={`${pre}assistant-prompt`} className="min-h-20 max-h-48 resize-y" placeholder="Tulis pertanyaan atau perintah…" maxLength={4000} value={prompt} disabled={locked} onChange={e=>setPrompt(e.target.value)}/>
       {mutation.error&&<p role="alert" className="text-sm text-destructive">{getApiError(mutation.error)} {recovering?'Pemeriksaan/kirim ulang memakai ID permintaan yang sama.':'Perbaiki pesan atau pilihan toko, lalu kirim kembali.'}</p>}{recovering&&<p className="text-sm">Pesan: {pending?.prompt}. Ada permintaan sebelumnya yang belum terkonfirmasi. Periksa dengan ID yang sama agar tidak membuat tindakan ganda.</p>}
       <div className="flex items-center justify-between gap-2">
@@ -153,7 +154,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
       {pintasan&&<div className="space-y-3 border-t pt-3">
         <div><Label className="mb-1 block text-xs text-muted-foreground" htmlFor={`${pre}assistant-agent`}>Bidang bantuan</Label><select id={`${pre}assistant-agent`} className={selectClass} value={agent} disabled={locked} onChange={e=>setAgent(e.target.value as ai.AiAgent)}><option value="auto">Otomatis</option><option value="operasional">Operasional</option><option value="iklan">Iklan</option><option value="coding">Coding · rencana perbaikan</option></select></div>
         {COMMAND_GROUPS.map(group=><div key={group.label}><p className="mb-2 text-xs font-medium text-muted-foreground">{group.label}</p><div className="flex flex-wrap gap-2">{group.commands.map(command=><Button key={command.label} type="button" variant="outline" size="sm" disabled={locked} onClick={()=>{setAgent(command.agent);setMode(command.mode);setPrompt(command.prompt);setPintasan(false)}}>{command.label}</Button>)}</div></div>)}
-        <p className="text-xs text-muted-foreground">Pintasan mengisi pesan agar bisa Anda periksa sebelum dikirim.</p>
+        <InfoTip teks={"Pintasan mengisi pesan agar bisa Anda periksa sebelum dikirim."} />
       </div>}
     </form>
   </div>

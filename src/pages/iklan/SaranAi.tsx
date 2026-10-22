@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
@@ -61,9 +62,7 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">Asisten AI</h3>
-          <p className="teks-kecil text-muted-foreground">
-            AI membaca performa kampanye yang berjalan dan dijeda, lalu memberi saran. Tidak ada yang berubah sebelum Anda menekan Terapkan.
-          </p>
+          <InfoTip teks={"AI membaca performa kampanye yang berjalan dan dijeda, lalu memberi saran. Tidak ada yang berubah sebelum Anda menekan Terapkan."} />
         </div>
         <Button onClick={() => analisis.mutate()} disabled={!akunId || analisis.isPending}>
           {analisis.isPending ? 'AI sedang menganalisis…' : 'Minta saran AI'}
@@ -107,10 +106,7 @@ export default function SaranAi({ akunId, hari }: { akunId: string; hari: number
             </ul>
           )}
           {h.saran.length > 0 && h.saran.every((s) => cara(s) === null) && (
-            <p className="teks-data text-muted-foreground">
-              Semua saran kali ini berupa catatan, jadi tidak ada tombol Terapkan: tidak ada perubahan yang bisa dilakukan dari ERP untuk itu (misalnya isi
-              saldo iklan dilakukan di Seller Centre).
-            </p>
+            <InfoTip teks={"Semua saran kali ini berupa catatan, jadi tidak ada tombol Terapkan: tidak ada perubahan yang bisa dilakukan dari ERP untuk itu (misalnya isi saldo iklan dilakukan di Seller Centre)."} />
           )}
           <p className="teks-kecil text-muted-foreground">
             Biaya analisis ini sekitar {fmtRp(h.pemakaian.biaya_rp)} ({h.pemakaian.token_masuk.toLocaleString('id-ID')} token masuk,{' '}

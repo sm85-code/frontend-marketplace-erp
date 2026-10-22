@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
 import { useTokoAktif } from '@/lib/tokoAktif'
@@ -61,7 +62,7 @@ export default function ReturPage() {
     </BarHalaman>
     <Bantuan judul="Cara menangani retur">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>
-      <p className="text-muted-foreground">Rentang maksimal 14 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti foto dan pengajuan sengketa tersedia di Detail; persyaratan mengikuti Shopee.</p>
+      <InfoTip teks={"Rentang maksimal 14 hari kalender (WIB). Gunakan halaman berikutnya untuk melihat semua hasil. Persetujuan tersedia di Detail. Permintaan maupun persetujuan retur tidak otomatis menambah stok atau mencatat dana settlement. Bukti foto dan pengajuan sengketa tersedia di Detail; persyaratan mengikuti Shopee."} />
     </Bantuan>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     <form className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); apply() }}>

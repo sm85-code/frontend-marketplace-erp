@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useState } from "react";
 import {
   ArrowUp,
@@ -39,10 +40,7 @@ export default function TemplateLayers({
   };
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Layer paling atas berada paling depan. Seret urutannya atau gunakan
-        panah.
-      </p>
+      <InfoTip teks={"Layer paling atas berada paling depan. Seret urutannya atau gunakan panah."} />
       <div role="list" aria-label="Layer dokumen" className="space-y-2">
         {[...blocks].reverse().map((item, index) => {
           const Icon = {

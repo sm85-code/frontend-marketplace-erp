@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import FormDialog from '@/components/FormDialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -85,7 +86,7 @@ export default function FormPesananManual({ open, onOpenChange }: { open: boolea
                 <Input id="pm-kode" maxLength={200} value={form.kode_pesanan} onChange={(e) => setForm((f) => ({ ...f, kode_pesanan: e.target.value }))} />
               </Medan>
             )}
-            {dipilih && !internal && <p className="text-xs text-muted-foreground">Kode pesanan dibentuk saat produk dipetakan: SKU produksi–DDMM–kode penjual–nomor urut.</p>}
+            {dipilih && !internal && <InfoTip teks={"Kode pesanan dibentuk saat produk dipetakan: SKU produksi–DDMM–kode penjual–nomor urut."} />}
             <Medan label={internal ? 'Nama pemesan' : 'Nama pemesan (opsional)'} untuk="pm-pemesan">
               <Input id="pm-pemesan" maxLength={200} value={form.pemesan} onChange={(e) => setForm((f) => ({ ...f, pemesan: e.target.value }))} />
             </Medan>

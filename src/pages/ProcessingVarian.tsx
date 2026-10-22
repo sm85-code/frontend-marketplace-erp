@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { Plus, X } from 'lucide-react'
 import { useId } from 'react'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,7 @@ export default function ProcessingVarian({ value, onChange }: { value: Varian[];
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-medium">Varian</legend>
-      <p className="text-xs text-muted-foreground">Kosongkan jika produk tidak punya varian. Tambah satu baris per jenis varian, misalnya Ukuran dan Jenis.</p>
+      <InfoTip teks={"Kosongkan jika produk tidak punya varian. Tambah satu baris per jenis varian, misalnya Ukuran dan Jenis."} />
       <datalist id={saran}>
         {SARAN_NAMA_VARIAN.map((n) => (
           <option key={n} value={n} />

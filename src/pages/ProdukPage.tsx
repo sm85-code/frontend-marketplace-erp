@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
 import FormDialog from '@/components/FormDialog'
@@ -300,13 +301,13 @@ export default function ProdukPage() {
                   <Input id="produk-lama-proses-hari-3-14-6" type="number" min={3} max={14} className="max-w-28" value={form.hari_proses} onChange={(e) => setForm((f) => ({ ...f, hari_proses: e.target.value }))} />
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">Bukan pre-order: ready stock, diproses 2 hari.</p>
+                <InfoTip teks={"Bukan pre-order: ready stock, diproses 2 hari."} />
               )}
             </div>
             <div className="space-y-1.5">
                 <Label htmlFor="produk-stok-awal-7">Stok referensi</Label>
                 <Input id="produk-stok-awal-7" type="number" min={0} step={1} value={form.stok} onChange={(e) => setForm((f) => ({ ...f, stok: e.target.value }))} />
-                <p className="text-xs text-muted-foreground">Angka referensi saja; tidak mengubah stok marketplace, Gudang, atau Toko Web.</p>
+                <InfoTip teks={"Angka referensi saja; tidak mengubah stok marketplace, Gudang, atau Toko Web."} />
               </div>
           </div>
           {(createMut.error||updateMut.error)&&<p role="alert" className="text-sm text-destructive">{getApiError(createMut.error||updateMut.error)}</p>}

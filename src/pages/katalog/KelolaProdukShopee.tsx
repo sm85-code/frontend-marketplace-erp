@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { BarisAksi } from './bagian'
@@ -65,7 +66,7 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
         <div className="space-y-1"><Label htmlFor="shopee-product-name">Nama produk</Label><Input id="shopee-product-name" value={nama} onChange={(e) => setNama(e.target.value)} maxLength={255} required /></div>
         <div className="space-y-1"><Label htmlFor="shopee-product-sku">SKU produk induk</Label><Input id="shopee-product-sku" value={sku} onChange={(e) => setSku(e.target.value)} maxLength={128} /></div>
         <div className="space-y-1"><Label htmlFor="shopee-product-description">Deskripsi produk Shopee</Label><Textarea id="shopee-product-description" rows={5} value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} /></div>
-        <p className="text-xs text-muted-foreground">Edit teks deskripsi maksimal 3.000 karakter. Deskripsi yang tidak diubah tetap dipertahankan. Shopee memeriksa aturan kategori dan format deskripsi.</p>
+        <InfoTip teks={"Edit teks deskripsi maksimal 3.000 karakter. Deskripsi yang tidak diubah tetap dipertahankan. Shopee memeriksa aturan kategori dan format deskripsi."} />
         <p className="text-sm text-muted-foreground">SKU ini milik produk induk, bukan SKU setiap varian. Mengosongkannya akan menghapus SKU induk di Shopee.</p>
         <div className="flex gap-2"><Button type="submit" disabled={mutation.isPending || !nama.trim() || !Object.keys(fields).length || (fields.deskripsi !== undefined && (!deskripsi.trim() || deskripsi.length > 3000))}>Simpan ke Shopee</Button><Button type="button" variant="outline" disabled={mutation.isPending} onClick={() => setEditing(false)}>Batal</Button></div>
       </form>}

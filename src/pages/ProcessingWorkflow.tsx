@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { labelVarian, namaDenganVarian } from '@/lib/varianProduk'
 import { useState } from 'react'
 import SupplierCatalogPanel from './SupplierCatalogPanel'
@@ -117,7 +118,7 @@ function ProductionPricePicker({ prices, value, onChange, manual }: {
       </div>
     </div>
     <p className="text-xs text-muted-foreground">{matches.length} dari {production.length} produk terstruktur.</p>
-    {value && !production.some(p => p.id === value) && <p className="text-xs text-muted-foreground">Pemetaan ini memakai harga lama yang tersimpan. Pilih produk terstruktur untuk menggantinya.</p>}
+    {value && !production.some(p => p.id === value) && <InfoTip teks={"Pemetaan ini memakai harga lama yang tersimpan. Pilih produk terstruktur untuk menggantinya."} />}
     {!matches.length && search.trim() && <p role="status" className="text-xs text-muted-foreground">Tidak ada produk yang cocok. Coba nama, model, atau ukuran lainnya.</p>}
   </div>
 }
@@ -286,7 +287,7 @@ function MappingEditor({
                     <Field title="SKU supplier (opsional)"><Input maxLength={200} disabled={!!edit.price_id} value={edit.supplier_sku || ''} onChange={e => setEdit(v => ({ ...v, supplier_sku: e.target.value, production_sku: e.target.value }))} /></Field>
                   </>}
                   <Field title="Harga beli per unit (Rp)"><Input required type="number" min="0" step="0.01" disabled={edit.catalog_mode === 'otomatis' || !!edit.price_id} value={edit.production_price ?? ''} onChange={e => set('production_price', e.target.value)} /></Field>
-                  {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <p className="text-xs text-muted-foreground">Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini.</p>}
+                  {edit.catalog_mode === 'otomatis' && job.supplier_reference && !edit.refresh_catalog_price && <InfoTip teks={"Harga pada order memakai harga tersimpan. Klik Gunakan harga terkini untuk memperbarui harga pada pemetaan ini."} />}
                 </div> : <>
                 <ProductionPricePicker prices={prices} value={edit.price_id} onChange={id => pickPrice(id)} manual={job.source !== 'erp'} />
                 <Field title="Harga produksi / beli per unit (Rp)">
@@ -430,7 +431,7 @@ function MappingEditor({
                 <div className="mt-2 border-t pt-2">
                   <Amount label="Total estimasi" value={String(harga + catPacking + kayu + Number(job.process_fee))} />
                 </div>
-                {termasuk && <p className="mt-2 text-xs text-muted-foreground">Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah.</p>}
+                {termasuk && <InfoTip teks={"Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah."} />}
               </div>
             )
           })()}

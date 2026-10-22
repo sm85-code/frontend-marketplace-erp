@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -349,7 +350,7 @@ export default function KategoriTransaksiPage() {
             </TableShell>
             </div>
             <PanelKelompok arah={arah} kelompok={kelompok} bisaTulis={bisaTulis} onChanged={segarkan} />
-            <p className="teks-kecil text-muted-foreground">Mengubah nama hanya mengganti tulisan: di pilihan kategori Arus Kas, tab Pemasukan/Pengeluaran, dan halaman Operasional. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.</p>
+            <InfoTip teks={"Mengubah nama hanya mengganti tulisan: di pilihan kategori Arus Kas, tab Pemasukan/Pengeluaran, dan halaman Operasional. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru."} />
           </CardContent>
         </Card>
       )}

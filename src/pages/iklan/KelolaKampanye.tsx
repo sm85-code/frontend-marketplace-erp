@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import MoneyInput from '@/components/MoneyInput'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -94,7 +95,7 @@ export default function KelolaKampanye({ akunId, kampanye: k, hari, biayaShopee,
         {saran.length > 0 && (
           <section aria-label="Saran otomatis" className="space-y-2">
             <h3 className="text-sm font-semibold">Saran otomatis</h3>
-            <p className="teks-kecil text-muted-foreground">Dihitung dari angka performa dengan aturan sederhana. Anda yang memutuskan.</p>
+            <InfoTip teks={"Dihitung dari angka performa dengan aturan sederhana. Anda yang memutuskan."} />
             <ul className="space-y-1.5">
               {saran.map((s) => (
                 <li key={s.teks} className={`rounded-md border p-2 text-sm ${WARNA[s.tingkat]}`}>

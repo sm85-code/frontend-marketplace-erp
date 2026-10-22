@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -48,11 +49,11 @@ function Settings({ shopId, initial, tab }: { shopId: string; initial: api.Autom
       {tab === 'rating' ? <><h2 className="font-semibold">Template balasan rating · {initial.nama_toko}</h2><label className="flex gap-2"><input type="checkbox" checked={form.replies_enabled} onChange={e => setForm(f => ({ ...f, replies_enabled: e.target.checked }))} />Aktifkan balasan otomatis</label>
         <label className="block">Balasan rating 4–5<textarea className="mt-1 min-h-28 w-full rounded-lg border bg-background p-2" maxLength={5000} value={form.high_template} onChange={e => setForm(f => ({ ...f, high_template: e.target.value }))} placeholder="Terima kasih atas penilaiannya. Semoga produknya bermanfaat!" /></label>
         <label className="block">Balasan rating 1–3<textarea className="mt-1 min-h-28 w-full rounded-lg border bg-background p-2" maxLength={5000} value={form.low_template} onChange={e => setForm(f => ({ ...f, low_template: e.target.value }))} placeholder="Terima kasih atas masukannya. Mohon hubungi kami melalui chat agar kendalanya bisa kami bantu." /></label>
-        <p className="text-sm text-muted-foreground">Berlaku untuk rating baru sejak diaktifkan; ulasan yang sudah dibalas dilewati.</p>
+        <InfoTip teks={"Berlaku untuk rating baru sejak diaktifkan; ulasan yang sudah dibalas dilewati."} />
         {initial.replies_enabled_at && <p className="text-xs text-muted-foreground">Aktif sejak {fmtDateTime(initial.replies_enabled_at)}</p>}
       </> : <><h2 className="font-semibold">Produk untuk boost otomatis · {initial.nama_toko}</h2><label className="flex gap-2"><input type="checkbox" checked={form.boost_enabled} onChange={e => setForm(f => ({ ...f, boost_enabled: e.target.checked }))} />Aktifkan boost otomatis</label>
         <label className="block">Jarak antarpermintaan (jam)<Input type="number" min={4} max={168} step={1} value={form.boost_interval_minutes / 60} onChange={e => setForm(f => ({ ...f, boost_interval_minutes: Math.round(Number(e.target.value) * 60) }))} /></label>
-        <p className="text-sm text-muted-foreground">Maksimal 5 produk. Cooldown dilewati; hasil belum pasti perlu diperiksa sebelum boost dilanjutkan.</p>
+        <InfoTip teks={"Maksimal 5 produk. Cooldown dilewati; hasil belum pasti perlu diperiksa sebelum boost dilanjutkan."} />
         <Input aria-label="Cari produk boost" value={q} onChange={e => { setQ(e.target.value); setPage(1) }} placeholder="Cari nama atau SKU produk…" />
         {products.isPending && <Spinner column label="Memuat produk…" />}{products.error && <QueryError error={products.error} retry={products.refetch} />}
         <p className="text-sm font-medium">Dipilih: {form.boost_catalog_ids.length}/5</p>
