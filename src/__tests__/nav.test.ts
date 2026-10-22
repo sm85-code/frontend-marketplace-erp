@@ -90,14 +90,17 @@ describe('bottom bar chosen on Kelola Aplikasi', () => {
   })
 })
 
-describe('Pemetaan Order and Data Produksi are separate pages', () => {
-  it('shows each staff member only the menu they were given', () => {
-    const akses = (halaman: Record<string, 'baca' | 'tulis'>) => ({ role: 'x', nama: 'x', akses_toko: 'semua', halaman }) as never
-    const proses = filterNav(akses({ processing: 'tulis' })).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
-    expect(proses).toEqual(['/processing/pemetaan'])
-    const data = filterNav(akses({ data_produksi: 'tulis' })).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
-    expect(data).not.toContain('/processing/pemetaan')
-    expect(data).toContain('/processing/tukang-kayu')
-    expect(data).toContain('/processing/template')
+describe('Pemetaan Order and every menu of Data Produksi are separate pages', () => {
+  const akses = (halaman: Record<string, 'baca' | 'tulis'>) => ({ role: 'x', nama: 'x', akses_toko: 'semua', halaman }) as never
+  const proses = (halaman: Record<string, 'baca' | 'tulis'>) => filterNav(akses(halaman)).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
+
+  it('shows each staff member only the menus they were given', () => {
+    expect(proses({ processing: 'tulis' })).toEqual(['/processing/pemetaan'])
+    expect(proses({ data_tukang: 'tulis', data_template: 'baca' })).toEqual(['/processing/tukang-kayu', '/processing/template'])
+  })
+
+  it('shows Katalog Produk Non Kayu when either of its tabs is given', () => {
+    expect(proses({ data_katalog_manual: 'baca' })).toEqual(['/processing/produk-non-kayu'])
+    expect(proses({ data_katalog_otomatis: 'baca' })).toEqual(['/processing/produk-non-kayu'])
   })
 })

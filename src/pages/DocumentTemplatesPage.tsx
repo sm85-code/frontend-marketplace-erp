@@ -996,7 +996,7 @@ function TemplateLoader({ kind }: { kind: DocumentKind }) {
 }
 export default function DocumentTemplatesPage() {
   const { bisa } = useAuth();
-  if (!bisa("data_produksi", "tulis"))
+  if (!bisa("data_template", "tulis"))
     return <p role="alert">Template hanya dapat diakses admin.</p>;
   return (
     <div className="min-w-0 space-y-4 text-left" data-text-align="preserve">

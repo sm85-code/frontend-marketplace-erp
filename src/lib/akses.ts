@@ -6,6 +6,7 @@ export type { AksesSaya, Tingkat }
 export function bisa(akses: AksesSaya | null | undefined, halaman: string, perlu: Tingkat = 'baca'): boolean {
   if (!akses) return false
   if (halaman === '*' || akses.role === 'admin') return true // admin always has everything
+  if (halaman.includes('|')) return halaman.split('|').some((h) => bisa(akses, h, perlu)) // a screen that either page opens
   const punya = akses.halaman[halaman]
   return perlu === 'baca' ? punya !== undefined : punya === 'tulis'
 }
