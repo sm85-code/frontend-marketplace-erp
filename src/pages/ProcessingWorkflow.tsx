@@ -167,6 +167,8 @@ function MappingEditor({
     paint_price: job.paint_price,
     packing_type: job.packing_type,
     packing_price: job.packing_price,
+    packing_by: job.packing_by ?? 'internal',
+    packing_party_id: job.packing_party_id ?? '',
   })
   const [packingTariff, setPackingTariff] = useState('')
   const [busy, setBusy] = useState(false)
@@ -192,9 +194,10 @@ function MappingEditor({
     )
   }
   const valid = packingOnly
-    ? edit.packing_price !== ''
+    ? edit.packing_price !== '' && (edit.packing_by !== 'supplier' || !!edit.packing_party_id)
     : Boolean(
-        edit.party_id &&
+        (edit.packing_by !== 'supplier' || !!edit.packing_party_id) &&
+          edit.party_id &&
           edit.production_price !== null &&
           edit.production_price !== '' &&
           (edit.price_id || job.source !== 'erp' || job.route === 'supplier') &&
@@ -235,7 +238,7 @@ function MappingEditor({
             setBusy(true)
             setError('')
             try {
-              if (packingOnly) await editProcessingPacking(job, edit.packing_type, edit.packing_price)
+              if (packingOnly) await editProcessingPacking(job, edit.packing_type, edit.packing_price, edit.packing_by, edit.packing_party_id)
               else await editProcessingJob(job.id, edit)
               await onSaved()
               onClose()
@@ -388,36 +391,49 @@ function MappingEditor({
                 />
               </Field>
             </div>
+            <Field title="Dipacking oleh">
+              <SelectField value={edit.packing_by ?? 'internal'} onChange={(e) => setEdit((v) => ({ ...v, packing_by: e.target.value as 'internal' | 'supplier', packing_party_id: '' }))}>
+                <option value="internal">Internal</option>
+                <option value="supplier">Supplier</option>
+              </SelectField>
+            </Field>
+            {edit.packing_by === 'supplier' && (
+              <Field title="Supplier yang packing">
+                <SelectField required value={edit.packing_party_id ?? ''} onChange={(e) => set('packing_party_id', e.target.value)}>
+                  <option value="">Pilih supplier</option>
+                  {catalog?.supplier?.map((p) => <option key={p.id} value={p.id}>{p.nama}</option>)}
+                </SelectField>
+              </Field>
+            )}
             <p className="text-xs text-muted-foreground">
               {job.source === 'reseller'
-                ? 'Packing masuk ke tagihan reseller.'
+                ? job.route === 'tukang' && edit.color !== POL0S && edit.packing_type === 'biasa' && edit.packing_by !== 'supplier'
+                  ? 'Packing biasa sudah termasuk di biaya cat; tidak dibayar dan tidak ditagihkan terpisah.'
+                  : 'Packing masuk ke tagihan reseller.'
                 : 'Dicatat sebagai biaya packing internal.'}
             </p>
           </section>
-          {job.source === 'reseller' && (
-            <div className="rounded-xl bg-muted/40 p-4">
-              <p className="mb-2 text-sm font-semibold">Ringkasan tagihan · {job.qty} unit</p>
-              <Amount label="Produksi" value={String(Number(edit.production_price || 0) * job.qty)} />
-              <Amount
-                label="Pengecatan"
-                value={String((edit.color !== POL0S ? Number(edit.paint_price || 0) : 0) * job.qty)}
-              />
-              <Amount label="Packing" value={String(Number(edit.packing_price || 0) * job.qty)} />
-              <Amount label="Proses" value={job.process_fee} />
-              <div className="mt-2 border-t pt-2">
-                <Amount
-                  label="Total estimasi"
-                  value={String(
-                    (Number(edit.production_price || 0) +
-                      (edit.color !== POL0S ? Number(edit.paint_price || 0) : 0) +
-                      Number(edit.packing_price || 0)) *
-                      job.qty +
-                      Number(job.process_fee),
-                  )}
-                />
+          {job.source === 'reseller' && (() => {
+            const cat = edit.color !== POL0S ? Number(edit.paint_price || 0) : 0
+            const harga = Number(edit.production_price || 0) * job.qty
+            const termasuk = job.route === 'tukang' && edit.color !== POL0S && edit.packing_type === 'biasa' && edit.packing_by !== 'supplier'
+            const packing = Number(edit.packing_price || 0)
+            const catPacking = (cat + (edit.packing_type === 'biasa' && !termasuk ? packing : 0)) * job.qty
+            const kayu = edit.packing_type === 'kayu' ? packing * job.qty : 0
+            return (
+              <div className="rounded-xl bg-muted/40 p-4">
+                <p className="mb-2 text-sm font-semibold">Ringkasan tagihan · {job.qty} unit</p>
+                <Amount label="Harga produk" value={String(harga)} />
+                <Amount label="Cat + packing" value={String(catPacking)} />
+                {kayu > 0 && <Amount label="Packing kayu" value={String(kayu)} />}
+                <Amount label="Biaya proses" value={job.process_fee} />
+                <div className="mt-2 border-t pt-2">
+                  <Amount label="Total estimasi" value={String(harga + catPacking + kayu + Number(job.process_fee))} />
+                </div>
+                {termasuk && <p className="mt-2 text-xs text-muted-foreground">Packing biasa sudah termasuk di biaya cat, tidak ditagihkan terpisah.</p>}
               </div>
-            </div>
-          )}
+            )
+          })()}
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}
@@ -480,9 +496,12 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
         <div>
           <Amount label="Total produksi / beli" value={job.production_total} />
           <Amount label="Total pengecatan" value={job.paint_total} />
-          <Amount label="Total packing" value={job.packing_total} />
+          <Amount label={job.packing_termasuk_cat ? 'Total packing (termasuk di cat)' : 'Total packing'} value={job.packing_total} />
           {job.source === 'reseller' && (
             <>
+              <Amount label="Harga produk" value={job.harga_produk_total || '0'} />
+              <Amount label="Cat + packing" value={job.cat_packing_total || '0'} />
+              {Number(job.packing_kayu_total || 0) > 0 && <Amount label="Packing kayu" value={job.packing_kayu_total || '0'} />}
               <Amount label="Biaya proses" value={job.process_fee} />
               <Amount label="Tagihan reseller" value={job.reseller_total || '0'} />
             </>
@@ -727,7 +746,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
         </p>
         {r.supplier_product_name && <p className="mt-1 break-words text-xs text-muted-foreground">Katalog: {r.supplier_product_name}{r.supplier_sku ? ` · ${r.supplier_sku}` : ''}</p>}
         <p className="mt-1 text-xs text-muted-foreground">
-          {r.qty} unit{table === 'packing' ? ` · Packing ${r.packing_type}` : ''}
+          {r.qty} unit{table === 'packing' ? ` · Packing ${r.packing_type}${r.packing_by === 'supplier' && r.packing_party_name ? ` oleh ${r.packing_party_name}` : ''}` : ''}
         </p>
       </div>
     </div>
