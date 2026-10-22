@@ -105,10 +105,10 @@ export function OrderPicker({
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="processing-dialog flex max-h-[92dvh] flex-col gap-3 overflow-hidden text-left sm:max-w-3xl">
+      <DialogContent className="processing-dialog dialog-lega flex max-h-[96dvh] flex-col gap-2 overflow-hidden text-left sm:h-[92dvh] sm:max-w-5xl">
         <DialogHeader className="shrink-0">
           <DialogTitle>Cek Pesanan</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="sr-only">
             Pilih item pesanan Shopee, lalu petakan ke Tukang atau Supplier. Pemetaan hanya tersimpan di sini, tidak dikirim ke Shopee.
           </DialogDescription>
         </DialogHeader>
@@ -145,8 +145,7 @@ export function OrderPicker({
                 <header className="flex items-center justify-between gap-2 border-b px-3 py-2">
                   <div className="min-w-0">
                     <p className="break-all text-sm font-semibold">{head.order_number}</p>
-                    <p className="text-xs text-muted-foreground">{head.shop}{head.status ? ` · ${STATUS_ORDER[head.status] ?? head.status}` : ''}</p>
-                    <p className="text-xs text-muted-foreground">Kirim sebelum {workTime(head.deadline)}</p>
+                    <p className="text-xs text-muted-foreground">{head.shop}{head.status ? ` · ${STATUS_ORDER[head.status] ?? head.status}` : ''} · Kirim sebelum {workTime(head.deadline)}</p>
                   </div>
                   {!mapped && g.length > 1 && (
                     <Button type="button" size="sm" variant="ghost" className="shrink-0" onClick={() => toggle(groupIds, !groupOn)}>
