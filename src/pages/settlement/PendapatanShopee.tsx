@@ -73,8 +73,8 @@ function Income({ shops, semuaToko }: { shops: AkunMarketplace[]; semuaToko: boo
   })
   const names = (values: string[]) => values.length ? <div className="space-y-2">{values.map((v, i) => <div key={i}>{v}</div>)}</div> : '—'
   const columns: KolomTabel<Row>[] = [
-    { kunci: 'shop', judul: 'Nama Toko', sel: r => r.shop, nilai: r => r.shop },
     { kunci: 'number', judul: 'Kode Pesanan', sel: r => r.number, nilai: r => r.number, tetap: true, kelas: 'font-mono whitespace-nowrap' },
+    { kunci: 'shop', judul: 'Nama Toko', sel: r => r.shop, nilai: r => r.shop },
     { kunci: 'products', judul: 'Nama Produk', sel: r => names(r.products), nilai: r => r.products.join(' · '), kelas: 'min-w-60' },
     { kunci: 'variants', judul: 'Varian', sel: r => names(r.variants), nilai: r => r.variants.join(' · '), kelas: 'min-w-36' },
     { kunci: 'shipping', judul: 'Status Pengiriman', sel: r => r.shipping ?? '—', nilai: r => r.shipping },
