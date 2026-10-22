@@ -1,3 +1,4 @@
+import TombolRefresh from '@/components/TombolRefresh'
 import InfoTip from '@/components/InfoTip'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -118,24 +119,24 @@ export default function KampanyeShopee() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="sr-only">
         <CardTitle>Kampanye di Shopee</CardTitle>
-        <InfoTip teks={"Daftar iklan produk yang ada di Shopee Ads toko ini. Jeda, ubah anggaran, kata kunci, atau hapus dari sini. Perubahan langsung berlaku di Shopee."} />
       </CardHeader>
-      <CardContent className="space-y-4">
-        <BarFilter aktif={0}>
+      <CardContent className="space-y-3 pt-4">
+        <BarFilter
+          aktif={0}
+          utama={
+            <div className="flex items-center gap-1">
+              <Button onClick={() => setBuka(true)} disabled={!akunId}>Buat iklan baru</Button>
+              <TombolRefresh onClick={() => refetch()} disabled={!akunId || isFetching} memuat={isFetching} />
+              <InfoTip teks={"Daftar iklan produk yang ada di Shopee Ads toko ini. Jeda, ubah anggaran, kata kunci, atau hapus dari sini. Perubahan langsung berlaku di Shopee."} />
+            </div>
+          }
+        >
           <FilterPilih id="kampanye-toko" label="Toko" nilai={akunId} onUbah={setDipilih} opsi={toko.map((t) => ({ value: t.id, label: t.nama_toko }))} />
           <FilterPilih id="kampanye-status" label="Status" nilai={status} onUbah={setStatus} opsi={STATUS} />
           <FilterPilih id="kampanye-hari" label="Performa" nilai={hari} onUbah={setHari} opsi={HARI} />
         </BarFilter>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setBuka(true)} disabled={!akunId}>
-            Buat iklan baru
-          </Button>
-          <Button variant="outline" onClick={() => refetch()} disabled={!akunId || isFetching}>
-            {isFetching ? 'Memuat…' : 'Refresh'}
-          </Button>
-        </div>
 
         {toko.length === 0 && <p className="rounded-lg border p-6 text-center text-muted-foreground">Belum ada toko Shopee yang terhubung. Hubungkan di menu Kelola Toko.</p>}
         {isLoading && <Spinner column label="Memuat kampanye dari Shopee…" />}
