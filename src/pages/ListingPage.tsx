@@ -19,7 +19,7 @@ import { type KolomTabel, TabelLokal, BarHalaman } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -131,12 +131,9 @@ export default function ListingPage() {
         </Button>
       </BarHalaman>
 
-      <div className="bar-filter"><Input aria-label="Cari pemetaan" placeholder="Cari nama, SKU, ID produk…" value={q} onChange={e=>setQ(e.target.value)}/><FilterPilih id="mapping-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(akunList??[]).map(a=>({value:a.id,label:a.nama_toko}))}/><FilterPilih id="mapping-status" label="Status" nilai={statusFilter} onUbah={setStatusFilter} semua="Semua status" opsi={[{value:'aktif',label:'Aktif'},{value:'nonaktif',label:'Nonaktif'}]}/></div>
+      <div className="grid grid-cols-2 items-end gap-2 md:flex md:flex-wrap"><Input className="col-span-2 md:w-72" aria-label="Cari pemetaan" placeholder="Cari nama, SKU, ID produk…" value={q} onChange={e=>setQ(e.target.value)}/><FilterPilih id="mapping-toko" label="Toko" nilai={toko} onUbah={setToko} semua="Seluruh toko" opsi={(akunList??[]).map(a=>({value:a.id,label:a.nama_toko}))}/><FilterPilih id="mapping-status" label="Status" nilai={statusFilter} onUbah={setStatusFilter} semua="Semua status" opsi={[{value:'aktif',label:'Aktif'},{value:'nonaktif',label:'Nonaktif'}]}/></div>
       <Card>
-        <CardHeader>
-          <CardTitle>Pemetaan Produk Toko</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {isLoading ? (
             <Spinner column label="Memuat listing…" />
           ) : (
