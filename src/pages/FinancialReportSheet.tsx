@@ -146,9 +146,9 @@ export default function FinancialReportSheet({
   const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
   const reportUntil = todayWib.startsWith(month) ? todayWib : undefined
   const summaries = [
-    { label: 'Pemasukan', value: lineOf('jml_pemasukan')?.total ?? null, icon: ArrowDownLeft, note: 'Akumulasi periode terisi' },
-    { label: 'Pengeluaran', value: lineOf('jml_pengeluaran')?.total ?? null, icon: ArrowUpRight, note: 'Akumulasi periode terisi' },
-    { label: 'Laba / Rugi', value: lineOf('laba')?.total ?? null, icon: TrendingUp, note: 'Akumulasi periode terisi' },
+    { label: t(idTab('pemasukan'), 'Pemasukan'), value: lineOf('jml_pemasukan')?.total ?? null, icon: ArrowDownLeft, note: 'Akumulasi periode terisi' },
+    { label: t(idTab('pengeluaran'), 'Pengeluaran'), value: lineOf('jml_pengeluaran')?.total ?? null, icon: ArrowUpRight, note: 'Akumulasi periode terisi' },
+    { label: t(idTab('laba_rugi'), 'Laba / Rugi'), value: lineOf('laba')?.total ?? null, icon: TrendingUp, note: 'Akumulasi periode terisi' },
     {
       label: 'Kas utama',
       value: lineOf('akhir')?.total ?? data.saldo_awal?.saldo.kas_utama ?? null,

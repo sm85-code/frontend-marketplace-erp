@@ -28,6 +28,7 @@ import { Field, SelectField } from './processingShared'
 import ProcessingVarian from './ProcessingVarian'
 import VarianBanyakPilihan, { type HasilVarian } from './VarianBanyakPilihan'
 import { bersihkanVarian, labelVarian, masalahVarian, ringkasanVarian, varianDari } from '@/lib/varianProduk'
+import { useNamaMenu } from '@/lib/namaMenu'
 
 /** A manual paint tariff may have no model; the catalog still needs a name, so it is stored (and shown) as this. */
 const TANPA_MODEL = 'Tanpa model'
@@ -63,7 +64,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('all')
   const categoriesId = useId()
-  const titleOf = (kind: string) => kind === 'produksi' ? 'Katalog Produk Kayu' : kind === 'non_kayu' ? 'Katalog Produk Manual' : kind === 'packing' ? 'Tarif Packing' : 'Tarif Pengecatan'
+  const menu = useNamaMenu()
+  const titleOf = (kind: string) => kind === 'produksi' ? menu('/processing/produk-kayu') : kind === 'non_kayu' ? 'Katalog Produk Manual' : kind === 'packing' ? menu('/processing/tarif-packing') : menu('/processing/tarif-pengecatan')
   const categoryOf = (p: ProcessingPrice) => p.jenis?.trim() || ''
   /** Paint tariffs are per model and size, so a tariff row is named by its model (the product name only when it has no model). */
   const namaOf = (p: ProcessingPrice) => (p.kind === 'pengecatan' ? p.model?.trim() || p.produk : p.produk)
