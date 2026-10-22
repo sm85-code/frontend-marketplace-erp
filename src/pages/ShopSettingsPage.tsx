@@ -1,3 +1,5 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { BarHalaman } from '@/components/daftar'
 import { useQuery } from '@tanstack/react-query'
 import { listAkun } from '@/api/endpoints'
 import { useTokoAktif } from '@/lib/tokoAktif'
@@ -11,8 +13,8 @@ export default function ShopSettingsPage() {
   const available = shops.data?.filter(s=>s.platform==='shopee' && s.id_toko_eksternal) ?? []
   const selected = available.find(s=>s.id===shop)
   return <div className="mx-auto max-w-4xl space-y-4">
-    <h1 className="page-h1 text-2xl font-semibold">Pengaturan Toko</h1>
-    <div className="space-y-2"><label htmlFor="settings-shop">Toko Shopee</label><select id="settings-shop" className="w-full rounded-xl border bg-background p-3 sm:max-w-md" value={selected?.id??''} onChange={e=>setShop(e.target.value)}><option value="">Pilih toko</option>{available.map(s=><option key={s.id} value={s.id}>{s.nama_toko}</option>)}</select></div>
+    <BarHalaman judul="Pengaturan Toko" />
+    <div className="space-y-2"><label htmlFor="settings-shop">Toko Shopee</label><Select value={selected?.id??''} onValueChange={v=>setShop(v)}><SelectTrigger id="settings-shop" className="w-full sm:max-w-md"><SelectValue placeholder="Pilih toko" /></SelectTrigger><SelectContent>{available.map(s=><SelectItem key={s.id} value={s.id}>{s.nama_toko}</SelectItem>)}</SelectContent></Select></div>
     {shops.isPending && <Spinner column/>}{shops.error && <QueryError error={shops.error} retry={shops.refetch}/>}
     {selected && <section className="rounded-2xl border bg-card p-3 sm:p-5"><ShopSettingsContent key={selected.id} id={selected.id}/></section>}
     {shops.data && !available.length && <p className="rounded-xl border bg-card p-4">Belum ada toko Shopee terhubung.</p>}

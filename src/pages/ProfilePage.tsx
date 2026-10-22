@@ -1,3 +1,4 @@
+import { BarHalaman } from '@/components/daftar'
 import { useMutation } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
 import { useEffect, useState } from 'react'
@@ -45,7 +46,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-md">
       <Card>
         <CardHeader>
-          <h1 className="page-h1 font-heading text-xl font-semibold">Profil Saya</h1>
+          <BarHalaman judul="Profil Saya" />
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
