@@ -34,7 +34,7 @@ function mulai() {
   )
 }
 
-// The installed app waits a moment so its opening screen can be seen; elsewhere it starts at once.
+// Every page load keeps its opening screen up long enough for its animation to be seen.
 const tunda = tundaanPembuka(performance.now())
 if (tunda > 0) setTimeout(mulai, tunda)
 else mulai()
