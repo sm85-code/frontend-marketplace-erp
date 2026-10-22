@@ -125,7 +125,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
       {!embedded&&<BarHalaman judul="Asisten AI" />}
       {status.data&&<p className="text-xs text-muted-foreground">AI hari ini {aiMoney(status.data.spent_usd,status.data.usd_idr)} / {aiMoney(status.data.daily_usd,status.data.usd_idr)} · {status.data.used_turns}/{status.data.daily_turns} pesan</p>}
       <div className="ml-auto flex items-center gap-2">
-        {!embedded&&<Button variant="ghost" size="sm" onClick={()=>window.dispatchEvent(new Event('erp-restore-ai'))}>Tombol AI mengambang</Button>}
+        
         <Button variant="outline" size="sm" disabled={mutation.isPending||recovering} onClick={()=>selectConversation('')}><MessageSquarePlus className="mr-2 size-4"/>Percakapan baru</Button>
       </div>
     </div>

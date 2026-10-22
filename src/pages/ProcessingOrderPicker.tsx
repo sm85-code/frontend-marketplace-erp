@@ -105,7 +105,7 @@ export function OrderPicker({
         if (!o && !busy) onClose()
       }}
     >
-      <DialogContent className="processing-dialog dialog-lega flex max-h-[96dvh] flex-col gap-2 overflow-hidden text-left sm:h-[92dvh] sm:max-w-5xl">
+      <DialogContent className="processing-dialog max-sm:top-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-screen max-sm:max-w-none max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:border-0 max-sm:p-3 flex max-h-[96dvh] flex-col gap-2 overflow-hidden text-left sm:h-[92dvh] sm:max-w-5xl">
         <DialogHeader className="shrink-0">
           <DialogTitle>Cek Pesanan</DialogTitle>
           <DialogDescription className="sr-only">
