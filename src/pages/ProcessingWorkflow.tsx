@@ -768,7 +768,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   )
   return (
     <div className="min-w-0 space-y-3 text-left [&_p]:text-left">
-      <RekapPemetaan onBelum={sourceTable ? () => setPicker(table) : undefined} />
+      <RekapPemetaan />
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Tabel pekerjaan">
         {(Object.keys(TABLES) as WorkTable[]).map((t) => {
           const Icon = TABLES[t].icon
