@@ -1,3 +1,4 @@
+import InfoTip from '@/components/InfoTip'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { listAkun } from '@/api/endpoints'
 import api, { fmtDateTime, fmtMoney, getApiError } from '@/api/client'
@@ -49,21 +50,20 @@ export default function FinancialSellerBalance({month,columns}:{month:string;col
   }
   const busy=accounts.isFetching || queries.some(q=>q.isFetching)
   return <Card className="mt-4"><CardHeader>
-    <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle>Saldo penjual (Shopee)</CardTitle><Button variant="outline" disabled={busy} onClick={()=>{void accounts.refetch();selected.forEach((account,i)=>{if(account?.id_toko_eksternal)dates.forEach((d,w)=>{if(d<today)void get(i,w)?.refetch()})})}}>{busy?'Memuat…':'Perbarui saldo'}</Button></div>
-    <p className="text-sm text-muted-foreground">Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off.</p>
+    <div className="flex flex-wrap items-center justify-between gap-2"><CardTitle className="flex items-center gap-1.5">Saldo penjual (Shopee) <InfoTip teks="Saldo tersisa pada tiap Minggu pukul 23.59 WIB, setelah mutasi dan penarikan yang tercatat sampai cut-off." /></CardTitle><Button variant="outline" disabled={busy} onClick={()=>{void accounts.refetch();selected.forEach((account,i)=>{if(account?.id_toko_eksternal)dates.forEach((d,w)=>{if(d<today)void get(i,w)?.refetch()})})}}>{busy?'Memuat…':'Refresh'}</Button></div>
   </CardHeader><CardContent className="space-y-3">
     {accounts.error && <p role="alert">{getApiError(accounts.error)}</p>}
     <PeriodPicker options={[...dates.map(d=>({key:d,label:'Periode',sub:weekOf(d)})),{key:'total',label:'Saldo terakhir'}]} pick={phone.pick} onPick={phone.setPick}/>
     <div className="max-w-full overflow-x-auto rounded-lg border"><Table className="table-fixed md:min-w-[calc(220px+var(--n)*165px)]" style={{'--n':columns+1} as React.CSSProperties} aria-label="SALDO PENJUAL (SHOPEE)">
       <colgroup><col className="max-md:w-[55%] md:w-[220px]"/>{dates.map((d,i)=><col key={d} className={`md:w-[165px] ${phone.hide(i)}`}/>)}<col className={`md:w-[165px] ${phone.hide(dates.length)}`}/></colgroup>
       <TableHeader className="bg-muted"><TableRow><TableHead className="bg-muted md:sticky md:left-0 md:z-10">Toko</TableHead>
-        {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}><span className="block">Periode</span><span className="block text-xs font-normal">{weekOf(d)}</span></TableHead>)}
+        {dates.map((d,i)=><TableHead key={d} className={`text-center ${phone.hide(i)}`}>{weekOf(d)}</TableHead>)}
         <TableHead className={`text-right ${phone.hide(dates.length)}`}>Saldo terakhir{lastClosed>=0 && <span className="block text-xs font-normal">{label(dates[lastClosed])}</span>}</TableHead>
       </TableRow></TableHeader><TableBody>
         {shops.map((name,i)=><TableRow key={name}><TableCell className="bg-card md:sticky md:left-0 md:z-10">{name}
           {!accounts.isPending && !accounts.error && (!selected[i] || !selected[i]?.id_toko_eksternal) && <span className="block whitespace-normal text-xs text-muted-foreground">{matched[i].length>1?'Nama cocok dengan lebih dari satu akun ERP':selected[i]?'Toko belum terhubung':'Akun toko ERP belum ditemukan'}</span>}
         </TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{amount(i,w)}
-          {usable(i,w) && get(i,w)!.data!.transaksi_at != null && <span className="block whitespace-normal text-xs text-muted-foreground">Mutasi {fmtDateTime(new Date(get(i,w)!.data!.transaksi_at!*1000).toISOString())}</span>}
+          {usable(i,w) && get(i,w)!.data!.transaksi_at != null && <InfoTip className="ml-1" teks={`Mutasi terakhir ${fmtDateTime(new Date(get(i,w)!.data!.transaksi_at!*1000).toISOString())} WIB`} />}
           {get(i,w)?.error && <span className="block whitespace-normal text-xs text-destructive">{getApiError(get(i,w)!.error)}</span>}
         </TableCell>)}<TableCell className={`bg-muted/40 text-right tabular-nums ${phone.hide(dates.length)}`}>{amount(i,lastClosed)}</TableCell></TableRow>)}
         <TableRow className="bg-muted/50 font-semibold"><TableCell className="bg-muted md:sticky md:left-0 md:z-10">Total</TableCell>{dates.map((d,w)=><TableCell key={d} className={`text-right tabular-nums ${phone.hide(w)}`}>{totals(w)}</TableCell>)}<TableCell className={`text-right tabular-nums ${phone.hide(dates.length)}`}>{totals(lastClosed)}</TableCell></TableRow>
