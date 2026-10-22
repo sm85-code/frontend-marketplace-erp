@@ -886,3 +886,5 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
    first header cell. Keep the sticky header above frozen body cells in every financial table. */
 .financial-page [data-slot="table-header"] { z-index: 30; }
 
+/* "More to the right" cue on tab and chip strips that are cut off (set by lib/tandaGeser). */
+[data-terpotong] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); }

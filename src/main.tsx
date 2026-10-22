@@ -1,3 +1,4 @@
+import { pasangTandaGeser } from '@/lib/tandaGeser'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -40,3 +41,5 @@ if (tunda > 0) setTimeout(mulai, tunda)
 else mulai()
 
 daftarkanServiceWorker()
+
+if (typeof window !== 'undefined') pasangTandaGeser()

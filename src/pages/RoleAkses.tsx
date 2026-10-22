@@ -104,7 +104,7 @@ export default function RoleAkses() {
   if (!data) return null
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
       <Card>
         <CardHeader>
           <CardTitle>Daftar role</CardTitle>
