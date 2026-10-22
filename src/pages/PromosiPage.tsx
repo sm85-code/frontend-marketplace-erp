@@ -7,7 +7,7 @@ import * as api from '@/api/endpoints'
 import { getApiError } from '@/api/client'
 import type { Promosi } from '@/api/types'
 import { qk } from '@/api/keys'
-import { BarHalaman, TabelData, type KolomTabel } from '@/components/daftar'
+import { BarHalaman, DaftarKartu, TabelData, type KolomTabel } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -84,7 +84,8 @@ export default function PromosiPage() {
     {!akun && <p className="text-sm text-muted-foreground">Pilih toko untuk memuat promosi.</p>}
     {list.data && !list.error && <>
       {list.data.items.length===0 && <p>Belum ada promosi sesuai filter. Buat promosi atau ubah status.</p>}
-      <TabelData label="Promosi diskon Shopee" items={list.data.items} kolom={columns} idDari={(p) => p.id} namaDari={(p) => p.nama} aksi={(p) => <Button variant="outline" size="sm" onClick={() => setSelected(p.id)}>Detail</Button>} />
+      <div className="hidden lg:block"><TabelData label="Promosi diskon Shopee" items={list.data.items} kolom={columns} idDari={(p) => p.id} namaDari={(p) => p.nama} aksi={(p) => <Button variant="outline" size="sm" onClick={() => setSelected(p.id)}>Detail</Button>} /></div>
+      <DaftarKartu label="Promosi diskon Shopee" items={list.data.items} kolom={columns} idDari={(p) => p.id} aksi={(p) => <Button variant="outline" size="sm" onClick={() => setSelected(p.id)}>Detail</Button>} />
       <div className="flex items-center justify-between gap-2"><Button variant="outline" disabled={halaman <= 1 || list.isFetching} onClick={() => setHalaman(halaman - 1)}>Sebelumnya</Button><span className="text-sm">Halaman {halaman}</span><Button variant="outline" disabled={!list.data.ada_lagi || list.isFetching} onClick={() => setHalaman(halaman + 1)}>Berikutnya</Button></div>
     </>}
 

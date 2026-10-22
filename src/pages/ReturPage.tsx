@@ -9,7 +9,7 @@ import * as endpoints from '@/api/endpoints'
 import { getApiError } from '@/api/client'
 import type { ReturMarketplace, ReturItem } from '@/api/types'
 import { qk } from '@/api/keys'
-import { BarHalaman, TabelData, type KolomTabel } from '@/components/daftar'
+import { BarHalaman, DaftarKartu, TabelData, type KolomTabel } from '@/components/daftar'
 import SengketaForm from './retur/SengketaForm'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
@@ -81,7 +81,9 @@ export default function ReturPage() {
     {list.data && !list.error && filter && <>
       <p className="text-sm text-muted-foreground">{shops.data?.find((s) => s.id === filter.akunId)?.nama_toko} · Pengajuan {filter.dari} sampai {filter.sampai} WIB · Halaman {filter.halaman}</p>
       <Input aria-label="Cari retur pada halaman ini" placeholder="Cari nomor pesanan atau retur pada halaman ini…" value={search} onChange={e => setSearch(e.target.value)} />
-      <TabelData label="Retur dan refund Shopee" items={list.data.items.filter(r => `${r.nomor_retur} ${r.nomor_pesanan}`.toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={(r) => r.nomor_retur} namaDari={(r) => r.nomor_retur}
+      <div className="hidden lg:block"><TabelData label="Retur dan refund Shopee" items={list.data.items.filter(r => `${r.nomor_retur} ${r.nomor_pesanan}`.toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={(r) => r.nomor_retur} namaDari={(r) => r.nomor_retur}
+        aksi={(r) => <Button variant="outline" size="sm" onClick={() => setSelected({ akunId: r.akun_id, nomor: r.nomor_retur })}>Detail</Button>} /></div>
+      <DaftarKartu label="Retur dan refund Shopee" items={list.data.items.filter(r => `${r.nomor_retur} ${r.nomor_pesanan}`.toLowerCase().includes(search.toLowerCase()))} kolom={columns} idDari={(r) => r.nomor_retur}
         aksi={(r) => <Button variant="outline" size="sm" onClick={() => setSelected({ akunId: r.akun_id, nomor: r.nomor_retur })}>Detail</Button>} />
       {list.data.items.length === 0 && <p className="text-sm text-muted-foreground">Tidak ada retur pada halaman dan rentang pengajuan ini.</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
