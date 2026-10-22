@@ -632,8 +632,8 @@ export default function ChatPage() {
                 <Button
                   type="button"
                   size="icon"
-                  className="size-11 shrink-0 rounded-full"
-                  aria-label={attachment ? "Kirim lampiran" : "Kirim balasan"}
+                  className={`size-11 shrink-0 rounded-full ${send.isPending ? 'disabled:opacity-100' : ''}`}
+                  aria-label={send.isPending ? 'Mengirim…' : attachment ? 'Kirim lampiran' : 'Kirim balasan'}
                   title={attachment ? "Kirim lampiran" : "Kirim balasan"}
                   onClick={() =>
                     send.mutate({
@@ -653,7 +653,7 @@ export default function ChatPage() {
                     (newConversation && !orderStart.data)
                   }
                 >
-                  {send.isPending ? <Spinner size={18} label="Mengirim…" /> : <Send className="size-5"/>}
+                  {send.isPending ? <span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none" aria-hidden="true" /> : <Send className="size-5"/>}
                 </Button>
               </div>
               </section>
