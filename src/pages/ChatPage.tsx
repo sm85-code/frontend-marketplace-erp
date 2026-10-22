@@ -315,6 +315,22 @@ export default function ChatPage() {
     const el = daftarPesan.current
     if (el) el.scrollTop = el.scrollHeight
   }, [selected?.conversation_id, pesanTerbaru])
+  function tutupPercakapan() {
+    setSelected(null)
+    setParams({}, { replace: true })
+    setAttachment(null)
+  }
+  // Phones (and the installed app, which has no browser back button): an open conversation is its own history step,
+  // so the Android back button returns to the chat list instead of leaving the app.
+  const adaPercakapan = !!selected
+  useEffect(() => {
+    if (!adaPercakapan || !window.matchMedia('(max-width: 767px)').matches) return
+    if (!(window.history.state as { chatTerbuka?: boolean } | null)?.chatTerbuka) window.history.pushState({ ...(window.history.state ?? {}), chatTerbuka: true }, '')
+    const kembali = () => tutupPercakapan()
+    window.addEventListener('popstate', kembali)
+    return () => window.removeEventListener('popstate', kembali)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adaPercakapan])
   function open(c: Conversation, akunId: string) {
     setPhotoError('')
     setThreadShop(akunId)
@@ -449,9 +465,8 @@ export default function ChatPage() {
                   className="shrink-0"
                   disabled={upload.isPending}
                   onClick={() => {
-                    setSelected(null)
-                    setParams({})
-                    setAttachment(null)
+                    if ((window.history.state as { chatTerbuka?: boolean } | null)?.chatTerbuka) window.history.back()
+                    else tutupPercakapan()
                   }}
                 >
                   <ArrowLeft className="size-4"/><span className="sr-only">Kembali</span>

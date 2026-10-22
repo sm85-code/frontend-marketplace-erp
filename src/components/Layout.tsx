@@ -125,7 +125,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </div>
             ))}
           </nav>
-          <div className="shrink-0 space-y-2 border-t p-3" style={{ borderColor: 'var(--legacy-border)' }}>
+          <div className="shrink-0 space-y-2 border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" style={{ borderColor: 'var(--legacy-border)' }}>
             {/* Desktop: the tool icons live here instead of a separate row above every page. */}
             <div className="hidden items-center justify-between lg:flex" aria-label="Alat">
               <TombolAI />
