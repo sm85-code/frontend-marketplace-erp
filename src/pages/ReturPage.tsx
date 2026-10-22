@@ -1,3 +1,4 @@
+import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import { useState } from 'react'
@@ -55,9 +56,8 @@ export default function ReturPage() {
     }
   }
   return <div className="space-y-4 pb-24">
-    <BarHalaman judul="Retur & Refund" deskripsi="Permintaan retur/refund dari Shopee; status terpisah dari pesanan.">
-      <Button asChild variant="outline"><Link to="/pesanan">Kembali ke Pesanan</Link></Button>
-      <Button variant="outline" disabled={!filter || list.isFetching} onClick={() => { void list.refetch() }}>Refresh</Button>
+    <BarHalaman judul="Retur & Refund">
+      <TombolRefresh disabled={!filter || list.isFetching} memuat={list.isFetching} onClick={() => { void list.refetch() }} />
     </BarHalaman>
     <Bantuan judul="Cara menangani retur">
       <p>Pilih toko dan tanggal pengajuan, lalu klik Tampilkan. Buka Detail untuk memeriksa barang, alasan, nominal refund, dan tenggat penanganan.</p>

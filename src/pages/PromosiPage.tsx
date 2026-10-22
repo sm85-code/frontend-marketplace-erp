@@ -1,6 +1,6 @@
+import TombolRefresh from '@/components/TombolRefresh'
 import Bantuan from '@/components/Bantuan'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as api from '@/api/endpoints'
 import { getApiError } from '@/api/client'
@@ -58,9 +58,8 @@ export default function PromosiPage() {
     if (await confirm({ title: 'Buat promosi di Shopee?', description: `${nama} · ${shops.data?.find((s) => s.id === akun)?.nama_toko}. Jadwal memakai WIB. Tambahkan produk setelah promosi dibuat.` })) create.mutate()
   }
   return <div className="space-y-4 pb-24">
-    <BarHalaman judul="Promosi Diskon" deskripsi="Kelola promosi harga produk dan varian Shopee.">
-      <Button asChild variant="outline"><Link to="/katalog">Kembali ke Katalog</Link></Button>
-      <Button variant="outline" disabled={!akun || list.isFetching} onClick={() => { void list.refetch() }}>Refresh</Button>
+    <BarHalaman judul="Promosi Diskon">
+      <TombolRefresh disabled={!akun || list.isFetching} memuat={list.isFetching} onClick={() => { void list.refetch() }} />
       <Button disabled={!akun || create.isPending} onClick={() => { create.reset(); setCreating(true); setNama(''); setJadwal(jadwalAwalPromosi()) }}>Buat Promosi</Button>
     </BarHalaman>
     <Bantuan><p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">Pilih toko, buat jadwal promosi, lalu buka Detail untuk menambahkan produk atau varian dan harga diskonnya. Harga mengikuti mata uang toko Shopee. Mengakhiri promosi menghentikan diskon; stok dan harga dasar ERP tidak diubah.</p></Bantuan>

@@ -1,3 +1,4 @@
+import AksiLainnya from '@/components/AksiLainnya'
 import { useStockSettings } from '@/lib/stock-settings'
 import PilihProduk from '@/components/PilihProduk'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -114,13 +115,15 @@ export default function GudangPage() {
   return (
     <div className="space-y-4">
       <BarHalaman judul="Gudang &amp; Stok">
-        <Button variant="outline" disabled={!warehouseEnabled} onClick={() => setGudangDialog(true)}>
-            Tambah Gudang
-          </Button>
-          <Button variant="outline" onClick={() => setTransferDialog(true)} disabled={!warehouseEnabled || (gudangList?.length ?? 0) < 2}>
-            Transfer Antar Gudang
-          </Button>
           <Button disabled={!warehouseEnabled} onClick={() => setAdjustDialog(true)}>Sesuaikan Stok</Button>
+          <AksiLainnya>
+            <Button variant="outline" disabled={!warehouseEnabled} onClick={() => setGudangDialog(true)}>
+              Tambah Gudang
+            </Button>
+            <Button variant="outline" onClick={() => setTransferDialog(true)} disabled={!warehouseEnabled || (gudangList?.length ?? 0) < 2}>
+              Transfer Antar Gudang
+            </Button>
+          </AksiLainnya>
       </BarHalaman>
       {!warehouseEnabled && <Card><CardHeader><CardTitle>Stok dikelola per toko</CardTitle></CardHeader><CardContent>Gudang ERP belum digunakan. Stok master hanya angka referensi; stok marketplace dan Toko Web berdiri sendiri. Riwayat Gudang tetap tersedia. Pengelolaan stok terpusat menunggu keputusan Anda.</CardContent></Card>}
       {gudangError && <QueryError error={gudangError} retry={retryGudang} />}

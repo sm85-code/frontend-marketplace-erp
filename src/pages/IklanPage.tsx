@@ -83,7 +83,7 @@ export default function IklanPage() {
   return (
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Iklan" deskripsi="Performa dan pengelolaan iklan Shopee." />
+      <BarHalaman judul="Iklan" />
 
       <Tabs value={tab} onValueChange={(v) => {
           setTab(v)

@@ -1,10 +1,10 @@
+import TombolRefresh from '@/components/TombolRefresh'
 import { BarHalaman } from '@/components/daftar'
 import TableShell from '@/components/TableShell'
 import PenaltiToko from './PenaltiToko'
 import { useQuery } from '@tanstack/react-query'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import * as api from '@/api/endpoints'
-import { Button } from '@/components/ui/button'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -20,7 +20,7 @@ export default function PerformaTokoPage() {
   const shops = useQuery({ queryKey: ['akun'], queryFn: () => api.listAkun() })
   const result = useQuery({ queryKey: ['performa-toko', akun], queryFn: () => api.getShopPerformance(akun), enabled: !!akun, retry: false })
   return <div className="space-y-4 pb-24">
-    <BarHalaman judul="Performa Toko"><Button variant="outline" disabled={!akun || result.isFetching} onClick={() => void result.refetch()}>Refresh</Button></BarHalaman>
+    <BarHalaman judul="Performa Toko"><TombolRefresh disabled={!akun || result.isFetching} memuat={result.isFetching} onClick={() => void result.refetch()} /></BarHalaman>
     <div className="space-y-2"><label htmlFor="performa-toko">Toko Shopee</label><select id="performa-toko" className="w-full rounded-2xl border bg-background px-4 py-2 sm:max-w-md" value={akun} onChange={e => setAkun(e.target.value)}><option value="">Pilih toko</option>{shops.data?.filter(s => s.platform === 'shopee').map(s => <option key={s.id} value={s.id}>{s.nama_toko}</option>)}</select></div>
     {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
     {result.error && <QueryError error={result.error} retry={result.refetch} />}

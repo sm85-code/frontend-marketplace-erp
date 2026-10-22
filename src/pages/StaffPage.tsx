@@ -1,3 +1,4 @@
+import AksiLainnya from '@/components/AksiLainnya'
 import Bantuan from '@/components/Bantuan'
 import { useLabel } from '@/api/pengaturanUi'
 import FormDialog from '@/components/FormDialog'
@@ -191,10 +192,10 @@ export default function StaffPage() {
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Kelola Pengguna">
-        {tab === 'pengguna' && <><Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
+        {tab === 'pengguna' && <><Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button>
+          <AksiLainnya><Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko
-          </Button>
-          <Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button></>}
+          </Button></AksiLainnya></>}
       </BarHalaman>
       <Tabs value={tab} onValueChange={(v) => setParams(v === 'role' ? { tab: 'role' } : {}, { replace: true })}>
         {adalahAdmin && (
