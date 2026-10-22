@@ -4,11 +4,12 @@ import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
 import MoneyInput from '@/components/MoneyInput'
 import Bantuan from '@/components/Bantuan'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
 import * as api from '@/api/workflows'
+import * as assistant from '@/api/assistant'
 import { useAuth } from '@/lib/auth'
 import { getApiError } from '@/api/client'
 import { BarHalaman, TabelData, type KolomTabel } from '@/components/daftar'
@@ -108,6 +109,38 @@ export default function PublicationPage() {
     mutationFn: (file: File) => api.uploadListingPhoto(shop, file),
     onSuccess: (r) => setForm((f) => f.image_ids.includes(r.image_id) ? f : ({ ...f, image_ids: [...f.image_ids, r.image_id] })),
   })
+  // Draft made by the AI product designer (?draf_ai=…): fill the form once, then put its photos on the chosen shop.
+  const drafAi = search.get('draf_ai') ?? ''
+  const aiDraft = useQuery({ queryKey: ['assistant-product-draft', drafAi], queryFn: () => assistant.productDraft(drafAi), enabled: !!drafAi, retry: false, staleTime: Infinity })
+  const [aiApplied, setAiApplied] = useState('')
+  const aiPhotosFor = useRef('')
+  const aiPhotos = useMutation({
+    retry: false,
+    mutationFn: async ({ shop, ids }: { shop: string; ids: string[] }) => {
+      const out: string[] = []
+      for (const id of ids) {
+        const blob = await assistant.aiImage(id)
+        out.push((await api.uploadListingPhoto(shop, new File([blob], 'foto-ai.jpg', { type: blob.type || 'image/jpeg' }))).image_id)
+      }
+      return out
+    },
+    onSuccess: (ids) => setForm((f) => ({ ...f, image_ids: [...new Set([...f.image_ids, ...ids])].slice(0, 9) })),
+  })
+  // Adjusted while rendering (not in an effect): fill the form once per draft.
+  const d = aiDraft.data
+  if (d && aiApplied !== d.id) {
+    setAiApplied(d.id)
+    setForm({ ...blank(), nama: d.nama, deskripsi: d.deskripsi, category_id: d.category_id ?? 0, price: String(d.harga_saran), stock: d.stok, weight: String(d.berat_kg), aktif: false })
+    if (d.akun_id && !shop) setShop(d.akun_id)
+  }
+  // Uploading the photos talks to the marketplace, so it runs in an effect once per shop and draft.
+  const aiPhotoKey = d && aiApplied === d.id && shop && d.gambar_ids.length ? shop + '|' + d.id : ''
+  const mulaiFotoAi = aiPhotos.mutate
+  useEffect(() => {
+    if (!aiPhotoKey || aiPhotosFor.current === aiPhotoKey || !aiDraft.data) return
+    aiPhotosFor.current = aiPhotoKey
+    mulaiFotoAi({ shop: aiPhotoKey.split('|')[0], ids: aiDraft.data.gambar_ids })
+  }, [aiPhotoKey, aiDraft.data, mulaiFotoAi])
   function applyResult(r: api.PublicationResult) {
     setResult(r)
     if (r.ok || r.status === 'belum_dikirim') sessionStorage.removeItem(key)
@@ -356,6 +389,17 @@ export default function PublicationPage() {
         benar-benar tersedia. Harga menggunakan harga asli, bukan harga diskon. Angka harga mengikuti mata uang toko tujuan.
       </p></Bantuan>
       {shops.error && <QueryError error={shops.error} retry={shops.refetch} />}
+      {aiDraft.error && <QueryError error={aiDraft.error} retry={aiDraft.refetch} />}
+      {aiDraft.data && <details className="rounded-lg border bg-card p-3 text-sm">
+        <summary className="cursor-pointer font-medium">Draf dari Asisten AI · belum dipublikasikan{aiPhotos.isPending ? ' · memasang foto…' : ''}</summary>
+        <div className="mt-2 space-y-1 text-muted-foreground">
+          {aiDraft.data.kategori && <p>Kategori usulan: {aiDraft.data.kategori}</p>}
+          {aiDraft.data.atribut.length > 0 && <p>Atribut usulan: {aiDraft.data.atribut.map((a) => `${a.nama}: ${a.nilai}`).join(' · ')}</p>}
+          {aiDraft.data.catatan_harga && <p>Harga: {aiDraft.data.catatan_harga}</p>}
+          {aiDraft.data.gambar_ids.length > 0 && !shop && <p>Pilih toko tujuan agar foto AI dipasang.</p>}
+          {aiPhotos.error && <p role="alert" className="text-destructive">Foto AI belum terpasang: {getApiError(aiPhotos.error)}</p>}
+        </div>
+      </details>}
       <nav aria-label="Langkah publikasi" className="flex flex-wrap gap-2">{['Sumber & Toko','Informasi Produk','Varian','Harga & Pengiriman','Tinjau'].map((label,i)=><Button key={label} size="sm" variant={step===i?'default':'outline'} aria-current={step===i?'step':undefined} disabled={busy} onClick={()=>setStep(i)}>{i+1}. {label}</Button>)}</nav>
       {draftAt&&!operation&&!result?.ok&&<p className="text-xs text-muted-foreground">Draft tersimpan di perangkat ini · {draftAt}</p>}
       <fieldset disabled={locked} className="min-w-0 space-y-4">

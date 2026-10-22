@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import KelolaMenuBawah from '@/pages/KelolaMenuBawah'
+import PengaturanAsistenAI from '@/pages/PengaturanAsistenAI'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRUP_NAV, NAV, idGrup, idMenu } from '@/config/nav'
@@ -37,9 +38,9 @@ interface Bagian {
   keterangan?: string
   teks: Teks[]
 }
-type Kategori = 'aplikasi' | 'menu' | 'bawah' | 'laporan'
-type KategoriTeks = Exclude<Kategori, 'bawah'>
-const URUTAN_TAB: Kategori[] = ['aplikasi', 'menu', 'bawah', 'laporan']
+type Kategori = 'aplikasi' | 'menu' | 'bawah' | 'laporan' | 'ai'
+type KategoriTeks = Exclude<Kategori, 'bawah' | 'ai'>
+const URUTAN_TAB: Kategori[] = ['aplikasi', 'menu', 'bawah', 'laporan', 'ai']
 
 const LEMBAR = sheetSections({ laporan: [] } as unknown as Overview)
 // Pemasukan, Pengeluaran and the groups/rows of Laba/Rugi that come from the categories are named in Kategori Transaksi,
@@ -94,7 +95,7 @@ const KATEGORI: Record<KategoriTeks, Bagian[]> = {
     })),
   ],
 }
-const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'Menu', bawah: 'Menu bawah', laporan: 'Laporan Keuangan' }
+const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'Menu', bawah: 'Menu bawah', laporan: 'Laporan Keuangan', ai: 'Asisten AI' }
 
 const alamatSah = (a: string) => /^https:\/\/\S+$/.test(a) || /^\/[^\s/]\S*$/.test(a)
 
@@ -173,7 +174,7 @@ function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
 
 /** Kelola Aplikasi: change the texts the app shows. Only the shown text changes; every text has a fixed id, so nothing stored or calculated is affected. */
 export default function KelolaAplikasi() {
-  const { akses } = useAuth()
+  const { akses, bisa: bisaMenu } = useAuth()
   const bisaUbah = bisa(akses, 'kelola_aplikasi', 'tulis')
   const { data, isLoading, error, refetch } = usePengaturanUi()
   const [kategori, setKategori] = useState<Kategori>('aplikasi')
@@ -181,7 +182,7 @@ export default function KelolaAplikasi() {
 
   const bagian = useMemo(() => {
     const k = cari.trim().toLowerCase()
-    const semua = k ? (Object.keys(KATEGORI) as KategoriTeks[]).flatMap((x) => KATEGORI[x]) : kategori === 'bawah' ? [] : KATEGORI[kategori]
+    const semua = k ? (Object.keys(KATEGORI) as KategoriTeks[]).flatMap((x) => KATEGORI[x]) : kategori === 'bawah' || kategori === 'ai' ? [] : KATEGORI[kategori]
     if (!k) return semua
     return semua
       .map((b) => ({ ...b, teks: b.teks.filter((t) => t.bawaan.toLowerCase().includes(k) || (t.judul ?? '').toLowerCase().includes(k) || (data?.[t.id] ?? '').toLowerCase().includes(k)) }))
@@ -196,7 +197,7 @@ export default function KelolaAplikasi() {
       </BarHalaman>
       <Tabs value={kategori} onValueChange={(v) => setKategori(v as Kategori)}>
         <TabsList className="section-tabs">
-          {URUTAN_TAB.map((k) => (
+          {URUTAN_TAB.filter((k) => k !== 'ai' || bisaMenu('asisten')).map((k) => (
             <TabsTrigger key={k} value={k}>{NAMA_KATEGORI[k]}</TabsTrigger>
           ))}
         </TabsList>
@@ -204,7 +205,8 @@ export default function KelolaAplikasi() {
       {isLoading && <Spinner label="Memuat pengaturan…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && kategori === 'bawah' && !cari && <KelolaMenuBawah data={data} bisaUbah={bisaUbah} />}
-      {data && (kategori !== 'bawah' || !!cari) && (
+      {data && kategori === 'ai' && !cari && <PengaturanAsistenAI data={data} bisaUbah={bisaUbah} />}
+      {data && ((kategori !== 'bawah' && kategori !== 'ai') || !!cari) && (
         <Card>
           <CardContent className="space-y-4 pt-4">
             {!bisaUbah && <p className="teks-kecil text-muted-foreground">Anda hanya bisa melihat halaman ini.</p>}
