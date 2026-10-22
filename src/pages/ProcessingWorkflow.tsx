@@ -1,3 +1,4 @@
+import AksiLainnya from '@/components/AksiLainnya'
 import RekapPemetaan from '@/pages/RekapPemetaan'
 import InfoTip from '@/components/InfoTip'
 import { labelVarian, namaDenganVarian } from '@/lib/varianProduk'
@@ -639,6 +640,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             )}
           </Button>
         )}
+        <AksiLainnya>
         <Button size="sm" variant="ghost" onClick={() => setDetail(r)}>
           Detail
         </Button>
@@ -723,6 +725,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
             Hapus
           </Button>
         )}
+        </AksiLainnya>
       </div>
     )
   }
