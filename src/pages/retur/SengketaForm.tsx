@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import Spinner from '@/components/Spinner'
 import { useEffect, useState } from 'react'
@@ -95,7 +96,7 @@ export default function SengketaForm({
           >
             <fieldset disabled={disabled || busy || !!submit.data || !!submit.error || reasons.isFetching} className="space-y-3">
               <Label htmlFor="dispute-reason">Alasan dan persyaratan</Label>
-              <select
+              <PilihNative
                 id="dispute-reason"
                 className="w-full rounded-md border bg-background p-2 text-sm"
                 value={reasonId || ''}
@@ -111,7 +112,7 @@ export default function SengketaForm({
                     Alasan {r.dispute_reason} — {r.dispute_requirement}
                   </option>
                 ))}
-              </select>
+              </PilihNative>
               {reason && <p className="whitespace-pre-wrap text-sm">{reason.dispute_requirement}</p>}
               <div>
                 <Label htmlFor="dispute-email">Email untuk penanganan sengketa</Label>

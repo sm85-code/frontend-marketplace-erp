@@ -1,3 +1,4 @@
+import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -58,15 +59,15 @@ function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="tp-jenis">Jenis</Label>
-          <select id="tp-jenis" className={selectCls} value={f.jenis} onChange={(e) => setF({ ...f, jenis: e.target.value as JenisToko })}>
+          <PilihNative id="tp-jenis" className={selectCls} value={f.jenis} onChange={(e) => setF({ ...f, jenis: e.target.value as JenisToko })}>
             {(Object.keys(NAMA_JENIS) as JenisToko[]).map((j) => <option key={j} value={j}>{NAMA_JENIS[j]}</option>)}
-          </select>
+          </PilihNative>
         </div>
         <div className="space-y-2">
           <Label htmlFor="tp-platform">Platform</Label>
-          <select id="tp-platform" className={selectCls} value={f.platform} onChange={(e) => setF({ ...f, platform: e.target.value })}>
+          <PilihNative id="tp-platform" className={selectCls} value={f.platform} onChange={(e) => setF({ ...f, platform: e.target.value })}>
             {PLATFORM_TOKO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
+          </PilihNative>
         </div>
       </div>
       <div className="space-y-2">
