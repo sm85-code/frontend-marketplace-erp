@@ -7,11 +7,13 @@ import { useTheme } from '@/lib/theme'
 export default function WallpaperLayer() {
   const { wallpaper } = useTheme()
   if (wallpaper === 'none') return null
+  const legacy = wallpaper === 'dots' || wallpaper === 'glow' || wallpaper === 'aurora'
   return (
-    <div className="wallpaper-layer opacity-25" aria-hidden="true">
+    <div className={legacy ? 'wallpaper-layer opacity-25' : 'wallpaper-layer'} aria-hidden="true">
       {wallpaper === 'dots' && <DotPattern />}
       {wallpaper === 'glow' && <Ripple />}
       {wallpaper === 'aurora' && <AuroraBackground />}
+      {!legacy && <div className={`wallpaper-css wallpaper-${wallpaper}`} data-testid={`wallpaper-${wallpaper}`} />}
     </div>
   )
 }
