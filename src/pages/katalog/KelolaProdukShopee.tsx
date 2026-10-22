@@ -55,7 +55,7 @@ export default function KelolaProdukShopee({ detail }: { detail: KatalogDetail }
       <BarisAksi judul="Nama, SKU induk, dan deskripsi" ket="Ubah teks produk langsung di Shopee.">
         <Button variant="outline" size="sm" disabled={mutation.isPending} onClick={() => {
           mutation.reset(); setWarnings([]); setNama(detail.nama); setSku(detail.sku); setDeskripsi(detail.deskripsi); setEditing(true)
-        }}>Ubah</Button>
+        }}>Edit</Button>
       </BarisAksi>
       <BarisAksi judul="Status di Shopee" ket={detail.status === 'NORMAL' ? 'Produk tayang. Nonaktifkan untuk menyembunyikannya.' : 'Produk tidak tayang. Aktifkan untuk menayangkannya lagi.'}>
         <Button variant="outline" size="sm" disabled={mutation.isPending} onClick={status}>

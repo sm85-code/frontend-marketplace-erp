@@ -48,7 +48,7 @@ function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk
       }}
     >
       <DialogHeader>
-        <DialogTitle>{awal ? 'Ubah toko' : 'Tambah toko'}</DialogTitle>
+        <DialogTitle>{awal ? 'Edit toko' : 'Tambah toko'}</DialogTitle>
         <DialogDescription>Toko sendiri atau reseller yang tidak terhubung ke marketplace.</DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
@@ -146,7 +146,7 @@ export default function TokoPenjualanTab() {
               namaDari={(t) => t.nama}
               urutAwal={{ kunci: 'status', arah: 'asc' }}
               minWidth={760}
-              aksi={bisaTulis ? (t) => <Button size="sm" variant="outline" aria-label={`Ubah ${t.nama}`} onClick={() => setDialog({ toko: t })}>Ubah</Button> : undefined}
+              aksi={bisaTulis ? (t) => <Button size="sm" variant="outline" aria-label={`Edit ${t.nama}`} onClick={() => setDialog({ toko: t })}>Edit</Button> : undefined}
               kartu={(t) => (
                 <article key={t.id} className={`min-w-0 space-y-2 rounded-xl border p-4 ${t.aktif ? '' : 'opacity-60'}`}>
                   <div className="flex items-start justify-between gap-2">
@@ -155,7 +155,7 @@ export default function TokoPenjualanTab() {
                   </div>
                   <p className="teks-kecil text-muted-foreground">{NAMA_JENIS[t.jenis]} · {namaPlatform(t.platform)} · Kode {t.kode || '—'}</p>
                   {t.keterangan && <p className="text-sm">{t.keterangan}</p>}
-                  {bisaTulis && <Button size="sm" variant="outline" aria-label={`Ubah ${t.nama}`} onClick={() => setDialog({ toko: t })}>Ubah</Button>}
+                  {bisaTulis && <Button size="sm" variant="outline" aria-label={`Edit ${t.nama}`} onClick={() => setDialog({ toko: t })}>Edit</Button>}
                 </article>
               )}
             />

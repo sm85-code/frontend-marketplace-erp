@@ -227,7 +227,7 @@ export default function StaffPage() {
                   ? (u) => (
                       <div className="flex flex-nowrap items-center justify-end gap-1.5">
                         <Button size="sm" variant="outline" onClick={() => bukaEdit(u)}>
-                          Ubah
+                          Edit
                         </Button>
                         {u.id !== saya?.id && (
                           <AksiLainnya>
@@ -343,7 +343,7 @@ export default function StaffPage() {
 <FormDialog open={editUser !== null} values={editForm} busy={updateUserMut.isPending} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ubah Akun</DialogTitle>
+            <DialogTitle>Edit Akun</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
