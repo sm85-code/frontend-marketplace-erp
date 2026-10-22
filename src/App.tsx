@@ -103,8 +103,8 @@ export default function App() {
               <Route path="/otomasi-produk" element={<Protected halaman="otomasi"><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
               <Route path="/pengaturan-toko" element={<Protected halaman="info_toko"><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
               <Route path="/performa-toko" element={<Protected halaman="info_toko"><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
-              <Route path="/processing/template" element={<Protected halaman="processing"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
-              <Route path="/processing/*" element={<Protected halaman="processing"><LazyPage><ProcessingPage /></LazyPage></Protected>} />
+              <Route path="/processing/template" element={<Protected halaman="data_produksi"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
+              <Route path="/processing/*" element={<Protected><LazyPage><ProcessingPage /></LazyPage></Protected>} />
               <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
               <Route path="/kelola-aplikasi" element={<Protected halaman="kelola_aplikasi"><LazyPage><KelolaAplikasiPage /></LazyPage></Protected>} />
               <Route path="/kategori-transaksi" element={<Protected halaman="kategori_transaksi"><LazyPage><KategoriTransaksiPage /></LazyPage></Protected>} />

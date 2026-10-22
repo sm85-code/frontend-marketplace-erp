@@ -27,7 +27,8 @@ function NonKayuTabs() {
 
 export default function ProcessingPage() {
   const { bisa } = useAuth()
-  const allowed = bisa('processing')
+  const bolehPemetaan = bisa('processing')
+  const allowed = bolehPemetaan || bisa('data_produksi')
   const location = useLocation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -55,7 +56,7 @@ export default function ProcessingPage() {
       .finally(() => setBusy(false))
     // Only an admin opening the explicit private import link triggers this one-time import.
   }, [allowed, privateKey, save])
-  if (!allowed) return <p role="alert">Processing hanya dapat diakses admin.</p>
+  if (!allowed) return <p role="alert">Halaman ini hanya dapat diakses pengguna yang diberi akses.</p>
   const data = q.data?.data
   const page = location.pathname.replace(/^\/processing\/?/, '').replace(/\/$/, '')
   const pages = {
@@ -71,6 +72,9 @@ export default function ProcessingPage() {
     'tarif-pengecatan': { title: 'Tarif Pengecatan', description: 'Kelola tarif pengecatan berdasarkan model, ukuran, dan warna.', content: <ProcessingPrices kind="pengecatan" /> },
     'tarif-packing': { title: 'Tarif Packing', description: 'Kelola tarif packing biasa dan packing kayu.', content: <ProcessingPrices kind="packing" /> },
   }
+  // Pemetaan Order and Data Produksi are separate pages in the role settings; send a user to the one they have.
+  const bolehData = bisa('data_produksi')
+  if (page === 'pemetaan' ? !bolehPemetaan : !bolehData) return <Navigate to={bolehPemetaan ? '/processing/pemetaan' : '/processing/tukang-kayu'} replace />
   if (page === 'katalog-siabumdes' || page === 'katalog-manual') return <Navigate to="/processing/produk-non-kayu" replace />
   const selected = pages[page as keyof typeof pages]
   if (!selected && !privateKey) return <Navigate to="/processing/pemetaan" replace />
