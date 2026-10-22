@@ -354,7 +354,7 @@ export default function PesananDetailPage() {
             Batalkan
           </Button>
         )}
-        <HapusPesananManual p={pesanan} size="default" onDihapus={() => navigate('/pesanan', { replace: true })} />
+        <HapusPesananManual p={pesanan} onDihapus={() => navigate('/pesanan', { replace: true })} />
         {ikutMp && bisaDiproses(pesanan) && (
           <Button onClick={onProses} disabled={prosesMut.isPending}>
             {labelProses(pesanan)}
