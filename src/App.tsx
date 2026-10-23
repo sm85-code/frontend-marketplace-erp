@@ -9,42 +9,65 @@ import Spinner from '@/components/Spinner'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import type { Tingkat } from '@/api/types'
 
-const EngagementAutomationPage = lazy(() => import('@/pages/EngagementAutomationPage'))
-const ShopSettingsPage = lazy(() => import('@/pages/ShopSettingsPage'))
-const AssistantPage = lazy(() => import('@/pages/AssistantPage'))
-const PerformaTokoPage = lazy(() => import('@/pages/PerformaTokoPage'))
-const LoginPage = lazy(() => import('@/pages/LoginPage'))
-const GantiPasswordPage = lazy(() => import('@/pages/GantiPasswordPage'))
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
-const AkunPage = lazy(() => import('@/pages/AkunPage'))
-const ShopeeCallbackPage = lazy(() => import('@/pages/ShopeeCallbackPage'))
-const KatalogDetailPage = lazy(() => import('@/pages/KatalogDetailPage'))
-const PromosiDetailPage = lazy(() => import('@/pages/PromosiDetailPage'))
-const KatalogPage = lazy(() => import('@/pages/KatalogPage'))
-const ProdukPage = lazy(() => import('@/pages/ProdukPage'))
-const ListingPage = lazy(() => import('@/pages/ListingPage'))
-const GudangPage = lazy(() => import('@/pages/GudangPage'))
-const ChatPage = lazy(() => import('@/pages/ChatPage'))
-const PesananPage = lazy(() => import('@/pages/PesananPage'))
-const ReturPage = lazy(() => import('@/pages/ReturPage'))
-const PublicationPage = lazy(() => import('@/pages/PublicationPage'))
-const PromosiPage = lazy(() => import('@/pages/PromosiPage'))
-const PesananDetailPage = lazy(() => import('@/pages/PesananDetailPage'))
-const DocumentTemplatesPage = lazy(() => import('@/pages/DocumentTemplatesPage'))
-const ProcessingPage = lazy(() => import('@/pages/ProcessingPage'))
-const ArusKas = lazy(() => import('@/pages/ArusKas'))
-const OperasionalUmumPage = lazy(() => import('@/pages/OperasionalUmum'))
-const KategoriTransaksiPage = lazy(() => import('@/pages/KategoriTransaksi'))
-const KelolaAplikasiPage = lazy(() => import('@/pages/KelolaAplikasi'))
-const OperasionalPackingPage = lazy(() => import('@/pages/OperasionalPacking'))
-const FinancialReportsPage = lazy(() => import('@/pages/FinancialReportsPage'))
-const SettlementPage = lazy(() => import('@/pages/SettlementPage'))
-const IklanPage = lazy(() => import('@/pages/IklanPage'))
-const KampanyeDetailPage = lazy(() => import('@/pages/KampanyeDetailPage'))
-const IklanDetailPage = lazy(() => import('@/pages/IklanDetailPage'))
-const StaffPage = lazy(() => import('@/pages/StaffPage'))
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+// Semua kode halaman diunduh diam-diam setelah login, supaya pindah halaman
+// tidak perlu menunggu unduhan dulu (service worker lalu menyimpannya).
+const pemuatHalaman: (() => Promise<unknown>)[] = []
+function muat<T>(loader: () => Promise<T>) {
+  pemuatHalaman.push(loader)
+  return loader
+}
+let sudahPrefetch = false
+function prefetchSemuaHalaman() {
+  if (sudahPrefetch) return
+  sudahPrefetch = true
+  const koneksi = (navigator as { connection?: { saveData?: boolean } }).connection
+  if (koneksi?.saveData) return
+  const jalan = async () => {
+    for (const loader of pemuatHalaman) {
+      try { await loader() } catch { /* dicoba lagi saat halaman dibuka */ }
+    }
+  }
+  const w = window as Window & { requestIdleCallback?: (cb: () => void) => void }
+  if (w.requestIdleCallback) w.requestIdleCallback(() => void jalan())
+  else setTimeout(() => void jalan(), 2000)
+}
+
+const EngagementAutomationPage = lazy(muat(() => import('@/pages/EngagementAutomationPage')))
+const ShopSettingsPage = lazy(muat(() => import('@/pages/ShopSettingsPage')))
+const AssistantPage = lazy(muat(() => import('@/pages/AssistantPage')))
+const PerformaTokoPage = lazy(muat(() => import('@/pages/PerformaTokoPage')))
+const LoginPage = lazy(muat(() => import('@/pages/LoginPage')))
+const GantiPasswordPage = lazy(muat(() => import('@/pages/GantiPasswordPage')))
+const ProfilePage = lazy(muat(() => import('@/pages/ProfilePage')))
+const DashboardPage = lazy(muat(() => import('@/pages/DashboardPage')))
+const AkunPage = lazy(muat(() => import('@/pages/AkunPage')))
+const ShopeeCallbackPage = lazy(muat(() => import('@/pages/ShopeeCallbackPage')))
+const KatalogDetailPage = lazy(muat(() => import('@/pages/KatalogDetailPage')))
+const PromosiDetailPage = lazy(muat(() => import('@/pages/PromosiDetailPage')))
+const KatalogPage = lazy(muat(() => import('@/pages/KatalogPage')))
+const ProdukPage = lazy(muat(() => import('@/pages/ProdukPage')))
+const ListingPage = lazy(muat(() => import('@/pages/ListingPage')))
+const GudangPage = lazy(muat(() => import('@/pages/GudangPage')))
+const ChatPage = lazy(muat(() => import('@/pages/ChatPage')))
+const PesananPage = lazy(muat(() => import('@/pages/PesananPage')))
+const ReturPage = lazy(muat(() => import('@/pages/ReturPage')))
+const PublicationPage = lazy(muat(() => import('@/pages/PublicationPage')))
+const PromosiPage = lazy(muat(() => import('@/pages/PromosiPage')))
+const PesananDetailPage = lazy(muat(() => import('@/pages/PesananDetailPage')))
+const DocumentTemplatesPage = lazy(muat(() => import('@/pages/DocumentTemplatesPage')))
+const ProcessingPage = lazy(muat(() => import('@/pages/ProcessingPage')))
+const ArusKas = lazy(muat(() => import('@/pages/ArusKas')))
+const OperasionalUmumPage = lazy(muat(() => import('@/pages/OperasionalUmum')))
+const KategoriTransaksiPage = lazy(muat(() => import('@/pages/KategoriTransaksi')))
+const KelolaAplikasiPage = lazy(muat(() => import('@/pages/KelolaAplikasi')))
+const OperasionalPackingPage = lazy(muat(() => import('@/pages/OperasionalPacking')))
+const FinancialReportsPage = lazy(muat(() => import('@/pages/FinancialReportsPage')))
+const SettlementPage = lazy(muat(() => import('@/pages/SettlementPage')))
+const IklanPage = lazy(muat(() => import('@/pages/IklanPage')))
+const KampanyeDetailPage = lazy(muat(() => import('@/pages/KampanyeDetailPage')))
+const IklanDetailPage = lazy(muat(() => import('@/pages/IklanDetailPage')))
+const StaffPage = lazy(muat(() => import('@/pages/StaffPage')))
+const NotFoundPage = lazy(muat(() => import('@/pages/NotFoundPage')))
 
 function PageFallback() {
   return (
@@ -72,6 +95,9 @@ function PendengarNotifikasi() {
 function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string; perlu?: Tingkat }) {
   const { user, loading, akses, bisa } = useAuth()
   const location = useLocation()
+  useEffect(() => {
+    if (user && akses) prefetchSemuaHalaman()
+  }, [user, akses])
   if (loading) return <PageFallback />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
   if (user.must_change_password && location.pathname !== '/ganti-password') {
