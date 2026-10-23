@@ -30,7 +30,7 @@ describe('menu order follows the daily workflow', () => {
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
-      keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan'],
+      keuangan: ['/operasional-umum', '/operasional-packing', '/belanja-supplier', '/arus-kas', '/laporan-keuangan'],
       'info-toko': ['/pengaturan-toko', '/performa-toko', '/iklan', '/settlement'],
       pengaturan: ['/toko', '/staff', '/kelola-aplikasi', '/asisten', '/profile'],
     })
@@ -45,7 +45,7 @@ describe('menu order follows the daily workflow', () => {
       expect(semua).not.toContain('/settlement')
     }
     // owner may only look at the two Operasional pages by default; the rest of Keuangan stays admin-only
-    expect(kelompokNav(filterNav(aksesBawaan('owner'))).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/operasional-umum', '/operasional-packing'])
+    expect(kelompokNav(filterNav(aksesBawaan('owner'))).find((g) => g.grup.id === 'keuangan')?.items.map((n) => n.to)).toEqual(['/operasional-umum', '/operasional-packing', '/belanja-supplier'])
   })
 
   it('drops sections a role cannot see anything in (staff sees Keuangan for Arus Kas only)', () => {

@@ -95,10 +95,12 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
   )
 }
 
+const PATH_OPERASIONAL: Record<JenisOperasional, string> = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier' }
+
 /** Operasional Umum and Operasional Packing: dated entries kept by weekly period (the same periods as Arus Kas), grouped by category; each is added and changed in a pop-up. */
 export default function HalamanOperasional({ jenis, judul: judulBawaan, deskripsi }: { jenis: JenisOperasional; judul: string; deskripsi: string }) {
   // The menu name set on Kelola Aplikasi names the page everywhere on it (title, table, total row).
-  const judul = useLabel()(idMenu(jenis === 'umum' ? '/operasional-umum' : '/operasional-packing'), judulBawaan)
+  const judul = useLabel()(idMenu(PATH_OPERASIONAL[jenis]), judulBawaan)
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [periode, setPeriode] = useState(bulanIni)

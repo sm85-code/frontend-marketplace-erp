@@ -93,3 +93,39 @@ describe('Operasional entries in Arus Kas', () => {
     expect(comp.cells.map((c) => c.value)).toEqual([0, 175])
   })
 })
+
+describe('Belanja Supplier flows like Operasional Umum', () => {
+  it('page entries -> Arus Kas row of that category -> Pengeluaran (Harga pokok penjualan) -> Laba/Rugi', () => {
+    const supplier = [{ tanggal: '2026-10-06', kategori: 'belanja_supplier', jumlah: '300.00' }]
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:sup', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Belanja supplier' })
+    l = setKategori(l, 'c:sup', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    const tampil = denganOperasional(l, days, supplier, KATEGORI_BAWAAN, arusDari(l))
+    expect(tampil.sel[`c:sup|${days[1]}`]).toBe('300')
+    const blocks = ringkasDariArusKas(sheet(tampil), days, tampil, KATEGORI_BAWAAN)
+    const baris = (tabel: string, key: string) => blocks.find((b) => b.tabel === tabel)!.lines.find((x): x is Line => !isGroup(x) && x.def.key === key)!
+    expect(baris('pengeluaran', 'p:belanja_supplier').cells[1].value).toBe(300)
+    expect(baris('laba_rugi', 'c_hpp').cells[1].value).toBe(300)
+  })
+})
+
+describe('Belanja Supplier: one Arus Kas row per supplier, one Pengeluaran row', () => {
+  it('an entry goes to the row named like its supplier; all rows add up in the single category', () => {
+    const supplier = [
+      { tanggal: '2026-10-06', kategori: 'belanja_supplier', jumlah: '300.00', uraian: 'CV Maju' },
+      { tanggal: '2026-10-07', kategori: 'belanja_supplier', jumlah: '200.00', uraian: 'ud sejahtera' },
+      { tanggal: '2026-10-08', kategori: 'belanja_supplier', jumlah: '50.00', uraian: 'Tanpa baris' },
+    ]
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:s1', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'CV Maju' }, { id: 'c:s2', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'UD Sejahtera' })
+    l = setKategori(l, 'c:s1', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    l = setKategori(l, 'c:s2', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    const tampil = denganOperasional(l, days, supplier, KATEGORI_BAWAAN, arusDari(l))
+    expect(tampil.sel[`c:s1|${days[1]}`]).toBe('350') // its own 300 + the unmatched 50 (first row of the category)
+    expect(tampil.sel[`c:s2|${days[1]}`]).toBe('200')
+    const blocks = ringkasDariArusKas(sheet(tampil), days, tampil, KATEGORI_BAWAAN)
+    const p = blocks.find((b) => b.tabel === 'pengeluaran')!.lines.filter((x): x is Line => !isGroup(x) && x.def.key === 'p:belanja_supplier')
+    expect(p).toHaveLength(1)
+    expect(p[0].cells[1].value).toBe(550)
+  })
+})

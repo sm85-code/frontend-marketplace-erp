@@ -1,9 +1,9 @@
-import { anakDari, hidden, keyKategori, keyNilaiDasar, splitsOf } from '@/lib/arusKasRinci'
+import { anakDari, hidden, keyKategori, keyNilaiDasar, nameOf, splitsOf } from '@/lib/arusKasRinci'
 import { GRUP_KELUAR, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuangan'
 import { isGroup, type Block, type Lembar, type Line } from '@/lib/sheetEngine'
 import type { KategoriTransaksi } from '@/api/kategori'
 
-export type OperasionalItem = { tanggal: string; kategori: string; jumlah: string }
+export type OperasionalItem = { tanggal: string; kategori: string; jumlah: string; uraian?: string }
 
 /** Gaji and iklan are typed into Arus Kas itself, never taken from the Operasional pages. */
 const DIINPUT_DI_ARUS_KAS = new Set(['gaji', 'iklan'])
@@ -22,26 +22,36 @@ export function indeksPeriode(days: string[], tanggal: string): number {
  * row Arus Kas started with only counts once a category was chosen for it. Hidden rows are skipped. A category no row was
  * given stays unused. Each place is the prefix of the sheet's keys for that row (`<prefix>|<date>`).
  */
-export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Map<string, string> {
+const kunciNama = (kategori: string, nama: string) => `${kategori}|${nama.trim().toLocaleLowerCase('id-ID')}`
+
+function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   const dipakai = new Set(kategoriOperasional(daftar).map((k) => k.id))
   const hasil = new Map<string, string>()
-  const catat = (kategori: string, prefix: string) => {
-    if (dipakai.has(kategori) && !hasil.has(kategori)) hasil.set(kategori, prefix)
+  const perNama = new Map<string, string>()
+  const catat = (kategori: string, prefix: string, nama: string) => {
+    if (!dipakai.has(kategori)) return
+    if (!hasil.has(kategori)) hasil.set(kategori, prefix)
+    const k = kunciNama(kategori, nama)
+    if (!perNama.has(k)) perNama.set(k, prefix)
   }
   const dipilih = (key: string) => lembar.baris.some((b) => b.id === keyKategori(key))
-  const baris: { key: string; prefix: string; bawaan: boolean }[] = []
+  const baris: { key: string; prefix: string; bawaan: boolean; nama: string }[] = []
   let grup = ''
   for (const l of arus.lines) {
     if (isGroup(l)) grup = l.label
-    else if (grup === GRUP_KELUAR && !(l as Line).def.emphasis && !hidden(lembar, l.def.key)) baris.push({ key: l.def.key, prefix: keyNilaiDasar(l.def.key), bawaan: true })
+    else if (grup === GRUP_KELUAR && !(l as Line).def.emphasis && !hidden(lembar, l.def.key)) baris.push({ key: l.def.key, prefix: keyNilaiDasar(l.def.key), bawaan: true, nama: nameOf(lembar, l.def.key, l.def.label) })
   }
-  for (const b of splitsOf(lembar)) if (b.grup === GRUP_KELUAR) baris.push({ key: b.id, prefix: b.id, bawaan: false })
+  for (const b of splitsOf(lembar)) if (b.grup === GRUP_KELUAR) baris.push({ key: b.id, prefix: b.id, bawaan: false, nama: nameOf(lembar, b.id, b.label) })
   for (const r of baris) {
     const anak = anakDari(lembar, r.key)
-    if (anak.length) for (const a of anak) catat(kategoriRincian(lembar, a.id, r.key, GRUP_KELUAR, daftar), a.id)
-    else if (!r.bawaan || dipilih(r.key)) catat(kategoriDari(lembar, r.key, GRUP_KELUAR, daftar), r.prefix)
+    if (anak.length) for (const a of anak) catat(kategoriRincian(lembar, a.id, r.key, GRUP_KELUAR, daftar), a.id, nameOf(lembar, a.id, a.label))
+    else if (!r.bawaan || dipilih(r.key)) catat(kategoriDari(lembar, r.key, GRUP_KELUAR, daftar), r.prefix, r.nama)
   }
-  return hasil
+  return { hasil, perNama }
+}
+
+export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Map<string, string> {
+  return tempatBaris(lembar, arus, daftar).hasil
 }
 
 /**
@@ -49,11 +59,14 @@ export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: Kategori
  * barisUntukKategori) and period, unless that cell has a figure typed by hand, which always wins.
  */
 export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block): Lembar {
-  const tempat = barisUntukKategori(lembar, arus, daftar)
+  const { hasil: tempat, perNama } = tempatBaris(lembar, arus, daftar)
   if (!tempat.size) return lembar
+  // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
+  // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
+  const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier').map((k) => k.id))
   const total = new Map<string, number>()
   for (const it of items) {
-    const prefix = tempat.get(it.kategori)
+    const prefix = (halamanSupplier.has(it.kategori) && it.uraian ? perNama.get(kunciNama(it.kategori, it.uraian)) : undefined) ?? tempat.get(it.kategori)
     const w = indeksPeriode(days, it.tanggal)
     if (prefix === undefined || w < 0) continue
     const key = `${prefix}|${days[w]}`

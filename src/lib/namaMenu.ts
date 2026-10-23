@@ -19,6 +19,7 @@ export const tabKategori = (t: Teks) => [
   { id: 'keluar', label: `${namaTab(t, 'arus_kas')} · ${namaTab(t, 'pengeluaran')}` },
   { id: 'umum', label: namaMenu(t, '/operasional-umum') },
   { id: 'packing', label: namaMenu(t, '/operasional-packing') },
+  { id: 'supplier', label: namaMenu(t, '/belanja-supplier') },
 ] as const
 
 /** `menu(path)`: the menu's name as set on Kelola Aplikasi, so tabs, headings and guides say the same as the sidebar. */

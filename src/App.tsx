@@ -60,6 +60,7 @@ const ArusKas = lazy(muat(() => import('@/pages/ArusKas')))
 const OperasionalUmumPage = lazy(muat(() => import('@/pages/OperasionalUmum')))
 const KelolaAplikasiPage = lazy(muat(() => import('@/pages/KelolaAplikasi')))
 const OperasionalPackingPage = lazy(muat(() => import('@/pages/OperasionalPacking')))
+const BelanjaSupplierPage = lazy(muat(() => import('@/pages/BelanjaSupplier')))
 const FinancialReportsPage = lazy(muat(() => import('@/pages/FinancialReportsPage')))
 const SettlementPage = lazy(muat(() => import('@/pages/SettlementPage')))
 const IklanPage = lazy(muat(() => import('@/pages/IklanPage')))
@@ -133,6 +134,7 @@ export default function App() {
               <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
               <Route path="/kelola-aplikasi" element={<Protected halaman={["kelola_aplikasi", "kategori_transaksi"]}><LazyPage><KelolaAplikasiPage /></LazyPage></Protected>} />
               <Route path="/kategori-transaksi" element={<Navigate to="/kelola-aplikasi?tab=kategori" replace />} />
+              <Route path="/belanja-supplier" element={<Protected halaman="belanja_supplier"><LazyPage><BelanjaSupplierPage /></LazyPage></Protected>} />
               <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
               <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />

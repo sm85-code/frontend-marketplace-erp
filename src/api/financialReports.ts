@@ -91,7 +91,7 @@ export type LembarManual = { sel: Record<string, string>; baris: { id: string; t
 export type LembarManualResponse = { version: number; lembar: LembarManual }
 /** Operasional Umum / Packing entries per date and category for a month, which the cash-flow table shows in the matching rows. */
 export const operasionalBulan = async (periode: string, hanyaLihat: boolean) =>
-  (await api.get<{ periode: string; items: { tanggal: string; kategori: string; jumlah: string }[] }>(hanyaLihat ? '/arus-kas/operasional' : '/laporan-keuangan/operasional', { params: { periode } })).data.items ?? []
+  (await api.get<{ periode: string; items: { tanggal: string; kategori: string; jumlah: string; uraian?: string }[] }>(hanyaLihat ? '/arus-kas/operasional' : '/laporan-keuangan/operasional', { params: { periode } })).data.items ?? []
 export const lembarManual = async (periode: string) => (await api.get<LembarManualResponse>('/laporan-keuangan/lembar-manual', { params: { periode } })).data
 export const saveLembarManual = async (periode: string, version: number, lembar: LembarManual) =>
   (await api.put<LembarManualResponse>('/laporan-keuangan/lembar-manual', { version, lembar }, { params: { periode } })).data
