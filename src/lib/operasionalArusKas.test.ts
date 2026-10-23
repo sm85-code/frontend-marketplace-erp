@@ -129,3 +129,23 @@ describe('Belanja Supplier: one Arus Kas row per supplier, one Pengeluaran row',
     expect(p[0].cells[1].value).toBe(550)
   })
 })
+
+describe('Belanja Tukang: one Arus Kas row per tukang, one Pengeluaran row', () => {
+  it('routes by tukang name and adds up in the single category', () => {
+    const items = [
+      { tanggal: '2026-10-06', kategori: 'belanja_tukang', jumlah: '100.00', uraian: 'Pak Budi' },
+      { tanggal: '2026-10-07', kategori: 'belanja_tukang', jumlah: '40.00', uraian: 'pak andi' },
+    ]
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:t1', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Pak Budi' }, { id: 'c:t2', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Pak Andi' })
+    l = setKategori(l, 'c:t1', 'Kas keluar', 'belanja_tukang', 'lain_keluar')
+    l = setKategori(l, 'c:t2', 'Kas keluar', 'belanja_tukang', 'lain_keluar')
+    const tampil = denganOperasional(l, days, items, KATEGORI_BAWAAN, arusDari(l))
+    expect(tampil.sel[`c:t1|${days[1]}`]).toBe('100')
+    expect(tampil.sel[`c:t2|${days[1]}`]).toBe('40')
+    const blocks = ringkasDariArusKas(sheet(tampil), days, tampil, KATEGORI_BAWAAN)
+    const p = blocks.find((b) => b.tabel === 'pengeluaran')!.lines.filter((x): x is Line => !isGroup(x) && x.def.key === 'p:belanja_tukang')
+    expect(p).toHaveLength(1)
+    expect(p[0].cells[1].value).toBe(140)
+  })
+})

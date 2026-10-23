@@ -12,7 +12,7 @@ export interface KategoriTransaksi {
   /** Id of that group: what the category really points at. */
   kelompok_id: string
   /** Operasional page that offers it, if any. */
-  operasional: 'umum' | 'packing' | 'supplier' | null
+  operasional: 'umum' | 'packing' | 'supplier' | 'tukang' | null
   urut: number
   aktif: boolean
   sistem: boolean
@@ -31,7 +31,7 @@ export type KelompokDaftar = Record<ArahKategori, Kelompok[]>
 export interface KategoriDaftar {
   items: KategoriTransaksi[]
   kelompok_daftar: KelompokDaftar
-  operasional: ('umum' | 'packing' | 'supplier')[]
+  operasional: ('umum' | 'packing' | 'supplier' | 'tukang')[]
 }
 
 export interface IsianKategori {
@@ -82,6 +82,7 @@ export const KATEGORI_BAWAAN: KategoriTransaksi[] = [
   m('lain_keluar', 'keluar', 'Operasional lainnya', B, 'umum', true),
   m('bukan_keluar', 'keluar', 'Bukan pengeluaran', '', null, true),
   m('belanja_supplier', 'keluar', 'Belanja supplier', H, 'supplier', false),
+  m('belanja_tukang', 'keluar', 'Belanja Tukang', H, 'tukang', false),
 ].map((k, i) => ({ ...k, urut: i + 1 }))
 
 function useKategoriData() {

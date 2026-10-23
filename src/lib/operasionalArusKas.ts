@@ -63,7 +63,7 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   if (!tempat.size) return lembar
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
-  const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier').map((k) => k.id))
+  const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
   const total = new Map<string, number>()
   for (const it of items) {
     const prefix = (halamanSupplier.has(it.kategori) && it.uraian ? perNama.get(kunciNama(it.kategori, it.uraian)) : undefined) ?? tempat.get(it.kategori)
