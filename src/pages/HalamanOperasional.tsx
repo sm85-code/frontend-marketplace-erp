@@ -11,6 +11,8 @@ import {
   hapusOperasional,
   tambahOperasional,
   ubahOperasional,
+  simpanPihak,
+  type PihakOperasional,
   type JenisOperasional,
   type TransaksiOperasional,
 } from '@/api/operasional'
@@ -37,7 +39,7 @@ const bulanIni = () => hariIni().slice(0, 7)
 
 
 /** What the pop-up edits: a saved entry (`id`) or a new one for a category. */
-type Sasaran = { kategori: string; label: string; item?: TransaksiOperasional }
+type Sasaran = { kategori: string; label: string; item?: TransaksiOperasional; /** Belanja Supplier/Tukang: the party, kept as uraian. */ pihak?: string }
 
 /** Pop-up for one entry, like the figures of Arus Kas in Laporan Keuangan: date, description and amount, save or delete. */
 function DialogTransaksi({ sasaran, tanggalBaru, sibuk, onClose, onSimpan, onHapus }: { sasaran: Sasaran | null; tanggalBaru: string; sibuk: boolean; onClose: () => void; onSimpan: (isi: Isi) => void; onHapus: () => void }) {
@@ -52,7 +54,7 @@ function DialogTransaksi({ sasaran, tanggalBaru, sibuk, onClose, onSimpan, onHap
 
 function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sasaran: Sasaran; tanggalBaru: string; sibuk: boolean; onSimpan: (isi: Isi) => void; onHapus: () => void }) {
   const { item } = sasaran
-  const [isi, setIsi] = useState<Isi>(() => (item ? { tanggal: item.tanggal, uraian: item.uraian, jumlah: jumlahTampil(item.jumlah) } : { tanggal: tanggalBaru, uraian: '', jumlah: '' }))
+  const [isi, setIsi] = useState<Isi>(() => (item ? { tanggal: item.tanggal, uraian: item.uraian, jumlah: jumlahTampil(item.jumlah) } : { tanggal: tanggalBaru, uraian: sasaran.pihak ?? '', jumlah: '' }))
   const alasan = alasanBelumBisa(isi)
   return (
     <form
@@ -72,8 +74,8 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
         <Input id="op-tanggal" type="date" value={isi.tanggal} onChange={(e) => setIsi((x) => ({ ...x, tanggal: e.target.value }))} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="op-uraian">Uraian</Label>
-        <Input id="op-uraian" maxLength={255} value={isi.uraian} placeholder="Ketik uraian…" onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
+        <Label htmlFor="op-uraian">{sasaran.pihak !== undefined ? 'Nama' : 'Uraian'}</Label>
+        <Input id="op-uraian" maxLength={255} value={isi.uraian} readOnly={sasaran.pihak !== undefined} placeholder="Ketik uraian…" onChange={(e) => setIsi((x) => ({ ...x, uraian: e.target.value }))} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="op-jumlah">Jumlah (Rp)</Label>
@@ -92,6 +94,25 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
         </Button>
       </DialogFooter>
     </form>
+  )
+}
+
+/** Which Arus Kas row each supplier / tukang fills. Empty = automatic: the row with the same name, or with the name in brackets ("Tagihan Produk [YUNI]"). */
+function PetaArusKas({ jenis, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
+  const simpan = useMutation({ mutationFn: (v: { id: string; baris: string }) => simpanPihak(jenis, v.id, v.baris), onSuccess: () => { toast.success('Tersimpan'); onSaved() }, onError: (e) => toast.error(getApiError(e)) })
+  return (
+    <details className="rounded-lg border p-3 text-sm">
+      <summary className="cursor-pointer font-medium">Hubungan ke baris Arus Kas</summary>
+      <p className="mt-2 text-muted-foreground">Kosong = otomatis: baris Kas keluar dengan nama sama, atau nama di dalam kurung (misal "Tagihan Produk [YUNI]"). Isi nama baris Arus Kas persis bila namanya berbeda.</p>
+      <div className="mt-2 grid gap-2 md:grid-cols-2">
+        {pihak.map((p) => (
+          <label key={p.id} className="grid gap-1"><span className="text-xs text-muted-foreground">{p.nama}</span>
+            <Input defaultValue={p.baris_arus_kas} disabled={!bisaTulis || simpan.isPending} placeholder="otomatis" maxLength={200} aria-label={`Baris Arus Kas untuk ${p.nama}`}
+              onBlur={(e) => e.target.value.trim() !== p.baris_arus_kas && simpan.mutate({ id: p.id, baris: e.target.value.trim() })} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+          </label>
+        ))}
+      </div>
+    </details>
   )
 }
 
@@ -153,7 +174,22 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
   const dalam = (tanggal: string, m: { mulai: string; akhir: string }) => tanggal >= m.mulai && tanggal <= m.akhir
   const jumlahDari = (items: TransaksiOperasional[]) => items.reduce((a, i) => a + Number(i.jumlah), 0)
   const itemsPeriode = (data?.items ?? []).filter((i) => dalam(i.tanggal, ini))
-  const berisi = (data?.kategori ?? []).filter((k) => itemsPeriode.some((i) => i.kategori === k.id)).map((k) => k.id)
+  // Belanja Supplier / Tukang: one row per party of the Supplier / Tukang Kayu list; otherwise one row per category.
+  const kunciP = (n: string) => n.replace(/\s+/g, ' ').trim().toLocaleLowerCase('id-ID')
+  const kategoriUtama = (data?.kategori ?? []).find((k) => k.aktif !== false) ?? data?.kategori[0]
+  const grup: { id: string; label: string; items: TransaksiOperasional[]; tambah: Sasaran | null; kategoriLabel: (i: TransaksiOperasional) => string }[] = (() => {
+    const labelKat = (id: string) => data?.kategori.find((k) => k.id === id)?.label ?? id
+    if (!data?.pihak) return (data?.kategori ?? []).map((k) => ({ id: k.id, label: k.label, items: itemsPeriode.filter((i) => i.kategori === k.id), tambah: { kategori: k.id, label: k.label }, kategoriLabel: () => k.label }))
+    const nama = new Set(data.pihak.map((x) => kunciP(x.nama)))
+    const hasil = data.pihak.map((x) => ({
+      id: `p:${x.id}`, label: x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)),
+      tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori),
+    }))
+    const lain = itemsPeriode.filter((i) => !nama.has(kunciP(i.uraian)))
+    if (lain.length) hasil.push({ id: 'p:lain', label: 'Lainnya (nama tidak ada di daftar)', items: lain, tambah: null, kategoriLabel: (i) => labelKat(i.kategori) })
+    return hasil
+  })()
+  const berisi = grup.filter((g) => g.items.length > 0).map((g) => g.id)
   const adaRincian = berisi.length > 0
   const semuaTertutup = adaRincian && berisi.every((id) => lipat.has(id))
   const lipatSemua = () => setLipat(semuaTertutup ? new Set() : new Set(berisi))
@@ -191,45 +227,49 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.kategori.map((k, n) => {
-                    const baris = itemsPeriode.filter((i) => i.kategori === k.id)
-                    const tertutup = lipat.has(k.id)
+                  {grup.map((g, n) => {
+                    const baris = g.items
+                    const tertutup = lipat.has(g.id)
+                    const t = bisaTulis && g.tambah
                     return (
-                      <Fragment key={k.id}>
+                      <Fragment key={g.id}>
                         <TableRow
-                          className={bisaTulis ? 'cursor-pointer hover:bg-muted/60 active:bg-muted/60' : undefined}
-                          tabIndex={bisaTulis ? 0 : undefined}
-                          aria-label={bisaTulis ? `Tambah transaksi ${k.label}` : undefined}
-                          onClick={bisaTulis ? () => setSasaran({ kategori: k.id, label: k.label }) : undefined}
-                          onKeyDown={bisaTulis ? (e) => e.key === 'Enter' && setSasaran({ kategori: k.id, label: k.label }) : undefined}
+                          className={t ? 'cursor-pointer hover:bg-muted/60 active:bg-muted/60' : undefined}
+                          tabIndex={t ? 0 : undefined}
+                          aria-label={t ? `Tambah transaksi ${g.label}` : undefined}
+                          onClick={t ? () => setSasaran(g.tambah) : undefined}
+                          onKeyDown={t ? (e) => e.key === 'Enter' && setSasaran(g.tambah) : undefined}
                         >
                           <TableCell className="w-16 px-1 text-center tabular-nums text-muted-foreground">
                             <span className="inline-flex items-center justify-end gap-0.5">
-                              {baris.length > 0 ? <TombolLipat tertutup={tertutup} nama={k.label} onClick={() => ubahLipat(k.id)} /> : <span className="inline-block w-7" aria-hidden="true" />}
+                              {baris.length > 0 ? <TombolLipat tertutup={tertutup} nama={g.label} onClick={() => ubahLipat(g.id)} /> : <span className="inline-block w-7" aria-hidden="true" />}
                               {n + 1}
                             </span>
                           </TableCell>
-                          <TableCell className="whitespace-normal">{k.label}</TableCell>
+                          <TableCell className="whitespace-normal">{g.label}</TableCell>
                           <TableCell className="whitespace-nowrap text-right tabular-nums">{fmtRp(jumlahDari(baris))}</TableCell>
                         </TableRow>
                         {!tertutup &&
-                          baris.map((item, m) => (
+                          baris.map((item, m) => {
+                            const sas: Sasaran = { kategori: item.kategori, label: g.tambah ? g.label : g.kategoriLabel(item), item, ...(data.pihak && g.tambah ? { pihak: g.label } : {}) }
+                            return (
                             <TableRow
                               key={item.id}
                               className={bisaTulis ? 'cursor-pointer hover:bg-muted/60 active:bg-muted/60' : undefined}
                               tabIndex={bisaTulis ? 0 : undefined}
-                              aria-label={bisaTulis ? `Ubah transaksi ${k.label} ${n + 1}.${m + 1}` : undefined}
-                              onClick={bisaTulis ? () => setSasaran({ kategori: k.id, label: k.label, item }) : undefined}
-                              onKeyDown={bisaTulis ? (e) => e.key === 'Enter' && setSasaran({ kategori: k.id, label: k.label, item }) : undefined}
+                              aria-label={bisaTulis ? `Ubah transaksi ${g.label} ${n + 1}.${m + 1}` : undefined}
+                              onClick={bisaTulis ? () => setSasaran(sas) : undefined}
+                              onKeyDown={bisaTulis ? (e) => e.key === 'Enter' && setSasaran(sas) : undefined}
                             >
                               <TableCell />
                               <TableCell className={`whitespace-normal break-words ${GAYA_ANAK}`}>
                                 <NomorRincian teks={`${n + 1}.${m + 1}`} />
-                                {item.uraian || '—'}
+                                {data.pihak ? `${item.tanggal}${g.tambah ? '' : ` · ${item.uraian || '—'}`}` : item.uraian || '—'}
                               </TableCell>
                               <TableCell className={`whitespace-nowrap text-right tabular-nums ${GAYA_ANAK}`}>{fmtRp(item.jumlah)}</TableCell>
                             </TableRow>
-                          ))}
+                            )
+                          })}
                       </Fragment>
                     )
                   })}
@@ -240,7 +280,8 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
                 </TableBody>
               </Table>
             </div>
-            {bisaTulis && <InfoTip teks={"Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus."} />}
+            {bisaTulis && <InfoTip teks={data.pihak ? "Ketuk nama untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus. Daftar nama diambil dari Data Produksi." : "Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus."} />}
+            {data.pihak && <PetaArusKas jenis={jenis} pihak={data.pihak} bisaTulis={bisaTulis} onSaved={() => { void qc.invalidateQueries({ queryKey: ['operasional-arus-kas'] }); void qc.invalidateQueries({ queryKey: ['operasional', jenis] }) }} />}
           </CardContent>
         </Card>
       )}
