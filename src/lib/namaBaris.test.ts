@@ -39,3 +39,19 @@ describe('row and group names', () => {
     expect(baris(c).produk).toBe('Khusus bulan')
   })
 })
+
+describe('judul tabel mengikuti Kelola Aplikasi', () => {
+  const dasar: Block[] = [{ title: 'A. PEMASUKAN', tabel: 'pemasukan', lines: [] }]
+  const lembarKosong = emptyLembar()
+  it('a renamed tab renames the heading above its table', () => {
+    const t = (id: string, bawaan: string) => ({ 'tab:pemasukan': 'Uang Masuk' } as Record<string, string>)[id] ?? bawaan
+    expect(namai(dasar, lembarKosong, t)[0].title).toBe('A. Uang Masuk')
+  })
+  it('the "Judul tabel" text wins over the tab name', () => {
+    const t = (id: string, bawaan: string) => ({ 'tab:pemasukan': 'Uang Masuk', 'judul:pemasukan': 'Rincian Pemasukan' } as Record<string, string>)[id] ?? bawaan
+    expect(namai(dasar, lembarKosong, t)[0].title).toBe('A. Rincian Pemasukan')
+  })
+  it('nothing set: the built-in title', () => {
+    expect(namai(dasar, lembarKosong)[0].title).toBe('A. PEMASUKAN')
+  })
+})

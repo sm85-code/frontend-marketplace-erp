@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { Overview } from '@/api/financialReports'
 import { getApiError } from '@/api/client'
@@ -38,9 +39,9 @@ interface Bagian {
   keterangan?: string
   teks: Teks[]
 }
-type Kategori = 'aplikasi' | 'menu' | 'bawah' | 'laporan' | 'ai'
-type KategoriTeks = Exclude<Kategori, 'bawah' | 'ai'>
-const URUTAN_TAB: Kategori[] = ['aplikasi', 'menu', 'bawah', 'laporan', 'ai']
+type Kategori = 'aplikasi' | 'menu' | 'bawah' | 'laporan' | 'kategori' | 'role' | 'ai'
+type KategoriTeks = Exclude<Kategori, 'bawah' | 'ai' | 'kategori'>
+const URUTAN_TAB: Kategori[] = ['menu', 'bawah', 'laporan', 'kategori', 'role', 'aplikasi', 'ai']
 
 const LEMBAR = sheetSections({ laporan: [] } as unknown as Overview)
 // Pemasukan, Pengeluaran and the groups/rows of Laba/Rugi that come from the categories are named in Kategori Transaksi,
@@ -67,6 +68,8 @@ const KATEGORI: Record<KategoriTeks, Bagian[]> = {
         { id: ID_APP.logo, nama: 'Teks', judul: 'Alamat gambar logo', bawaan: APP_BAWAAN.logo, alamat: true },
       ],
     },
+  ],
+  role: [
     { judul: 'Kelompok halaman di pengaturan role', keterangan: 'Judul kelompok pada tabel hak akses di Kelola Pengguna dan Role.', teks: GRUP_AKSES.map((g) => ({ id: idGrupAkses(g), nama: 'Kelompok', bawaan: g })) },
     { judul: 'Nama role bawaan', keterangan: 'Role buatan sendiri diberi nama di Kelola Pengguna.', teks: Object.entries(ROLE_LABELS).map(([id, nama]) => ({ id: `role:${id}`, nama: 'Role', bawaan: nama })) },
   ],
@@ -79,23 +82,42 @@ const KATEGORI: Record<KategoriTeks, Bagian[]> = {
     })),
   ],
   laporan: [
-    { judul: 'Nama tab', teks: TAB_LAPORAN.map(([tabel, nama]) => ({ id: idTab(tabel), nama: 'Tab', bawaan: nama })) },
-    ...LEMBAR.map((sec) => ({
-      judul: `Laporan: ${sec.title.slice(3).toLowerCase()}`,
-      keterangan: 'Judul tabel, judul kelompok, dan baris tetap.',
-      teks: [
-        { id: idJudul(sec.tabel), nama: 'Judul tabel', bawaan: sec.title.slice(3) },
-        ...sec.rows.flatMap((r): Teks[] =>
-          isGroup(r)
-            ? GRUP_KATEGORI.has(r.label) ? [] : [{ id: idGrupSheet(r.tabel, r.label), nama: 'Kelompok', bawaan: r.label }]
-            : r.key.startsWith('shop:') || DARI_KATEGORI.has(r.key) ? [] : [{ id: idBaris(r.key), nama: 'Baris', bawaan: r.label }],
-        ),
-        ...(TAMBAHAN[sec.tabel] ?? []),
-      ],
-    })),
+    ...LEMBAR.map((sec) => {
+      const tab = TAB_LAPORAN.find(([tabel]) => tabel === sec.tabel)
+      return {
+        judul: `Tabel ${tab?.[1] ?? sec.title.slice(3).toLowerCase()}`,
+        keterangan: 'Nama tab juga menjadi judul di atas tabel; isi "Judul di atas tabel" hanya bila judulnya ingin berbeda dari nama tab.',
+        teks: [
+          ...(tab ? [{ id: idTab(tab[0]), nama: 'Tab', judul: `Nama tab: ${tab[1]}`, bawaan: tab[1] }] : []),
+          { id: idJudul(sec.tabel), nama: 'Judul tabel', judul: `Judul di atas tabel: ${sec.title.slice(3)}`, bawaan: sec.title.slice(3) },
+          ...sec.rows.flatMap((r): Teks[] =>
+            isGroup(r)
+              ? GRUP_KATEGORI.has(r.label) ? [] : [{ id: idGrupSheet(r.tabel, r.label), nama: 'Kelompok', bawaan: r.label }]
+              : r.key.startsWith('shop:') || DARI_KATEGORI.has(r.key) ? [] : [{ id: idBaris(r.key), nama: 'Baris', bawaan: r.label }],
+          ),
+          ...(TAMBAHAN[sec.tabel] ?? []),
+        ],
+      }
+    }),
+    // Tabs without a table of their own (none today) still get their name field.
+    ...(() => {
+      const sisa = TAB_LAPORAN.filter(([tabel]) => !LEMBAR.some((sec) => sec.tabel === tabel))
+      return sisa.length ? [{ judul: 'Nama tab lainnya', teks: sisa.map(([tabel, nama]) => ({ id: idTab(tabel), nama: 'Tab', bawaan: nama })) }] : []
+    })(),
   ],
 }
-const NAMA_KATEGORI: Record<Kategori, string> = { aplikasi: 'Aplikasi', menu: 'Menu', bawah: 'Menu bawah', laporan: 'Laporan Keuangan', ai: 'Asisten AI' }
+const NAMA_KATEGORI: Record<Kategori, string> = { menu: 'Menu & Judul Halaman', bawah: 'Menu Bawah HP', laporan: 'Teks Laporan Keuangan', kategori: 'Kategori Transaksi', role: 'Role', aplikasi: 'Nama & Logo', ai: 'Asisten AI' }
+const KETERANGAN_KATEGORI: Record<Kategori, string> = {
+  menu: 'Nama menu di sidebar, sekaligus judul halamannya.',
+  bawah: 'Pilih sampai 4 menu untuk bilah bawah layar HP tiap role.',
+  laporan: 'Nama tab, judul tabel, kelompok, dan baris tetap di Laporan Keuangan.',
+  kategori: 'Kategori pemasukan dan pengeluaran beserta laporan yang dituju.',
+  role: 'Nama role bawaan dan judul kelompok pada pengaturan hak akses.',
+  aplikasi: 'Nama aplikasi, keterangan di bawahnya, dan logo di sidebar serta layar HP.',
+  ai: 'Pengaturan Asisten AI.',
+}
+
+const KategoriTransaksiPage = lazy(() => import('@/pages/KategoriTransaksi'))
 
 const alamatSah = (a: string) => /^https:\/\/\S+$/.test(a) || /^\/[^\s/]\S*$/.test(a)
 
@@ -176,13 +198,20 @@ function PratinjauLogo({ data }: { data: Record<string, string> | undefined }) {
 export default function KelolaAplikasi() {
   const { akses, bisa: bisaMenu } = useAuth()
   const bisaUbah = bisa(akses, 'kelola_aplikasi', 'tulis')
+  // A role with only Kategori Transaksi access reaches this page for that tab alone.
+  const bisaTeks = bisaMenu('kelola_aplikasi')
+  const bisaKategori = bisaMenu('kategori_transaksi')
   const { data, isLoading, error, refetch } = usePengaturanUi()
-  const [kategori, setKategori] = useState<Kategori>('aplikasi')
+  const [params, setParams] = useSearchParams()
+  const diminta = params.get('tab') as Kategori | null
+  const tabTampil = URUTAN_TAB.filter((k) => (k === 'kategori' ? bisaKategori : bisaTeks && (k !== 'ai' || bisaMenu('asisten'))))
+  const kategori: Kategori = diminta && tabTampil.includes(diminta) ? diminta : tabTampil[0] ?? 'menu'
+  const setKategori = (k: Kategori) => setParams(k === tabTampil[0] ? {} : { tab: k }, { replace: true })
   const [cari, setCari] = useState('')
 
   const bagian = useMemo(() => {
     const k = cari.trim().toLowerCase()
-    const semua = k ? (Object.keys(KATEGORI) as KategoriTeks[]).flatMap((x) => KATEGORI[x]) : kategori === 'bawah' || kategori === 'ai' ? [] : KATEGORI[kategori]
+    const semua = k ? (Object.keys(KATEGORI) as KategoriTeks[]).flatMap((x) => KATEGORI[x]) : kategori === 'bawah' || kategori === 'ai' || kategori === 'kategori' ? [] : KATEGORI[kategori]
     if (!k) return semua
     return semua
       .map((b) => ({ ...b, teks: b.teks.filter((t) => t.bawaan.toLowerCase().includes(k) || (t.judul ?? '').toLowerCase().includes(k) || (data?.[t.id] ?? '').toLowerCase().includes(k)) }))
@@ -193,20 +222,26 @@ export default function KelolaAplikasi() {
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
       <BarHalaman judul="Kelola Aplikasi" deskripsi="Ubah tulisan yang tampil di aplikasi. Hanya tampilan yang berubah; data dan cara kerja tetap sama.">
-        <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari teks di semua bagian…" className="w-full sm:w-72" aria-label="Cari teks" />
+        {bisaTeks && <Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Cari teks di semua bagian…" className="w-full sm:w-72" aria-label="Cari teks" />}
       </BarHalaman>
       <Tabs value={kategori} onValueChange={(v) => setKategori(v as Kategori)}>
         <TabsList className="section-tabs">
-          {URUTAN_TAB.filter((k) => k !== 'ai' || bisaMenu('asisten')).map((k) => (
+          {tabTampil.map((k) => (
             <TabsTrigger key={k} value={k}>{NAMA_KATEGORI[k]}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
+      {!cari && <p className="text-sm text-muted-foreground">{KETERANGAN_KATEGORI[kategori]}</p>}
+      {kategori === 'kategori' && !cari && (
+        <Suspense fallback={<Spinner label="Memuat kategori…" />}>
+          <KategoriTransaksiPage tertanam />
+        </Suspense>
+      )}
       {isLoading && <Spinner label="Memuat pengaturan…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && kategori === 'bawah' && !cari && <KelolaMenuBawah data={data} bisaUbah={bisaUbah} />}
       {data && kategori === 'ai' && !cari && <PengaturanAsistenAI data={data} bisaUbah={bisaUbah} />}
-      {data && ((kategori !== 'bawah' && kategori !== 'ai') || !!cari) && (
+      {data && ((kategori !== 'bawah' && kategori !== 'ai' && kategori !== 'kategori') || !!cari) && (
         <Card>
           <CardContent className="space-y-4 pt-4">
             {!bisaUbah && <p className="teks-kecil text-muted-foreground">Anda hanya bisa melihat halaman ini.</p>}

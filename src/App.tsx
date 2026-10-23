@@ -58,7 +58,6 @@ const DocumentTemplatesPage = lazy(muat(() => import('@/pages/DocumentTemplatesP
 const ProcessingPage = lazy(muat(() => import('@/pages/ProcessingPage')))
 const ArusKas = lazy(muat(() => import('@/pages/ArusKas')))
 const OperasionalUmumPage = lazy(muat(() => import('@/pages/OperasionalUmum')))
-const KategoriTransaksiPage = lazy(muat(() => import('@/pages/KategoriTransaksi')))
 const KelolaAplikasiPage = lazy(muat(() => import('@/pages/KelolaAplikasi')))
 const OperasionalPackingPage = lazy(muat(() => import('@/pages/OperasionalPacking')))
 const FinancialReportsPage = lazy(muat(() => import('@/pages/FinancialReportsPage')))
@@ -92,7 +91,7 @@ function PendengarNotifikasi() {
   return null
 }
 
-function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string; perlu?: Tingkat }) {
+function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode; halaman?: string | string[]; perlu?: Tingkat }) {
   const { user, loading, akses, bisa } = useAuth()
   const location = useLocation()
   useEffect(() => {
@@ -104,7 +103,7 @@ function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode;
     return <Navigate to="/ganti-password" replace state={{ from: location }} />
   }
   if (!akses) return <PageFallback />
-  if (halaman && !bisa(halaman, perlu)) return <Navigate to={bisa('dashboard') ? '/dashboard' : '/profile'} replace />
+  if (halaman && ![halaman].flat().some((h) => bisa(h, perlu))) return <Navigate to={bisa('dashboard') ? '/dashboard' : '/profile'} replace />
   return <Layout>{children}</Layout>
 }
 
@@ -132,8 +131,8 @@ export default function App() {
               <Route path="/processing/template" element={<Protected halaman="data_template"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected><LazyPage><ProcessingPage /></LazyPage></Protected>} />
               <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
-              <Route path="/kelola-aplikasi" element={<Protected halaman="kelola_aplikasi"><LazyPage><KelolaAplikasiPage /></LazyPage></Protected>} />
-              <Route path="/kategori-transaksi" element={<Protected halaman="kategori_transaksi"><LazyPage><KategoriTransaksiPage /></LazyPage></Protected>} />
+              <Route path="/kelola-aplikasi" element={<Protected halaman={["kelola_aplikasi", "kategori_transaksi"]}><LazyPage><KelolaAplikasiPage /></LazyPage></Protected>} />
+              <Route path="/kategori-transaksi" element={<Navigate to="/kelola-aplikasi?tab=kategori" replace />} />
               <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
               <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />

@@ -18,7 +18,6 @@ import {
   ArrowLeftRight,
   Wallet,
   PackageOpen,
-  Tags,
   SlidersHorizontal,
 } from 'lucide-react'
 import { bisa, type AksesSaya } from '@/lib/akses'
@@ -30,6 +29,8 @@ export interface NavItem {
   icon: LucideIcon
   /** The page (halaman) whose access setting decides whether this item shows. */
   halaman: string
+  /** Other pages whose access also shows this item (Kelola Aplikasi holds the Kategori Transaksi tab). */
+  halamanLain?: string[]
   grup: GrupNav
   /** Priority for the phone bottom bar (1 = first to get a slot). Items without it live under "Lainnya". */
   bawah?: number
@@ -74,14 +75,13 @@ export const NAV: NavItem[] = [
   { to: '/operasional-packing', label: 'Operasional Packing', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
   { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
   { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
-  { to: '/kategori-transaksi', label: 'Kategori Transaksi', icon: Tags, halaman: 'kategori_transaksi', grup: 'keuangan' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: 'iklan', grup: 'info-toko' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: 'settlement', grup: 'info-toko' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', grup: 'pengaturan' },
-  { to: '/kelola-aplikasi', label: 'Kelola Aplikasi', icon: SlidersHorizontal, halaman: 'kelola_aplikasi', grup: 'pengaturan' },
+  { to: '/kelola-aplikasi', label: 'Kelola Aplikasi', icon: SlidersHorizontal, halaman: 'kelola_aplikasi', halamanLain: ['kategori_transaksi'], grup: 'pengaturan' },
   { to: '/asisten', label: 'Asisten AI', icon: Bot, halaman: 'asisten', grup: 'pengaturan' },
   { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, halaman: '*', grup: 'pengaturan', bawah: 6, posisiBawah: 6 },
 ]
@@ -126,5 +126,5 @@ export function itemBawah(items: NavItem[], maks = SLOT_BAWAH): NavItem[] {
 
 export function filterNav(akses: AksesSaya | null | undefined, items: NavItem[] = NAV): NavItem[] {
   if (!akses) return []
-  return items.filter((n) => bisa(akses, n.halaman))
+  return items.filter((n) => [n.halaman, ...(n.halamanLain ?? [])].some((h) => bisa(akses, h)))
 }
