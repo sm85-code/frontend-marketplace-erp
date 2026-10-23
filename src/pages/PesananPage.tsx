@@ -378,7 +378,8 @@ export default function PesananPage() {
             onUbahSemua: (p) => pilih.ubahBanyak(bisaDipilihSemua, p),
           }}
           aksi={(p) => <AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: false })} cetakSibuk={sedangBekerja} />}
-          minWidth={1200}
+          minWidth={1280}
+          aksiTetap={false}
         />
         </div>
         </>

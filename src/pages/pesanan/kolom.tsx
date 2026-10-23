@@ -129,6 +129,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
     {
       kunci: 'kurir',
       judul: 'Kurir & Resi',
+      kelas: 'min-w-40',
       urut: { kunci: 'kurir' },
       sel: (p) => (
         <>
@@ -164,7 +165,7 @@ export function AksiPesanan({
   const { user } = useAuth()
   const [hapusBuka, setHapusBuka] = useState(false)
   return (
-    <div className="flex items-stretch justify-end gap-2">
+    <div className="flex items-stretch justify-end gap-2 md:min-w-[15rem]">
       {bisaDiproses(p) && <Button size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onProses(p)} disabled={cetakSibuk}>{labelProses(p)}</Button>}
       {bisaDicetak(p) && (
         <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onCetak(p)} disabled={cetakSibuk}>

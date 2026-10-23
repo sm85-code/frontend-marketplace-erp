@@ -46,6 +46,7 @@ export default function TabelData<T>({
   pilihan,
   aksi,
   judulAksi = 'Aksi',
+  aksiTetap = true,
   minWidth = 720,
   urut,
   onUrut,
@@ -61,6 +62,8 @@ export default function TabelData<T>({
   namaDari: (item: T) => string
   pilihan?: PilihanTabel<T>
   aksi?: (item: T) => ReactNode
+  /** Pin the action column to the right edge while scrolling (default). Off: it scrolls with the rest, never covering other columns. */
+  aksiTetap?: boolean
   judulAksi?: string
   minWidth?: number
   /** Current sort and what a header click does; omit for an unsortable table. */
@@ -112,7 +115,7 @@ export default function TabelData<T>({
                     </TableHead>
                   )
                 })}
-                {aksi && <TableHead className="sel-tetap text-right md:sticky md:right-0">{judulAksi}</TableHead>}
+                {aksi && <TableHead className={aksiTetap ? "sel-tetap text-right md:sticky md:right-0" : "text-right"}>{judulAksi}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -139,7 +142,7 @@ export default function TabelData<T>({
                         {k.sel(item)}
                       </TableCell>
                     ))}
-                    {aksi && <TableCell className="sel-tetap text-right md:sticky md:right-0">{aksi(item)}</TableCell>}
+                    {aksi && <TableCell className={aksiTetap ? "sel-tetap text-right md:sticky md:right-0" : "text-right"}>{aksi(item)}</TableCell>}
                   </TableRow>
                   {subBaris.map((a, i) => (
                     <TableRow key={`${id}-anak-${i}`} data-anak="" aria-label={anak!.label(a, item)} className="bg-muted/40 hover:bg-muted/60">
@@ -149,7 +152,7 @@ export default function TabelData<T>({
                           {k.selAnak?.(a, item, i)}
                         </TableCell>
                       ))}
-                      {aksi && <TableCell className="sel-tetap md:sticky md:right-0" />}
+                      {aksi && <TableCell className={aksiTetap ? "sel-tetap md:sticky md:right-0" : ""} />}
                     </TableRow>
                   ))}
                   </Fragment>
