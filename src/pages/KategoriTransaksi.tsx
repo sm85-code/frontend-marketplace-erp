@@ -20,10 +20,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/lib/auth'
-import { namaMenuBawaan, tabKategori, useNamaTab } from '@/lib/namaMenu'
-import { aliranLaporan } from '@/lib/aliranKategori'
+import { namaMenuBawaan, useNamaTab } from '@/lib/namaMenu'
+import { aliranLaporan, namaGanda } from '@/lib/aliranKategori'
 
 const TABEL_ARAH: Record<ArahKategori, string> = { masuk: 'pemasukan', keluar: 'pengeluaran' }
 const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing'), supplier: namaMenuBawaan('/belanja-supplier') } as const
@@ -56,16 +55,18 @@ function useNama(k: KategoriTransaksi, simpan: (i: Isi, aktif: boolean) => Promi
   return { nama, setNama, keluar }
 }
 
-type PropsBaris = { k: KategoriTransaksi; bisaTulis: boolean; simpan: (i: Isi, aktif: boolean) => Promise<void>; geser: (arah: -1 | 1) => void; atur: () => void; awal: boolean; akhir: boolean }
+type PropsBaris = { k: KategoriTransaksi; ganda?: string; bisaGeser?: boolean; bisaTulis: boolean; simpan: (i: Isi, aktif: boolean) => Promise<void>; geser: (arah: -1 | 1) => void; atur: () => void; awal: boolean; akhir: boolean }
 
 const Status = ({ k }: { k: KategoriTransaksi }) => (!k.aktif ? <Badge variant="secondary">Disembunyikan</Badge> : k.kelompok === '' ? <Badge variant="secondary">Tetap</Badge> : <Badge>Aktif</Badge>)
 
-function Aksi({ k, simpan, geser, atur, awal, akhir }: PropsBaris) {
+function Aksi({ k, simpan, geser, atur, awal, akhir, bisaGeser = true }: PropsBaris) {
   const tetap = k.kelompok === '' // "not income / expense" lands nowhere and stays on offer
   return (
     <div className="flex shrink-0 items-center gap-1 md:justify-end">
+      {bisaGeser && <>
       <Button type="button" size="icon" className="h-8 w-8" variant="outline" aria-label={`Naikkan ${k.nama}`} disabled={awal} onClick={() => geser(-1)}>↑</Button>
       <Button type="button" size="icon" className="h-8 w-8" variant="outline" aria-label={`Turunkan ${k.nama}`} disabled={akhir} onClick={() => geser(1)}>↓</Button>
+      </>}
       {!tetap && (
         <AksiLainnya>
           <Button type="button" size="sm" variant="outline" aria-label={`Atur penempatan ${k.nama}`} onClick={atur}>Atur penempatan</Button>
@@ -79,15 +80,25 @@ function Aksi({ k, simpan, geser, atur, awal, akhir }: PropsBaris) {
 const KolomNama = ({ k, bisaTulis, n }: { k: KategoriTransaksi; bisaTulis: boolean; n: ReturnType<typeof useNama> }) =>
   bisaTulis ? <Input aria-label={`Nama ${k.nama}`} value={n.nama} maxLength={80} onChange={(e) => n.setNama(e.target.value)} onBlur={() => void n.keluar()} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} /> : <>{k.nama}</>
 
+const ARAH_LABEL: Record<ArahKategori, string> = { masuk: 'Masuk', keluar: 'Keluar' }
+const dipakaiTeks = (k: KategoriTransaksi) => {
+  const bagian = [k.dipakai > 0 ? `${k.dipakai} entri` : '', (k.dipakai_arus_kas ?? 0) > 0 ? `${k.dipakai_arus_kas} baris Arus Kas` : ''].filter(Boolean)
+  return bagian.length ? bagian.join(' · ') : '—'
+}
+const Ganda = ({ ganda }: { ganda?: string }) => (ganda ? <Badge variant="outline" className="ml-1 border-amber-400 text-amber-700">Nama mirip: {ganda}</Badge> : null)
+
 function Baris(p: PropsBaris) {
   const halaman = useNamaHalaman()
   const { k, bisaTulis } = p
   const n = useNama(k, p.simpan)
   return (
     <TableRow className={k.aktif ? '' : 'opacity-60'}>
-      <TableCell className="min-w-56"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /></TableCell>
-      <TableCell className="min-w-48 text-muted-foreground">{penempatan(k, halaman)}<Aliran k={k} /></TableCell>
-      <TableCell className="whitespace-nowrap">{k.dipakai > 0 ? `${k.dipakai} baris` : '—'}</TableCell>
+      <TableCell className="min-w-52"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /><Ganda ganda={p.ganda} /></TableCell>
+      <TableCell><Badge variant="secondary">{ARAH_LABEL[k.arah]}</Badge></TableCell>
+      <TableCell className="whitespace-nowrap">{k.operasional ? halaman[k.operasional] : 'Arus Kas langsung'}</TableCell>
+      <TableCell className="whitespace-nowrap">{k.kelompok || 'Tidak masuk laba/rugi'}</TableCell>
+      <TableCell className="min-w-56"><Aliran k={k} /></TableCell>
+      <TableCell className="whitespace-nowrap">{dipakaiTeks(k)}</TableCell>
       <TableCell><Status k={k} /></TableCell>
       <TableCell>{bisaTulis && <Aksi {...p} />}</TableCell>
     </TableRow>
@@ -113,9 +124,11 @@ function Kartu(p: PropsBaris) {
         {bisaTulis && <Aksi {...p} />}
       </div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 teks-kecil text-muted-foreground">
+        <Badge variant="secondary">{ARAH_LABEL[k.arah]}</Badge>
         <span>{penempatan(k, halaman)}</span>
         <Status k={k} />
-        <span>{k.dipakai > 0 ? `${k.dipakai} baris` : 'Belum dipakai'}</span>
+        <span>{dipakaiTeks(k)}</span>
+        <Ganda ganda={p.ganda} />
       </div>
       <div className="px-1"><Aliran k={k} /></div>
     </li>
@@ -280,19 +293,23 @@ function ItemKelompok({ g, bisaTulis, onChanged }: { g: Kelompok; bisaTulis: boo
   )
 }
 
-type Tab = 'masuk' | 'keluar' | 'umum' | 'packing' | 'supplier'
-const arahTab = (t: Tab): ArahKategori => (t === 'masuk' ? 'masuk' : 'keluar')
-
-/** Kategori Transaksi: rename, add, hide and reorder the categories of money in and out. Ids never change, so nothing already filed breaks. */
+type FilterArah = 'semua' | ArahKategori
+type Sumber = 'semua' | 'arus_kas' | 'umum' | 'packing' | 'supplier'
+type FilterStatus = 'aktif' | 'sembunyi' | 'semua'
+type Urut = 'laporan' | 'nama' | 'kelompok' | 'dipakai'
+/** Kategori Transaksi: one table of every category with filters; rename, add, hide and reorder. Ids never change, so nothing already filed breaks. */
 export default function KategoriTransaksiPage({ tertanam = false }: { tertanam?: boolean }) {
   const qc = useQueryClient()
   const { bisa } = useAuth()
   const bisaTulis = bisa('kategori_transaksi', 'tulis')
-  const [tab, setTab] = useState<Tab>('masuk')
-  const [baru, setBaru] = useState(false)
+  const [fArah, setFArah] = useState<FilterArah>('semua')
+  const [sumber, setSumber] = useState<Sumber>('semua')
+  const [fStatus, setFStatus] = useState<FilterStatus>('semua')
+  const [urutan, setUrutan] = useState<Urut>('laporan')
+  const [cari, setCari] = useState('')
+  const [baru, setBaru] = useState<ArahKategori | null>(null)
   const [atur, setAtur] = useState<KategoriTransaksi | null>(null)
-  const arah = arahTab(tab)
-  const TAB = tabKategori(useLabel())
+  const halaman = useNamaHalaman()
   const namaTab = useNamaTab()
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['kategori-transaksi'], queryFn: daftarKategori })
   const segarkan = () => qc.invalidateQueries({ queryKey: ['kategori-transaksi'] })
@@ -301,89 +318,118 @@ export default function KategoriTransaksiPage({ tertanam = false }: { tertanam?:
     onSuccess: segarkan,
     onError: (e) => toast.error(getApiError(e)),
   })
-  const urut = useMutation({ mutationFn: (v: { ids: string[] }) => urutkanKategori(arah, v.ids), onSuccess: segarkan, onError: (e) => toast.error(getApiError(e)) })
+  const urut = useMutation({ mutationFn: (v: { arah: ArahKategori; ids: string[] }) => urutkanKategori(v.arah, v.ids), onSuccess: segarkan, onError: (e) => toast.error(getApiError(e)) })
 
-  const semuaArah = (data?.items ?? []).filter((k) => k.arah === arah).sort((a, b) => a.urut - b.urut)
-  const daftar = semuaArah.filter((k) => (tab === 'umum' || tab === 'packing' || tab === 'supplier' ? k.operasional === tab : true))
-  const kelompok = data?.kelompok_daftar[arah] ?? []
-  /** Swaps with the neighbour in this tab, keeping the other categories of the kind where they are. */
+  const semua = data?.items ?? []
+  const ganda = namaGanda(semua)
+  const kata = cari.trim().toLocaleLowerCase('id-ID')
+  const daftar = semua
+    .filter((k) => fArah === 'semua' || k.arah === fArah)
+    .filter((k) => sumber === 'semua' || (sumber === 'arus_kas' ? !k.operasional : k.operasional === sumber))
+    .filter((k) => fStatus === 'semua' || (fStatus === 'aktif' ? k.aktif : !k.aktif))
+    .filter((k) => !kata || k.nama.toLocaleLowerCase('id-ID').includes(kata))
+    .sort((a, b) =>
+      urutan === 'nama' ? a.nama.localeCompare(b.nama, 'id') :
+      urutan === 'kelompok' ? (a.kelompok || '~').localeCompare(b.kelompok || '~', 'id') || a.urut - b.urut :
+      urutan === 'dipakai' ? (b.dipakai + (b.dipakai_arus_kas ?? 0)) - (a.dipakai + (a.dipakai_arus_kas ?? 0)) :
+      a.arah.localeCompare(b.arah) * -1 || a.urut - b.urut, // masuk first, then keluar, each in report order
+    )
+  // Moving only means something in report order within one direction.
+  const bisaGeser = urutan === 'laporan' && fArah !== 'semua'
   const geser = (i: number, d: -1 | 1) => {
-    const ids = semuaArah.map((k) => k.id)
+    const arah = daftar[i].arah
+    const ids = semua.filter((k) => k.arah === arah).sort((a, b) => a.urut - b.urut).map((k) => k.id)
     const a = ids.indexOf(daftar[i].id)
     const b = ids.indexOf(daftar[i + d].id)
     ;[ids[a], ids[b]] = [ids[b], ids[a]]
-    urut.mutate({ ids })
+    urut.mutate({ arah, ids })
   }
+  const jumlahGanda = ganda.size
+  const pilih = (label: string, value: string, set: (v: string) => void, opsi: [string, string][]) => (
+    <label className="grid gap-1 text-xs text-muted-foreground">{label}
+      <select className={selectCls} value={value} onChange={(e) => set(e.target.value)} aria-label={label}>
+        {opsi.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      </select>
+    </label>
+  )
+  const tombolTambah = bisaTulis && (
+    <div className="flex flex-wrap gap-2">
+      <Button onClick={() => setBaru('masuk')} disabled={!data} variant="outline"><Plus /> Kategori pemasukan</Button>
+      <Button onClick={() => setBaru('keluar')} disabled={!data}><Plus /> Kategori pengeluaran</Button>
+    </div>
+  )
+  const deskripsi = 'Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.'
+  const props = (k: KategoriTransaksi, i: number) => ({
+    k, bisaTulis, ganda: ganda.get(k.id), bisaGeser, awal: i === 0, akhir: i === daftar.length - 1,
+    geser: (d: -1 | 1) => geser(i, d), atur: () => setAtur(k),
+    simpan: (isi: Isi, aktif: boolean) => ubah.mutateAsync({ id: k.id, isi, aktif }).then(() => undefined),
+  })
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
       {tertanam ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.</p>
-        {bisaTulis && (
-          <Button onClick={() => setBaru(true)} disabled={!data}>
-            <Plus /> Tambah kategori
-          </Button>
-        )}
+          <p className="text-sm text-muted-foreground">{deskripsi}</p>
+          {tombolTambah}
         </div>
       ) : (
-        <BarHalaman judul="Kategori Transaksi" deskripsi="Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.">
-        {bisaTulis && (
-          <Button onClick={() => setBaru(true)} disabled={!data}>
-            <Plus /> Tambah kategori
-          </Button>
-        )}
-        </BarHalaman>
+        <BarHalaman judul="Kategori Transaksi" deskripsi={deskripsi}>{tombolTambah}</BarHalaman>
       )}
       <p className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
-        Kategori dipilih pada baris {namaTab('arus_kas')}. Angka sebuah kategori baru masuk laporan bila ada baris {namaTab('arus_kas')} yang diberi kategori itu; catatan di bawah tiap kategori menunjukkan laporan yang dituju. {namaTab('neraca')} tidak memakai kategori: isinya diambil dari baris {namaTab('arus_kas')} (seperti saldo kas akhir), laba bersih {namaTab('laba_rugi')}, dan angka yang diisi langsung.
+        Kategori dipilih pada baris {namaTab('arus_kas')}. Angka sebuah kategori baru masuk laporan bila ada baris {namaTab('arus_kas')} yang diberi kategori itu; kolom "Masuk ke" menunjukkan laporan yang dituju. {namaTab('neraca')} tidak memakai kategori: isinya diambil dari baris {namaTab('arus_kas')} (seperti saldo kas akhir), laba bersih {namaTab('laba_rugi')}, dan angka yang diisi langsung.
       </p>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList className="section-tabs max-md:flex max-md:w-full max-md:justify-start max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
-          {TAB.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}
-        </TabsList>
-      </Tabs>
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+        {pilih('Arah', fArah, (v) => setFArah(v as FilterArah), [['semua', 'Semua'], ['masuk', 'Masuk'], ['keluar', 'Keluar']])}
+        {pilih('Sumber', sumber, (v) => setSumber(v as Sumber), [['semua', 'Semua'], ['arus_kas', 'Arus Kas langsung'], ['umum', halaman.umum], ['packing', halaman.packing], ['supplier', halaman.supplier]])}
+        {pilih('Status', fStatus, (v) => setFStatus(v as FilterStatus), [['semua', 'Semua'], ['aktif', 'Aktif'], ['sembunyi', 'Disembunyikan']])}
+        {pilih('Urutkan', urutan, (v) => setUrutan(v as Urut), [['laporan', 'Urutan laporan'], ['nama', 'Nama'], ['kelompok', 'Kelompok'], ['dipakai', 'Paling dipakai']])}
+        <label className="grid gap-1 text-xs text-muted-foreground">Cari<Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Nama kategori…" aria-label="Cari kategori" /></label>
+      </div>
+      {jumlahGanda > 0 && <p role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-2 text-sm text-amber-800">{jumlahGanda} kategori punya nama yang mirip dengan kategori lain. Ganti salah satunya agar tidak tertukar.</p>}
+      {urutan === 'laporan' && fArah === 'semua' && bisaTulis && <p className="text-xs text-muted-foreground">Pilih Arah Masuk atau Keluar untuk mengubah urutan.</p>}
       {isLoading && <Spinner label="Memuat kategori…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && (
         <Card>
           <CardContent className="space-y-3 pt-4">
             <ul className="space-y-3 md:hidden" aria-label="Kategori transaksi">
-              {daftar.map((k, i) => (
-                <Kartu key={k.id} k={k} bisaTulis={bisaTulis} awal={i === 0} akhir={i === daftar.length - 1} geser={(d) => geser(i, d)} atur={() => setAtur(k)} simpan={(isi, aktif) => ubah.mutateAsync({ id: k.id, isi, aktif }).then(() => undefined)} />
-              ))}
-              {daftar.length === 0 && <li className="text-center text-sm text-muted-foreground">Belum ada kategori di sini.</li>}
+              {daftar.map((k, i) => <Kartu key={k.id} {...props(k, i)} />)}
+              {daftar.length === 0 && <li className="text-center text-sm text-muted-foreground">Tidak ada kategori yang cocok.</li>}
             </ul>
             <div className="hidden md:block">
-            <TableShell label="Kategori transaksi" minWidth={760}>
+            <TableShell label="Kategori transaksi" minWidth={1100}>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nama kategori</TableHead>
-                    <TableHead>Penempatan</TableHead>
+                    <TableHead>Arah</TableHead>
+                    <TableHead>Sumber</TableHead>
+                    <TableHead>Kelompok {namaTab('laba_rugi')}</TableHead>
+                    <TableHead>Masuk ke</TableHead>
                     <TableHead>Dipakai</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {daftar.map((k, i) => (
-                    <Baris key={k.id} k={k} bisaTulis={bisaTulis} awal={i === 0} akhir={i === daftar.length - 1} geser={(d) => geser(i, d)} atur={() => setAtur(k)} simpan={(isi, aktif) => ubah.mutateAsync({ id: k.id, isi, aktif }).then(() => undefined)} />
-                  ))}
+                  {daftar.map((k, i) => <Baris key={k.id} {...props(k, i)} />)}
                   {daftar.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">Belum ada kategori di sini.</TableCell>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">Tidak ada kategori yang cocok.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </TableShell>
             </div>
-            <PanelKelompok arah={arah} kelompok={kelompok} bisaTulis={bisaTulis} onChanged={segarkan} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div><h3 className="mb-1 text-sm font-semibold">Kelompok pemasukan</h3><PanelKelompok arah="masuk" kelompok={data.kelompok_daftar.masuk ?? []} bisaTulis={bisaTulis} onChanged={segarkan} /></div>
+              <div><h3 className="mb-1 text-sm font-semibold">Kelompok pengeluaran</h3><PanelKelompok arah="keluar" kelompok={data.kelompok_daftar.keluar ?? []} bisaTulis={bisaTulis} onChanged={segarkan} /></div>
+            </div>
           </CardContent>
         </Card>
       )}
-      {data && <DialogBaru arah={arah} kelompok={kelompok} buka={baru} onClose={() => setBaru(false)} onSaved={segarkan} />}
-      <DialogAtur k={atur} kelompok={kelompok} onClose={() => setAtur(null)} onSimpan={(isi) => atur && ubah.mutate({ id: atur.id, isi: { ...isi, nama: atur.nama }, aktif: atur.aktif }, { onSuccess: () => setAtur(null) })} />
+      {data && baru && <DialogBaru arah={baru} kelompok={data.kelompok_daftar[baru] ?? []} buka onClose={() => setBaru(null)} onSaved={segarkan} />}
+      <DialogAtur k={atur} kelompok={atur ? data?.kelompok_daftar[atur.arah] ?? [] : []} onClose={() => setAtur(null)} onSimpan={(isi) => atur && ubah.mutate({ id: atur.id, isi: { ...isi, nama: atur.nama }, aktif: atur.aktif }, { onSuccess: () => setAtur(null) })} />
     </div>
   )
 }
