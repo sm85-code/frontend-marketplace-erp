@@ -73,6 +73,54 @@ function time(value: number | string) {
   return Number.isFinite(date.getTime()) ? fmtDateTime(date.toISOString()) : '—'
 }
 
+
+// Kotak ketik punya state sendiri: tiap ketukan hanya me-render komponen ini,
+// bukan daftar percakapan & riwayat pesan yang panjang.
+function ReplyComposer({ clearKey, attachment, sending, inputDisabled, blocked, onSend }: {
+  clearKey: number
+  attachment: boolean
+  sending: boolean
+  inputDisabled: boolean
+  blocked: boolean
+  onSend: (text: string) => void
+}) {
+  const [text, setText] = useState('')
+  const [seenKey, setSeenKey] = useState(clearKey)
+  if (seenKey !== clearKey) {
+    setSeenKey(clearKey)
+    setText('')
+  }
+  return (
+    <>
+      <div className="min-w-0 flex-1">
+        <label htmlFor="chat-reply-text" className="sr-only">Pesan</label>
+        <Textarea id="chat-reply-text"
+          className="min-h-11 max-h-36 w-full resize-none overflow-y-auto rounded-2xl bg-card px-3.5 py-2.5 text-base leading-snug sm:text-sm"
+          rows={1}
+          aria-label="Balasan Chat"
+          placeholder={attachment ? 'Kirim atau hapus lampiran dulu' : 'Tulis balasan…'}
+          maxLength={1000}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={inputDisabled}
+        />
+        {text.length >= 800 && <div className="mt-0.5 text-right text-[11px] tabular-nums text-muted-foreground">{text.length}/1.000</div>}
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        className={`size-11 shrink-0 rounded-full ${sending ? 'disabled:opacity-100' : ''}`}
+        aria-label={sending ? 'Mengirim…' : attachment ? 'Kirim lampiran' : 'Kirim balasan'}
+        title={attachment ? "Kirim lampiran" : "Kirim balasan"}
+        onClick={() => onSend(text)}
+        disabled={(!attachment && !text.trim()) || blocked}
+      >
+        {sending ? <span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none" aria-hidden="true" /> : <Send className="size-5"/>}
+      </Button>
+    </>
+  )
+}
+
 export default function ChatPage() {
   const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
@@ -96,7 +144,9 @@ export default function ChatPage() {
   const [selectedOverride, setSelected] = useState<Conversation | null>(null)
   const [older, setOlder] = useState<Message[]>([])
   const [offset, setOffset] = useState('')
-  const [text, setText] = useState('')
+  // Teks balasan disimpan di ReplyComposer agar mengetik tidak me-render ulang seluruh halaman chat.
+  const [clearKey, setClearKey] = useState(0)
+  const clearText = () => setClearKey((k) => k + 1)
   const [readError, setReadError] = useState('')
   const [delivery, setDelivery] = useState<Delivery | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -247,7 +297,7 @@ export default function ChatPage() {
           setSelected({ ...selected!, conversation_id: String(result.message.conversation_id) })
           setParams({})
         }
-        if (!request.attachment) setText('')
+        if (!request.attachment) clearText()
         setAttachment(null)
         setOffset('')
         setOlder([])
@@ -337,7 +387,7 @@ export default function ChatPage() {
     setSelected(c)
     setOffset('')
     setOlder([])
-    setText('')
+    clearText()
     setDelivery(null)
     setReadError('')
     setCursor('')
@@ -570,7 +620,7 @@ export default function ChatPage() {
                     onClick={() => {
                       localStorage.removeItem(storageKey)
                       setDelivery(null)
-                      setText('')
+                      clearText()
                     }}
                   >
                     Sudah memeriksa riwayat
@@ -601,27 +651,19 @@ export default function ChatPage() {
                   choose={setAttachment}
                   disabled={send.isPending || upload.isPending || !!pending || !!attachment}
                 />
-                <div className="min-w-0 flex-1">
-                  <label htmlFor="chat-reply-text" className="sr-only">Pesan</label>
-                  <Textarea id="chat-reply-text"
-                    className="min-h-11 max-h-36 w-full resize-none overflow-y-auto rounded-2xl bg-card px-3.5 py-2.5 text-base leading-snug sm:text-sm"
-                    rows={1}
-                    aria-label="Balasan Chat"
-                    placeholder={attachment ? 'Kirim atau hapus lampiran dulu' : 'Tulis balasan…'}
-                    maxLength={1000}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    disabled={send.isPending || !!pending || !!attachment}
-                  />
-                  {text.length >= 800 && <div className="mt-0.5 text-right text-[11px] tabular-nums text-muted-foreground">{text.length}/1.000</div>}
-                </div>
-                <Button
-                  type="button"
-                  size="icon"
-                  className={`size-11 shrink-0 rounded-full ${send.isPending ? 'disabled:opacity-100' : ''}`}
-                  aria-label={send.isPending ? 'Mengirim…' : attachment ? 'Kirim lampiran' : 'Kirim balasan'}
-                  title={attachment ? "Kirim lampiran" : "Kirim balasan"}
-                  onClick={() =>
+                <ReplyComposer
+                  clearKey={clearKey}
+                  attachment={!!attachment}
+                  sending={send.isPending}
+                  inputDisabled={send.isPending || !!pending || !!attachment}
+                  blocked={
+                    send.isPending ||
+                    upload.isPending ||
+                    !!pending ||
+                    (!newConversation && (!history.data || !!history.error)) ||
+                    (newConversation && !orderStart.data)
+                  }
+                  onSend={(text) =>
                     send.mutate({
                       key: storageKey,
                       path: newConversation ? `/pesanan/${encodeURIComponent(orderId)}/chat/pesan` : path,
@@ -630,17 +672,7 @@ export default function ChatPage() {
                       attachment,
                     })
                   }
-                  disabled={
-                    (!attachment && !text.trim()) ||
-                    send.isPending ||
-                    upload.isPending ||
-                    !!pending ||
-                    (!newConversation && (!history.data || !!history.error)) ||
-                    (newConversation && !orderStart.data)
-                  }
-                >
-                  {send.isPending ? <span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none" aria-hidden="true" /> : <Send className="size-5"/>}
-                </Button>
+                />
               </div>
               </section>
             </>
