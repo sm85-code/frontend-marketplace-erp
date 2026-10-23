@@ -1,6 +1,6 @@
 import api from '@/api/client'
 
-export type JenisOperasional = 'umum' | 'packing' | 'supplier'
+export type JenisOperasional = 'umum' | 'packing' | 'supplier' | 'tukang'
 
 export interface TransaksiOperasional {
   id: string

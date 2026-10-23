@@ -25,8 +25,8 @@ import { namaMenuBawaan, useNamaTab } from '@/lib/namaMenu'
 import { aliranLaporan, namaGanda } from '@/lib/aliranKategori'
 
 const TABEL_ARAH: Record<ArahKategori, string> = { masuk: 'pemasukan', keluar: 'pengeluaran' }
-const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing'), supplier: namaMenuBawaan('/belanja-supplier') } as const
-const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier' } as const
+const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing'), supplier: namaMenuBawaan('/belanja-supplier'), tukang: namaMenuBawaan('/belanja-tukang') } as const
+const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier', tukang: '/belanja-tukang' } as const
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
 type Isi = { nama: string; kelompok: string; operasional: string }
@@ -294,7 +294,7 @@ function ItemKelompok({ g, bisaTulis, onChanged }: { g: Kelompok; bisaTulis: boo
 }
 
 type FilterArah = 'semua' | ArahKategori
-type Sumber = 'semua' | 'arus_kas' | 'umum' | 'packing' | 'supplier'
+type Sumber = 'semua' | 'arus_kas' | 'umum' | 'packing' | 'supplier' | 'tukang'
 type FilterStatus = 'aktif' | 'sembunyi' | 'semua'
 type Urut = 'laporan' | 'nama' | 'kelompok' | 'dipakai'
 /** Kategori Transaksi: one table of every category with filters; rename, add, hide and reorder. Ids never change, so nothing already filed breaks. */
@@ -379,7 +379,7 @@ export default function KategoriTransaksiPage({ tertanam = false }: { tertanam?:
       </p>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
         {pilih('Arah', fArah, (v) => setFArah(v as FilterArah), [['semua', 'Semua'], ['masuk', 'Masuk'], ['keluar', 'Keluar']])}
-        {pilih('Sumber', sumber, (v) => setSumber(v as Sumber), [['semua', 'Semua'], ['arus_kas', 'Arus Kas langsung'], ['umum', halaman.umum], ['packing', halaman.packing], ['supplier', halaman.supplier]])}
+        {pilih('Sumber', sumber, (v) => setSumber(v as Sumber), [['semua', 'Semua'], ['arus_kas', 'Arus Kas langsung'], ['umum', halaman.umum], ['packing', halaman.packing], ['supplier', halaman.supplier], ['tukang', halaman.tukang]])}
         {pilih('Status', fStatus, (v) => setFStatus(v as FilterStatus), [['semua', 'Semua'], ['aktif', 'Aktif'], ['sembunyi', 'Disembunyikan']])}
         {pilih('Urutkan', urutan, (v) => setUrutan(v as Urut), [['laporan', 'Urutan laporan'], ['nama', 'Nama'], ['kelompok', 'Kelompok'], ['dipakai', 'Paling dipakai']])}
         <label className="grid gap-1 text-xs text-muted-foreground">Cari<Input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="Nama kategori…" aria-label="Cari kategori" /></label>

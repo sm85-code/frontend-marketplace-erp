@@ -95,7 +95,7 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
   )
 }
 
-const PATH_OPERASIONAL: Record<JenisOperasional, string> = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier' }
+const PATH_OPERASIONAL: Record<JenisOperasional, string> = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier', tukang: '/belanja-tukang' }
 
 /** Operasional Umum and Operasional Packing: dated entries kept by weekly period (the same periods as Arus Kas), grouped by category; each is added and changed in a pop-up. */
 export default function HalamanOperasional({ jenis, judul: judulBawaan, deskripsi }: { jenis: JenisOperasional; judul: string; deskripsi: string }) {
