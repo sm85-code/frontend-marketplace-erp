@@ -93,3 +93,18 @@ describe('Operasional entries in Arus Kas', () => {
     expect(comp.cells.map((c) => c.value)).toEqual([0, 175])
   })
 })
+
+describe('Belanja Supplier flows like Operasional Umum', () => {
+  it('page entries -> Arus Kas row of that category -> Pengeluaran (Harga pokok penjualan) -> Laba/Rugi', () => {
+    const supplier = [{ tanggal: '2026-10-06', kategori: 'belanja_supplier', jumlah: '300.00' }]
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:sup', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Belanja supplier' })
+    l = setKategori(l, 'c:sup', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    const tampil = denganOperasional(l, days, supplier, KATEGORI_BAWAAN, arusDari(l))
+    expect(tampil.sel[`c:sup|${days[1]}`]).toBe('300')
+    const blocks = ringkasDariArusKas(sheet(tampil), days, tampil, KATEGORI_BAWAAN)
+    const baris = (tabel: string, key: string) => blocks.find((b) => b.tabel === tabel)!.lines.find((x): x is Line => !isGroup(x) && x.def.key === key)!
+    expect(baris('pengeluaran', 'p:belanja_supplier').cells[1].value).toBe(300)
+    expect(baris('laba_rugi', 'c_hpp').cells[1].value).toBe(300)
+  })
+})

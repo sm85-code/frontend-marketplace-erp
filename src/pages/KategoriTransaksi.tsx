@@ -26,8 +26,8 @@ import { namaMenuBawaan, tabKategori, useNamaTab } from '@/lib/namaMenu'
 import { aliranLaporan } from '@/lib/aliranKategori'
 
 const TABEL_ARAH: Record<ArahKategori, string> = { masuk: 'pemasukan', keluar: 'pengeluaran' }
-const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing') } as const
-const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing' } as const
+const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing'), supplier: namaMenuBawaan('/belanja-supplier') } as const
+const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier' } as const
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
 type Isi = { nama: string; kelompok: string; operasional: string }
@@ -280,7 +280,7 @@ function ItemKelompok({ g, bisaTulis, onChanged }: { g: Kelompok; bisaTulis: boo
   )
 }
 
-type Tab = 'masuk' | 'keluar' | 'umum' | 'packing'
+type Tab = 'masuk' | 'keluar' | 'umum' | 'packing' | 'supplier'
 const arahTab = (t: Tab): ArahKategori => (t === 'masuk' ? 'masuk' : 'keluar')
 
 /** Kategori Transaksi: rename, add, hide and reorder the categories of money in and out. Ids never change, so nothing already filed breaks. */
@@ -304,7 +304,7 @@ export default function KategoriTransaksiPage({ tertanam = false }: { tertanam?:
   const urut = useMutation({ mutationFn: (v: { ids: string[] }) => urutkanKategori(arah, v.ids), onSuccess: segarkan, onError: (e) => toast.error(getApiError(e)) })
 
   const semuaArah = (data?.items ?? []).filter((k) => k.arah === arah).sort((a, b) => a.urut - b.urut)
-  const daftar = semuaArah.filter((k) => (tab === 'umum' || tab === 'packing' ? k.operasional === tab : true))
+  const daftar = semuaArah.filter((k) => (tab === 'umum' || tab === 'packing' || tab === 'supplier' ? k.operasional === tab : true))
   const kelompok = data?.kelompok_daftar[arah] ?? []
   /** Swaps with the neighbour in this tab, keeping the other categories of the kind where they are. */
   const geser = (i: number, d: -1 | 1) => {
