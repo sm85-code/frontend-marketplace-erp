@@ -23,6 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/lib/auth'
 import { namaMenuBawaan, tabKategori, useNamaTab } from '@/lib/namaMenu'
+import { aliranLaporan } from '@/lib/aliranKategori'
 
 const TABEL_ARAH: Record<ArahKategori, string> = { masuk: 'pemasukan', keluar: 'pengeluaran' }
 const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaMenuBawaan('/operasional-packing') } as const
@@ -85,12 +86,19 @@ function Baris(p: PropsBaris) {
   return (
     <TableRow className={k.aktif ? '' : 'opacity-60'}>
       <TableCell className="min-w-56"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /></TableCell>
-      <TableCell className="min-w-48 text-muted-foreground">{penempatan(k, halaman)}</TableCell>
+      <TableCell className="min-w-48 text-muted-foreground">{penempatan(k, halaman)}<Aliran k={k} /></TableCell>
       <TableCell className="whitespace-nowrap">{k.dipakai > 0 ? `${k.dipakai} baris` : '—'}</TableCell>
       <TableCell><Status k={k} /></TableCell>
       <TableCell>{bisaTulis && <Aksi {...p} />}</TableCell>
     </TableRow>
   )
+}
+
+/** Which reports the figures of a category end up in (see src/lib/aliranKategori.ts). */
+function Aliran({ k }: { k: KategoriTransaksi }) {
+  const tab = useNamaTab()
+  const halaman = useNamaHalaman()
+  return <p className="mt-0.5 text-xs text-muted-foreground">{aliranLaporan(k, tab, halaman)}</p>
 }
 
 /** Phone layout: one card per category, so nothing scrolls sideways. */
@@ -109,6 +117,7 @@ function Kartu(p: PropsBaris) {
         <Status k={k} />
         <span>{k.dipakai > 0 ? `${k.dipakai} baris` : 'Belum dipakai'}</span>
       </div>
+      <div className="px-1"><Aliran k={k} /></div>
     </li>
   )
 }
@@ -275,7 +284,7 @@ type Tab = 'masuk' | 'keluar' | 'umum' | 'packing'
 const arahTab = (t: Tab): ArahKategori => (t === 'masuk' ? 'masuk' : 'keluar')
 
 /** Kategori Transaksi: rename, add, hide and reorder the categories of money in and out. Ids never change, so nothing already filed breaks. */
-export default function KategoriTransaksiPage() {
+export default function KategoriTransaksiPage({ tertanam = false }: { tertanam?: boolean }) {
   const qc = useQueryClient()
   const { bisa } = useAuth()
   const bisaTulis = bisa('kategori_transaksi', 'tulis')
@@ -284,6 +293,7 @@ export default function KategoriTransaksiPage() {
   const [atur, setAtur] = useState<KategoriTransaksi | null>(null)
   const arah = arahTab(tab)
   const TAB = tabKategori(useLabel())
+  const namaTab = useNamaTab()
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['kategori-transaksi'], queryFn: daftarKategori })
   const segarkan = () => qc.invalidateQueries({ queryKey: ['kategori-transaksi'] })
   const ubah = useMutation({
@@ -306,13 +316,27 @@ export default function KategoriTransaksiPage() {
   }
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
-      <BarHalaman judul="Kategori Transaksi" deskripsi="Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.">
+      {tertanam ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.</p>
         {bisaTulis && (
           <Button onClick={() => setBaru(true)} disabled={!data}>
             <Plus /> Tambah kategori
           </Button>
         )}
-      </BarHalaman>
+        </div>
+      ) : (
+        <BarHalaman judul="Kategori Transaksi" deskripsi="Nama kategori bisa diubah kapan saja; transaksi yang sudah tercatat ikut memakai nama baru. Kategori tidak bisa dihapus, hanya disembunyikan dari pilihan baru.">
+        {bisaTulis && (
+          <Button onClick={() => setBaru(true)} disabled={!data}>
+            <Plus /> Tambah kategori
+          </Button>
+        )}
+        </BarHalaman>
+      )}
+      <p className="rounded-lg border bg-muted/40 p-3 text-sm text-muted-foreground">
+        Kategori dipilih pada baris {namaTab('arus_kas')}. Angka sebuah kategori baru masuk laporan bila ada baris {namaTab('arus_kas')} yang diberi kategori itu; catatan di bawah tiap kategori menunjukkan laporan yang dituju. {namaTab('neraca')} tidak memakai kategori: isinya diambil dari baris {namaTab('arus_kas')} (seperti saldo kas akhir), laba bersih {namaTab('laba_rugi')}, dan angka yang diisi langsung.
+      </p>
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList className="section-tabs max-md:flex max-md:w-full max-md:justify-start max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
           {TAB.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}

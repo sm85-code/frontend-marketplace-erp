@@ -10,7 +10,8 @@ import { bisaDiganti } from '@/lib/namaBaris'
 import { isGroup, type Block, type GroupDef, type Line } from '@/lib/sheetEngine'
 
 const ADDABLE = new Set(['pemasukan', 'pengeluaran', 'arus_kas', 'neraca'])
-const sentenceCase = (label: string) => label.toLocaleLowerCase('id-ID').replace(/^./, (c) => c.toLocaleUpperCase('id-ID'))
+// Only the built-in ALL-CAPS titles are softened; a text typed on Kelola Aplikasi shows exactly as typed.
+const sentenceCase = (label: string) => label !== label.toLocaleUpperCase('id-ID') ? label : label.toLocaleLowerCase('id-ID').replace(/^./, (c) => c.toLocaleUpperCase('id-ID'))
 /** Cell of a period whose cash transaction is ticked as done. */
 const SELESAI = 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
 const editable = (line: Line) => line.def.kind === 'input' && !line.hidden

@@ -9,7 +9,7 @@ describe('filterNav', () => {
 
   it('admin sees every nav item; owner cannot see Iklan or Settlement', () => {
     expect(filterNav(aksesBawaan('admin')).length).toBe(NAV.length)
-    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/kategori-transaksi', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/kelola-aplikasi', '/pengaturan-toko'].includes(to)))
+    expect(filterNav(aksesBawaan('owner')).map((n) => n.to)).toEqual(NAV.map((n) => n.to).filter((to) => !to.startsWith('/processing/') && ![ '/laporan-keuangan', '/arus-kas', '/iklan', '/settlement', '/toko', '/staff', '/performa-toko', '/asisten', '/kelola-aplikasi', '/pengaturan-toko'].includes(to)))
   })
 
   it('staff gets the shared pages and Arus Kas, in workflow order', () => {
@@ -30,7 +30,7 @@ describe('menu order follows the daily workflow', () => {
       produk: ['/katalog', '/produk', '/listing', '/gudang'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
-      keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan', '/kategori-transaksi'],
+      keuangan: ['/operasional-umum', '/operasional-packing', '/arus-kas', '/laporan-keuangan'],
       'info-toko': ['/pengaturan-toko', '/performa-toko', '/iklan', '/settlement'],
       pengaturan: ['/toko', '/staff', '/kelola-aplikasi', '/asisten', '/profile'],
     })
@@ -102,5 +102,13 @@ describe('Pemetaan Order and every menu of Data Produksi are separate pages', ()
   it('shows Katalog Produk Non Kayu when either of its tabs is given', () => {
     expect(proses({ data_katalog_manual: 'baca' })).toEqual(['/processing/produk-non-kayu'])
     expect(proses({ data_katalog_otomatis: 'baca' })).toEqual(['/processing/produk-non-kayu'])
+  })
+})
+
+describe('Kategori Transaksi lives on Kelola Aplikasi', () => {
+  it('a role with only kategori_transaksi still sees Kelola Aplikasi, and the old menu is gone', () => {
+    const akses = { role: 'x', nama: 'x', akses_toko: 'semua', halaman: { kategori_transaksi: 'baca' } } as never
+    expect(filterNav(akses).map((n) => n.to)).toContain('/kelola-aplikasi')
+    expect(NAV.map((n) => n.to)).not.toContain('/kategori-transaksi')
   })
 })
