@@ -6,7 +6,7 @@ import { useTokoAktif } from '@/lib/tokoAktif'
 import { Link, useSearchParams } from 'react-router-dom'
 import { qk } from '@/api/keys'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight, MoreVertical, CheckCheck, History, Plus, Paperclip } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Send, UserRound, Camera, ImagePlus, X, ArrowUpRight, MoreVertical, CheckCheck, History, Plus, Paperclip, Check } from 'lucide-react'
 import { chatWebUrl } from '@/lib/chat'
 import { chatVariationCard, chatClosedNotice, chatNeedsReply, chatTimestamp, chatPreview, type ChatCard, type ChatContext, type ChatAttachment } from '@/lib/chat'
 import MessageContent from './chat/MessageContent'
@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
 type Conversation = {
+  opposite_last_read_msg_id?: string | number
   conversation_id: string
   latest_message_id?: string
   kota?: string | null
@@ -58,6 +59,21 @@ function Avatar({ url }: { url?: string }) {
     {safe && !failed ? <img src={safe} alt="" className="size-full object-cover" referrerPolicy="no-referrer" onError={() => setFailed(true)}/> : <UserRound className="size-5"/>}
   </span>
 }
+/** Centang pesan toko: 1 = sedang dikirim, 2 abu = terkirim, 2 biru = dibaca pembeli
+ * (hanya bila Shopee mengirim opposite_last_read_msg_id; nilainya sering 0 sehingga tetap abu). */
+function dibacaPembeli(messageId: string, lastRead?: string | number) {
+  try {
+    const r = BigInt(String(lastRead ?? '0'))
+    return r > 0n && BigInt(messageId) <= r
+  } catch {
+    return false
+  }
+}
+function Centang({ status }: { status: 'mengirim' | 'terkirim' | 'dibaca' }) {
+  if (status === 'mengirim') return <Check className="inline size-3.5" aria-label="Sedang dikirim" />
+  return <CheckCheck className={`inline size-3.5 ${status === 'dibaca' ? 'text-sky-500' : ''}`} aria-label={status === 'dibaca' ? 'Dibaca' : 'Terkirim'} />
+}
+
 function shortTime(value: number | string) {
   const timestamp = chatTimestamp(value)
   if (!timestamp) return '—'
@@ -575,7 +591,7 @@ export default function ChatPage() {
                         />
                       )}
                     </>
-                    <div className="mt-1 text-right text-[11px] text-muted-foreground">{shortTime(m.created_timestamp)}</div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-muted-foreground">{shortTime(m.created_timestamp)}{String(m.from_shop_id) === active?.id_toko_eksternal && !['notification', 'system'].includes(m.message_type) && <Centang status={dibacaPembeli(m.message_id, history.data?.conversation?.opposite_last_read_msg_id) ? 'dibaca' : 'terkirim'} />}</div>
                     {m.context?.order_id && (
                       <Link className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted/70 text-primary hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring" to={`/pesanan/${encodeURIComponent(m.context.order_id)}`} aria-label="Buka pesanan terkait" title="Buka pesanan">
                         <ArrowUpRight className="size-4" aria-hidden="true" />
@@ -588,6 +604,12 @@ export default function ChatPage() {
                     )}
                   </div>
                 ))}
+                {send.isPending && send.variables && !send.variables.attachment && send.variables.key === storageKey && (
+                  <div className="ml-auto w-fit max-w-[90%] rounded-2xl rounded-tr-sm bg-primary/15 p-3 opacity-70 shadow-sm">
+                    <div className="whitespace-pre-wrap break-words">{send.variables.text}</div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-muted-foreground">Mengirim <Centang status="mengirim" /></div>
+                  </div>
+                )}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
               <section aria-label="Form balas chat" className="mt-1 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2">
@@ -606,9 +628,9 @@ export default function ChatPage() {
                   </Button>
                 </div>
               )}
-              {delivery && (
-                <p role="status" className={delivery.status === 'terkirim' ? 'px-1 text-xs text-primary' : 'rounded-lg border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive'}>
-                  {delivery.status === 'terkirim' ? 'Pesan terkirim.' : delivery.error || 'Hasil kirim belum pasti; periksa riwayat.'}
+              {delivery && delivery.status !== 'terkirim' && (
+                <p role="status" className={'rounded-lg border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 text-xs text-destructive'}>
+                  {delivery.error || 'Hasil kirim belum pasti; periksa riwayat.'}
                 </p>
               )}
               {pending && !send.isPending && (
