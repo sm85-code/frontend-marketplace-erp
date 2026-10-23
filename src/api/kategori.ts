@@ -18,6 +18,8 @@ export interface KategoriTransaksi {
   sistem: boolean
   auto_sembunyi: boolean
   dipakai: number
+  /** Arus Kas rows filed under it (built-in rows included), over all months. */
+  dipakai_arus_kas?: number
 }
 
 export interface Kelompok {

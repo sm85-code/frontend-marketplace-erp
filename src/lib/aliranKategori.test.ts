@@ -18,3 +18,11 @@ describe('aliranLaporan', () => {
     expect(aliranLaporan({ id: 'bukan_masuk', arah: 'masuk', kelompok: '', operasional: null }, tab, halaman)).toContain('Tidak masuk laporan')
   })
 })
+
+import { namaGanda } from './aliranKategori'
+describe('namaGanda', () => {
+  it('flags names equal apart from case and spaces, within one direction only', () => {
+    const g = namaGanda([{ id: 'a', arah: 'keluar', nama: 'Belanja Supplier' }, { id: 'b', arah: 'keluar', nama: 'belanja  supplier' }, { id: 'c', arah: 'masuk', nama: 'Belanja Supplier' }])
+    expect([...g.keys()].sort()).toEqual(['a', 'b'])
+  })
+})

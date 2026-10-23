@@ -19,3 +19,12 @@ export function aliranLaporan(k: Pick<KategoriTransaksi, 'id' | 'arah' | 'kelomp
   const op = k.arah === 'keluar' && k.operasional && !DIINPUT_DI_ARUS_KAS.has(k.id) ? halaman[k.operasional] : ''
   return `${op ? `Dari ${op} → ` : ''}Masuk ke: ${arus} · ${ringkas} › ${k.kelompok} · ${tab('laba_rugi')} › ${baris}`
 }
+
+const kunciNama = (n: string) => n.replace(/\s+/g, '').toLocaleLowerCase('id-ID')
+
+/** Names that repeat within a direction (case and spaces ignored): id -> the other category's name. */
+export function namaGanda(items: Pick<KategoriTransaksi, 'id' | 'arah' | 'nama'>[]): Map<string, string> {
+  const hasil = new Map<string, string>()
+  for (const a of items) for (const b of items) if (a.id !== b.id && a.arah === b.arah && kunciNama(a.nama) === kunciNama(b.nama)) hasil.set(a.id, b.nama)
+  return hasil
+}
