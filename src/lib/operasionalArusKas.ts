@@ -28,11 +28,19 @@ function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   const dipakai = new Set(kategoriOperasional(daftar).map((k) => k.id))
   const hasil = new Map<string, string>()
   const perNama = new Map<string, string>()
+  const kurung = new Map<string, { kunci: string; prefix: string }[]>()
   const catat = (kategori: string, prefix: string, nama: string) => {
     if (!dipakai.has(kategori)) return
     if (!hasil.has(kategori)) hasil.set(kategori, prefix)
     const k = kunciNama(kategori, nama)
     if (!perNama.has(k)) perNama.set(k, prefix)
+    // "Tagihan Produk [YUNI]": the name in brackets also identifies the row.
+    const isi = /\[([^\]]+)\]/.exec(nama)?.[1]?.trim()
+    if (isi) {
+      const kb = kunciNama(kategori, isi)
+      if (!perNama.has(kb)) perNama.set(kb, prefix)
+      kurung.set(kategori, [...(kurung.get(kategori) ?? []), { kunci: isi.toLocaleLowerCase('id-ID'), prefix }])
+    }
   }
   const dipilih = (key: string) => lembar.baris.some((b) => b.id === keyKategori(key))
   const baris: { key: string; prefix: string; bawaan: boolean; nama: string }[] = []
@@ -47,7 +55,14 @@ function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
     if (anak.length) for (const a of anak) catat(kategoriRincian(lembar, a.id, r.key, GRUP_KELUAR, daftar), a.id, nameOf(lembar, a.id, a.label))
     else if (!r.bawaan || dipilih(r.key)) catat(kategoriDari(lembar, r.key, GRUP_KELUAR, daftar), r.prefix, r.nama)
   }
-  return { hasil, perNama }
+  /** Row for a party name: same name, same name in brackets, or a bracketed short name inside it ("[PUDIN]" for MAHPUDIN). */
+  const cari = (kategori: string, uraian: string): string | undefined => {
+    const tepat = perNama.get(kunciNama(kategori, uraian))
+    if (tepat) return tepat
+    const u = uraian.trim().toLocaleLowerCase('id-ID')
+    return u ? (kurung.get(kategori) ?? []).find((x) => x.kunci.length >= 3 && u.includes(x.kunci))?.prefix : undefined
+  }
+  return { hasil, perNama, cari }
 }
 
 export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Map<string, string> {
@@ -59,14 +74,14 @@ export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: Kategori
  * barisUntukKategori) and period, unless that cell has a figure typed by hand, which always wins.
  */
 export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block): Lembar {
-  const { hasil: tempat, perNama } = tempatBaris(lembar, arus, daftar)
+  const { hasil: tempat, cari } = tempatBaris(lembar, arus, daftar)
   if (!tempat.size) return lembar
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
   const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
   const total = new Map<string, number>()
   for (const it of items) {
-    const prefix = (halamanSupplier.has(it.kategori) && it.uraian ? perNama.get(kunciNama(it.kategori, it.uraian)) : undefined) ?? tempat.get(it.kategori)
+    const prefix = (halamanSupplier.has(it.kategori) && it.uraian ? cari(it.kategori, it.uraian) : undefined) ?? tempat.get(it.kategori)
     const w = indeksPeriode(days, it.tanggal)
     if (prefix === undefined || w < 0) continue
     const key = `${prefix}|${days[w]}`

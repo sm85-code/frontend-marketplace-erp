@@ -149,3 +149,19 @@ describe('Belanja Tukang: one Arus Kas row per tukang, one Pengeluaran row', () 
     expect(p[0].cells[1].value).toBe(140)
   })
 })
+
+describe('party name matches a row by the name in brackets', () => {
+  it('MAHPUDIN -> "Tagihan Produk [PUDIN]", YUNI -> "Tagihan Produk [YUNI]"', () => {
+    const items = [
+      { tanggal: '2026-10-06', kategori: 'belanja_supplier', jumlah: '10.00', uraian: 'MAHPUDIN' },
+      { tanggal: '2026-10-06', kategori: 'belanja_supplier', jumlah: '5.00', uraian: 'YUNI' },
+    ]
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:a', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Tagihan Produk [YUNI]' }, { id: 'c:b', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Tagihan Produk [PUDIN]' })
+    l = setKategori(l, 'c:a', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    l = setKategori(l, 'c:b', 'Kas keluar', 'belanja_supplier', 'lain_keluar')
+    const tampil = denganOperasional(l, days, items, KATEGORI_BAWAAN, arusDari(l))
+    expect(tampil.sel[`c:a|${days[1]}`]).toBe('5')
+    expect(tampil.sel[`c:b|${days[1]}`]).toBe('10')
+  })
+})
