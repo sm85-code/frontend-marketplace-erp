@@ -905,3 +905,4 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 .dash-stripe [data-slot="table-header"] .sel-tetap { background-color: var(--table-heading-background) !important; }
 /* Dashboard on phones: the logo bar scrolls away with the page instead of floating over the tables. */
 @media (max-width: 1023px) { body:has(.dash-stripe) .kepala-hp { position: absolute; } }
+.dash-stripe tfoot .sel-tetap { background-color: color-mix(in oklab, var(--card), var(--muted) 40%) !important; }
