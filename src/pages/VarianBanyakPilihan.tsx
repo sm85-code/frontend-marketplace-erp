@@ -39,7 +39,17 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
   const [baru, setBaru] = useState<string[]>([])
   const masalah = masalahGrup(grup)
   const kombinasi = useMemo(() => (masalah ? [] : kombinasiVarian(grup)), [grup, masalah])
-  const grupAktif = useMemo(() => grup.filter((g) => g.nama.trim() && g.nilai.length), [grup])
+  // Groups typed twice under one name (Warna, Warna) count as one variant with all their choices.
+  const grupAktif = useMemo(() => {
+    const satu = new Map<string, GrupVarian>()
+    for (const g of grup) {
+      if (!g.nama.trim() || !g.nilai.length) continue
+      const ada = satu.get(kunciNama(g.nama))
+      if (ada) satu.set(kunciNama(g.nama), { ...ada, nilai: [...ada.nilai, ...g.nilai.filter((n) => !ada.nilai.includes(n))] })
+      else satu.set(kunciNama(g.nama), g)
+    }
+    return [...satu.values()]
+  }, [grup])
   // A way of pricing by a variant that was removed or renamed falls back to one price for all.
   const caraNyata: CaraHarga = cara.startsWith('g:') && !grupAktif.some((g) => `g:${kunciNama(g.nama)}` === cara) ? 'semua' : cara
 

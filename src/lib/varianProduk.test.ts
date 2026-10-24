@@ -27,7 +27,8 @@ describe('variants of a manual product', () => {
   it('reports the problems the server would reject', () => {
     expect(masalahVarian([])).toBeNull()
     expect(masalahVarian([{ nama: 'Jenis', nilai: '' }])).toMatch(/Isi nama dan nilai/)
-    expect(masalahVarian([{ nama: 'Jenis', nilai: 'a' }, { nama: 'jenis', nilai: 'b' }])).toMatch(/dipakai dua kali/)
+    expect(masalahVarian([{ nama: 'Jenis', nilai: 'a' }, { nama: 'jenis', nilai: 'b' }])).toBeNull()
+    expect(masalahVarian([{ nama: 'Jenis', nilai: 'a' }, { nama: 'jenis', nilai: 'A' }])).toMatch(/dua kali/)
     expect(masalahVarian(Array.from({ length: 9 }, (_, i) => ({ nama: 'n' + i, nilai: 'v' })))).toMatch(/Maksimal/)
   })
 })
@@ -51,7 +52,11 @@ describe('a variant with several choices', () => {
     expect(masalahGrup([])).toBeNull()
     expect(masalahGrup([{ nama: '', nilai: ['Basah'] }])).toMatch(/nama/i)
     expect(masalahGrup([{ nama: 'Jenis', nilai: [] }])).toMatch(/pilihan/i)
-    expect(masalahGrup([{ nama: 'Jenis', nilai: ['A'] }, { nama: 'jenis', nilai: ['B'] }])).toMatch(/dua kali/)
+    expect(masalahGrup([{ nama: 'Jenis', nilai: ['A'] }, { nama: 'jenis', nilai: ['B'] }])).toBeNull()
+    expect(kombinasiVarian([{ nama: 'Warna', nilai: ['Merah'] }, { nama: 'Ukuran', nilai: ['S'] }, { nama: 'warna', nilai: ['Hitam', 'merah'] }])).toEqual([
+      [{ nama: 'Warna', nilai: 'Merah' }, { nama: 'Ukuran', nilai: 'S' }],
+      [{ nama: 'Warna', nilai: 'Hitam' }, { nama: 'Ukuran', nilai: 'S' }],
+    ])
     const banyak = Array.from({ length: 8 }, (_, i) => `n${i}`)
     expect(masalahGrup([{ nama: 'A', nilai: banyak }, { nama: 'B', nilai: banyak }])).toMatch(/terlalu banyak/i)
   })
