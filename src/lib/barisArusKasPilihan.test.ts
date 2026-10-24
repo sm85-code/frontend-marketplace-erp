@@ -22,3 +22,12 @@ test('lists Kas keluar rows, page categories first', () => {
   expect(r.map((x) => x.id)).toEqual(['c:b', 'c:a'])
   expect(r[0].kategori).toBe('belanja_supplier')
 })
+
+test('includes the report rows of Kas keluar under their new names (Tukang Kayu [JOKO])', () => {
+  const l = emptyLembar()
+  l.baris.push({ id: 'c:nm-k_tukang', tabel: 'arus_rinci', grup: 'nama', label: 'Tukang Kayu [JOKO]' }, { id: 'c:kt-k_tukang', tabel: 'arus_rinci', grup: 'kategori', label: 'tukang' })
+  const arus = { title: 'x', tabel: 'arus_kas', lines: [{ group: true, label: 'Kas keluar', tabel: 'arus_kas' }, { def: { key: 'k_tukang', label: 'Tukang', tabel: 'arus_kas', grup: 'Kas keluar', kind: 'input', total: 'sum', base: () => '0' }, custom: false, hidden: false, cells: [], total: null }] } as unknown as Parameters<typeof barisKasKeluar>[3]
+  const r = barisKasKeluar(l, KATEGORI_BAWAAN, new Set(['tukang']), arus)
+  expect(r[0]).toMatchObject({ id: 'k_tukang', nama: 'Tukang Kayu [JOKO]', kategori: 'tukang' })
+  expect(cocokOtomatis(r[0].nama, 'JOKO WAHYONO')).toBe(true)
+})
