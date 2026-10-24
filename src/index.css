@@ -897,3 +897,11 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 @media (max-width: 767px) {
   .dash-stripe .sel-tetap { box-shadow: 1px 0 0 var(--border), 6px 0 8px -6px color-mix(in oklab, var(--foreground) 35%, transparent) !important; }
 }
+.dash-stripe [data-multiline-justify] { text-align: left !important; text-justify: auto; }
+.dash-stripe tfoot .sel-tetap, .dash-stripe tfoot tr:hover > .sel-tetap { background-color: var(--card); }
+/* Dashboard: one opaque surface for the whole table so the frozen column matches its row in every theme. */
+.dash-stripe [role="region"], .dash-stripe .sel-tetap { background-color: var(--card) !important; }
+.dash-stripe tbody tr:hover > .sel-tetap { background-color: color-mix(in oklab, var(--card), var(--muted) 40%) !important; }
+.dash-stripe [data-slot="table-header"] .sel-tetap { background-color: var(--table-heading-background) !important; }
+/* Dashboard on phones: the logo bar scrolls away with the page instead of floating over the tables. */
+@media (max-width: 1023px) { body:has(.dash-stripe) .kepala-hp { position: absolute; } }
