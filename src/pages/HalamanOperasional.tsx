@@ -1,5 +1,5 @@
 import { barisTujuan, TIDAK_DISAMBUNG } from '@/lib/barisTujuan'
-import { barisKasKeluar, cocokOtomatis } from '@/lib/barisArusKasPilihan'
+import { barisKasKeluar, barisOtomatis, cocokOtomatis } from '@/lib/barisArusKasPilihan'
 import { lembarArusKas, overviewArusKas } from '@/api/financialReports'
 import { computeSheet } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
@@ -104,14 +104,13 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
   )
 }
 
-/** Which Arus Kas rows each supplier / tukang fills, picked from the Kas keluar rows of Arus Kas. None = automatic (same
- * name or name in brackets, "Tagihan Produk [YUNI]"); several = one row each on this page; "-" = not linked. Saved as the
- * rows' names separated by ";" (the format links typed earlier already use). */
-function PetaArusKas({ jenis, periode, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; periode: string; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
-  const simpan = useMutation({ mutationFn: (v: { id: string; baris: string }) => simpanPihak(jenis, v.id, v.baris), onSuccess: () => { toast.success('Tersimpan'); onSaved() }, onError: (e) => toast.error(getApiError(e)) })
-  const lembar = useQuery({ queryKey: ['financial-arus-kas-lembar', periode], queryFn: () => lembarArusKas(periode), retry: false })
+const PIHAK_JENIS = new Set<JenisOperasional>(['supplier', 'tukang'])
+
+/** The Kas keluar rows of Arus Kas (report rows and rows added by hand) a supplier / tukang can be linked to. */
+function usePilihanArusKas(jenis: JenisOperasional, periode: string) {
+  const lembar = useQuery({ queryKey: ['financial-arus-kas-lembar', periode], queryFn: () => lembarArusKas(periode), retry: false, enabled: PIHAK_JENIS.has(jenis) })
   // The report's own Kas keluar rows (Tukang Kayu [JOKO] and the like) come from the Arus Kas report itself.
-  const laporan = useQuery({ queryKey: ['arus-kas-laporan-peta', periode], queryFn: () => overviewArusKas(periode), retry: false })
+  const laporan = useQuery({ queryKey: ['arus-kas-laporan-peta', periode], queryFn: () => overviewArusKas(periode), retry: false, enabled: PIHAK_JENIS.has(jenis) })
   const daftarKat = useKategori()
   const pilihan = useMemo(() => {
     if (!lembar.data) return []
@@ -124,6 +123,15 @@ function PetaArusKas({ jenis, periode, pihak, bisaTulis, onSaved }: { jenis: Jen
     return barisKasKeluar(l, daftarKat, new Set(daftarKat.filter((k) => k.operasional === jenis).map((k) => k.id)), arus)
   }, [lembar.data, laporan.data, daftarKat, jenis, periode],
   )
+  return { lembar, pilihan }
+}
+
+/** Which Arus Kas rows each supplier / tukang fills, picked from the Kas keluar rows of Arus Kas. None = automatic (same
+ * name or name in brackets, "Tagihan Produk [YUNI]"); several = one row each on this page; "-" = not linked. Saved as the
+ * rows' names separated by ";" (the format links typed earlier already use). */
+function PetaArusKas({ jenis, periode, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; periode: string; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
+  const simpan = useMutation({ mutationFn: (v: { id: string; baris: string }) => simpanPihak(jenis, v.id, v.baris), onSuccess: () => { toast.success('Tersimpan'); onSaved() }, onError: (e) => toast.error(getApiError(e)) })
+  const { lembar, pilihan } = usePilihanArusKas(jenis, periode)
   const ubah = (p: PihakOperasional, daftar: string[]) => simpan.mutate({ id: p.id, baris: daftar.join('; ') })
   return (
     <details className="rounded-lg border p-3 text-sm">
@@ -191,6 +199,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [periode, setPeriode] = useState(bulanIni)
+  const { pilihan } = usePilihanArusKas(jenis, periode)
   const kunci = ['operasional', jenis, periode] as const
   const { data, isLoading, error, refetch } = useQuery({ queryKey: kunci, queryFn: () => daftarOperasional(jenis, periode) })
   const [tersimpan, setTersimpan] = useState(false)
@@ -255,7 +264,9 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
       nama.add(kunciP(x.nama))
       const tujuan = barisTujuan(x.baris_arus_kas).filter((b) => b !== TIDAK_DISAMBUNG)
       if (tujuan.length < 2) {
-        hasil.push({ id: `p:${x.id}`, label: x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
+        // The row it fills is shown with the name, as for a split party: "PUDIN – Tagihan Produk [PUDIN]".
+        const ke = barisTujuan(x.baris_arus_kas)[0] === TIDAK_DISAMBUNG ? 'tidak disambung' : tujuan[0] ?? barisOtomatis(pilihan, x.nama)?.nama
+        hasil.push({ id: `p:${x.id}`, label: ke ? `${x.nama} – ${ke}` : x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
         continue
       }
       tujuan.forEach((b, k) => {

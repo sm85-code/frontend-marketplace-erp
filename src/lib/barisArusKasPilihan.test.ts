@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { barisKasKeluar, cocokOtomatis } from './barisArusKasPilihan'
+import { barisKasKeluar, barisOtomatis, cocokOtomatis } from './barisArusKasPilihan'
 import { emptyLembar } from './sheetEngine'
 import { KATEGORI_BAWAAN } from '@/api/kategori'
 
@@ -30,4 +30,11 @@ test('includes the report rows of Kas keluar under their new names (Tukang Kayu 
   const r = barisKasKeluar(l, KATEGORI_BAWAAN, new Set(['tukang']), arus)
   expect(r[0]).toMatchObject({ id: 'k_tukang', nama: 'Tukang Kayu [JOKO]', kategori: 'tukang' })
   expect(cocokOtomatis(r[0].nama, 'JOKO WAHYONO')).toBe(true)
+})
+
+test('automatic row prefers an exact name', () => {
+  const rows = [{ nama: 'Tukang Kayu [YONO]' }, { nama: 'Tukang Kayu [JOKO]' }]
+  expect(barisOtomatis(rows, 'JOKO')?.nama).toBe('Tukang Kayu [JOKO]')
+  expect(barisOtomatis(rows, 'CAHYONO')?.nama).toBe('Tukang Kayu [YONO]')
+  expect(barisOtomatis(rows, 'SURYAMAN')).toBeUndefined()
 })
