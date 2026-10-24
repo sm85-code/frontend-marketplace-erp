@@ -1,3 +1,4 @@
+import { barisTujuan } from '@/lib/barisTujuan'
 import { useLabel } from '@/api/pengaturanUi'
 import { idMenu } from '@/config/nav'
 import InfoTip from '@/components/InfoTip'
@@ -103,7 +104,7 @@ function PetaArusKas({ jenis, pihak, bisaTulis, onSaved }: { jenis: JenisOperasi
   return (
     <details className="rounded-lg border p-3 text-sm">
       <summary className="cursor-pointer font-medium">Hubungan ke baris Arus Kas</summary>
-      <p className="mt-2 text-muted-foreground">Kosong = otomatis: baris Kas keluar dengan nama sama, atau nama di dalam kurung (misal "Tagihan Produk [YUNI]"). Isi nama baris Arus Kas persis bila namanya berbeda.</p>
+      <p className="mt-2 text-muted-foreground">Kosong = otomatis: baris Kas keluar dengan nama sama, atau nama di dalam kurung (misal "Tagihan Produk [YUNI]"). Isi nama baris Arus Kas persis bila namanya berbeda. Untuk dipecah ke beberapa baris, pisahkan dengan titik koma, misal "Tagihan Produk [RIZKI]; Packing [RIZKI]": tiap baris jadi baris sendiri di halaman ini.</p>
       <div className="mt-2 grid gap-2 md:grid-cols-2">
         {pihak.map((p) => (
           <label key={p.id} className="grid gap-1"><span className="text-xs text-muted-foreground">{p.nama}</span>
@@ -177,14 +178,27 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
   // Belanja Supplier / Tukang: one row per party of the Supplier / Tukang Kayu list; otherwise one row per category.
   const kunciP = (n: string) => n.replace(/\s+/g, ' ').trim().toLocaleLowerCase('id-ID')
   const kategoriUtama = (data?.kategori ?? []).find((k) => k.aktif !== false) ?? data?.kategori[0]
-  const grup: { id: string; label: string; items: TransaksiOperasional[]; tambah: Sasaran | null; kategoriLabel: (i: TransaksiOperasional) => string }[] = (() => {
+  type Grup = { id: string; label: string; items: TransaksiOperasional[]; tambah: Sasaran | null; kategoriLabel: (i: TransaksiOperasional) => string }
+  const grup: Grup[] = (() => {
     const labelKat = (id: string) => data?.kategori.find((k) => k.id === id)?.label ?? id
     if (!data?.pihak) return (data?.kategori ?? []).map((k) => ({ id: k.id, label: k.label, items: itemsPeriode.filter((i) => i.kategori === k.id), tambah: { kategori: k.id, label: k.label }, kategoriLabel: () => k.label }))
-    const nama = new Set(data.pihak.map((x) => kunciP(x.nama)))
-    const hasil = data.pihak.map((x) => ({
-      id: `p:${x.id}`, label: x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)),
-      tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori),
-    }))
+    // A party linked to several Arus Kas rows ("Tagihan Produk [RIZKI]; Packing [RIZKI]") gets one row per linked row;
+    // its entries keep that Arus Kas row's name as uraian, so each sums into its own row. Old entries (party name) go to the first.
+    const nama = new Set<string>()
+    const hasil: Grup[] = []
+    for (const x of data.pihak) {
+      nama.add(kunciP(x.nama))
+      const tujuan = barisTujuan(x.baris_arus_kas)
+      if (tujuan.length < 2) {
+        hasil.push({ id: `p:${x.id}`, label: x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
+        continue
+      }
+      tujuan.forEach((b, k) => {
+        nama.add(kunciP(b))
+        const label = `${x.nama} – ${b}`
+        hasil.push({ id: `p:${x.id}:${k}`, label, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(b) || (k === 0 && kunciP(i.uraian) === kunciP(x.nama))), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label, pihak: b } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
+      })
+    }
     const lain = itemsPeriode.filter((i) => !nama.has(kunciP(i.uraian)))
     if (lain.length) hasil.push({ id: 'p:lain', label: 'Lainnya (nama tidak ada di daftar)', items: lain, tambah: null, kategoriLabel: (i) => labelKat(i.kategori) })
     return hasil
@@ -251,7 +265,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
                         </TableRow>
                         {!tertutup &&
                           baris.map((item, m) => {
-                            const sas: Sasaran = { kategori: item.kategori, label: g.tambah ? g.label : g.kategoriLabel(item), item, ...(data.pihak && g.tambah ? { pihak: g.label } : {}) }
+                            const sas: Sasaran = { kategori: item.kategori, label: g.tambah ? g.label : g.kategoriLabel(item), item, ...(data.pihak && g.tambah?.pihak !== undefined ? { pihak: g.tambah.pihak } : {}) }
                             return (
                             <TableRow
                               key={item.id}
