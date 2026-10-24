@@ -95,25 +95,25 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
             <div className="flex items-end gap-2">
               <label className="min-w-0 flex-1 space-y-1 text-xs">
                 <span className="block text-muted-foreground">Nama varian</span>
-                <Input list={saran} maxLength={60} value={g.nama} placeholder="Jenis" onChange={(e) => ubahGrup(i, { nama: e.target.value })} />
+                <Input className="h-10" list={saran} maxLength={60} value={g.nama} placeholder="Jenis" onChange={(e) => ubahGrup(i, { nama: e.target.value })} />
               </label>
-              <Button type="button" variant="ghost" size="icon" aria-label={`Hapus varian ${g.nama || i + 1}`} onClick={() => setGrup((x) => x.filter((_, j) => j !== i))}><X className="size-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label={`Hapus varian ${g.nama || i + 1}`} onClick={() => setGrup((x) => x.filter((_, j) => j !== i))}><X className="size-4" /></Button>
             </div>
             <div className="space-y-1 text-xs">
               <span className="block text-muted-foreground">Pilihan</span>
               {g.nilai.length > 0 && (
                 <ul className="flex flex-wrap gap-1.5">
                   {g.nilai.map((n) => (
-                    <li key={n} className="flex items-center gap-1 rounded-full bg-muted py-1 pr-1 pl-3 text-sm">
+                    <li key={n} className="flex items-center gap-1 rounded-full bg-muted py-0.5 pr-0.5 pl-3 text-sm">
                       {n}
-                      <button type="button" className="grid size-6 place-items-center rounded-full hover:bg-background" aria-label={`Hapus pilihan ${n}`} onClick={() => ubahGrup(i, { nilai: g.nilai.filter((x) => x !== n) })}><X className="size-3.5" /></button>
+                      <button type="button" className="grid size-10 place-items-center rounded-full hover:bg-background" aria-label={`Hapus pilihan ${n}`} onClick={() => ubahGrup(i, { nilai: g.nilai.filter((x) => x !== n) })}><X className="size-3.5" /></button>
                     </li>
                   ))}
                 </ul>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
-                  className="min-w-0 flex-1"
+                  className="h-10 min-w-0 flex-1"
                   maxLength={100}
                   value={baru[i] ?? ''}
                   placeholder="Ketik nilai, mis. 80x40"
@@ -121,12 +121,12 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
                   onChange={(e) => setBaru((b) => { const n = [...b]; n[i] = e.target.value; return n })}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); tambahNilai(i) } }}
                 />
-                <Button type="button" variant="outline" onClick={() => tambahNilai(i)} disabled={!(baru[i] ?? '').trim()}><Plus className="size-4" /> Tambah nilai</Button>
+                <Button type="button" variant="outline" className="h-10 w-full sm:w-auto" onClick={() => tambahNilai(i)} disabled={!(baru[i] ?? '').trim()}><Plus className="size-4" /> Tambah nilai</Button>
               </div>
             </div>
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" disabled={grup.length >= MAKS_VARIAN} onClick={() => setGrup((g) => [...g, { nama: '', nilai: [] }])}>
+        <Button type="button" variant="outline" className="h-10 w-full" disabled={grup.length >= MAKS_VARIAN} onClick={() => setGrup((g) => [...g, { nama: '', nilai: [] }])}>
           <Plus className="size-4" /> Tambah varian
         </Button>
         {masalah && grup.length > 0 && <p role="alert" className="text-sm text-destructive">{masalah}</p>}

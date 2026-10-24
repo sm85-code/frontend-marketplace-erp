@@ -26,37 +26,36 @@ export default function ProcessingVarian({ value, onChange, ekstra = [], onEkstr
         ))}
       </datalist>
       {value.map((v, i) => (
-        <div key={i} className="space-y-2 rounded-xl border p-2">
-          <div className="grid grid-cols-[1fr_1.4fr_auto] items-end gap-2">
-            <label className="space-y-1 text-xs">
+        <div key={i} className="space-y-3 rounded-xl border p-3">
+          <div className="flex items-end gap-2">
+            <label className="min-w-0 flex-1 space-y-1 text-xs">
               <span className="block text-muted-foreground">Nama varian</span>
-              <Input list={saran} maxLength={60} value={v.nama} placeholder="Ukuran" onChange={(e) => ubah(i, { nama: e.target.value })} />
+              <Input className="h-10" list={saran} maxLength={60} value={v.nama} placeholder="Ukuran" onChange={(e) => ubah(i, { nama: e.target.value })} />
             </label>
-            <label className="space-y-1 text-xs">
-              <span className="block text-muted-foreground">Pilihan / nilai</span>
-              <Input maxLength={100} value={v.nilai} placeholder="80x40" onChange={(e) => ubah(i, { nilai: e.target.value })} />
-            </label>
-            <Button type="button" variant="ghost" size="icon" aria-label={`Hapus varian ${v.nama || i + 1}`} onClick={() => { onChange(value.filter((_, j) => j !== i)); onEkstra?.(ekstra.filter((_, j) => j !== i)) }}>
+            <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label={`Hapus varian ${v.nama || i + 1}`} onClick={() => { onChange(value.filter((_, j) => j !== i)); onEkstra?.(ekstra.filter((_, j) => j !== i)) }}>
               <X className="size-4" />
             </Button>
           </div>
-          {(ekstra[i] ?? []).map((n, k) => (
-            <div key={k} className="grid grid-cols-[1fr_1.4fr_auto] items-end gap-2">
-              <span className="truncate pb-2 text-xs text-muted-foreground">{v.nama || 'Nilai'} (baru)</span>
-              <Input maxLength={100} value={n} placeholder="100x50" aria-label={`Nilai baru ${k + 1} untuk ${v.nama || `varian ${i + 1}`}`} onChange={(e) => ubahEkstra(i, (ekstra[i] ?? []).map((x, j) => (j === k ? e.target.value : x)))} />
-              <Button type="button" variant="ghost" size="icon" aria-label={`Hapus nilai baru ${n || k + 1}`} onClick={() => ubahEkstra(i, (ekstra[i] ?? []).filter((_, j) => j !== k))}>
-                <X className="size-4" />
+          <div className="space-y-2">
+            <span className="block text-xs text-muted-foreground">Nilai</span>
+            <Input className="h-10 w-full" maxLength={100} value={v.nilai} placeholder="80x40" aria-label={`Nilai ${v.nama || `varian ${i + 1}`}`} onChange={(e) => ubah(i, { nilai: e.target.value })} />
+            {(ekstra[i] ?? []).map((n, k) => (
+              <div key={k} className="flex items-center gap-2">
+                <Input className="h-10 min-w-0 flex-1" maxLength={100} value={n} placeholder="Nilai baru, mis. 100x50" aria-label={`Nilai baru ${k + 1} untuk ${v.nama || `varian ${i + 1}`}`} onChange={(e) => ubahEkstra(i, (ekstra[i] ?? []).map((x, j) => (j === k ? e.target.value : x)))} />
+                <Button type="button" variant="ghost" size="icon" className="size-10 shrink-0" aria-label={`Hapus nilai baru ${n || k + 1}`} onClick={() => ubahEkstra(i, (ekstra[i] ?? []).filter((_, j) => j !== k))}>
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ))}
+            {onEkstra && (
+              <Button type="button" variant="outline" className="h-10 w-full sm:w-auto" onClick={() => ubahEkstra(i, [...(ekstra[i] ?? []), ''])}>
+                <Plus className="size-4" /> Tambah nilai
               </Button>
-            </div>
-          ))}
-          {onEkstra && (
-            <Button type="button" variant="outline" size="sm" onClick={() => ubahEkstra(i, [...(ekstra[i] ?? []), ''])}>
-              <Plus className="size-4" /> Tambah nilai
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" disabled={value.length >= MAKS_VARIAN} onClick={() => onChange([...value, { nama: '', nilai: '' }])}>
+      <Button type="button" variant="outline" className="h-10 w-full" disabled={value.length >= MAKS_VARIAN} onClick={() => onChange([...value, { nama: '', nilai: '' }])}>
         <Plus className="size-4" /> Tambah varian
       </Button>
       {baru.length > 0 && (
