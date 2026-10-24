@@ -27,8 +27,8 @@ export function useTokoAktif(single = false) {
     }
     const linked = new URLSearchParams(search).get('toko')
     if (linked !== null) {
+      // A link or notification shows that shop for this visit only; it never overwrites the user's choice.
       setSelection({ key, value: linked })
-      tulisSimpan(key, linked)
     } else update()
     window.addEventListener('erp-toko', update)
     return () => window.removeEventListener('erp-toko', update)

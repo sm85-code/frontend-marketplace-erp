@@ -6,7 +6,7 @@ export function tahapDariTautan(value: string) {
 }
 
 export function tautanPesanan(toko: string, tahap: TahapPesanan | '' = '', tanggal?: string) {
-  const query = new URLSearchParams({ toko, tahap })
+  const query = new URLSearchParams(toko ? { toko, tahap } : { tahap })
   if (tanggal) query.set('tanggal', tanggal)
   return `/pesanan?${query}`
 }

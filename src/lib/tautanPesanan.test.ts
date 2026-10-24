@@ -8,6 +8,10 @@ describe('dashboard links to orders', () => {
     expect(query.has('tahap')).toBe(true)
     expect(query.get('tahap')).toBe('')
   })
+  it('leaves the shop filter untouched when no shop is chosen', () => {
+    const query = new URL(tautanPesanan(''), 'https://erp.test').searchParams
+    expect(query.has('toko')).toBe(false)
+  })
   it('preserves a specific stage and dashboard period', () => {
     const query = new URL(tautanPesanan('toko-b', 'menunggu_kurir', '30'), 'https://erp.test').searchParams
     expect(query.get('tahap')).toBe('menunggu_kurir')
