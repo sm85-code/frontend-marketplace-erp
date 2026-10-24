@@ -749,7 +749,8 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 0 0 auto; }
 @media (max-width: 767px) {
   .section-tabs, .section-tabs.order-status-tabs { width: 100%; max-width: 100%; flex-wrap: wrap; justify-content: flex-start; overflow: visible; }
-  .section-tabs [data-slot="tabs-trigger"], .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 1 0 auto; white-space: nowrap; }
+  .section-tabs [data-slot="tabs-trigger"], .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 1 0 auto; white-space: nowrap; min-height: 36px; padding: .375rem .75rem; font-size: .8125rem; }
+  .section-tabs, .section-tabs.order-status-tabs { padding: .25rem; }
 }
 
 /* Operation feedback uses the same theme surfaces as confirmation dialogs. */
@@ -885,3 +886,14 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 
 /* "More to the right" cue on tab and chip strips that are cut off (set by lib/tandaGeser). */
 [data-terpotong] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent); }
+
+/* Phones: frozen first column casts a soft edge so scrolled columns visibly pass under it. */
+@media (max-width: 767px) {
+  .sel-tetap { box-shadow: 1px 0 0 var(--border), 6px 0 8px -6px color-mix(in oklab, var(--foreground) 35%, transparent) !important; }
+}
+
+/* Phones: like Chat, a section's table sits directly on the page instead of a box inside a box. */
+@media (max-width: 767px) {
+  .kartu-lega { border: 0; background: transparent; box-shadow: none; padding-block: 0; gap: .5rem; border-radius: 0; overflow: visible; }
+  .kartu-lega > [data-slot="card-header"], .kartu-lega > [data-slot="card-content"] { padding-left: 0; padding-right: 0; padding-top: 0; }
+}
