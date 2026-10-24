@@ -8,6 +8,7 @@ export const labels = {
   table: "Tabel barang",
   total: "Total",
 };
+export type TemplateOrientation = "portrait" | "landscape";
 export const fields = [
   "nama_usaha",
   "alamat_usaha",
@@ -111,6 +112,22 @@ export function defaults(kind: DocumentKind): TemplateBlock[] {
     text(48, 708, 698, 100, "Catatan:\n{{catatan}}"),
     text(500, 900, 246, 100, "Hormat kami,\n\n\n{{nama_usaha}}"),
   ];
+}
+/** Desain PO memakai susunan INV apa adanya, hanya ID elemen yang diperbarui. */
+export function copyInvDesign(source?: {
+  blocks?: TemplateBlock[] | null;
+  orientation?: string;
+} | null): { blocks: TemplateBlock[]; orientation: TemplateOrientation } {
+  const orientation: TemplateOrientation =
+    source?.orientation === "landscape" ? "landscape" : "portrait";
+  const origin = source?.blocks?.length ? source.blocks : defaults("INV");
+  return {
+    blocks: origin.map((item) => ({
+      ...structuredClone(item),
+      id: crypto.randomUUID(),
+    })),
+    orientation,
+  };
 }
 export function elementName(item: TemplateBlock) {
   if (item.name?.trim()) return item.name;
