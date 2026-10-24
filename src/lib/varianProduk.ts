@@ -29,9 +29,10 @@ export function masalahVarian(varian: Varian[]): string | null {
   const rows = bersihkanVarian(varian)
   if (rows.length > MAKS_VARIAN) return `Maksimal ${MAKS_VARIAN} varian`
   if (rows.some((v) => !v.nama || !v.nilai)) return 'Isi nama dan nilai pada setiap varian'
-  const names = rows.map((v) => v.nama.toLocaleLowerCase('id'))
-  const dobel = names.find((n, i) => names.indexOf(n) !== i)
-  if (dobel) return `Nama varian "${rows[names.indexOf(dobel)].nama}" dipakai dua kali`
+  // The same variant name may appear with different values (Warna: Merah + Warna: Hitam); only an exact repeat is refused.
+  const pasang = rows.map((v) => `${v.nama.toLocaleLowerCase('id')}=${v.nilai.toLocaleLowerCase('id')}`)
+  const dobel = pasang.findIndex((n, i) => pasang.indexOf(n) !== i)
+  if (dobel >= 0) return `Varian "${rows[dobel].nama}: ${rows[dobel].nilai}" diisi dua kali`
   if (ringkasanVarian(rows).length > 100) return 'Nilai varian terlalu panjang'
   return null
 }
@@ -46,10 +47,19 @@ export type GrupVarian = { nama: string; nilai: string[] }
 export const MAKS_KOMBINASI = 60
 
 const rapikan = (t: string) => t.replace(/\s+/g, ' ').trim()
-const rapikanGrup = (grup: GrupVarian[]): GrupVarian[] =>
-  grup
-    .map((g) => ({ nama: rapikan(g.nama), nilai: [...new Set(g.nilai.map(rapikan).filter(Boolean))] }))
-    .filter((g) => g.nama || g.nilai.length)
+/** Tidied groups; two groups with the same name (Warna: Merah and Warna: Hitam) become one with all their choices. */
+const rapikanGrup = (grup: GrupVarian[]): GrupVarian[] => {
+  const hasil: GrupVarian[] = []
+  for (const g of grup) {
+    const nama = rapikan(g.nama)
+    const nilai = g.nilai.map(rapikan).filter(Boolean)
+    if (!nama && !nilai.length) continue
+    const sama = nama ? hasil.find((x) => x.nama.toLocaleLowerCase('id') === nama.toLocaleLowerCase('id')) : undefined
+    const tujuan = sama ?? (hasil[hasil.push({ nama, nilai: [] }) - 1])
+    for (const n of nilai) if (!tujuan.nilai.some((x) => x.toLocaleLowerCase('id') === n.toLocaleLowerCase('id'))) tujuan.nilai.push(n)
+  }
+  return hasil
+}
 
 /**
  * Every combination of the choices: Jenis Basah/Kering and Ukuran 1 kg/5 kg give four, one product each. Without any
@@ -67,9 +77,6 @@ export function masalahGrup(grup: GrupVarian[]): string | null {
   if (g.length > MAKS_VARIAN) return `Maksimal ${MAKS_VARIAN} varian`
   if (g.some((x) => !x.nama)) return 'Beri nama pada setiap varian'
   if (g.some((x) => !x.nilai.length)) return 'Isi minimal satu pilihan pada setiap varian'
-  const nama = g.map((x) => x.nama.toLocaleLowerCase('id'))
-  const dobel = nama.find((n, i) => nama.indexOf(n) !== i)
-  if (dobel) return `Nama varian "${g[nama.indexOf(dobel)].nama}" dipakai dua kali`
   const jumlah = kombinasiVarian(g).length
   if (jumlah > MAKS_KOMBINASI) return `Kombinasi terlalu banyak (${jumlah}). Maksimal ${MAKS_KOMBINASI} produk sekali buat`
   if (kombinasiVarian(g).some((k) => ringkasanVarian(k).length > 100)) return 'Nilai varian terlalu panjang'
