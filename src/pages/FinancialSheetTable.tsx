@@ -213,7 +213,7 @@ export default function FinancialSheetTable(props: Props) {
   return (
     <Card className="min-w-0 overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle>{sentenceCase(block.title.slice(3))}</CardTitle>
+        <CardTitle>{block.title.slice(3)}</CardTitle>
         {nomor && induk.size > 0 && !props.lipat && (
           <Button type="button" variant="outline" size="sm" onClick={lipatSemua}>
             {semuaTertutup ? <ChevronsUpDown className="size-4" aria-hidden="true" /> : <ChevronsDownUp className="size-4" aria-hidden="true" />}

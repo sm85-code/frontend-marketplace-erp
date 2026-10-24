@@ -45,8 +45,13 @@ export function judulTabel(t: Teks, tabel: string, bawaan: string) {
   const judul = t(idJudul(tabel), KOSONG)
   if (judul !== KOSONG) return judul
   const tab = t(idTab(tabel), KOSONG)
-  return tab !== KOSONG ? tab : bawaan
+  return tab !== KOSONG ? tab : judulBawaan(bawaan)
 }
+
+/** Built-in table titles are written in capitals ("POSISI KEUANGAN / NERACA") and shown in sentence case. A text set in
+ * Kelola Aplikasi is shown exactly as typed (capitals included). */
+export const judulBawaan = (judul: string) =>
+  judul !== judul.toLocaleUpperCase('id-ID') ? judul : judul.toLocaleLowerCase('id-ID').replace(/^./, (c) => c.toLocaleUpperCase('id-ID'))
 
 /** Blocks with renamed rows and group titles applied. Order of precedence: Kategori Transaksi settings, the pencil of this month, Kelola Aplikasi, the built-in text. */
 export function namai(blocks: Block[], lembar: Lembar, t: Teks = apa): Block[] {

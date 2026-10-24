@@ -51,7 +51,10 @@ describe('judul tabel mengikuti Kelola Aplikasi', () => {
     const t = (id: string, bawaan: string) => ({ 'tab:pemasukan': 'Uang Masuk', 'judul:pemasukan': 'Rincian Pemasukan' } as Record<string, string>)[id] ?? bawaan
     expect(namai(dasar, lembarKosong, t)[0].title).toBe('A. Rincian Pemasukan')
   })
-  it('nothing set: the built-in title', () => {
-    expect(namai(dasar, lembarKosong)[0].title).toBe('A. PEMASUKAN')
+  it('nothing set: the built-in title, in sentence case', () => {
+    expect(namai(dasar, lembarKosong)[0].title).toBe('A. Pemasukan')
+  })
+  it('a title typed in capitals stays in capitals', () => {
+    expect(namai(dasar, lembarKosong, (id, b) => (id === 'judul:pemasukan' ? 'PENDAPATAN' : b))[0].title).toBe('A. PENDAPATAN')
   })
 })
