@@ -72,7 +72,7 @@ export const NAV: NavItem[] = [
   { to: '/processing/tarif-packing', label: 'Tarif Packing', icon: Boxes, halaman: 'data_tarif_packing', grup: 'data-produksi' },
   { to: '/processing/template', label: 'Template', icon: FilePenLine, halaman: 'data_template', grup: 'data-produksi' },
   { to: '/operasional-umum', label: 'Operasional Umum', icon: Wallet, halaman: 'operasional_umum', grup: 'keuangan' },
-  { to: '/operasional-packing', label: 'Operasional Packing', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
+  { to: '/operasional-packing', label: 'Operasional Eceran', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
   { to: '/belanja-supplier', label: 'Belanja Supplier', icon: Truck, halaman: 'belanja_supplier', grup: 'keuangan' },
   { to: '/belanja-tukang', label: 'Belanja Tukang', icon: HardHat, halaman: 'belanja_tukang', grup: 'keuangan' },
   { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },

@@ -1,5 +1,5 @@
 import HalamanOperasional from '@/pages/HalamanOperasional'
 
 export default function OperasionalPacking() {
-  return <HalamanOperasional jenis="packing" judul="Operasional Packing" deskripsi="Bahan dan perlengkapan packing, dan ATK eceran untuk menutup kekurangan belanja ATK di Operasional Umum." />
+  return <HalamanOperasional jenis="packing" judul="Operasional Eceran" deskripsi="Belanja eceran yang dibayar dari Kas Kecil. Kas Kecil diisi ulang tiap akhir minggu dari Kas Utama sebesar yang terpakai (catat di Arus Kas, Transfer antar kas)." />
 }

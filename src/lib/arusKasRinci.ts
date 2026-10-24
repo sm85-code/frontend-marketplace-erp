@@ -134,5 +134,21 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
     out[at(awal)] = withCells(awal, open)
     out[at(akhir)] = withCells(akhir, close)
   }
+  // Kas Kecil: opening = previous period's closing; closing = opening + top-up (tr_packing is shown negative) - money
+  // returned to Kas Utama (tr_ops) - spending paid out of it (tr_kk).
+  const [kkAwal, kkAkhir] = [byKey.get('kk_awal'), byKey.get('kk_akhir')]
+  if (kkAwal && kkAkhir) {
+    const v = (key: string, w: number) => byKey.get(key)?.cells[w].value ?? 0
+    const open: Cell[] = []
+    const close: Cell[] = []
+    days.forEach((_, w) => {
+      const o = w === 0 || close[w - 1].value === null ? kkAwal.cells[w] : { value: close[w - 1].value, manual: false }
+      open.push(o)
+      const ada = kkAkhir.cells[w].value !== null || akhir?.cells[w].value != null
+      close.push(o.value === null || !ada ? kkAkhir.cells[w] : { value: round(o.value - v('tr_packing', w) - v('tr_ops', w) - v('tr_kk', w)), manual: false })
+    })
+    out[out.indexOf(kkAwal)] = withCells(kkAwal, open)
+    out[out.indexOf(kkAkhir)] = withCells(kkAkhir, close)
+  }
   return { ...block, lines: out }
 }

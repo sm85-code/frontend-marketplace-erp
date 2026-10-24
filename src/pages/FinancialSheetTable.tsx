@@ -1,4 +1,5 @@
 import { ChevronsDownUp, ChevronsUpDown, Pencil, Plus } from 'lucide-react'
+import { GRUP_KAS_KECIL } from '@/lib/sheetSections'
 import { useMemo, useState } from 'react'
 import { fmtRp } from '@/api/client'
 import PeriodPicker, { usePeriodPick } from '@/components/PeriodPicker'
@@ -61,7 +62,7 @@ function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { g
               <Pencil className="size-3" />
             </button>
           )}
-          {ADDABLE.has(group.tabel) && !tanpaTambah && (
+          {ADDABLE.has(group.tabel) && group.label !== GRUP_KAS_KECIL && !tanpaTambah && (
             <button
               type="button"
               onClick={() => onAddRow(group)}

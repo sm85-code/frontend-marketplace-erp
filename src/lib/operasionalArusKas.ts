@@ -3,6 +3,9 @@ import { GRUP_KELUAR, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuang
 import { isGroup, type Block, type Lembar, type Line } from '@/lib/sheetEngine'
 import type { KategoriTransaksi } from '@/api/kategori'
 
+/** Sheet key prefix of the Transfer antar kas row "Belanja dibayar dari Kas Kecil" (sheetSections: tr_kk). */
+export const KEY_BELANJA_KAS_KECIL = 'rb:tr_kk'
+
 export type OperasionalItem = { tanggal: string; kategori: string; jumlah: string; uraian?: string }
 
 /** Gaji and iklan are typed into Arus Kas itself, never taken from the Operasional pages. */
@@ -75,7 +78,20 @@ export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: Kategori
  */
 export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block): Lembar {
   const { hasil: tempat, cari } = tempatBaris(lembar, arus, daftar)
-  if (!tempat.size) return lembar
+  const kasKecil = new Set(daftar.filter((k) => k.kas_kecil).map((k) => k.id))
+  const sel = { ...lembar.sel }
+  // Entries paid out of Kas Kecil: still an expense in their Kas keluar row, but Kas Utama gets them back in Transfer antar
+  // kas ("Belanja dibayar dari Kas Kecil") and Kas Kecil goes down by them instead.
+  const kecil = new Map<string, number>()
+  for (const it of items) {
+    if (!kasKecil.has(it.kategori)) continue
+    const w = indeksPeriode(days, it.tanggal)
+    if (w < 0) continue
+    const key = `${KEY_BELANJA_KAS_KECIL}|${days[w]}`
+    kecil.set(key, Math.round(((kecil.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
+  }
+  for (const [key, value] of kecil) if (sel[key] === undefined && value > 0) sel[key] = String(value)
+  if (!tempat.size) return { ...lembar, sel }
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
   const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
@@ -89,7 +105,6 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
     const key = `${prefix}|${days[w]}`
     total.set(key, Math.round(((total.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
   }
-  const sel = { ...lembar.sel }
   for (const [key, value] of total) if (sel[key] === undefined && value > 0) sel[key] = String(value)
   return { ...lembar, sel }
 }

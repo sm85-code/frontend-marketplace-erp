@@ -79,7 +79,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     return group
   }
   const openEdit = (line: Line, week: number) => {
-    if (line.def.key.endsWith(':selisih')) return
+    if (line.def.key.endsWith(':selisih') || saldoKasKecil(line.def.key)) return
     const grup = grupDari(line.def.key)
     const adaRincian = anakDari(lembar, line.def.key).length > 0
     // A row with sub-rows has no category of its own: each sub-row (1.1, 1.2, ...) picks where its figure goes.
@@ -163,7 +163,9 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     }
     save.mutate({ ...lembar, sel })
   }
-  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input' && !line.def.induk
+  // Kas Kecil balances are worked out (opening + top-up - spending), never typed or ticked.
+  const saldoKasKecil = (key: string) => key === 'kk_awal' || key === 'kk_akhir'
+  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input' && !line.def.induk && !saldoKasKecil(line.def.key)
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
     const grup = addChildTo ? `${ANAK}${addChildTo}` : addTo?.label
