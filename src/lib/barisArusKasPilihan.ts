@@ -44,3 +44,10 @@ export function barisKasKeluar(lembar: Lembar, daftar: KategoriTransaksi[], kate
   for (const b of splitsOf(lembar)) if (b.grup === GRUP_KELUAR) tambah(b.id, nameOf(lembar, b.id, b.label))
   return out.sort((x, y) => Number(kategoriHalaman.has(y.kategori)) - Number(kategoriHalaman.has(x.kategori)) || x.nama.localeCompare(y.nama, 'id-ID'))
 }
+
+/** The row the automatic match fills for a party: same name or same name in brackets first, else a short bracketed name inside it. */
+export function barisOtomatis<T extends { nama: string }>(pilihan: T[], pihak: string): T | undefined {
+  const p = kecil(pihak)
+  const tepat = pilihan.find((b) => kecil(b.nama) === p || kecil(/\[([^\]]+)\]/.exec(b.nama)?.[1] ?? '') === p)
+  return tepat ?? pilihan.find((b) => cocokOtomatis(b.nama, pihak))
+}
