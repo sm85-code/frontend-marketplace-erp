@@ -70,3 +70,15 @@ describe('kombinasiBaru', () => {
     expect(kombinasiBaru([{ nama: 'Ukuran', nilai: 'S' }, { nama: 'Warna', nilai: 'Merah' }], [['M'], ['Hitam']])).toHaveLength(3)
   })
 })
+
+import { produkBaruDariEdit } from './varianProduk'
+describe('produkBaruDariEdit', () => {
+  it('gives each new value its own price with one variant', () => {
+    expect(produkBaruDariEdit([{ nama: 'Ukuran', nilai: '80x40' }], [[{ nilai: '100x50', harga: '20000' }, { nilai: '', harga: '1' }]], {}, '15000'))
+      .toEqual([{ varian: [{ nama: 'Ukuran', nilai: '100x50' }], harga: '20000' }])
+  })
+  it('prices each new combination with several variants, defaulting to the product price', () => {
+    const r = produkBaruDariEdit([{ nama: 'Ukuran', nilai: 'S' }, { nama: 'Warna', nilai: 'Merah' }], [[{ nilai: 'M', harga: '' }], []], { 'Ukuran=M|Warna=Merah': '9' }, '5')
+    expect(r).toEqual([{ varian: [{ nama: 'Ukuran', nilai: 'M' }, { nama: 'Warna', nilai: 'Merah' }], harga: '9' }])
+  })
+})
