@@ -211,7 +211,7 @@ export default function FinancialSheetTable(props: Props) {
   const lipatSemua = () => (semuaTertutup ? setLipatSendiri(new Set()) : setLipatSendiri(new Set(induk)))
   const kembangan = { ...props, lipat, onLipat }
   return (
-    <Card className="min-w-0 overflow-hidden">
+    <Card className="kartu-lega min-w-0 overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle>{block.title.slice(3)}</CardTitle>
         {nomor && induk.size > 0 && !props.lipat && (

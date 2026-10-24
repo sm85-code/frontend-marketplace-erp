@@ -27,7 +27,7 @@ const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
 
 function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: string; children: React.ReactNode }) {
   return (
-    <Card>
+    <Card className="kartu-lega">
       <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
         <CardTitle>{judul}</CardTitle>
         {deskripsi && <CardDescription className="sr-only">{deskripsi}</CardDescription>}
@@ -38,7 +38,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 }
 
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
-  { kunci: 'nama_toko', judul: 'Toko', tetap: true, kelas: 'min-w-[180px] max-w-[260px] break-words font-medium', sel: (t) => <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
+  { kunci: 'nama_toko', judul: 'Toko', tetap: true, kelas: 'w-[9.5rem] min-w-[9.5rem] max-w-[9.5rem] break-words font-medium md:w-auto md:min-w-[180px] md:max-w-[260px]', sel: (t) => <Link title={t.nama_toko} className="line-clamp-2 md:line-clamp-none font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
@@ -57,7 +57,7 @@ const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
 ]
 
 const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
-  { kunci: 'nama', judul: 'Produk', tetap: true, kelas: 'min-w-[260px] max-w-[480px] break-words', sel: (p) => p.nama_produk, nilai: (p) => p.nama_produk },
+  { kunci: 'nama', judul: 'Produk', tetap: true, kelas: 'w-[9.5rem] min-w-[9.5rem] max-w-[9.5rem] break-words md:w-auto md:min-w-[260px] md:max-w-[480px]', sel: (p) => <span title={p.nama_produk} className="line-clamp-2 md:line-clamp-none">{p.nama_produk}</span>, nilai: (p) => p.nama_produk },
   { kunci: 'qty', judul: 'Terjual', rata: 'kanan', kelas: 'font-semibold', sel: (p) => fmtAngka(p.qty_terjual), nilai: (p) => p.qty_terjual },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (p) => fmtAngka(p.pesanan), nilai: (p) => p.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (p) => fmtRp(p.omzet), nilai: (p) => Number(p.omzet) },
