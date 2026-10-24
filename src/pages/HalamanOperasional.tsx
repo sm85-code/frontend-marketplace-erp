@@ -358,7 +358,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
                               <TableCell />
                               <TableCell className={`whitespace-normal break-words ${GAYA_ANAK}`}>
                                 <NomorRincian teks={`${n + 1}.${m + 1}`} />
-                                {data.pihak ? `${item.tanggal}${g.tambah ? '' : ` · ${item.uraian || '—'}`}` : item.uraian || '—'}
+                                {data.pihak ? `${item.tanggal.slice(8, 10)}/${item.tanggal.slice(5, 7)}/${item.tanggal.slice(0, 4)}${g.tambah ? '' : ` · ${item.uraian || '—'}`}` : item.uraian || '—'}
                               </TableCell>
                               <TableCell className={`whitespace-nowrap text-right tabular-nums ${GAYA_ANAK}`}>{fmtRp(item.jumlah)}</TableCell>
                             </TableRow>
