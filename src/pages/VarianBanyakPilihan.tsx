@@ -68,12 +68,12 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
         {grup.map((g, i) => (
           <div key={i} className="space-y-1.5 rounded-xl border p-2">
             <div className="flex items-center gap-1.5">
-              <Input className="h-9 min-w-0 flex-1" list={saran} maxLength={60} value={g.nama} placeholder="Nama varian, mis. Ukuran" aria-label={`Nama varian ${i + 1}`} onChange={(e) => ubahGrup(i, { nama: e.target.value })} />
+              <Input className="h-9 min-w-0 flex-1" list={saran} maxLength={60} value={g.nama} placeholder="Nama varian, mis. Ukuran" aria-label={`Nama varian ${i + 1}`} onChange={(e) => ubahGrup(i, { nama: e.target.value.toLocaleUpperCase('id') })} />
               <Button type="button" variant="ghost" size="icon" className={tombol} aria-label={`Hapus varian ${g.nama || i + 1}`} onClick={() => setGrup((x) => x.filter((_, j) => j !== i))}><X className="size-4" /></Button>
             </div>
             {g.nilai.map((n, k) => (
               <div key={k} className="flex items-center gap-1.5">
-                <Input className="h-9 min-w-0 flex-1" maxLength={100} value={n} placeholder="Nilai, mis. 80x40" aria-label={`Nilai ${k + 1} untuk ${g.nama || `varian ${i + 1}`}`} onChange={(e) => ubahNilai(i, k, e.target.value)}
+                <Input className="h-9 min-w-0 flex-1" maxLength={100} value={n} placeholder="Nilai, mis. 80x40" aria-label={`Nilai ${k + 1} untuk ${g.nama || `varian ${i + 1}`}`} onChange={(e) => ubahNilai(i, k, e.target.value.toLocaleUpperCase('id'))}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sisipNilai(i, k) } }} />
                 {perNilai && <Input className="h-9 w-24 shrink-0 sm:w-32" type="number" min="0" step="0.01" inputMode="decimal" placeholder="Harga" aria-label={`Harga ${g.nama} ${n}`} value={hargaNilai[kunciNilai(g.nama, n)] ?? ''} onChange={(e) => setHargaNilai((h) => ({ ...h, [kunciNilai(g.nama, n)]: e.target.value }))} />}
                 <Button type="button" variant="outline" size="icon" className={tombol} aria-label={`Tambah nilai setelah ${n || k + 1}`} onClick={() => sisipNilai(i, k)}><Plus className="size-4" /></Button>
@@ -103,7 +103,7 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
               <li key={b.kunci} className="space-y-1 p-2">
                 <span className="block text-sm font-medium">{b.label}</span>
                 <div className="flex gap-1.5">
-                  <Input className="h-9 min-w-0 flex-1" maxLength={200} value={b.sku} placeholder="SKU supplier (opsional)" aria-label={`SKU ${b.label}`} onChange={(e) => setSku((s) => ({ ...s, [b.kunci]: e.target.value }))} />
+                  <Input className="h-9 min-w-0 flex-1" maxLength={200} value={b.sku} placeholder="SKU supplier (opsional)" aria-label={`SKU ${b.label}`} onChange={(e) => setSku((s) => ({ ...s, [b.kunci]: e.target.value.toLocaleUpperCase('id') }))} />
                   {perKombinasi && <Input className="h-9 w-24 shrink-0 sm:w-32" type="number" min="0" step="0.01" inputMode="decimal" value={b.harga} placeholder="Harga" aria-label={`Harga ${b.label}`} onChange={(e) => setHargaKombinasi((h) => ({ ...h, [b.kunci]: e.target.value }))} />}
                 </div>
               </li>
