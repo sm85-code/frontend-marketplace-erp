@@ -26,6 +26,8 @@ export default function TabelLokal<T>({
   aksi?: (item: T) => ReactNode
   judulAksi?: string
   minWidth?: number
+  /** Rows per page (10 by default). */
+  perHalaman?: number
   footer?: ReactNode
   /** Phone cards share the table sorting and pagination. */
   kartu?: (item: T) => ReactNode
@@ -39,9 +41,10 @@ export default function TabelLokal<T>({
   )
   const identity = hasil.map(rest.idDari).join('|')
   useEffect(() => setPage(1), [identity])
-  const pages = Math.max(1, Math.ceil(hasil.length / 10))
+  const n = rest.perHalaman ?? 10
+  const pages = Math.max(1, Math.ceil(hasil.length / n))
   const current = Math.min(page, pages)
-  const visible = hasil.slice((current - 1) * 10, current * 10)
+  const visible = hasil.slice((current - 1) * n, current * n)
   const eligible = visible.filter(
     (item) => !rest.pilihan?.bisaDipilih || rest.pilihan.bisaDipilih(item),
   )
@@ -69,7 +72,7 @@ export default function TabelLokal<T>({
       {kartu && <div className="grid gap-3 sm:grid-cols-2 lg:hidden">{visible.map(item => <div key={rest.idDari(item)} className="min-w-0">{kartu(item)}</div>)}</div>}
       {pages > 1 && (
         <p className="text-xs text-center text-muted-foreground">
-          {(current - 1) * 10 + 1}–{Math.min(current * 10, hasil.length)} dari{' '}
+          {(current - 1) * n + 1}–{Math.min(current * n, hasil.length)} dari{' '}
           {hasil.length}
         </p>
       )}
