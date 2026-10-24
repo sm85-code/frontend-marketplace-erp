@@ -81,6 +81,8 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
   const total = new Map<string, number>()
   for (const it of items) {
+    // A supplier / tukang set to "tidak disambung" (its entries come with uraian '-') goes to no row.
+    if (halamanSupplier.has(it.kategori) && it.uraian === '-') continue
     const prefix = (halamanSupplier.has(it.kategori) && it.uraian ? cari(it.kategori, it.uraian) : undefined) ?? tempat.get(it.kategori)
     const w = indeksPeriode(days, it.tanggal)
     if (prefix === undefined || w < 0) continue

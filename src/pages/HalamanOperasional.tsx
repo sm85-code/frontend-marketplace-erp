@@ -1,4 +1,7 @@
-import { barisTujuan } from '@/lib/barisTujuan'
+import { barisTujuan, TIDAK_DISAMBUNG } from '@/lib/barisTujuan'
+import { barisKasKeluar, cocokOtomatis } from '@/lib/barisArusKasPilihan'
+import { lembarArusKas } from '@/api/financialReports'
+import { useKategori } from '@/api/kategori'
 import { useLabel } from '@/api/pengaturanUi'
 import { idMenu } from '@/config/nav'
 import InfoTip from '@/components/InfoTip'
@@ -98,20 +101,70 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
   )
 }
 
-/** Which Arus Kas row each supplier / tukang fills. Empty = automatic: the row with the same name, or with the name in brackets ("Tagihan Produk [YUNI]"). */
-function PetaArusKas({ jenis, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
+/** Which Arus Kas rows each supplier / tukang fills, picked from the Kas keluar rows of Arus Kas. None = automatic (same
+ * name or name in brackets, "Tagihan Produk [YUNI]"); several = one row each on this page; "-" = not linked. Saved as the
+ * rows' names separated by ";" (the format links typed earlier already use). */
+function PetaArusKas({ jenis, periode, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; periode: string; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
   const simpan = useMutation({ mutationFn: (v: { id: string; baris: string }) => simpanPihak(jenis, v.id, v.baris), onSuccess: () => { toast.success('Tersimpan'); onSaved() }, onError: (e) => toast.error(getApiError(e)) })
+  const lembar = useQuery({ queryKey: ['financial-arus-kas-lembar', periode], queryFn: () => lembarArusKas(periode), retry: false })
+  const daftarKat = useKategori()
+  const pilihan = useMemo(
+    () => (lembar.data ? barisKasKeluar(lembar.data.lembar, daftarKat, new Set(daftarKat.filter((k) => k.operasional === jenis).map((k) => k.id))) : []),
+    [lembar.data, daftarKat, jenis],
+  )
+  const ubah = (p: PihakOperasional, daftar: string[]) => simpan.mutate({ id: p.id, baris: daftar.join('; ') })
   return (
     <details className="rounded-lg border p-3 text-sm">
       <summary className="cursor-pointer font-medium">Hubungan ke baris Arus Kas</summary>
-      <p className="mt-2 text-muted-foreground">Kosong = otomatis: baris Kas keluar dengan nama sama, atau nama di dalam kurung (misal "Tagihan Produk [YUNI]"). Isi nama baris Arus Kas persis bila namanya berbeda. Untuk dipecah ke beberapa baris, pisahkan dengan titik koma, misal "Tagihan Produk [RIZKI]; Packing [RIZKI]": tiap baris jadi baris sendiri di halaman ini.</p>
-      <div className="mt-2 grid gap-2 md:grid-cols-2">
-        {pihak.map((p) => (
-          <label key={p.id} className="grid gap-1"><span className="text-xs text-muted-foreground">{p.nama}</span>
-            <Input defaultValue={p.baris_arus_kas} disabled={!bisaTulis || simpan.isPending} placeholder="otomatis" maxLength={200} aria-label={`Baris Arus Kas untuk ${p.nama}`}
-              onBlur={(e) => e.target.value.trim() !== p.baris_arus_kas && simpan.mutate({ id: p.id, baris: e.target.value.trim() })} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-          </label>
-        ))}
+      <p className="mt-2 text-muted-foreground">Pilih baris Kas keluar di Arus Kas untuk tiap nama. Belum dipilih = otomatis (nama sama, atau nama di dalam kurung seperti "Tagihan Produk [YUNI]"). Pilih lebih dari satu untuk memecahnya: tiap baris jadi baris sendiri di halaman ini.</p>
+      <div className="mt-2 grid gap-3 md:grid-cols-2">
+        {pihak.map((p) => {
+          const dipilih = barisTujuan(p.baris_arus_kas)
+          const putus = dipilih.length === 1 && dipilih[0] === TIDAK_DISAMBUNG
+          const otomatis = pilihan.filter((b) => cocokOtomatis(b.nama, p.nama))
+          const kat = (nama: string) => pilihan.find((b) => b.nama.trim().toLocaleLowerCase('id-ID') === nama.toLocaleLowerCase('id-ID'))
+          const listId = `peta-${jenis}-${p.id}`
+          const mati = !bisaTulis || simpan.isPending
+          return (
+            <div key={p.id} className="grid gap-1 rounded-md border p-2">
+              <span className="font-medium">{p.nama}</span>
+              {putus ? (
+                <span className="text-xs text-muted-foreground">Tidak disambung ke Arus Kas</span>
+              ) : dipilih.length ? (
+                <ul className="flex flex-wrap gap-1">
+                  {dipilih.map((n) => (
+                    <li key={n} className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs">
+                      {n}{kat(n) ? <span className="text-muted-foreground">· {kat(n)!.kategoriLabel}</span> : lembar.data ? <span className="text-destructive">· tidak ada di Arus Kas</span> : null}
+                      {bisaTulis && <button type="button" disabled={mati} aria-label={`Lepas ${n}`} className="ml-1 text-muted-foreground hover:text-foreground" onClick={() => ubah(p, dipilih.filter((x) => x !== n))}>×</button>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-xs text-muted-foreground">Otomatis: {otomatis.length ? otomatis.map((b) => `${b.nama} (${b.kategoriLabel})`).join(', ') : lembar.data ? 'belum ada baris yang cocok' : 'nama sama / nama dalam kurung'}</span>
+              )}
+              {bisaTulis && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input list={listId} disabled={mati} placeholder={pilihan.length ? 'Cari & tambah baris Arus Kas…' : 'Ketik nama baris Arus Kas…'} aria-label={`Tambah baris Arus Kas untuk ${p.nama}`} className="h-8 min-w-48 flex-1"
+                    onChange={(e) => {
+                      const b = pilihan.find((x) => x.nama === e.target.value)
+                      if (!b) return
+                      e.target.value = ''
+                      if (!dipilih.includes(b.nama)) ubah(p, [...(putus ? [] : dipilih), b.nama])
+                    }}
+                    onKeyDown={(e) => {
+                      const v = e.currentTarget.value.trim()
+                      if (e.key !== 'Enter' || !v || pilihan.length) return
+                      e.currentTarget.value = ''
+                      if (!dipilih.includes(v)) ubah(p, [...(putus ? [] : dipilih), v])
+                    }} />
+                  <datalist id={listId}>{pilihan.map((b) => <option key={b.id} value={b.nama}>{b.kategoriLabel}</option>)}</datalist>
+                  {(dipilih.length > 0) && <Button type="button" size="sm" variant="ghost" disabled={mati} onClick={() => ubah(p, [])}>Otomatis</Button>}
+                  {!putus && <Button type="button" size="sm" variant="ghost" disabled={mati} onClick={() => ubah(p, [TIDAK_DISAMBUNG])}>Tidak disambung</Button>}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </details>
   )
@@ -188,7 +241,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
     const hasil: Grup[] = []
     for (const x of data.pihak) {
       nama.add(kunciP(x.nama))
-      const tujuan = barisTujuan(x.baris_arus_kas)
+      const tujuan = barisTujuan(x.baris_arus_kas).filter((b) => b !== TIDAK_DISAMBUNG)
       if (tujuan.length < 2) {
         hasil.push({ id: `p:${x.id}`, label: x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
         continue
@@ -295,7 +348,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
               </Table>
             </div>
             {bisaTulis && <InfoTip teks={data.pihak ? "Ketuk nama untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus. Daftar nama diambil dari Data Produksi." : "Ketuk kategori untuk menambah transaksi, atau ketuk rinciannya untuk mengubah atau menghapus."} />}
-            {data.pihak && <PetaArusKas jenis={jenis} pihak={data.pihak} bisaTulis={bisaTulis} onSaved={() => { void qc.invalidateQueries({ queryKey: ['operasional-arus-kas'] }); void qc.invalidateQueries({ queryKey: ['operasional', jenis] }) }} />}
+            {data.pihak && <PetaArusKas jenis={jenis} periode={periode} pihak={data.pihak} bisaTulis={bisaTulis} onSaved={() => { void qc.invalidateQueries({ queryKey: ['operasional-arus-kas'] }); void qc.invalidateQueries({ queryKey: ['operasional', jenis] }) }} />}
           </CardContent>
         </Card>
       )}
