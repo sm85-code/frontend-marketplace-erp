@@ -1,4 +1,5 @@
 import Paginasi from '@/components/daftar/Paginasi'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import AksiLainnya from '@/components/AksiLainnya'
 import InfoTip from '@/components/InfoTip'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -54,6 +55,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   // A new manual product can be several at once (one per combination of its variant choices).
   const [kombo, setKombo] = useState<HasilVarian>({ baris: [], masalah: null })
   // Values added to an existing product's variants (Tambah nilai); each new combination is saved as a new product.
+  // Status/category filters sit behind a small button so the list starts higher on a phone.
+  const [tampilFilter, setTampilFilter] = useState(false)
   const [ekstra, setEkstra] = useState<NilaiBaru[][]>([])
   const [hargaKombinasi, setHargaKombinasi] = useState<Record<string, string>>({})
   const disimpan = useRef(new Set<string>())
@@ -92,6 +95,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   // Manual products read best A–Z by name, 25 to a page; other kinds keep their order and 15 a page.
   if (selectedKind === 'non_kayu') filtered.sort((a, b) => a.produk.localeCompare(b.produk, 'id', { sensitivity: 'base' }) || labelVarian(a).localeCompare(labelVarian(b), 'id', { numeric: true }))
   const perHalaman = selectedKind === 'non_kayu' ? 25 : 15
+  const filterAktif = status !== 'active' || category !== 'all'
   const pages = Math.max(1, Math.ceil(filtered.length / perHalaman))
   const current = Math.min(page, pages)
   const [busy, setBusy] = useState(false)
@@ -174,11 +178,40 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
     <>
       {(selectedKind ? [selectedKind] : (['produksi', 'pengecatan'] as const)).map((kind) => (
         <Card className="min-w-0" key={kind}>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <CardTitle className={selectedKind ? 'sr-only' : 'mr-auto'}>{titleOf(kind)}</CardTitle>
+          {!selectedKind && <CardHeader><CardTitle>{titleOf(kind)}</CardTitle></CardHeader>}
+          <CardContent className="space-y-3">
+            {q.error && (
+              <p role="alert">
+                {getApiError(q.error)}{' '}
+                <Button variant="outline" onClick={() => void q.refetch()}>
+                  Coba lagi
+                </Button>
+              </p>
+            )}
+            {kind === 'produksi' && selection.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-2">
+              <span className="mr-auto text-sm">{selection.length} produk dipilih · maksimal 100</span>
+              <Button variant="ghost" size="sm" disabled={!selected.size} onClick={() => setSelected(new Set())}>Bersihkan pilihan</Button>
+              <Button size="sm" disabled={!selection.length || changing} onClick={() => setBulk(selection.map(p => ({...p})))}>Susun Struktur Massal</Button>
+            </div>}
+            <div className="flex items-center gap-1.5">
+            <Input
+              className="h-9 min-w-0 flex-1"
+              aria-label={`Cari harga ${kind}`}
+              placeholder={kind === 'pengecatan' ? 'Cari model, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
+            />
+            {(catalogProduct || kind === 'produksi') && <Button type="button" variant={filterAktif ? 'secondary' : 'outline'} size="icon" className="relative size-9 shrink-0" aria-label="Filter" aria-expanded={tampilFilter} title="Filter" onClick={() => setTampilFilter(v => !v)}>
+              <SlidersHorizontal className="size-4" />{filterAktif && <span className="absolute top-1 right-1 size-2 rounded-full bg-primary" aria-hidden />}
+            </Button>}
               <Button
                 variant="default"
+                className="h-9 shrink-0 px-2.5 sm:px-3"
+                aria-label={kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
+                title={kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
                 onClick={() => {
                   setAdding(true)
                   setUseHierarchy(true)
@@ -199,39 +232,14 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   })
                 }}
               >
-                {kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
+                <Plus className="size-4" /><span className="hidden sm:inline">Tambah</span><span className="hidden lg:inline">{kind === 'non_kayu' ? ' produk manual' : kind === 'packing' ? ' tarif packing' : kind === 'produksi' ? ' produk kayu' : ' tarif pengecatan'}</span>
               </Button>
               <InfoTip teks={kind === 'produksi'
                 ? 'Perubahan harga tidak mengubah pemetaan order yang sudah tersimpan.'
                 : kind === 'packing' ? 'Tarif packing biasa dan kayu. Biaya pada pesanan bisa disesuaikan menurut ukuran.' : kind === 'non_kayu' ? 'Produk dan harga beli supplier yang dicatat manual.' : 'Tarif tagihan reseller, sudah termasuk jasa. Pengecatan internal tidak menimbulkan tagihan jasa karyawan.'} />
               {kind === 'produksi' && <AksiLainnya><Button variant="outline" size="sm" disabled={changing || !filtered.some(p => p.active !== false)} onClick={() => setSelected(new Set(filtered.filter(p => p.active !== false).slice(0,100).map(p => p.id)))}>Pilih hasil pencarian</Button></AksiLainnya>}
             </div>
-
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {q.error && (
-              <p role="alert">
-                {getApiError(q.error)}{' '}
-                <Button variant="outline" onClick={() => void q.refetch()}>
-                  Coba lagi
-                </Button>
-              </p>
-            )}
-            {kind === 'produksi' && selection.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-2">
-              <span className="mr-auto text-sm">{selection.length} produk dipilih · maksimal 100</span>
-              <Button variant="ghost" size="sm" disabled={!selected.size} onClick={() => setSelected(new Set())}>Bersihkan pilihan</Button>
-              <Button size="sm" disabled={!selection.length || changing} onClick={() => setBulk(selection.map(p => ({...p})))}>Susun Struktur Massal</Button>
-            </div>}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] [&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1">
-            <Input
-              aria-label={`Cari harga ${kind}`}
-              placeholder={kind === 'pengecatan' ? 'Cari model, ukuran, warna, atau SKU' : 'Cari produk, ukuran, atau SKU'}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-            />
+            {tampilFilter && <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:max-w-xl">
             {catalogProduct && <SelectField aria-label="Status produk" value={status} onChange={e => {setStatus(e.target.value);setPage(1)}}><option value="active">Produk aktif</option><option value="inactive">Produk nonaktif</option><option value="all">Semua status</option></SelectField>}
             {kind === 'produksi' && (
               <SelectField
@@ -251,7 +259,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 ))}
               </SelectField>
             )}
-            </div>
+            </div>}
             <div className="hidden md:block">
               <TabelLokal
                 label={titleOf(kind)}
@@ -297,7 +305,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               {!filtered.length && (
                 <p className="py-8 text-center text-sm text-muted-foreground">Belum ada harga yang sesuai.</p>
               )}
-              {filtered.length > 15 && (
+              {filtered.length > perHalaman && (
                 <div className="flex items-center justify-between gap-2 pt-3">
                   <Paginasi halaman={current} totalHalaman={pages} onUbah={setPage} />
                 </div>
