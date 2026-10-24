@@ -211,7 +211,23 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
         onClearValue={onClearValue}
         onDeleteRow={onDeleteRow}
         urutan={(() => {
-          if (!target || target.total || target.child) return undefined
+          if (!target || target.total) return undefined
+          if (target.child) {
+            // Sub-rows (1.1, 1.2, ...) move within their row: their order is the order they are kept in the sheet.
+            const ids = anakDari(lembar, indukDari(target.key)).map((b) => b.id)
+            const i = ids.indexOf(target.key)
+            if (i < 0 || ids.length < 2) return undefined
+            const pindah = (arah: -1 | 1) => {
+              const lain = ids[i + arah]
+              const a = lembar.baris.findIndex((b) => b.id === target.key)
+              const b = lembar.baris.findIndex((x) => x.id === lain)
+              if (a < 0 || b < 0) return
+              const baris = [...lembar.baris]
+              ;[baris[a], baris[b]] = [baris[b], baris[a]]
+              save.mutate({ ...lembar, baris })
+            }
+            return { label: 'Urutan di rinciannya:', naik: i > 0 ? () => pindah(-1) : undefined, turun: i < ids.length - 1 ? () => pindah(1) : undefined }
+          }
           const ks = sekategori(block, lembar, daftarKat, target.key)
           const i = ks.indexOf(target.key)
           if (ks.length < 2) return undefined

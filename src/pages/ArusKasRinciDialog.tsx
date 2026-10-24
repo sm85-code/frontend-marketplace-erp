@@ -28,14 +28,14 @@ export default function ArusKasRinciDialog({
   onAddSplit: () => void
   onAddChild: () => void
   /** Up / down among the rows of the same category (undefined = not at that end / not movable). */
-  urutan?: { naik?: () => void; turun?: () => void }
+  urutan?: { label?: string; naik?: () => void; turun?: () => void }
 }) {
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-sm">
         {target && urutan && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Urutan di kategorinya:</span>
+            <span className="text-muted-foreground">{urutan.label ?? 'Urutan di kategorinya:'}</span>
             <Button type="button" size="sm" variant="outline" disabled={!urutan.naik} onClick={urutan.naik}>↑ Naik</Button>
             <Button type="button" size="sm" variant="outline" disabled={!urutan.turun} onClick={urutan.turun}>↓ Turun</Button>
           </div>
