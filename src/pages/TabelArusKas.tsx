@@ -9,6 +9,7 @@ import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
 import { denganOperasional } from '@/lib/operasionalArusKas'
+import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
@@ -56,7 +57,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lembarHitung, days.join('|'), operasional.data, daftarKat, plain],
   )
-  const block = useMemo(() => namai([applyRinci(plain, days, lembarTampil)], lembarHitung, t)[0], [plain, days, lembarTampil, lembarHitung, t])
+  // Kas keluar rows follow the category order of Kategori Transaksi, then their own up / down order (display only).
+  const block = useMemo(() => urutkanKasKeluar(namai([applyRinci(plain, days, lembarTampil)], lembarHitung, t)[0], lembarHitung, daftarKat), [plain, days, lembarTampil, lembarHitung, t, daftarKat])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
@@ -206,6 +208,17 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
         onSave={onSave}
         onClearValue={onClearValue}
         onDeleteRow={onDeleteRow}
+        urutan={(() => {
+          if (!target || target.total || target.child) return undefined
+          const ks = sekategori(block, lembar, daftarKat, target.key)
+          const i = ks.indexOf(target.key)
+          if (ks.length < 2) return undefined
+          const pindah = (arah: -1 | 1) => {
+            const next = geser(block, lembar, daftarKat, target.key, arah)
+            if (next) save.mutate(next)
+          }
+          return { naik: i > 0 ? () => pindah(-1) : undefined, turun: i < ks.length - 1 ? () => pindah(1) : undefined }
+        })()}
         onAddSplit={() => {
           let group: GroupDef | null = null
           for (const l of block.lines) {

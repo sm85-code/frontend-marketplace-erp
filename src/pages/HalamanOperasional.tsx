@@ -199,7 +199,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [periode, setPeriode] = useState(bulanIni)
-  const { pilihan } = usePilihanArusKas(jenis, periode)
+  const { lembar: lembarArus, pilihan } = usePilihanArusKas(jenis, periode)
   const kunci = ['operasional', jenis, periode] as const
   const { data, isLoading, error, refetch } = useQuery({ queryKey: kunci, queryFn: () => daftarOperasional(jenis, periode) })
   const [tersimpan, setTersimpan] = useState(false)
@@ -266,7 +266,11 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
       if (tujuan.length < 2) {
         // The row it fills is shown with the name, as for a split party: "PUDIN – Tagihan Produk [PUDIN]".
         const ke = barisTujuan(x.baris_arus_kas)[0] === TIDAK_DISAMBUNG ? 'tidak disambung' : tujuan[0] ?? barisOtomatis(pilihan, x.nama)?.nama
-        hasil.push({ id: `p:${x.id}`, label: ke ? `${x.nama} – ${ke}` : x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
+        const punya = itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama))
+        // Only people linked to an Arus Kas row get a row (link them in the panel below); one not linked keeps its row
+        // while it has entries this period, so nothing typed goes missing from the list or the total.
+        if ((!ke || ke === 'tidak disambung') && lembarArus.data && !punya.length) continue
+        hasil.push({ id: `p:${x.id}`, label: ke ? `${x.nama} – ${ke}` : lembarArus.data ? `${x.nama} (belum tersambung)` : x.nama, items: itemsPeriode.filter((i) => kunciP(i.uraian) === kunciP(x.nama)), tambah: kategoriUtama ? { kategori: kategoriUtama.id, label: x.nama, pihak: x.nama } : null, kategoriLabel: (i: TransaksiOperasional) => labelKat(i.kategori) })
         continue
       }
       tujuan.forEach((b, k) => {
