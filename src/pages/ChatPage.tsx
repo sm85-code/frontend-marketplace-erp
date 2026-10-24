@@ -152,6 +152,8 @@ export default function ChatPage() {
   const [productOffset, setProductOffset] = useState(0)
   const [shopOverride, setShop] = useTokoAktif()
   const [threadShopOverride, setThreadShop] = useState('')
+  // Shop chosen by an action (send, sync, load more) applies to this visit only; only the filter control persists.
+  const [viewShop, setViewShop] = useState('')
   const [unread, setUnread] = useState(false)
   const [unreplied, setUnreplied] = useState(false)
   const [syncedAt, setSyncedAt] = useState('')
@@ -186,7 +188,7 @@ export default function ChatPage() {
     retry: false,
   })
   // The order route supplies the initial selection without resetting a user's draft on query refresh.
-  const shop = (linkedId?linkedShop:'') || shopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
+  const shop = (linkedId?linkedShop:'') || viewShop || shopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
   const threadShop = (linkedId?linkedShop:'') || threadShopOverride || (orderId ? (orderStart.data?.akun_id ?? '') : '')
   const selected = linkedId?(linkedChat.data?.conversation??null):selectedOverride ?? (orderId ? (orderStart.data?.conversation ?? null) : null)
   const available = shops.filter((a) => a.platform === 'shopee' && a.id_toko_eksternal)
@@ -309,7 +311,7 @@ export default function ChatPage() {
       if (result.status === 'terkirim') {
         if (request.newConversation && result.message?.conversation_id) {
           setThreadShop(threadShop)
-          setShop(threadShop)
+          setViewShop(threadShop)
           setSelected({ ...selected!, conversation_id: String(result.message.conversation_id) })
           setParams({})
         }
@@ -350,7 +352,7 @@ export default function ChatPage() {
   }
   const syncChat = useMutation({
     mutationFn: async ({ shopId }: { shopId: string }) => {
-      setShop(shopId)
+      setViewShop(shopId)
       if (shopId && threadShop !== shopId) setSelected(null)
       setCursor('')
       setOffset('')
@@ -428,6 +430,7 @@ export default function ChatPage() {
           value={shop}
           onChange={(e) => {
             setShop(e.target.value)
+            setViewShop('')
             setSelected(null)
             setCursor('')
             setAttachment(null)
@@ -504,7 +507,7 @@ export default function ChatPage() {
                   variant="secondary"
                   className="w-full justify-between whitespace-normal text-left h-auto min-h-10 py-2"
                   onClick={() => {
-                    setShop(r.shop.id)
+                    setViewShop(r.shop.id)
                     setCursor(r.data?.page_result.next_cursor?.next_message_time_nano ?? '')
                   }}
                 >
