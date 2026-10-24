@@ -46,12 +46,19 @@ import {
 import Spinner from "@/components/Spinner";
 import { SelectField } from "./processingShared";
 import { previewAmounts } from "./templateTable";
-import { block, defaults, labels, elementName } from "./templateDocumentModel";
+import {
+  block,
+  copyInvDesign,
+  defaults,
+  labels,
+  elementName,
+  type TemplateOrientation,
+} from "./templateDocumentModel";
 import BlockContent from "./TemplateBlockContent";
 import TemplateProperties from "./TemplateProperties";
 import TemplateLayers from "./TemplateLayers";
 
-type Orientation = "portrait" | "landscape";
+type Orientation = TemplateOrientation;
 type Snapshot = { blocks: TemplateBlock[]; orientation: Orientation };
 const kinds = Object.keys(labels) as TemplateBlock["kind"][];
 const icons = {
@@ -91,8 +98,11 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
     "properties" | "layers" | null
   >(null);
   const [preview, setPreview] = useState(false),
-    [busy, setBusy] = useState(false),
+    [saving, setSaving] = useState(false),
+    [salin, setSalin] = useState(false),
+    [tanyaSalin, setTanyaSalin] = useState(false),
     [error, setError] = useState("");
+  const busy = saving || salin;
   const [zoom, setZoom] = useState(0),
     [scale, setScale] = useState(1),
     [snap, setSnap] = useState(false);
@@ -308,7 +318,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
       commit(document);
       setEditing(null);
     }
-    setBusy(true);
+    setSaving(true);
     setError("");
     try {
       const result = await saveDocumentTemplate(
@@ -329,7 +339,30 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
     } catch (e) {
       setError(getApiError(e));
     } finally {
-      setBusy(false);
+      setSaving(false);
+    }
+  };
+  const salinDariInv = async () => {
+    if (initial.kind !== "PO" || busy || preview) return;
+    setTanyaSalin(false);
+    setSalin(true);
+    setError("");
+    try {
+      const inv = await queryClient.ensureQueryData({
+        queryKey: ["processing-document-template", "INV"],
+        queryFn: () => getDocumentTemplate("INV"),
+      });
+      const copied = copyInvDesign(inv);
+      setEditing(null);
+      setSelected("");
+      commit(copied.blocks, copied.orientation);
+      toast.success("Desain INV disalin ke PO. Periksa lalu tekan Simpan.");
+    } catch (e) {
+      const message = getApiError(e);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSalin(false);
     }
   };
   const resizingHandles = (item: TemplateBlock) => {
@@ -496,6 +529,26 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           >
             <Redo2 size={16} />
           </Button>
+          {initial.kind === "PO" && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || preview}
+              title="Salin desain INV ke PO"
+              aria-label={salin ? "Menyalin desain INV" : "Salin desain INV ke PO"}
+              aria-busy={salin}
+              onClick={() => {
+                finishText();
+                if (dirty) setTanyaSalin(true);
+                else void salinDariInv();
+              }}
+            >
+              <Copy size={16} />
+              <span className="max-sm:sr-only">
+                {salin ? "Menyalin…" : "Salin desain INV"}
+              </span>
+            </Button>
+          )}
           <Button
             type="button"
             variant={preview ? "secondary" : "outline"}
@@ -514,7 +567,7 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
             onClick={() => void save()}
           >
             <Save size={16} />
-            {busy ? "Menyimpan…" : "Simpan"}
+            {saving ? "Menyimpan…" : "Simpan"}
           </Button>
         </div>
       </div>
@@ -967,6 +1020,32 @@ function TemplateEditor({ initial }: { initial: TemplateData }) {
           {mobilePanel === "layers" ? layerContent : propertyContent}
         </DialogContent>
       </Dialog>
+      {initial.kind === "PO" && (
+        <Dialog
+          open={tanyaSalin}
+          onOpenChange={(open) => {
+            if (!open) setTanyaSalin(false);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ganti desain PO dengan desain INV?</DialogTitle>
+              <DialogDescription>
+                Perubahan PO yang belum disimpan akan diganti. Tekan Simpan
+                setelah menyalin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="outline" onClick={() => setTanyaSalin(false)}>
+                Batal
+              </Button>
+              <Button disabled={salin} onClick={() => void salinDariInv()}>
+                {salin ? "Menyalin…" : "Ganti desain"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       <InfoTip teks={"Pratinjau memakai data contoh. Simpan desain untuk menggunakan kembali pengaturan INV/PO."} />
     </div>
   );
