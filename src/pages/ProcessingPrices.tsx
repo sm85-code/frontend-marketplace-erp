@@ -100,7 +100,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const current = Math.min(page, pages)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const change = (k: keyof ProcessingPrice, v: string) => setEdit((p) => (p ? { ...p, [k]: v } : p))
+  // Manual (non-wood) catalog text is kept in capitals: name, SKU and notes turn uppercase as they are typed.
+  const KAPITAL: (keyof ProcessingPrice)[] = ['produk', 'sku', 'catatan']
+  const change = (k: keyof ProcessingPrice, v: string) => setEdit((p) => (p ? { ...p, [k]: p.kind === 'non_kayu' && KAPITAL.includes(k) ? v.toLocaleUpperCase('id') : v } : p))
   const catalogProduct = selectedKind === 'produksi' || selectedKind === 'non_kayu'
   const changeStatus = async (price: ProcessingPrice) => {
     const activate = price.active === false

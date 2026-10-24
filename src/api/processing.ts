@@ -165,7 +165,14 @@ export const retireProcessingPrice = async (price: ProcessingPrice) =>
   (await api.delete<{ action: 'deleted' | 'deactivated' }>(`/processing/prices/${encodeURIComponent(price.id)}`, { params: { version: price.version } })).data
 export const activateProcessingPrice = async (price: ProcessingPrice) =>
   (await api.post(`/processing/prices/${encodeURIComponent(price.id)}/activate`, null, { params: { version: price.version } })).data
-export const saveProcessingPrice = async (price: ProcessingPrice) => {
+/** Manual (non-wood) catalog text is saved in capitals; other kinds are sent as typed. */
+export const kapitalManual = (price: ProcessingPrice): ProcessingPrice => {
+  if (price.kind !== 'non_kayu') return price
+  const up = (t?: string) => (t ?? '').toLocaleUpperCase('id')
+  return { ...price, produk: up(price.produk), sku: up(price.sku), ukuran: up(price.ukuran), catatan: up(price.catatan), varian: price.varian?.map((v) => ({ nama: up(v.nama), nilai: up(v.nilai) })) }
+}
+export const saveProcessingPrice = async (input: ProcessingPrice) => {
+  const price = kapitalManual(input)
   const { id, version, kind, produk, sku, ukuran, harga, catatan, jenis, warna, structure_model_id, packing_type, color_id, production_price_id, varian } = price
   return (
     await api.put(`/processing/prices/${encodeURIComponent(id)}`, {
