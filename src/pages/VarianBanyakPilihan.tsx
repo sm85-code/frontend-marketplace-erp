@@ -116,12 +116,12 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
                   className="min-w-0 flex-1"
                   maxLength={100}
                   value={baru[i] ?? ''}
-                  placeholder="Ketik pilihan, lalu Enter"
+                  placeholder="Ketik nilai, mis. 80x40"
                   aria-label={`Tambah pilihan untuk ${g.nama || `varian ${i + 1}`}`}
                   onChange={(e) => setBaru((b) => { const n = [...b]; n[i] = e.target.value; return n })}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); tambahNilai(i) } }}
                 />
-                <Button type="button" variant="outline" onClick={() => tambahNilai(i)} disabled={!(baru[i] ?? '').trim()}>Tambah</Button>
+                <Button type="button" variant="outline" onClick={() => tambahNilai(i)} disabled={!(baru[i] ?? '').trim()}><Plus className="size-4" /> Tambah nilai</Button>
               </div>
             </div>
           </div>

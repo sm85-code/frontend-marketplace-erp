@@ -61,3 +61,12 @@ describe('a variant with several choices', () => {
     expect(masalahGrup([{ nama: 'A', nilai: banyak }, { nama: 'B', nilai: banyak }])).toMatch(/terlalu banyak/i)
   })
 })
+
+import { kombinasiBaru } from './varianProduk'
+describe('kombinasiBaru', () => {
+  it('makes only the new combinations, leaving the product itself out', () => {
+    expect(kombinasiBaru([{ nama: 'Ukuran', nilai: '80x40' }], [[]])).toEqual([])
+    expect(kombinasiBaru([{ nama: 'Ukuran', nilai: '80x40' }], [['100x50', ' 80x40 ', '']])).toEqual([[{ nama: 'Ukuran', nilai: '100x50' }]])
+    expect(kombinasiBaru([{ nama: 'Ukuran', nilai: 'S' }, { nama: 'Warna', nilai: 'Merah' }], [['M'], ['Hitam']])).toHaveLength(3)
+  })
+})
