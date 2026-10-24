@@ -299,7 +299,7 @@ export default function HalamanOperasional({ jenis, judul: judulBawaan, deskrips
       {isLoading && <Spinner label="Memuat transaksi…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && (
-        <Card className="kartu-lega min-w-0 overflow-hidden">
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle>Transaksi</CardTitle>
             {adaRincian && (

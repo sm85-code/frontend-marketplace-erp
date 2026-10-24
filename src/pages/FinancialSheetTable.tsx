@@ -91,7 +91,7 @@ const Amount = ({ value, manual, warisan }: { value: number | null; manual: bool
 /** Number of each detail row, restarting at every group heading; sub-rows are 1.1, 1.2, ... under their row. */
 /** The note after a row's name: small, muted, and kept apart from the name. */
 function Ket({ teks }: { teks?: string }) {
-  return teks ? <span className="teks-kecil ml-1.5 whitespace-normal font-normal md:whitespace-nowrap text-muted-foreground">· {teks}</span> : null
+  return teks ? <span className="teks-kecil ml-1.5 whitespace-nowrap font-normal text-muted-foreground">· {teks}</span> : null
 }
 
 /** Keys of the rows that have visible sub-rows. */
@@ -176,7 +176,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                       )}
                     </TableCell>
                   )}
-                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal [overflow-wrap:anywhere] ${line.def.induk ? GAYA_ANAK : ''}`}>{line.def.induk && <NomorRincian teks={nomor?.get(line.def.key)} />}{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
+                  <TableCell colSpan={nomor && line.def.emphasis ? 2 : 1} className={`whitespace-normal ${line.def.induk ? GAYA_ANAK : ''}`}>{line.def.induk && <NomorRincian teks={nomor?.get(line.def.key)} />}{line.def.emphasis && !hurufAsli ? sentenceCase(line.def.label) : line.def.label}<Ket teks={ketBaris?.(line)} /></TableCell>
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
@@ -211,7 +211,7 @@ export default function FinancialSheetTable(props: Props) {
   const lipatSemua = () => (semuaTertutup ? setLipatSendiri(new Set()) : setLipatSendiri(new Set(induk)))
   const kembangan = { ...props, lipat, onLipat }
   return (
-    <Card className="kartu-lega min-w-0 overflow-hidden">
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle>{block.title.slice(3)}</CardTitle>
         {nomor && induk.size > 0 && !props.lipat && (

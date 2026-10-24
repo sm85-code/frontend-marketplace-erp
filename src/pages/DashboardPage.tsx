@@ -11,9 +11,6 @@ import { qk } from '@/api/keys'
 import type { Dashboard, DashboardProduk, DashboardToko, TahapPesanan } from '@/api/types'
 import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Ban, Clock, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
@@ -27,13 +24,11 @@ const Angka = ({ n, tebal }: { n: number; tebal?: boolean }) => (
 
 function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: string; children: React.ReactNode }) {
   return (
-    <Card className="kartu-lega">
-      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
-        <CardTitle>{judul}</CardTitle>
-        {deskripsi && <CardDescription className="sr-only">{deskripsi}</CardDescription>}
-      </CardHeader>
-      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">{children}</CardContent>
-    </Card>
+    <section className="space-y-2" aria-label={judul}>
+      <h2 className="font-heading text-base font-semibold text-foreground">{judul}</h2>
+      {deskripsi && <p className="sr-only">{deskripsi}</p>}
+      {children}
+    </section>
   )
 }
 
@@ -69,16 +64,16 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
   },
 ]
 
-function BarisMetrik({ icon: Icon, label, nilai, href }: { icon: ComponentType<{ className?: string }>; label: string; nilai: string; href?: string }) {
+/** Stripe-style figure: small grey label, large number. */
+function BarisMetrik({ label, nilai, href }: { icon?: ComponentType<{ className?: string }>; label: string; nilai: string; href?: string }) {
   const isi = (
     <>
-      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
-      <span className="text-base font-semibold tabular-nums">{nilai}</span>
+      <span className="block text-xs text-muted-foreground">{label}</span>
+      <span className="mt-1 block text-xl font-semibold tabular-nums text-foreground lg:text-2xl">{nilai}</span>
     </>
   )
-  const kelas = 'flex items-center gap-2 px-3 py-2 lg:py-3'
-  return href ? <Link to={href} className={`${kelas} hover:bg-muted/50`}>{isi}</Link> : <div className={kelas}>{isi}</div>
+  const kelas = 'block min-w-0 py-3 pr-3'
+  return href ? <Link to={href} className={`${kelas} rounded-md hover:text-primary`}>{isi}</Link> : <div className={kelas}>{isi}</div>
 }
 
 export default function DashboardPage() {
@@ -101,7 +96,7 @@ export default function DashboardPage() {
   const orderUrl = (tahap: TahapPesanan | '' = '', akun = toko) => tautanPesanan(akun, tahap, preset)
 
   return (
-    <div className="space-y-4">
+    <div className="dash-stripe space-y-6">
       <BarHalaman judul="Dashboard">
         <div className="grid w-full grid-cols-2 items-end gap-3 md:w-auto md:grid-cols-[180px_minmax(220px,280px)_auto]">
           {user && <FilterPilih
@@ -120,15 +115,16 @@ export default function DashboardPage() {
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>
-          <div className="grid grid-cols-1 divide-y overflow-hidden rounded-xl border bg-card lg:grid-cols-5 lg:divide-x lg:divide-y-0">
-            <BarisMetrik icon={ShoppingBag} label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
-            <BarisMetrik icon={Clock} label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
-            <BarisMetrik icon={PackageCheck} label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
-            <BarisMetrik icon={Truck} label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
-            <BarisMetrik icon={Ban} label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
+          <div className="grid grid-cols-2 gap-x-4 border-y sm:grid-cols-3 lg:grid-cols-6">
+            <BarisMetrik label="Nilai Pesanan" nilai={fmtRp(d.per_toko.reduce((a, t) => a + Number(t.omzet), 0))} href={orderUrl()} />
+            <BarisMetrik label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
+            <BarisMetrik label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
+            <BarisMetrik label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
+            <BarisMetrik label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
+            <BarisMetrik label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
           </div>
 
-          <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button></section>
+          <Link to="/chat" className="inline-block text-sm font-medium text-primary hover:underline">Chat perlu dibalas →</Link>
           <Bagian judul="Ringkasan per Toko">
             {d.per_toko.some((t) => !t.pesanan) && (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
