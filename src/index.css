@@ -744,16 +744,13 @@ select:not([multiple]):focus-visible { outline: 2px solid var(--ring); outline-o
 [data-slot="table-head"]:last-child, [data-slot="table-cell"]:last-child { padding-right: 1.25rem; }
 .section-tabs [data-slot="tabs-trigger"] { padding: .5rem 1rem; }
 
-/* On phones every set of section tabs stays on one row that scrolls sideways (like the order status filters) instead of wrapping into a grid. */
-@media (max-width: 767px) {
-  .section-tabs:not(.order-status-tabs) { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
-  .section-tabs:not(.order-status-tabs)::-webkit-scrollbar { display: none; }
-  .section-tabs:not(.order-status-tabs) [data-slot="tabs-trigger"] { flex: 1 0 auto; white-space: nowrap; }
-}
-
-/* Order status filters stay on one scrollable row, including on phones. */
+/* On phones every set of section tabs wraps onto as many rows as needed, so every label stays fully visible. */
 .section-tabs.order-status-tabs { max-width: none; width: max-content; flex-wrap: nowrap; }
 .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 0 0 auto; }
+@media (max-width: 767px) {
+  .section-tabs, .section-tabs.order-status-tabs { width: 100%; max-width: 100%; flex-wrap: wrap; justify-content: flex-start; overflow: visible; }
+  .section-tabs [data-slot="tabs-trigger"], .section-tabs.order-status-tabs [data-slot="tabs-trigger"] { flex: 1 0 auto; white-space: nowrap; }
+}
 
 /* Operation feedback uses the same theme surfaces as confirmation dialogs. */
 .erp-feedback[data-sonner-toaster] { z-index: 100; --width: min(300px, calc(100vw - 48px)); }
