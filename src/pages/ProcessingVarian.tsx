@@ -32,8 +32,7 @@ export default function ProcessingVarian({ value, onChange, ekstra = [], onEkstr
   )
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">Varian</legend>
-      <InfoTip teks={"Kosongkan jika produk tidak punya varian. Tekan + di samping nilai untuk menambah nilai lain dari varian yang sama (misalnya ukuran lain); tiap nilai baru menjadi produk baru dengan harganya sendiri. Produk ini tetap."} />
+      <legend className="flex items-center gap-1 text-sm font-medium">Varian <InfoTip teks={"Kosongkan jika produk tidak punya varian. Tekan + di samping nilai untuk menambah nilai lain dari varian yang sama (misalnya ukuran lain); tiap nilai baru menjadi produk baru dengan harganya sendiri. Produk ini tetap."} /></legend>
       <datalist id={saran}>
         {SARAN_NAMA_VARIAN.map((n) => (
           <option key={n} value={n} />

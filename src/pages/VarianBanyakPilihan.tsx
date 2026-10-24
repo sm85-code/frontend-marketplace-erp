@@ -63,8 +63,7 @@ export default function VarianBanyakPilihan({ onChange }: { onChange: (hasil: Ha
   return (
     <div className="space-y-3">
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Varian</legend>
-        <InfoTip teks={"Kosongkan jika produk tidak punya varian. Beri nama varian (misalnya Ukuran), lalu isi nilainya beserta harganya. Tekan + untuk nilai lain. Setiap kombinasi nilai menjadi satu produk."} />
+        <legend className="flex items-center gap-1 text-sm font-medium">Varian <InfoTip teks={"Kosongkan jika produk tidak punya varian. Beri nama varian (misalnya Ukuran), lalu isi nilainya beserta harganya. Tekan + untuk nilai lain. Setiap kombinasi nilai menjadi satu produk."} /></legend>
         <datalist id={saran}>{SARAN_NAMA_VARIAN.map((n) => <option key={n} value={n} />)}</datalist>
         {grup.map((g, i) => (
           <div key={i} className="space-y-1.5 rounded-xl border p-2">

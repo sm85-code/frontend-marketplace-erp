@@ -179,7 +179,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
       {(selectedKind ? [selectedKind] : (['produksi', 'pengecatan'] as const)).map((kind) => (
         <Card className="min-w-0" key={kind}>
           {!selectedKind && <CardHeader><CardTitle>{titleOf(kind)}</CardTitle></CardHeader>}
-          <CardContent className="space-y-3">
+          <CardContent className={selectedKind ? "space-y-3 p-3 sm:p-6" : "space-y-3"}>
             {q.error && (
               <p role="alert">
                 {getApiError(q.error)}{' '}
@@ -272,6 +272,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 idDari={(p) => p.id}
                 namaDari={(p) => namaOf(p)}
                 minWidth={selectedKind === 'produksi' ? 950 : 580}
+                perHalaman={perHalaman}
               />
               {!filtered.length && (
                 <p className="py-8 text-center text-sm text-muted-foreground">Belum ada harga yang sesuai. Tambahkan tarif baru untuk mulai.</p>
