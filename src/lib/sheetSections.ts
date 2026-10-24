@@ -21,6 +21,9 @@ const result =
 const end = (key: keyof Report['hasil']['saldo_akhir']) => (r: Report) => r.hasil.saldo_akhir[key]
 const before = (key: keyof Report['hasil']['saldo_awal']) => (r: Report) => r.hasil.saldo_awal[key]
 
+/** Arus Kas group with the Kas Kecil balance (no rows can be added to it). */
+export const GRUP_KAS_KECIL = 'Kas Kecil'
+
 const G = (tabel: string, grup: string) => ({ group: `${tabel}|${grup}` })
 const cum = (row: string, sign: 1 | -1 = 1): Dep => ({ row, sign, mode: 'cum' })
 const prior = (row: string, sign: 1 | -1 = 1): Dep => ({ row, sign, mode: 'cumBefore' })
@@ -106,7 +109,7 @@ export function sheetSections(data: Overview): SectionDef[] {
   c.row('laba', 'Laba bersih', result('laba'), { kind: 'calc', emphasis: true, deps: [{ row: 'c_masuk' }, { row: 'c_keluar', sign: -1 }] })
 
   const d = section('arus_kas', 'D. ARUS KAS')
-  d.row('awal', 'Saldo awal kas utama', before('kas_utama'), {
+  d.row('awal', 'Saldo awal Kas Utama', before('kas_utama'), {
     kind: 'calc',
     total: 'first',
     emphasis: true,
@@ -137,27 +140,35 @@ export function sheetSections(data: Overview): SectionDef[] {
   })
   d.row('kas_keluar', 'Jumlah kas keluar', (r) => (r.hasil.kas_keluar_gaji === undefined ? sumAmounts([r.hasil.kas_keluar, r.input.transfer_kas_gaji ?? '0']) : r.hasil.kas_keluar), { ...calcTotal, deps: [G('arus_kas', 'Kas keluar')] })
   d.group('Transfer antar kas')
-  d.row('tr_ops', 'Transfer dari kas operasional packing (+)', input('transfer_kas_ops'))
-  d.row('tr_packing', 'Transfer ke kas operasional packing (−)', (r) => sumAmounts([`-${r.input.transfer_ke_ops_packing ?? '0'}`]))
+  d.row('tr_ops', 'Pengembalian Kas Kecil ke Kas Utama (+)', input('transfer_kas_ops'))
+  d.row('tr_packing', 'Isi ulang Kas Kecil dari Kas Utama (−)', (r) => sumAmounts([`-${r.input.transfer_ke_ops_packing ?? '0'}`]))
+  // Kas keluar lists every expense, Kas Kecil ones too (so they count once in Laba/Rugi); this gives them back to Kas Utama,
+  // as they were paid out of Kas Kecil. Filled from the entries of the categories marked "Dibayar dari Kas Kecil".
+  d.row('tr_kk', 'Belanja dibayar dari Kas Kecil (+)', () => '0')
   if (anyNonZero((r) => String(r.input.tambahan_modal ?? 0))) d.row('tr_modal', 'Tambahan modal', input('tambahan_modal'))
   d.row('transfer', 'Jumlah transfer antar kas', (r) => (r.hasil.kas_keluar_gaji === undefined ? sumAmounts([r.hasil.transfer_antar_kas, r.input.transfer_kas_gaji ?? '0']) : r.hasil.transfer_antar_kas), { ...calcTotal, deps: [G('arus_kas', 'Transfer antar kas')] })
   // The whole month's profit is shared out after the month closes: it leaves the main cash and the retained profit, and is not an expense.
   d.group(GRUP_PEMBAGIAN)
   for (const p of PENERIMA_LABA) d.row(keyPembagian(p.id), `Pembagian laba ${p.nama.toLowerCase()} (${p.persen}%)`, () => '0')
   d.row('jml_pembagian', 'Jumlah pembagian laba', () => '0', { ...calcTotal, deps: [G('arus_kas', GRUP_PEMBAGIAN)] })
-  d.row('akhir', 'Saldo akhir kas utama', end('kas_utama'), {
+  d.row('akhir', 'Saldo akhir Kas Utama', end('kas_utama'), {
     ...calcTotal,
     total: 'last',
     deps: [cum('kas_masuk'), cum('kas_keluar', -1), cum('transfer'), cum('jml_pembagian', -1)],
   })
+  // Kas Kecil (petty cash, fixed amount topped up weekly): opening + top-up from Kas Utama - money returned to Kas Utama -
+  // spending paid out of it. Rolled forward in applyRinci from the shown transfer rows (see GRUP_KAS_KECIL).
+  d.group(GRUP_KAS_KECIL)
+  d.row('kk_awal', 'Saldo awal Kas Kecil', before('kas_operasional'), { kind: 'calc', total: 'first', showCarried: true, carry: ['kk_akhir'] })
+  d.row('kk_akhir', 'Saldo akhir Kas Kecil', end('kas_operasional'), { kind: 'calc', total: 'last', showCarried: true })
 
   const e = section('neraca', 'E. POSISI KEUANGAN / NERACA')
   // Only Kas utama, Kas gaji, Utang gaji and the profit lines are filled in automatically; every other row is typed by hand
   // (a closed period keeps its report's figure, an open one carries the previous period's until it is typed over).
   e.group('Aset')
-  e.row('n_kas', 'Kas utama', end('kas_utama'), { total: 'last', deps: [{ row: 'akhir' }] })
+  e.row('n_kas', 'Kas Utama', end('kas_utama'), { total: 'last', deps: [{ row: 'akhir' }] })
   e.row('n_stok', 'Stok produk', end('stok'), { total: 'last' })
-  e.row('n_kas_ops', 'Kas operasional packing', end('kas_operasional'), { total: 'last' })
+  e.row('n_kas_ops', 'Kas Kecil', end('kas_operasional'), { total: 'last' })
   e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last' })
   e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last' })
   e.row('n_saldo_toko', 'Saldo tertahan toko / Shopee', end('saldo_toko'), { total: 'last' })

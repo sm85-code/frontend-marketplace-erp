@@ -165,3 +165,29 @@ describe('party name matches a row by the name in brackets', () => {
     expect(tampil.sel[`c:b|${days[1]}`]).toBe('10')
   })
 })
+
+describe('Kas Kecil (Operasional Eceran)', () => {
+  const kecil = [{ tanggal: '2026-10-10', kategori: 'atk_eceran', jumlah: '30.00' }]
+  const baris = (blok: ReturnType<typeof applyRinci>, key: string) => blok.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)!
+
+  it('gives Kas Kecil spending back to Kas Utama in Transfer antar kas and takes it off the Kas Kecil balance', () => {
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:e', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Eceran' })
+    l = setKategori(l, 'c:e', 'Kas keluar', 'atk_eceran', 'lain_keluar')
+    // Week 2 is still open; Kas Kecil topped up by 10 that week.
+    l.sel['rb:tr_packing|2026-10-11'] = '-10'
+    const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l))
+    expect(lembar.sel['rb:tr_kk|2026-10-04']).toBeUndefined()
+    const blok = applyRinci(arusDari(l), days, lembar)
+    expect(baris(blok, 'tr_kk').cells[1].value).toBe(30)
+    // Still an expense in Kas keluar (counted once in Laba/Rugi) ...
+    expect(baris(blok, 'c:e').cells[1].value).toBe(30)
+    // ... but Kas Utama only lost the top-up, and Kas Kecil lost the spending.
+    const k = baris(blok, 'kas_keluar').cells[1].value!
+    const t = baris(blok, 'transfer').cells[1].value!
+    expect(t).toBe(20)
+    expect(k - t).toBe(baris(blok, 'kas_keluar').cells[1].value! - 20)
+    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-20)
+    expect(baris(blok, 'kk_awal').cells[1].value).toBe(0)
+  })
+})

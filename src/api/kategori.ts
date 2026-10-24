@@ -17,6 +17,8 @@ export interface KategoriTransaksi {
   aktif: boolean
   sistem: boolean
   auto_sembunyi: boolean
+  /** Paid out of Kas Kecil (petty cash, Operasional Eceran) instead of Kas Utama. */
+  kas_kecil?: boolean
   dipakai: number
   /** Arus Kas rows filed under it (built-in rows included), over all months. */
   dipakai_arus_kas?: number
@@ -39,6 +41,7 @@ export interface IsianKategori {
   /** Id of the group. */
   kelompok: string
   operasional: string | null
+  kas_kecil?: boolean
 }
 
 export const daftarKategori = () => api.get<KategoriDaftar>('/kategori-transaksi').then((r) => r.data)
@@ -48,7 +51,7 @@ export const buatKelompok = (arah: ArahKategori, nama: string) => api.post<Kelom
 export const ubahKelompok = (id: string, nama: string) => api.put<Kelompok>(`/kategori-transaksi/kelompok/${id}`, { nama }).then((r) => r.data)
 export const urutkanKategori = (arah: ArahKategori, ids: string[]) => api.put('/kategori-transaksi/urutan', { arah, ids }).then((r) => r.data)
 
-const m = (id: string, arah: ArahKategori, nama: string, kelompok: string, operasional: KategoriTransaksi['operasional'], auto: boolean): KategoriTransaksi => ({ id, arah, nama, kelompok: KELOMPOK_NAMA_BAWAAN[kelompok] ?? '', kelompok_id: kelompok, operasional, urut: 0, aktif: true, sistem: true, auto_sembunyi: auto, dipakai: 0 })
+const m = (id: string, arah: ArahKategori, nama: string, kelompok: string, operasional: KategoriTransaksi['operasional'], auto: boolean): KategoriTransaksi => ({ id, arah, nama, kelompok: KELOMPOK_NAMA_BAWAAN[kelompok] ?? '', kelompok_id: kelompok, operasional, urut: 0, aktif: true, sistem: true, auto_sembunyi: auto, kas_kecil: operasional === 'packing', dipakai: 0 })
 /** The groups a fresh installation starts with (mirrors the server); used while the list loads or if it cannot be had. */
 export const KELOMPOK_BAWAAN: KelompokDaftar = {
   masuk: [{ id: 'pemasukan', nama: 'Pemasukan' }],

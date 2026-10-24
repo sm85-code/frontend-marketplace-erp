@@ -1,6 +1,6 @@
 import api from './client'
 export const balanceLabels = {
-  kas_utama: 'Kas utama', stok: 'Persediaan (nilai biaya)', kas_operasional: 'Kas operasional packing',
+  kas_utama: 'Kas Utama', stok: 'Persediaan (nilai biaya)', kas_operasional: 'Kas Kecil',
   iklan_prabayar: 'Iklan dibayar di muka', piutang_pengiriman: 'Piutang dalam pengiriman',
   saldo_toko: 'Saldo tertahan toko', kas_gaji: 'Kas gaji', utang_gaji: 'Utang gaji',
   utang_usaha: 'Utang usaha', modal: 'Modal usaha', saldo_laba: 'Saldo laba/rugi',
@@ -12,9 +12,9 @@ export const inputLabels = {
   jasa_proses: 'Jasa proses pesanan', jasa_cat_packing: 'Jasa pengecatan & packing', jasa_cat: 'Jasa pengecatan saja',
   bayar_tukang: 'Pembayaran tukang kayu', pembelian: 'Pembayaran produk & packing', operasional: 'Biaya operasional',
   langganan: 'Langganan rutin', gaji: 'Beban gaji periode ini', biaya_iklan: 'Pemakaian iklan',
-  topup_iklan: 'Top-up iklan dari kas utama', transfer_kas_ops: 'Transfer kas operasional ke kas utama',
-  transfer_ke_ops_packing: 'Transfer kas utama ke kas operasional packing',
-  transfer_kas_gaji: 'Penyisihan kas utama ke kas gaji', bayar_gaji: 'Gaji dibayar dari kas gaji', tambahan_modal: 'Tambahan modal masuk kas',
+  topup_iklan: 'Top-up iklan dari Kas Utama', transfer_kas_ops: 'Pengembalian Kas Kecil ke Kas Utama',
+  transfer_ke_ops_packing: 'Isi ulang Kas Kecil dari Kas Utama',
+  transfer_kas_gaji: 'Penyisihan Kas Utama ke Kas Gaji', bayar_gaji: 'Gaji dibayar dari Kas Gaji', tambahan_modal: 'Tambahan modal masuk kas',
   piutang_pengiriman: 'Saldo akhir piutang pengiriman (bersih)', saldo_toko: 'Saldo akhir tertahan toko',
   stok: 'Saldo akhir persediaan (nilai biaya)', utang_usaha: 'Saldo akhir utang usaha',
 } as const

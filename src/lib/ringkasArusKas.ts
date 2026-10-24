@@ -171,6 +171,9 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
       l.total = total(cells, l.def.total)
     }
     set(at('n_kas'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value ?? null, manual: false })))
+    // Kas Kecil follows its balance in Arus Kas (a figure typed in the old manual row is no longer used).
+    const kkAkhir = arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'kk_akhir')
+    if (kkAkhir) set(at('n_kas_ops'), 'calc', days.map((_, w) => ({ value: kkAkhir.cells[w].value, manual: false })))
     set(at('n_laba_ini'), 'calc', laba.cells.map((c) => ({ ...c })))
     // Salary cash and salary owed follow the Gaji row of Arus Kas (typed over or not), the owed one through the Pengeluaran
     // tab's Gaji. A closed period keeps the figure of its report, moved by what was typed over its own; a period still open

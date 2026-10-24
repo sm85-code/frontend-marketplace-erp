@@ -29,9 +29,23 @@ const NAMA_HALAMAN = { umum: namaMenuBawaan('/operasional-umum'), packing: namaM
 const PATH_HALAMAN = { umum: '/operasional-umum', packing: '/operasional-packing', supplier: '/belanja-supplier', tukang: '/belanja-tukang' } as const
 const selectCls = 'h-9 w-full rounded-md border border-input bg-background px-2 text-sm disabled:opacity-60'
 
-type Isi = { nama: string; kelompok: string; operasional: string }
-const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelompok_id, operasional: k.operasional ?? '' })
-const kirim = (i: Isi) => ({ nama: i.nama.trim(), kelompok: i.kelompok, operasional: i.operasional || null })
+type Isi = { nama: string; kelompok: string; operasional: string; kasKecil: boolean }
+const isiDari = (k: KategoriTransaksi): Isi => ({ nama: k.nama, kelompok: k.kelompok_id, operasional: k.operasional ?? '', kasKecil: !!k.kas_kecil })
+const kirim = (i: Isi) => ({ nama: i.nama.trim(), kelompok: i.kelompok, operasional: i.operasional || null, kas_kecil: i.kasKecil })
+
+/** "Dibayar dari Kas Kecil": the entries come out of the petty cash, not Kas Utama (Arus Kas takes them off Kas Kecil). */
+function PilihKasKecil({ id, isi, setIsi }: { id: string; isi: Isi; setIsi: (i: Isi) => void }) {
+  return (
+    <label htmlFor={id} className="flex items-start gap-2 text-sm">
+      <input id={id} type="checkbox" className="mt-0.5 size-4" checked={isi.kasKecil} onChange={(e) => setIsi({ ...isi, kasKecil: e.target.checked })} />
+      <span>
+        Dibayar dari Kas Kecil
+        <span className="block text-xs text-muted-foreground">Tetap dihitung sebagai biaya, tapi uangnya keluar dari Kas Kecil, bukan Kas Utama.</span>
+      </span>
+    </label>
+  )
+}
+const BadgeKasKecil = ({ k }: { k: KategoriTransaksi }) => (k.arah === 'keluar' && k.kas_kecil ? <Badge variant="outline" className="ml-1">Kas Kecil</Badge> : null)
 /** Names of the two Operasional pages as set on Kelola Aplikasi. */
 function useNamaHalaman() {
   const t = useLabel()
@@ -95,7 +109,7 @@ function Baris(p: PropsBaris) {
     <TableRow className={k.aktif ? '' : 'opacity-60'}>
       <TableCell className="min-w-52"><KolomNama k={k} bisaTulis={bisaTulis} n={n} /><Ganda ganda={p.ganda} /></TableCell>
       <TableCell><Badge variant="secondary">{ARAH_LABEL[k.arah]}</Badge></TableCell>
-      <TableCell className="whitespace-nowrap">{k.operasional ? halaman[k.operasional] : 'Arus Kas langsung'}</TableCell>
+      <TableCell className="whitespace-nowrap">{k.operasional ? halaman[k.operasional] : 'Arus Kas langsung'}<BadgeKasKecil k={k} /></TableCell>
       <TableCell className="whitespace-nowrap">{k.kelompok || 'Tidak masuk laba/rugi'}</TableCell>
       <TableCell className="min-w-56"><Aliran k={k} /></TableCell>
       <TableCell className="whitespace-nowrap">{dipakaiTeks(k)}</TableCell>
@@ -126,6 +140,7 @@ function Kartu(p: PropsBaris) {
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 teks-kecil text-muted-foreground">
         <Badge variant="secondary">{ARAH_LABEL[k.arah]}</Badge>
         <span>{penempatan(k, halaman)}</span>
+        <BadgeKasKecil k={k} />
         <Status k={k} />
         <span>{dipakaiTeks(k)}</span>
         <Ganda ganda={p.ganda} />
@@ -173,6 +188,7 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
           </PilihNative>
         </div>
       )}
+      {k.arah === 'keluar' && <PilihKasKecil id="atur-kas-kecil" isi={isi} setIsi={setIsi} />}
       <DialogFooter>
         <Button type="submit">Simpan</Button>
       </DialogFooter>
@@ -183,9 +199,9 @@ function FormAtur({ k, kelompok, onSimpan }: { k: KategoriTransaksi; kelompok: K
 function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKategori; kelompok: Kelompok[]; buka: boolean; onClose: () => void; onSaved: () => void }) {
   const halaman = useNamaHalaman()
   const tab = useNamaTab()
-  const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
+  const [isi, setIsi] = useState<Isi>({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '', kasKecil: false })
   useEffect(() => {
-    if (buka) setIsi({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '' })
+    if (buka) setIsi({ nama: '', kelompok: kelompok[0]?.id ?? '', operasional: '', kasKecil: false })
   }, [buka, arah]) // eslint-disable-line react-hooks/exhaustive-deps
   const simpan = useMutation({
     mutationFn: () => buatKategori(arah, kirim(isi)),
@@ -229,6 +245,7 @@ function DialogBaru({ arah, kelompok, buka, onClose, onSaved }: { arah: ArahKate
               </PilihNative>
             </div>
           )}
+          {arah === 'keluar' && <PilihKasKecil id="kat-kas-kecil" isi={isi} setIsi={setIsi} />}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
             <Button type="submit" disabled={simpan.isPending || isi.nama.trim().length < 2}>Simpan</Button>
