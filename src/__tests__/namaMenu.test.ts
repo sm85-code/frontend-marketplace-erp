@@ -7,12 +7,12 @@ const t = (id: string, bawaan: string) => diatur[id] ?? bawaan
 describe('labels follow Kelola Aplikasi', () => {
   it('uses the renamed menu and tab names', () => {
     expect(namaMenu(t, '/operasional-packing')).toBe('Operasional Eceran')
-    expect(namaMenu(t, '/operasional-umum')).toBe('Operasional Umum')
+    expect(namaMenu(t, '/operasional-umum')).toBe('Kas Utama')
     expect(namaTab(t, 'pengeluaran')).toBe('Belanja')
     expect(namaTab(t, 'arus_kas')).toBe('Arus Kas')
   })
   it('Kategori Transaksi tabs use the configured names', () => {
-    expect(tabKategori(t).map((x) => x.label)).toEqual(['Arus Kas · Pemasukan', 'Arus Kas · Belanja', 'Operasional Umum', 'Operasional Eceran', 'Belanja Supplier', 'Belanja Tukang'])
+    expect(tabKategori(t).map((x) => x.label)).toEqual(['Arus Kas · Pemasukan', 'Arus Kas · Belanja', 'Kas Utama', 'Operasional Eceran', 'Belanja Supplier', 'Belanja Tukang'])
   })
   it('no hardcoded menu names in pages that show them as labels', () => {
     const files = import.meta.glob(['../pages/KategoriTransaksi.tsx', '../pages/ProcessingParties.tsx', '../pages/ProcessingPrices.tsx', '../components/WorkspaceOverlays.tsx'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>
