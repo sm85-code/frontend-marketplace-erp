@@ -27,7 +27,7 @@ import ProcessingColorField from './ProcessingColorField'
 import { Field, SelectField } from './processingShared'
 import ProcessingVarian from './ProcessingVarian'
 import VarianBanyakPilihan, { type HasilVarian } from './VarianBanyakPilihan'
-import { bersihkanVarian, labelVarian, masalahVarian, ringkasanVarian, varianDari } from '@/lib/varianProduk'
+import { bersihkanVarian, kombinasiBaru, labelVarian, masalahVarian, ringkasanVarian, varianDari } from '@/lib/varianProduk'
 import { useNamaMenu } from '@/lib/namaMenu'
 
 /** A manual paint tariff may have no model; the catalog still needs a name, so it is stored (and shown) as this. */
@@ -53,6 +53,8 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   const [adding, setAdding] = useState(false)
   // A new manual product can be several at once (one per combination of its variant choices).
   const [kombo, setKombo] = useState<HasilVarian>({ baris: [], masalah: null })
+  // Values added to an existing product's variants (Tambah nilai); each new combination is saved as a new product.
+  const [ekstra, setEkstra] = useState<string[][]>([])
   const disimpan = useRef(new Set<string>())
   useEffect(() => { disimpan.current = new Set() }, [edit?.id])
   const banyak = !!edit && edit.kind === 'non_kayu' && adding
@@ -105,7 +107,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
   }
   const rowActions = (price: ProcessingPrice) => <div className="flex items-center gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
-      setAdding(false); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setCariModel(''); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
+      setAdding(false); setEkstra([]); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setCariModel(''); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
     }}>Edit</Button>
     {catalogProduct && <AksiLainnya><Button variant="outline" size="sm" disabled={changing} className={price.active === false ? '' : 'text-destructive'} onClick={() => void changeStatus(price)}>{price.active === false ? 'Aktifkan' : price.in_use ? 'Nonaktifkan' : 'Hapus'}</Button></AksiLainnya>}
   </div>
@@ -348,7 +350,18 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 if (masalah) { setError(masalah); return }
                 setBusy(true)
                 setError('')
+                const baruKombinasi = edit.kind === 'non_kayu' ? kombinasiBaru(edit.varian ?? [], ekstra) : []
+                const salahBaru = baruKombinasi.map(k => masalahVarian(k)).find(Boolean)
+                if (salahBaru) { setError(salahBaru); return }
                 try {
+                  // New sibling products first, so a failure leaves this product untouched and the form open.
+                  for (const k of baruKombinasi) {
+                    const kunci = 'ekstra:' + edit.id + ':' + k.map(v => v.nama + '=' + v.nilai).join('|')
+                    if (disimpan.current.has(kunci)) continue
+                    await saveProcessingPrice({ ...edit, id: crypto.randomUUID(), version: 0, varian: k, ukuran: ringkasanVarian(k) })
+                    disimpan.current.add(kunci)
+                  }
+                  if (baruKombinasi.length) setEkstra([])
                   await saveProcessingPrice(edit.kind === 'non_kayu' ? { ...edit, varian: bersihkanVarian(edit.varian ?? []), ukuran: ringkasanVarian(edit.varian ?? []) } : edit.kind === 'pengecatan' && modeCat === 'manual' && !edit.produk.trim() ? { ...edit, produk: TANPA_MODEL } : edit)
                   await qc.invalidateQueries({ queryKey: ['processing-prices'] })
                   if ((e.nativeEvent as SubmitEvent).submitter?.getAttribute('data-next-size') === 'true') {
@@ -358,8 +371,9 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                   setCategory('all')
                   setSearch('')
                   setPage(1)
-                  toast.success('Harga tersimpan')
+                  toast.success(baruKombinasi.length ? `Tersimpan, ${baruKombinasi.length} produk baru dibuat` : 'Harga tersimpan')
                 } catch (err) {
+                  await qc.invalidateQueries({ queryKey: ['processing-prices'] })
                   setError(getApiError(err))
                 } finally {
                   setBusy(false)
@@ -428,7 +442,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               {edit.kind === 'packing' && <Field title="Jenis packing"><SelectField value={edit.packing_type || 'biasa'} onChange={e => change('packing_type', e.target.value)}><option value="biasa">Biasa</option><option value="kayu">Kayu</option></SelectField></Field>}
               {edit.kind === 'pengecatan' && <ProcessingColorField onEditingChange={setEditingColor} value={edit.warna ?? ''} colors={(q.data?.items || []).filter(p => p.kind === 'pengecatan').map(p => p.warna || '')} onChange={(color, id) => setEdit(v => v ? {...v, warna:color, color_id:id} : v)} />}
               {edit.kind === 'pengecatan' ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Field title="Ukuran"><Input readOnly={modeCat === 'otomatis'} required={modeCat === 'manual'} maxLength={100} value={edit.ukuran} placeholder={modeCat === 'manual' ? 'Contoh: 50x30' : undefined} onChange={e => change('ukuran', e.target.value)}/></Field><Field title={modeCat === 'manual' ? 'SKU (opsional)' : 'SKU produksi'}><Input readOnly={modeCat === 'otomatis'} maxLength={200} value={edit.sku} onChange={e => change('sku', e.target.value)}/></Field></div> : <div className={edit.kind === 'packing' || edit.kind === 'non_kayu' ? 'grid gap-3' : 'grid grid-cols-2 gap-3'}>
-                {banyak ? <div className="col-span-2"><VarianBanyakPilihan key={edit.id} onChange={setKombo} /></div> : edit.kind === 'non_kayu' ? <div className="col-span-2"><ProcessingVarian value={edit.varian ?? []} onChange={varian => setEdit(v => v ? { ...v, varian } : v)} /></div> : <Field title="Ukuran">
+                {banyak ? <div className="col-span-2"><VarianBanyakPilihan key={edit.id} onChange={setKombo} /></div> : edit.kind === 'non_kayu' ? <div className="col-span-2"><ProcessingVarian value={edit.varian ?? []} onChange={varian => setEdit(v => v ? { ...v, varian } : v)} ekstra={ekstra} onEkstra={setEkstra} /></div> : <Field title="Ukuran">
                   <Input
                     maxLength={100}
                     value={edit.ukuran}

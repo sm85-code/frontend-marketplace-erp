@@ -85,3 +85,15 @@ export function masalahGrup(grup: GrupVarian[]): string | null {
 
 /** A stable key for one combination, to keep what was typed for it (SKU, price) while the choices change. */
 export const kunciKombinasi = (k: Varian[]) => k.map((v) => `${v.nama}=${v.nilai}`).join('|')
+
+/**
+ * Editing one product: values added to its variants (Ukuran 80x40 plus 100x50) make new sibling products, one per new
+ * combination. The product itself (every variant on its own value) is left out, so it stays unchanged.
+ */
+export function kombinasiBaru(varian: Varian[], ekstra: string[][]): Varian[][] {
+  const rows = varian.map((v) => ({ nama: rapikan(v.nama), nilai: rapikan(v.nilai) }))
+  if (!rows.some((_, i) => (ekstra[i] ?? []).some((n) => rapikan(n)))) return []
+  const asal = kunciKombinasi(rows.filter((v) => v.nama || v.nilai))
+  const grup: GrupVarian[] = rows.map((v, i) => ({ nama: v.nama, nilai: [v.nilai, ...(ekstra[i] ?? [])] }))
+  return kombinasiVarian(grup).filter((k) => kunciKombinasi(k) !== asal)
+}
