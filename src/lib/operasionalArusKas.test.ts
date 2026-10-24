@@ -188,6 +188,17 @@ describe('Kas Kecil (Operasional Eceran)', () => {
     expect(t).toBe(20)
     expect(k - t).toBe(baris(blok, 'kas_keluar').cells[1].value! - 20)
     expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-20)
+  })
+
+  it('tops Kas Kecil up by what it spent unless a top-up is typed', () => {
+    let l = emptyLembar()
+    l.baris.push({ id: 'c:e', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Eceran' })
+    l = setKategori(l, 'c:e', 'Kas keluar', 'atk_eceran', 'lain_keluar')
+    const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l))
+    expect(lembar.sel['rb:tr_packing|2026-10-11']).toBe('-30')
+    const blok = applyRinci(arusDari(l), days, lembar)
+    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(0)
+    expect(baris(blok, 'transfer').cells[1].value).toBe(0)
     expect(baris(blok, 'kk_awal').cells[1].value).toBe(0)
   })
 })

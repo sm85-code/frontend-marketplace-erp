@@ -5,6 +5,8 @@ import type { KategoriTransaksi } from '@/api/kategori'
 
 /** Sheet key prefix of the Transfer antar kas row "Belanja dibayar dari Kas Kecil" (sheetSections: tr_kk). */
 export const KEY_BELANJA_KAS_KECIL = 'rb:tr_kk'
+/** Sheet key prefix of "Isi ulang Kas Kecil dari Kas Utama (−)" (sheetSections: tr_packing), shown negative. */
+export const KEY_ISI_ULANG_KAS_KECIL = 'rb:tr_packing'
 
 export type OperasionalItem = { tanggal: string; kategori: string; jumlah: string; uraian?: string }
 
@@ -90,7 +92,13 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
     const key = `${KEY_BELANJA_KAS_KECIL}|${days[w]}`
     kecil.set(key, Math.round(((kecil.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
   }
-  for (const [key, value] of kecil) if (sel[key] === undefined && value > 0) sel[key] = String(value)
+  for (const [key, value] of kecil) {
+    if (sel[key] === undefined && value > 0) sel[key] = String(value)
+    // Weekly top-up: by default Kas Kecil is filled back from Kas Utama by what it spent that period, so it returns to its
+    // fixed amount. A figure typed in the top-up row wins.
+    const isi = `${KEY_ISI_ULANG_KAS_KECIL}|${key.slice(KEY_BELANJA_KAS_KECIL.length + 1)}`
+    if (sel[isi] === undefined && value > 0) sel[isi] = String(-value)
+  }
   if (!tempat.size) return { ...lembar, sel }
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
