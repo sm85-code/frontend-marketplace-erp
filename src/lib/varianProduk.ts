@@ -97,3 +97,18 @@ export function kombinasiBaru(varian: Varian[], ekstra: string[][]): Varian[][] 
   const grup: GrupVarian[] = rows.map((v, i) => ({ nama: v.nama, nilai: [v.nilai, ...(ekstra[i] ?? [])] }))
   return kombinasiVarian(grup).filter((k) => kunciKombinasi(k) !== asal)
 }
+
+/**
+ * The new sibling products of an edited product with their prices. With one variant each added value carries its own
+ * price; with several variants the price is set per combination, else the product's own price.
+ */
+export function produkBaruDariEdit(varian: Varian[], ekstra: { nilai: string; harga: string }[][], hargaKombinasi: Record<string, string>, hargaAsal: string): { varian: Varian[]; harga: string }[] {
+  const kombinasi = kombinasiBaru(varian, ekstra.map((e) => e.map((x) => x.nilai)))
+  return kombinasi.map((k) => {
+    if (varian.length === 1) {
+      const n = (ekstra[0] ?? []).find((x) => rapikan(x.nilai).toLocaleLowerCase('id') === k[0].nilai.toLocaleLowerCase('id'))
+      return { varian: k, harga: n?.harga ?? hargaAsal }
+    }
+    return { varian: k, harga: hargaKombinasi[kunciKombinasi(k)] ?? hargaAsal }
+  })
+}
