@@ -1,6 +1,9 @@
 import { barisTujuan, TIDAK_DISAMBUNG } from '@/lib/barisTujuan'
 import { barisKasKeluar, cocokOtomatis } from '@/lib/barisArusKasPilihan'
-import { lembarArusKas } from '@/api/financialReports'
+import { lembarArusKas, overviewArusKas } from '@/api/financialReports'
+import { computeSheet } from '@/lib/sheetEngine'
+import { sheetDays } from '@/lib/sheetDays'
+import { sheetSections } from '@/lib/sheetSections'
 import { useKategori } from '@/api/kategori'
 import { useLabel } from '@/api/pengaturanUi'
 import { idMenu } from '@/config/nav'
@@ -107,10 +110,19 @@ function FormTransaksi({ sasaran, tanggalBaru, sibuk, onSimpan, onHapus }: { sas
 function PetaArusKas({ jenis, periode, pihak, bisaTulis, onSaved }: { jenis: JenisOperasional; periode: string; pihak: PihakOperasional[]; bisaTulis: boolean; onSaved: () => void }) {
   const simpan = useMutation({ mutationFn: (v: { id: string; baris: string }) => simpanPihak(jenis, v.id, v.baris), onSuccess: () => { toast.success('Tersimpan'); onSaved() }, onError: (e) => toast.error(getApiError(e)) })
   const lembar = useQuery({ queryKey: ['financial-arus-kas-lembar', periode], queryFn: () => lembarArusKas(periode), retry: false })
+  // The report's own Kas keluar rows (Tukang Kayu [JOKO] and the like) come from the Arus Kas report itself.
+  const laporan = useQuery({ queryKey: ['arus-kas-laporan-peta', periode], queryFn: () => overviewArusKas(periode), retry: false })
   const daftarKat = useKategori()
-  const pilihan = useMemo(
-    () => (lembar.data ? barisKasKeluar(lembar.data.lembar, daftarKat, new Set(daftarKat.filter((k) => k.operasional === jenis).map((k) => k.id))) : []),
-    [lembar.data, daftarKat, jenis],
+  const pilihan = useMemo(() => {
+    if (!lembar.data) return []
+    const l = lembar.data.lembar
+    let arus
+    if (laporan.data) {
+      const { records, days } = sheetDays(laporan.data, periode)
+      arus = computeSheet(sheetSections(laporan.data), records, days, l).find((b) => b.tabel === 'arus_kas')
+    }
+    return barisKasKeluar(l, daftarKat, new Set(daftarKat.filter((k) => k.operasional === jenis).map((k) => k.id)), arus)
+  }, [lembar.data, laporan.data, daftarKat, jenis, periode],
   )
   const ubah = (p: PihakOperasional, daftar: string[]) => simpan.mutate({ id: p.id, baris: daftar.join('; ') })
   return (
