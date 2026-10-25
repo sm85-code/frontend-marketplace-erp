@@ -301,8 +301,8 @@ export default function PesananPage() {
         utama={<div className="min-w-0 space-y-3" style={{ gridColumn: '1 / -1' }}>
           <div className="flex items-end gap-2">
             <div className="min-w-0 flex-1"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
-            {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="h-10 w-10 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
-            <AksiLainnya className="h-10 w-10 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
+            {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="!h-11 !w-11 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
+            <AksiLainnya className="!h-11 !w-11 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
           </div>
           <div ref={statusScroll} className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg">
             <TabsList aria-label="Status pesanan" className="section-tabs order-status-tabs">
