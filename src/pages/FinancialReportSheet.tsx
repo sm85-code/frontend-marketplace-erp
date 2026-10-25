@@ -23,7 +23,6 @@ import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
-import KartuPembagianLaba from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const months = [
@@ -161,11 +160,11 @@ export default function FinancialReportSheet({
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
-      <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border bg-card px-4 py-2 text-sm" aria-label={`Rekap ${months[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`}>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border bg-card px-3 py-2 sm:gap-x-6 sm:px-4 text-sm md:max-w-2xl" aria-label={`Rekap ${months[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`}>
         {summaries.map((s) => (
-          <div key={s.label} className="flex items-baseline gap-1.5" title={s.note}>
+          <div key={s.label} className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-2" title={s.note}>
             <dt className="text-muted-foreground">{s.label}</dt>
-            <dd className="font-semibold tabular-nums">{s.value === null ? '—' : fmtRp(s.value)}</dd>
+            <dd className="ml-auto whitespace-nowrap text-right text-[clamp(0.75rem,3.4vw,0.875rem)] font-semibold tabular-nums">{s.value === null ? '—' : fmtRp(s.value)}</dd>
           </div>
         ))}
       </dl>
@@ -174,7 +173,6 @@ export default function FinancialReportSheet({
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
       </AksiHalaman>
-      <KartuPembagianLaba month={month} days={days} lembar={lembar} menyimpan={save.isPending} onIsi={(next) => save.mutate(next)} />
       <Tabs defaultValue="3" className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">

@@ -300,7 +300,7 @@ export default function PesananPage() {
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0) - (f.nilai.tahap !== AWAL.tahap ? 1 : 0)}
         utama={<div className="min-w-0 space-y-3" style={{ gridColumn: '1 / -1' }}>
           <div className="flex items-end gap-2 max-md:-mr-[3.25rem]">
-            <div className="min-w-0 flex-1"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
+            <div className="min-w-0 flex-1 [&_label]:sr-only"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
             {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="!h-11 !w-11 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
             <AksiLainnya className="!h-11 !w-11 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
           </div>

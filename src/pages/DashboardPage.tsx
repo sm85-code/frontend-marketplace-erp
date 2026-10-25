@@ -11,9 +11,8 @@ import { qk } from '@/api/keys'
 import type { Dashboard, DashboardProduk, DashboardToko, TahapPesanan } from '@/api/types'
 import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Ban, Clock, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
+import { Ban, Clock, MessageCircle, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
@@ -72,12 +71,12 @@ const KOLOM_PRODUK: KolomTabel<DashboardProduk>[] = [
 function BarisMetrik({ icon: Icon, label, nilai, href }: { icon: ComponentType<{ className?: string }>; label: string; nilai: string; href?: string }) {
   const isi = (
     <>
-      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
-      <span className="text-base font-semibold tabular-nums">{nilai}</span>
+      <Icon className="size-4 shrink-0 self-center text-muted-foreground" aria-hidden="true" />
+      <span className="min-w-0 flex-1 break-words text-sm text-muted-foreground">{label}</span>
+      <span className="shrink-0 text-right text-[clamp(0.75rem,3.4vw,0.875rem)] font-semibold tabular-nums">{nilai}</span>
     </>
   )
-  const kelas = 'flex items-center gap-2 px-3 py-2 lg:py-3'
+  const kelas = 'flex min-w-0 items-baseline gap-2 rounded-md px-2 py-1.5'
   return href ? <Link to={href} className={`${kelas} hover:bg-muted/50`}>{isi}</Link> : <div className={kelas}>{isi}</div>
 }
 
@@ -120,15 +119,15 @@ export default function DashboardPage() {
         <Spinner column label="Memuat ringkasan…" />
       ) : (
         <>
-          <div className="grid grid-cols-1 divide-y overflow-hidden rounded-xl border bg-card lg:grid-cols-5 lg:divide-x lg:divide-y-0">
+          <div className="grid grid-cols-2 gap-x-3 overflow-hidden rounded-xl border bg-card px-1 py-1 sm:gap-x-6 sm:px-2 md:max-w-2xl">
             <BarisMetrik icon={ShoppingBag} label="Jumlah Pesanan" nilai={d.per_tahap.reduce((total, item) => total + item.jumlah, 0).toLocaleString('id-ID')} href={orderUrl()} />
             <BarisMetrik icon={Clock} label="Belum Bayar" nilai={String(tahap.belum_bayar?.jumlah ?? 0)} href={orderUrl('belum_bayar')} />
             <BarisMetrik icon={PackageCheck} label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
             <BarisMetrik icon={Truck} label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
             <BarisMetrik icon={Ban} label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
+            <BarisMetrik icon={MessageCircle} label="Chat perlu dibalas" nilai="Buka ›" href="/chat" />
           </div>
 
-          <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button></section>
           <Bagian judul="Ringkasan per Toko">
             {d.per_toko.some((t) => !t.pesanan) && (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
