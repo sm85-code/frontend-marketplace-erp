@@ -270,7 +270,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               }
               const hal = Math.max(1, Math.ceil(grup.length / perHalaman))
               const kini = Math.min(page, hal)
-              const harga = (r: ProcessingPrice) => <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${r.harga && Number(r.harga) === 0 ? 'text-destructive' : ''}`}>{r.harga ? fmtRp(r.harga) : <span className="font-normal text-muted-foreground">Belum ada harga</span>}{r.harga && Number(r.harga) === 0 && <span className="block text-xs font-normal text-destructive">Harga nol — periksa</span>}</span>
+              const harga = (r: ProcessingPrice) => <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${!r.harga || Number(r.harga) === 0 ? 'text-destructive' : ''}`}>{r.harga ? fmtRp(r.harga) : <span className="font-normal">Belum ada harga</span>}{r.harga && Number(r.harga) === 0 && <span className="block text-xs font-normal text-destructive">Harga nol — periksa</span>}</span>
               const ket = (r: ProcessingPrice) => [labelVarian(r), r.sku].filter(Boolean).join(' · ')
               return <div className="divide-y border-y" aria-label="Katalog Produk Manual">
                 {grup.slice((kini - 1) * perHalaman, kini * perHalaman).map((g) => {
