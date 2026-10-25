@@ -796,17 +796,9 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
       </div>
       <section className="min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm">
         <div className="space-y-2 border-b p-3 sm:p-4">
-          <div className="flex flex-wrap items-center justify-end gap-2 empty:hidden">
-            <h2 className="sr-only">{table === 'tukang' ? 'Produksi Tukang Kayu' : meta.name}</h2>
-            <div className="flex flex-wrap gap-2">
-              {sourceTable && (
-                <Button onClick={() => setPicker(table)}>
-                  <Plus className="h-4 w-4" /> Cek Pesanan
-                </Button>
-              )}
-            </div>
-          </div>
+          <h2 className="sr-only">{table === 'tukang' ? 'Produksi Tukang Kayu' : meta.name}</h2>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -819,6 +811,12 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
                   setPage(1)
                 }}
               />
+            </div>
+            {sourceTable && (
+              <Button size="icon" className="h-10 w-10 shrink-0" aria-label="Cek Pesanan" title="Cek Pesanan" onClick={() => setPicker(table)}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            )}
             </div>
             <SelectField
               aria-label="Filter status pekerjaan"
