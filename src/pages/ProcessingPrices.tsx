@@ -262,6 +262,40 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
               </SelectField>
             )}
             </div>}
+            {kind === 'non_kayu' ? (() => {
+              const grup: { nama: string; isi: ProcessingPrice[] }[] = []
+              for (const p of filtered) {
+                const g = grup.find((x) => x.nama.toLocaleLowerCase('id') === p.produk.trim().toLocaleLowerCase('id'))
+                if (g) g.isi.push(p); else grup.push({ nama: p.produk.trim(), isi: [p] })
+              }
+              const hal = Math.max(1, Math.ceil(grup.length / perHalaman))
+              const kini = Math.min(page, hal)
+              const harga = (r: ProcessingPrice) => <span className={`whitespace-nowrap text-sm font-semibold tabular-nums ${r.harga && Number(r.harga) === 0 ? 'text-destructive' : ''}`}>{r.harga ? fmtRp(r.harga) : <span className="font-normal text-muted-foreground">Belum ada harga</span>}{r.harga && Number(r.harga) === 0 && <span className="block text-xs font-normal text-destructive">Harga nol — periksa</span>}</span>
+              const ket = (r: ProcessingPrice) => [labelVarian(r), r.sku].filter(Boolean).join(' · ')
+              return <div className="divide-y border-y" aria-label="Katalog Produk Manual">
+                {grup.slice((kini - 1) * perHalaman, kini * perHalaman).map((g) => {
+                  const tunggal = g.isi.length === 1 ? g.isi[0] : null
+                  return <div key={g.nama} className="py-3">
+                    <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+                      <div className="min-w-0 flex-1 basis-40">
+                        <p className="break-words text-sm font-semibold [overflow-wrap:break-word]">{g.nama}</p>
+                        {tunggal && ket(tunggal) && <p className="mt-0.5 break-words text-xs text-muted-foreground">{ket(tunggal)}</p>}
+                        {g.isi.every((r) => r.active === false) && <span className="text-xs text-muted-foreground">Nonaktif</span>}
+                      </div>
+                      {tunggal && <div className="ml-auto flex items-center gap-3">{harga(tunggal)}{rowActions(tunggal)}</div>}
+                    </div>
+                    {!tunggal && <ul className="mt-2 space-y-1.5">
+                      {g.isi.map((r) => <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-3">
+                        <span className="min-w-0 flex-1 basis-32 break-words text-sm text-muted-foreground">{ket(r) || 'Tanpa varian'}{r.active === false && <span className="ml-1 text-xs">(nonaktif)</span>}</span>
+                        <div className="ml-auto flex items-center gap-3">{harga(r)}{rowActions(r)}</div>
+                      </li>)}
+                    </ul>}
+                  </div>
+                })}
+                {!grup.length && <p className="py-8 text-center text-sm text-muted-foreground">Belum ada produk yang sesuai.</p>}
+                {grup.length > perHalaman && <div className="flex items-center justify-between gap-2 pt-3"><Paginasi halaman={kini} totalHalaman={hal} onUbah={setPage} /></div>}
+              </div>
+            })() : <>
             <div className="hidden md:block">
               <TabelLokal
                 label={titleOf(kind)}
@@ -314,6 +348,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </div>
               )}
             </div>
+            </>}
           </CardContent>
         </Card>
       ))}

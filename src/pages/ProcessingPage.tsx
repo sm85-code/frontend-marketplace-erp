@@ -20,10 +20,10 @@ function NonKayuTabs() {
   const otomatis = bisa('data_katalog_otomatis')
   const manual = bisa('data_katalog_manual')
   return (
-    <Tabs defaultValue={otomatis ? 'otomatis' : 'manual'}>
+    <Tabs defaultValue={manual ? 'manual' : 'otomatis'}>
       <TabsList className="section-tabs">
-        {otomatis && <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>}
         {manual && <TabsTrigger value="manual">Katalog Manual</TabsTrigger>}
+        {otomatis && <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>}
       </TabsList>
       {otomatis && <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>}
       {manual && <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>}
