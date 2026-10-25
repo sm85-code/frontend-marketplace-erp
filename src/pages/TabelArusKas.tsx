@@ -16,7 +16,7 @@ import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { GRUP_PEMBAGIAN, KEY_PEMBAGIAN } from '@/config/pembagianLaba'
-import { sheetSections } from '@/lib/sheetSections'
+import { GRUP_KAS_KECIL, sheetSections } from '@/lib/sheetSections'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import FinancialSheetTable from './FinancialSheetTable'
@@ -180,7 +180,14 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   // The profit sharing is for the admin (Laporan Keuangan): the read-only Arus Kas page, which staff open, leaves its rows out.
   const tampil = useMemo(() => {
     if (!hanyaLihat) return block
-    const lines = block.lines.filter((l) => (isGroup(l) ? l.label !== GRUP_PEMBAGIAN : !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key)))
+    // Transfer antar kas and Kas Kecil are shown only in Laporan Keuangan; hidden here by group (display only, figures unchanged).
+    const sembunyi = new Set([GRUP_PEMBAGIAN, 'Transfer antar kas', GRUP_KAS_KECIL])
+    let grupNow = ''
+    const lines = block.lines.filter((l) => {
+      if (isGroup(l)) { grupNow = l.label; return !sembunyi.has(l.label) }
+      if (l.def.key === 'akhir') return true
+      return !sembunyi.has(grupNow) && !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key)
+    })
     return { ...block, lines }
   }, [block, hanyaLihat])
   const exportReport = () =>
