@@ -12,6 +12,8 @@ import { Link } from 'react-router-dom'
 import { Plus, RefreshCw, Undo2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { toast } from 'sonner'
+import { Copy } from 'lucide-react'
+import { PLATFORM_LABELS } from '@/config/roles'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
 import type { Pesanan, ResiGabunganHasil } from '@/api/types'
@@ -349,13 +351,40 @@ export default function PesananPage() {
           <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Pilih semua di halaman ini" disabled={!bisaDipilihSemua.length} checked={bisaDipilihSemua.length > 0 && bisaDipilihSemua.every((p) => pilih.ada(p.id))} onCheckedChange={(v) => pilih.ubahBanyak(bisaDipilihSemua, v === true)} />Pilih semua di halaman ini</label>
           <ul className="space-y-3" aria-label="Kartu pesanan">
             {items.map((p) => <li key={p.id} className="space-y-3 rounded-xl border bg-card p-4">
-              <div className="flex items-start gap-3">
-                {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${p.id_eksternal}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
-                <div className="min-w-0 flex-1 break-words">{semuaKolom.find((k) => k.kunci === 'pesanan')?.sel(p)}</div>
-              </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
-                {semuaKolom.filter((k) => k.kunci !== 'pesanan' && (k.kunci === 'toko' || (k.kunci === 'catatan' ? Boolean(p.message_to_seller?.trim()) : k.kunci === 'kota' ? Boolean(p.kota) || kolom.tampil.includes(k.kunci) : kolom.tampil.includes(k.kunci)))).map((k) => <div key={k.kunci} className={`min-w-0 break-words ${['toko', 'produk', 'catatan'].includes(k.kunci) ? 'col-span-2' : ''}`}><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
-              </dl>
+              {(() => {
+                const sel = (kunci: string) => semuaKolom.find((k) => k.kunci === kunci)?.sel(p)
+                const sel1 = (kunci: string, judul?: string) => <div className="min-w-0 break-words"><dt className="mb-1 text-xs text-muted-foreground">{judul ?? semuaKolom.find((k) => k.kunci === kunci)?.judul}</dt><dd className="text-sm">{sel(kunci) || '—'}</dd></div>
+                const blok = ['pesanan', 'kurir', 'produk', 'status', 'tanggal', 'ship_by_date', 'bayar', 'kota', 'toko', 'catatan']
+                const salin = async (teks: string, label: string) => {
+                  try { await navigator.clipboard.writeText(teks); toast.success(`${label} disalin`) } catch { toast.error(`Gagal menyalin ${label.toLowerCase()}. Coba lagi.`) }
+                }
+                return <>
+                  <div className="flex items-start gap-3">
+                    {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${p.id_eksternal}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
+                    <div className="grid min-w-0 flex-1 grid-cols-2 gap-x-4">
+                      <div className="min-w-0 break-words">
+                        <div className="flex items-start gap-1"><span className="min-w-0 break-all font-mono text-sm font-medium">{p.id_eksternal}</span>{p.id_eksternal && <Button size="icon" variant="ghost" className="-mt-1.5 h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${p.id_eksternal}`} title="Salin kode pesanan" onClick={() => salin(p.id_eksternal!, 'Kode pesanan')}><Copy className="h-4 w-4" /></Button>}</div>
+                        <div className="teks-kecil break-words text-muted-foreground">{PLATFORM_LABELS[p.platform]}{p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}</div>
+                      </div>
+                      <div className="min-w-0 break-words">
+                        <div className="flex items-start gap-1"><span className="min-w-0 break-all font-mono text-sm">{p.nomor_resi || '—'}</span>{p.nomor_resi && <Button size="icon" variant="ghost" className="-mt-1.5 h-8 w-8 shrink-0" aria-label={`Salin nomor resi ${p.nomor_resi}`} title="Salin nomor resi" onClick={() => salin(p.nomor_resi!, 'Nomor resi')}><Copy className="h-4 w-4" /></Button>}</div>
+                        <div className="teks-kecil break-words text-muted-foreground">{p.kurir || '—'}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
+                    <div className="col-span-2">{sel1('produk')}</div>
+                    <div className="col-span-2">{sel1('status')}</div>
+                    {sel1('tanggal')}
+                    {sel1('ship_by_date')}
+                    {sel1('bayar')}
+                    {sel1('kota')}
+                    <div className="col-span-2">{sel1('toko')}</div>
+                    {p.message_to_seller?.trim() && <div className="col-span-2">{sel1('catatan')}</div>}
+                    {semuaKolom.filter((k) => !blok.includes(k.kunci) && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className="min-w-0 break-words"><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
+                  </dl>
+                </>
+              })()}
               <div className="border-t pt-3"><AksiPesanan p={p} onCetak={cetakSatu} onProses={(pesanan) => setPengiriman({ pesanan: [pesanan], cetak: false })} cetakSibuk={sedangBekerja} /></div>
             </li>)}
           </ul>
