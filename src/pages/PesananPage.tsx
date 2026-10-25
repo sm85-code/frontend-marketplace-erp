@@ -299,7 +299,7 @@ export default function PesananPage() {
       <BarFilter
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0) - (f.nilai.tahap !== AWAL.tahap ? 1 : 0)}
         utama={<div className="min-w-0 space-y-3" style={{ gridColumn: '1 / -1' }}>
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 max-md:-mr-[3.25rem]">
             <div className="min-w-0 flex-1"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
             {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="!h-11 !w-11 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
             <AksiLainnya className="!h-11 !w-11 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
@@ -388,7 +388,7 @@ export default function PesananPage() {
                     {sel1('bayar')}
                     {sel1('kota')}
                     <div className="col-span-2">{sel1('toko')}</div>
-                    {p.message_to_seller?.trim() && <div className="col-span-2">{sel1('catatan')}</div>}
+                    <div className="col-span-2">{sel1('catatan')}</div>
                     {semuaKolom.filter((k) => !blok.includes(k.kunci) && kolom.tampil.includes(k.kunci)).map((k) => <div key={k.kunci} className="min-w-0 break-words"><dt className="mb-1 text-xs text-muted-foreground">{k.judul}</dt><dd className="text-sm">{k.sel(p)}</dd></div>)}
                   </dl>
                 </>
