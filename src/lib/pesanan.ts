@@ -135,7 +135,7 @@ export const TAHAP_LABELS: Record<TahapPesanan, string> = {
   dibatalkan: 'Dibatalkan',
 }
 
-export const TAHAP_ORDER: TahapPesanan[] = ['belum_bayar', 'perlu_diproses', 'menunggu_kurir', 'dikirim', 'selesai', 'dibatalkan']
+export const TAHAP_ORDER: TahapPesanan[] = ['perlu_diproses', 'menunggu_kurir', 'dikirim', 'selesai', 'belum_bayar', 'dibatalkan']
 
 export const URUTAN_PESANAN = [
   { value: 'terbaru', label: 'Terbaru' },
