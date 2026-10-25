@@ -109,3 +109,8 @@ export type TagihanReseller = { tanggal: string; reseller: string; harga_produk:
 /** From Pemetaan Order for a month, as a reference for the cash-flow table: what is paid out, and what each reseller is billed. Never posted to it. */
 export const biayaProduksiBulan = async (periode: string) =>
   (await api.get<{ periode: string; pembayaran: PembayaranProduksi[]; tagihan: TagihanReseller[] }>('/arus-kas/biaya-produksi', { params: { periode } })).data
+export type RekeningLain = { id: string; nama: string; jenis: string; bank: string; rekening: string }
+export type DaftarRekening = { lain: RekeningLain[]; urutan: string[] }
+/** The admin's saved list of non-craftsman accounts and the order of all rows; null while never saved. */
+export const daftarRekening = async () => (await api.get<DaftarRekening | null>('/arus-kas/rekening-daftar')).data
+export const simpanDaftarRekening = async (d: DaftarRekening) => (await api.put<DaftarRekening>('/arus-kas/rekening-daftar', d)).data
