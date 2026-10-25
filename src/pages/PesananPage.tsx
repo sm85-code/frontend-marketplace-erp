@@ -275,12 +275,7 @@ export default function PesananPage() {
       : `Tersinkron dari Shopee pukul ${jam}`
   }
 
-  return (
-    <Tabs value={tahapDariTautan(f.nilai.tahap) || 'semua'} onValueChange={(tahap) => f.ubah({ tahap: tahap === 'semua' ? '' : tahap })} className="block min-w-0 space-y-4 pb-24">
-      {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
-        {bisa('pesanan_manual', 'tulis') && <Button onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /> Pesanan Manual</Button>}
-        <AksiLainnya>
+  const isiAksiLainnya = <>
           <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
           <Button asChild variant="ghost" className="w-full justify-start gap-2"><Link to="/pesanan/retur"><Undo2 className="size-4" aria-hidden="true" /> Retur & Refund</Link></Button>
           <div className="order-mobile-view flex items-center justify-between gap-3 border-t pt-2 md:hidden" role="group" aria-label="Tampilan pesanan di HP">
@@ -289,13 +284,26 @@ export default function PesananPage() {
           {(['kartu', 'tabel'] as const).map((mode) => <Button key={mode} size="sm" variant={modeHp === mode ? 'default' : 'ghost'} aria-pressed={modeHp === mode} onClick={() => ubahModeHp(mode)}>{mode === 'kartu' ? 'Kartu' : 'Tabel'}</Button>)}
         </div>
       </div>
-</AksiLainnya>
+</>
+
+  return (
+    <Tabs value={tahapDariTautan(f.nilai.tahap) || 'semua'} onValueChange={(tahap) => f.ubah({ tahap: tahap === 'semua' ? '' : tahap })} className="block min-w-0 space-y-4 pb-24">
+      {queryError && <QueryError error={queryError} retry={retryQuery} />}
+      <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
+        <div className="hidden md:contents">
+        {bisa('pesanan_manual', 'tulis') && <Button onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /> Pesanan Manual</Button>}
+        <AksiLainnya>{isiAksiLainnya}</AksiLainnya>
+        </div>
       </BarHalaman>
 
       <BarFilter
         aktif={f.jumlahAktif - (f.nilai.q ? 1 : 0) - (f.nilai.tahap !== AWAL.tahap ? 1 : 0)}
         utama={<div className="min-w-0 space-y-3" style={{ gridColumn: '1 / -1' }}>
-          <FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} />
+          <div className="flex items-end gap-2">
+            <div className="min-w-0 flex-1"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
+            {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="h-10 w-10 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
+            <AksiLainnya className="h-10 w-10 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
+          </div>
           <div ref={statusScroll} className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg">
             <TabsList aria-label="Status pesanan" className="section-tabs order-status-tabs">
               {TAHAP_ORDER.map((tahap) => <TabsTrigger key={tahap} value={tahap}>{TAHAP_LABELS[tahap]} <span className="tabular-nums">({ringkasan?.tahap[tahap] ?? '…'})</span></TabsTrigger>)}
