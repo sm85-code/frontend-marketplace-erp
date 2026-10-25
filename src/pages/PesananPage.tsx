@@ -49,7 +49,7 @@ import type { PengaturanPengiriman } from '@/api/types'
 import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
 
 const DEFAULT_PER_HALAMAN = 25
-const AWAL = { tahap: 'perlu_diproses', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
+const AWAL = { tahap: 'menunggu_kurir', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
 const PILIHAN_RESI = [
   { value: 'belum', label: 'Belum dicetak' },
   { value: 'sudah', label: 'Sudah dicetak' },
