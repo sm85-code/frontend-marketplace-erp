@@ -11,9 +11,8 @@ import { qk } from '@/api/keys'
 import type { Dashboard, DashboardProduk, DashboardToko, TahapPesanan } from '@/api/types'
 import { BarHalaman, FilterPilih, type KolomTabel, TabelLokal } from '@/components/daftar'
 import Spinner from '@/components/Spinner'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Ban, Clock, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
+import { Ban, Clock, MessageCircle, PackageCheck, ShoppingBag, Truck } from 'lucide-react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
 import { PRESET_LABEL, rentangTanggal, type PresetTanggal } from '@/lib/rentang'
@@ -126,9 +125,9 @@ export default function DashboardPage() {
             <BarisMetrik icon={PackageCheck} label="Perlu Diproses" nilai={String(tahap.perlu_diproses?.jumlah ?? 0)} href={orderUrl('perlu_diproses')} />
             <BarisMetrik icon={Truck} label="Menunggu Penyerahan" nilai={String(tahap.menunggu_kurir?.jumlah ?? 0)} href={orderUrl('menunggu_kurir')} />
             <BarisMetrik icon={Ban} label="Permintaan Pembatalan" nilai={d.permintaan_pembatalan == null ? '—' : String(d.permintaan_pembatalan)} />
+            <BarisMetrik icon={MessageCircle} label="Chat perlu dibalas" nilai="Buka ›" href="/chat" />
           </div>
 
-          <section className="flex flex-wrap gap-2" aria-label="Pintasan pekerjaan"><Button asChild variant="outline"><Link to="/chat">Chat perlu dibalas</Link></Button></section>
           <Bagian judul="Ringkasan per Toko">
             {d.per_toko.some((t) => !t.pesanan) && (
               <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
