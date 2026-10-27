@@ -27,6 +27,8 @@ export type RowDef = {
   carry?: string[]
   /** Opening balance: shown in a week without a closed report too, taken from the previous week. */
   showCarried?: boolean
+  /** Typed by hand every week: an open week shows nothing (and counts 0) until a figure is typed; never carried. */
+  manualOpen?: boolean
   deps?: Dep[]
   base: (r: Report) => string
 }
@@ -50,7 +52,7 @@ export const isGroup = (row: RowDef | GroupDef | Line): row is GroupDef => 'grou
 export const cellKey = (row: string, day: string) => `${row}|${day}`
 
 export type Cell = { value: number | null; manual: boolean; /** Ticked as done on the Arus Kas page (only a marker; the figure stays editable in Laporan Keuangan). */ selesai?: boolean }
-export type Line = { def: RowDef; custom: boolean; hidden: boolean; cells: Cell[]; total: number | null }
+export type Line = { def: RowDef; custom: boolean; hidden: boolean; cells: Cell[]; total: number | null; totalNote?: string }
 export type Block = { title: string; tabel: string; lines: (Line | GroupDef)[] }
 
 const num = (value: string | undefined) => {
@@ -110,6 +112,7 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
     const typed = lembar.sel[cellKey(key, days[w])]
     let value: number
     if (row.kind === 'input' && typed !== undefined) value = num(typed)
+    else if (row.manualOpen && !recordOf[w]) value = 0
     else value = baseAt(row, w) + (row.deps ?? []).reduce((sum, dep) => sum + depDelta(dep, w), 0)
     visiting.delete(id)
     memo[w] = value
@@ -141,7 +144,7 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
       if (isGroup(row)) return row
       const isHidden = hidden.has(row.key)
       const cells: Cell[] = days.map((d, w) => ({
-        value: hasData[w] || (row.showCarried && anyBefore[w]) ? round(shownAt(row.key, w)) : null,
+        value: row.manualOpen && !recordOf[w] && lembar.sel[cellKey(row.key, d)] === undefined ? null : hasData[w] || (row.showCarried && anyBefore[w]) ? round(shownAt(row.key, w)) : null,
         manual: lembar.sel[cellKey(row.key, d)] !== undefined && row.kind === 'input',
       }))
       const present = cells.map((c) => c.value).filter((v): v is number => v !== null)
@@ -153,7 +156,10 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
             ? present.at(-1)!
             : round(present.reduce((a, b) => a + b, 0))
       const empty = !!row.autoHide && cells.every((c) => !c.value)
-      return { def: row, custom: custom.has(row.key), hidden: isHidden || empty, cells, total }
+      // A hand-typed row whose last period is not typed yet: the month shows the latest typed period's figure.
+      const lastTyped = cells.map((c) => c.value !== null).lastIndexOf(true)
+      const totalNote = row.manualOpen && lastTyped >= 0 && lastTyped < days.length - 1 && cells[days.length - 1].value === null ? `dari periode terakhir yang diisi (${days[lastTyped].slice(8, 10)}/${days[lastTyped].slice(5, 7)})` : undefined
+      return { def: row, custom: custom.has(row.key), hidden: isHidden || empty, cells, total, totalNote }
     }),
   }))
 }

@@ -197,6 +197,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                   <TableCell className={`whitespace-nowrap text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''} ${cell?.selesai ? SELESAI : ''}`}>
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
+                      {total && line.totalNote && <span className="block text-[10px] font-normal text-muted-foreground">{line.totalNote}</span>}
                       {!total && onCentang && bisaCentang?.(line) && <Centang line={line} week={pick} checked={!!cell?.selesai} onCentang={onCentang} />}
                     </span>
                   </TableCell>
@@ -314,6 +315,7 @@ export default function FinancialSheetTable(props: Props) {
                     ))}
                     <TableCell className={`whitespace-nowrap ${bulanan ? 'bg-primary/5 font-medium' : 'bg-muted/40'} text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''}`}>
                       <Amount value={line.total} manual={false} />
+                      {line.totalNote && <span className="block text-[10px] font-normal text-muted-foreground">{line.totalNote}</span>}
                     </TableCell>
                   </TableRow>
                 )
