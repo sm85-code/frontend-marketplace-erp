@@ -180,7 +180,7 @@ export default function FinancialReportSheet({
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
             {TAB_TAMPIL.map((tabel) => (
-              <TabsTrigger key={tabel} value={String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
+              <TabsTrigger key={tabel} value={tabel === 'transaksi_erp' ? 'erp' : String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
                 {t(idTab(tabel), TAB_LAPORAN.find(([id]) => id === tabel)?.[1] ?? tabel)}
               </TabsTrigger>
             ))}
@@ -191,9 +191,6 @@ export default function FinancialReportSheet({
             {block.tabel === 'pemasukan' ? (
               <div className="min-w-0 space-y-5">
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
-                <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
-                <FinancialPendingReconciliation month={month} />
-                <FinancialSellerBalance month={month} columns={days.length} />
                 {blocks.filter((b) => b.tabel === 'pengeluaran').map((b) => (
                   <FinancialSheetTable key={b.title} block={b} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
                 ))}
@@ -214,6 +211,14 @@ export default function FinancialReportSheet({
             )}
           </TabsContent>
         ))}
+        {/* Tables read from the ERP's own Shopee data (receivables in shipping, pending reconciliation, seller balance). */}
+        <TabsContent value="erp" className="min-w-0">
+          <div className="min-w-0 space-y-5">
+            <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
+            <FinancialPendingReconciliation month={month} />
+            <FinancialSellerBalance month={month} columns={days.length} />
+          </div>
+        </TabsContent>
       </Tabs>
       <EditCellDialog
         target={target}
