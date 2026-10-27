@@ -78,7 +78,7 @@ export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: Kategori
  * The sheet as it is shown: the totals of the Operasional entries stand in the row chosen for each category (see
  * barisUntukKategori) and period, unless that cell has a figure typed by hand, which always wins.
  */
-export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block): Lembar {
+export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block, hariIni: string = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)): Lembar {
   const { hasil: tempat, cari } = tempatBaris(lembar, arus, daftar)
   const kasKecil = new Set(daftar.filter((k) => k.kas_kecil).map((k) => k.id))
   const sel = { ...lembar.sel }
@@ -96,9 +96,11 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   // top-up below instead. Its rows are taken out of Kas keluar and
   // shown as "Belanja Kas Kecil" (see kunciKasKecil / applyRinci); Laba/Rugi still counts them as expenses.
   // Imprest: at each weekly closing Kas Kecil is filled back from Kas Utama by what it spent, so it returns to its fixed
-  // amount. A figure typed in the top-up row wins.
+  // amount. A week still running is not closed yet: no top-up until it has passed. A figure typed in the top-up row wins.
   for (const [key, value] of kecil) {
-    const isi = `${KEY_ISI_ULANG_KAS_KECIL}|${key.slice(KEY_BELANJA_KAS_KECIL.length + 1)}`
+    const hari = key.slice(KEY_BELANJA_KAS_KECIL.length + 1)
+    if (hari >= hariIni) continue
+    const isi = `${KEY_ISI_ULANG_KAS_KECIL}|${hari}`
     if (sel[isi] === undefined && value > 0) sel[isi] = String(-value)
   }
   if (!tempat.size) return { ...lembar, sel }
