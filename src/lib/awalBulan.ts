@@ -6,6 +6,7 @@ import { emptyLembar, isGroup, type Block } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { susunLaporan } from '@/lib/susunLaporan'
 import { applyRinci } from '@/lib/arusKasRinci'
+import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { bulanAntara, bulanSetelah } from '@/lib/labaBulan'
 
 /** Each row's last shown figure of a month: what the next month opens with (Saldo awal Kas Utama = Saldo akhir, Kas Kecil, Neraca). */
@@ -48,7 +49,8 @@ export function useAwalBulan(month: string, data: reports.Overview | undefined):
       const { records: rs, days } = sheetDays(o, m)
       const { plain, sheet, lembarTampil } = susunLaporan(o, rs, days, lb[i].data!.lembar ?? emptyLembar(), op[i].data!, daftar, kelompok, rs.length ? null : awal)
       // Kas Utama and Kas Kecil closing as the Arus Kas table shows them (rolled forward in applyRinci).
-      const arus = applyRinci(sheet.find((b) => b.tabel === 'arus_kas')!, days, lembarTampil)
+      const blok = sheet.find((b) => b.tabel === 'arus_kas')!
+      const arus = applyRinci(blok, days, lembarTampil, kunciKasKecil(lb[i].data!.lembar ?? emptyLembar(), blok, daftar))
       awal = { ...(awal ?? {}), ...posisiAkhir(plain), ...posisiAkhir([arus]) }
     })
     return awal

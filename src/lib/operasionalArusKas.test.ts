@@ -1,3 +1,4 @@
+import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { describe, expect, it } from 'vitest'
 import { KATEGORI_BAWAAN } from '@/api/kategori'
 import type { Overview, Report } from '@/api/financialReports'
@@ -170,35 +171,34 @@ describe('Kas Kecil (Operasional Eceran)', () => {
   const kecil = [{ tanggal: '2026-10-10', kategori: 'atk_eceran', jumlah: '30.00' }]
   const baris = (blok: ReturnType<typeof applyRinci>, key: string) => blok.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)!
 
-  it('gives Kas Kecil spending back to Kas Utama in Transfer antar kas and takes it off the Kas Kecil balance', () => {
+  it('pays Kas Kecil spending out of Kas Kecil: not in Kas keluar (Kas Utama), lowers the Kas Kecil balance', () => {
     let l = emptyLembar()
     l.baris.push({ id: 'c:e', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Eceran' })
     l = setKategori(l, 'c:e', 'Kas keluar', 'atk_eceran', 'lain_keluar')
-    // Week 2 is still open; Kas Kecil topped up by 10 that week.
+    // Week 2 is still open; Kas Kecil topped up by 10 that week (typed: a real top-up).
     l.sel['rb:tr_packing|2026-10-11'] = '-10'
     const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l))
-    expect(lembar.sel['rb:tr_kk|2026-10-04']).toBeUndefined()
-    const blok = applyRinci(arusDari(l), days, lembar)
-    expect(baris(blok, 'tr_kk').cells[1].value).toBe(30)
-    // Still an expense in Kas keluar (counted once in Laba/Rugi) ...
+    expect(lembar.sel['rb:tr_kk|2026-10-11']).toBeUndefined()
+    const kk = kunciKasKecil(l, arusDari(l), KATEGORI_BAWAAN)
+    expect([...kk]).toEqual(['c:e'])
+    const blok = applyRinci(arusDari(l), days, lembar, kk)
+    // The row keeps its figure (Laba/Rugi still counts it as an expense) ...
     expect(baris(blok, 'c:e').cells[1].value).toBe(30)
-    // ... but Kas Utama only lost the top-up, and Kas Kecil lost the spending.
-    const k = baris(blok, 'kas_keluar').cells[1].value!
-    const t = baris(blok, 'transfer').cells[1].value!
-    expect(t).toBe(20)
-    expect(k - t).toBe(baris(blok, 'kas_keluar').cells[1].value! - 20)
+    // ... Kas Utama only lost the top-up, and Kas Kecil: +10 top-up - 30 spending.
+    const lama = applyRinci(arusDari(l), days, lembar)
+    expect(baris(blok, 'kas_keluar').cells[1].value).toBe(baris(lama, 'kas_keluar').cells[1].value! - 30)
+    expect(baris(blok, 'transfer').cells[1].value).toBe(-10)
     expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-20)
   })
 
-  it('tops Kas Kecil up by what it spent unless a top-up is typed', () => {
+  it('no longer tops Kas Kecil up automatically by what it spent', () => {
     let l = emptyLembar()
     l.baris.push({ id: 'c:e', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Eceran' })
     l = setKategori(l, 'c:e', 'Kas keluar', 'atk_eceran', 'lain_keluar')
     const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l))
-    expect(lembar.sel['rb:tr_packing|2026-10-11']).toBe('-30')
-    const blok = applyRinci(arusDari(l), days, lembar)
-    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(0)
+    expect(lembar.sel['rb:tr_packing|2026-10-11']).toBeUndefined()
+    const blok = applyRinci(arusDari(l), days, lembar, kunciKasKecil(l, arusDari(l), KATEGORI_BAWAAN))
+    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-30)
     expect(baris(blok, 'transfer').cells[1].value).toBe(0)
-    expect(baris(blok, 'kk_awal').cells[1].value).toBe(0)
   })
 })

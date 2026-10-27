@@ -1,4 +1,5 @@
 import { applyRinci } from '@/lib/arusKasRinci'
+import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { isGroup, type Block, type Cell, type GroupDef, type Lembar, type Line, type RowDef } from '@/lib/sheetEngine'
 import { KATEGORI_BAWAAN, KELOMPOK_BAWAAN, type Kelompok as KelompokTabel, type KelompokDaftar, type KategoriTransaksi } from '@/api/kategori'
 import { GRUP_KELUAR, GRUP_MASUK, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuangan'
@@ -80,6 +81,8 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
   const kas = plain.find((b) => b.tabel === 'arus_kas')
   if (!kas) return plain
   const arus = applyRinci(kas, days, lembar)
+  // Balances: Kas Kecil spending is paid out of Kas Kecil, not Kas Utama (the expense still counts in Laba/Rugi through `arus`).
+  const saldo = applyRinci(kas, days, lembar, kunciKasKecil(lembar, kas, daftar))
   const lama = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
   const hasData = days.map((_, w) => (arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'kas_masuk')?.cells[w].value ?? null) !== null)
   const present = (w: number, key: string) => hasData[w] || lembar.sel[`${key}|${days[w]}`] !== undefined
@@ -161,7 +164,7 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
   const laba = line('laba_rugi', 'Ringkasan', 'laba', 'Laba bersih', 'calc', selisih(masuk.cells, keluar.cells), { emphasis: true })
   const labaRugi: Block = { title: 'C. LABA / RUGI', tabel: 'laba_rugi', lines: [{ group: true, label: 'Ringkasan', tabel: 'laba_rugi' }, cMasuk, cHpp, kotor, ...lain, laba] }
   const neraca = (b: Block): Block => {
-    const akhir = arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'akhir')
+    const akhir = saldo.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'akhir')
     const lines = b.lines.map((l) => ({ ...l })) as (Line | GroupDef)[]
     const at = (key: string) => lines.find((l): l is Line => !isGroup(l) && l.def.key === key)
     const set = (l: Line | undefined, kind: RowDef['kind'], cells: Cell[]) => {
@@ -172,7 +175,7 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     }
     set(at('n_kas'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value ?? null, manual: false })))
     // Kas Kecil follows its balance in Arus Kas (a figure typed in the old manual row is no longer used).
-    const kkAkhir = arus.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'kk_akhir')
+    const kkAkhir = saldo.lines.find((l): l is Line => !isGroup(l) && l.def.key === 'kk_akhir')
     // Only in periods that have figures (as Kas Utama), so an empty period does not show a lone balance.
     if (kkAkhir) set(at('n_kas_ops'), 'calc', days.map((_, w) => ({ value: akhir?.cells[w].value == null ? null : kkAkhir.cells[w].value, manual: false })))
     set(at('n_laba_ini'), 'calc', laba.cells.map((c) => ({ ...c })))

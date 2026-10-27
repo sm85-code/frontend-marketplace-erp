@@ -92,13 +92,10 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
     const key = `${KEY_BELANJA_KAS_KECIL}|${days[w]}`
     kecil.set(key, Math.round(((kecil.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
   }
-  for (const [key, value] of kecil) {
-    if (sel[key] === undefined && value > 0) sel[key] = String(value)
-    // Weekly top-up: by default Kas Kecil is filled back from Kas Utama by what it spent that period, so it returns to its
-    // fixed amount. A figure typed in the top-up row wins.
-    const isi = `${KEY_ISI_ULANG_KAS_KECIL}|${key.slice(KEY_BELANJA_KAS_KECIL.length + 1)}`
-    if (sel[isi] === undefined && value > 0) sel[isi] = String(-value)
-  }
+  // Kas Kecil spending is paid out of Kas Kecil: it no longer fills a give-back in Transfer antar kas nor an automatic top-up
+  // equal to it (only a top-up actually typed in moves money out of Kas Utama). Its rows are taken out of Kas keluar and
+  // shown as "Belanja Kas Kecil" (see kunciKasKecil / applyRinci); Laba/Rugi still counts them as expenses.
+  void kecil
   if (!tempat.size) return { ...lembar, sel }
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
@@ -115,4 +112,27 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   }
   for (const [key, value] of total) if (sel[key] === undefined && value > 0) sel[key] = String(value)
   return { ...lembar, sel }
+}
+
+/**
+ * Kas keluar rows (and rows added there by hand) that hold only Kas Kecil spending: each of their categories (their own, or
+ * every sub-row's) is marked "Dibayar dari Kas Kecil". They are paid out of Kas Kecil, not Kas Utama.
+ */
+export function kunciKasKecil(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Set<string> {
+  const kecil = new Set(daftar.filter((k) => k.kas_kecil).map((k) => k.id))
+  const out = new Set<string>()
+  if (!kecil.size) return out
+  let grup = ''
+  const keys: string[] = []
+  for (const l of arus.lines) {
+    if (isGroup(l)) grup = l.label
+    else if (grup === GRUP_KELUAR && !(l as Line).def.emphasis && !(l as Line).def.induk) keys.push(l.def.key)
+  }
+  for (const b of splitsOf(lembar)) if (b.grup === GRUP_KELUAR && !keys.includes(b.id)) keys.push(b.id)
+  for (const key of keys) {
+    const anak = anakDari(lembar, key)
+    const kat = anak.length ? anak.map((a) => kategoriRincian(lembar, a.id, key, GRUP_KELUAR, daftar)) : [kategoriDari(lembar, key, GRUP_KELUAR, daftar)]
+    if (kat.every((k) => kecil.has(k))) out.add(key)
+  }
+  return out
 }

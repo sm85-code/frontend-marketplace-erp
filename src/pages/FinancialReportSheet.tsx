@@ -158,7 +158,7 @@ export default function FinancialReportSheet({
     { label: t(idTab('laba_rugi'), 'Laba / Rugi'), value: lineOf('laba')?.total ?? null, icon: TrendingUp, note: 'Akumulasi periode terisi' },
     {
       label: 'Kas Utama',
-      value: lineOf('akhir')?.total ?? data.saldo_awal?.saldo.kas_utama ?? null,
+      value: lineOf('n_kas')?.total ?? lineOf('akhir')?.total ?? data.saldo_awal?.saldo.kas_utama ?? null,
       icon: Wallet,
       note: 'Posisi terakhir',
     },
