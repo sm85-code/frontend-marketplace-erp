@@ -198,6 +198,11 @@ export default function FinancialReportSheet({
                 <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
                 <RujukanBiayaProduksi month={month} />
               </div>
+            ) : block.tabel === 'neraca' ? (
+              <div className="min-w-0 space-y-5">
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
+                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} />
+              </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
             )}
