@@ -207,7 +207,10 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       const urut = ['tr_packing', 'tr_ops']
       const kkKosong = (l: (typeof block.lines)[number] | undefined) => !l || isGroup(l) || l.cells.every((c) => !c.value)
       const belanja = block.lines.filter((l) => !isGroup(l) && (kasKecil.has(l.def.key) || (!!l.def.induk && kasKecil.has(l.def.induk))))
-      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l)) && !(key(l) === 'tr_kk' && kkKosong(l))), ...belanja, byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
+      // The spending row reads "Belanja Kas Kecil" (with the holder in brackets, e.g. [NURUL]); its sub-rows list each spending.
+      const namaBelanja = (label: string) => (/^belanja kas kecil/i.test(label) ? label : `Belanja Kas Kecil${/\[[^\]]+\]/.exec(label)?.[0] ? ` ${/\[[^\]]+\]/.exec(label)![0]}` : ''}`)
+      const belanjaTampil = new Map(belanja.map((l) => [l, isGroup(l) || l.def.induk ? l : { ...l, def: { ...l.def, label: namaBelanja(l.def.label) } }]))
+      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l)) && !(key(l) === 'tr_kk' && kkKosong(l))), ...belanja.map((l) => belanjaTampil.get(l) ?? l), byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
       const lines: typeof block.lines = []
       for (const l of block.lines) {
         const gr = grupOf.get(l)
