@@ -43,7 +43,7 @@ export default function ArusKas() {
               <Button onClick={() => void overview.refetch()}>Coba lagi</Button>
             </div>
           )}
-          {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat denganBulanan />}
+          {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat denganBulanan tanpaCentang={!bisa('arus_kas', 'tulis')} />}
         </TabsContent>
         <TabsContent value="rekening" className="min-w-0">
           <RekeningTukangKayu />
