@@ -44,6 +44,23 @@ type Props = {
   /** Rows whose sub-rows are folded away (tree view of the breakdown), and how to fold/unfold one. */
   lipat?: ReadonlySet<string>
   onLipat?: (key: string) => void
+  /** The total column as the month column: its date range (e.g. "1–31 Okt") and whether the month's books are final. */
+  bulanan?: { rentang: string; final: boolean }
+}
+
+const BULAN_PENDEK = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+/** "1–31 Okt" for a YYYY-MM month. */
+export const rentangBulan = (month: string) => {
+  const y = Number(month.slice(0, 4)), m = Number(month.slice(5))
+  return `1–${new Date(Date.UTC(y, m, 0)).getUTCDate()} ${BULAN_PENDEK[m - 1]}`
+}
+
+function LencanaBulanan({ final }: { final: boolean }) {
+  return final ? (
+    <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">Final</span>
+  ) : (
+    <span className="ml-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Estimasi</span>
+  )
 }
 
 function GroupHead({ group, colSpan, onAddRow, tanpaTambah, onRenameGroup }: { group: GroupDef; colSpan: number; onAddRow: (g: GroupDef) => void; tanpaTambah?: boolean; onRenameGroup?: (g: GroupDef) => void }) {
@@ -139,14 +156,14 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
 }
 
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
-function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, lipat, onLipat }: Props) {
+function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, lipat, onLipat, bulanan }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
   const total = pick >= days.length
   const nomor = bernomor ? nomorBaris(block) : null
   const induk = useMemo(() => punyaRincian(block), [block])
   const options = [
     ...days.map((_, i) => ({ key: String(i), label: 'Periode', sub: weekLabel(i) })),
-    { key: 'total', label: block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah', sub: '' },
+    { key: 'total', label: bulanan ? 'Bulanan' : block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah', sub: bulanan ? `${bulanan.rentang} · ${bulanan.final ? 'Final' : 'Estimasi'}` : '' },
   ]
   return (
     <div className="space-y-3 md:hidden">
@@ -194,7 +211,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 }
 
 export default function FinancialSheetTable(props: Props) {
-  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris } = props
+  const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, bulanan } = props
   const nomor = bernomor ? nomorBaris(block) : null
   const [lipatSendiri, setLipatSendiri] = useState<ReadonlySet<string>>(new Set())
   const induk = useMemo(() => punyaRincian(block), [block])
@@ -243,7 +260,14 @@ export default function FinancialSheetTable(props: Props) {
                     <span className="block text-xs font-normal">{weekLabel(i)}</span>
                   </TableHead>
                 ))}
-                <TableHead className="text-right">{block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah'}</TableHead>
+                {bulanan ? (
+                  <TableHead className="bg-primary/10 text-center" title={block.tabel === 'neraca' ? 'Posisi akhir periode terakhir di bulan ini' : 'Jumlah periode di bulan ini'}>
+                    <span className="block whitespace-nowrap">Bulanan<LencanaBulanan final={bulanan.final} /></span>
+                    <span className="block text-xs font-normal">{bulanan.rentang}</span>
+                  </TableHead>
+                ) : (
+                  <TableHead className="text-right">{block.tabel === 'neraca' ? 'Posisi terakhir' : 'Jumlah'}</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -286,7 +310,7 @@ export default function FinancialSheetTable(props: Props) {
                         </span>
                       </TableCell>
                     ))}
-                    <TableCell className={`whitespace-nowrap bg-muted/40 text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''}`}>
+                    <TableCell className={`whitespace-nowrap ${bulanan ? 'bg-primary/5 font-medium' : 'bg-muted/40'} text-right tabular-nums ${line.def.induk ? GAYA_ANAK : ''}`}>
                       <Amount value={line.total} manual={false} />
                     </TableCell>
                   </TableRow>

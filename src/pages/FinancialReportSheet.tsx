@@ -9,7 +9,7 @@ export { sumAmounts } from '@/lib/financialAmounts'
 import FinancialSellerBalance from './FinancialSellerBalance'
 import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
-import FinancialSheetTable from './FinancialSheetTable'
+import FinancialSheetTable, { rentangBulan } from './FinancialSheetTable'
 import TabelArusKas from './TabelArusKas'
 import RujukanBiayaProduksi from './RujukanBiayaProduksi'
 import { AddRowDialog, EditCellDialog, RenameDialog, type EditTarget } from './FinancialSheetDialogs'
@@ -133,7 +133,7 @@ export default function FinancialReportSheet({
   const exportReport = () =>
     exportCsv(`laporan-${month}.csv`, [
       [title],
-      ['Uraian', ...days.map(dateLabel), 'JUMLAH / POSISI TERAKHIR'],
+      ['Uraian', ...days.map(dateLabel), `BULANAN ${rentangBulan(month)}`],
       ...blocks.flatMap((b) => [
         [b.title],
         ...b.lines.map((line) =>
@@ -158,6 +158,7 @@ export default function FinancialReportSheet({
   ]
   const weekLabel = (i: number) => weekRange(month, i)
   const periodeAwal = periodeBerjalan(month, days.length)
+  const bulanan = { rentang: rentangBulan(month), final: data.bulanan?.final ?? false }
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
@@ -189,24 +190,24 @@ export default function FinancialReportSheet({
           <TabsContent key={block.title} value={String(i)} className="min-w-0">
             {i === 0 ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
                 <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
                 <FinancialSellerBalance month={month} columns={days.length} />
               </div>
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
-                <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
+                <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang denganBulanan />
                 <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
                 <RujukanBiayaProduksi month={month} />
               </div>
             ) : block.tabel === 'neraca' ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
                 <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
               </div>
             ) : (
-              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
+              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
             )}
           </TabsContent>
         ))}
