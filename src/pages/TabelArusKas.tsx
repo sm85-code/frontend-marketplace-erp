@@ -187,10 +187,9 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   const nameOfKey = (key: string) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? ''
 
-  // The Arus Kas page shows the main rows only; the sub-rows (breakdown) are seen and edited in Laporan Keuangan.
-  // The profit sharing is for the admin (Laporan Keuangan): the read-only Arus Kas page, which staff open, leaves its rows out.
   const tampil = useMemo(() => {
-    if (!hanyaLihat) {
+    // Laporan Keuangan and the read-only /arus-kas page show the same layout and figures.
+    {
       // Laporan Keuangan: the profit sharing has its own table below, so its group is left out here (display only; saldo akhir
       // comes from the report). Saldo akhir Kas Utama stays, followed by Kas Kecil.
       // Transfer antar kas and Kas Kecil are one section, in transaction order: Saldo awal Kas Kecil, top-up, spending,
@@ -231,16 +230,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       }
       return { ...block, lines }
     }
-    // Transfer antar kas and Kas Kecil are shown only in Laporan Keuangan; hidden here by group (display only, figures unchanged).
-    const sembunyi = new Set([GRUP_PEMBAGIAN, 'Transfer antar kas', GRUP_KAS_KECIL])
-    let grupNow = ''
-    const lines = block.lines.filter((l) => {
-      if (isGroup(l)) { grupNow = l.label; return !sembunyi.has(l.label) }
-      if (l.def.key === 'akhir') return true
-      return !sembunyi.has(grupNow) && !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key) && !kasKecil.has(l.def.key)
-    })
-    return { ...block, lines }
-  }, [block, hanyaLihat, kasKecil])
+  }, [block, kasKecil])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
