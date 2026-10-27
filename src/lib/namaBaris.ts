@@ -30,7 +30,9 @@ export const setNamaGrup = (lembar: Lembar, tabel: string, original: string, lab
 export const idTab = (tabel: string) => `tab:${tabel}`
 export const idJudul = (tabel: string) => `judul:${tabel}`
 /** The tab buttons of Laporan Keuangan: [table, built-in name], in the order shown. */
-export const TAB_LAPORAN: [string, string][] = [['arus_kas', 'Arus Kas'], ['pemasukan', 'Pemasukan'], ['pengeluaran', 'Pengeluaran'], ['laba_rugi', 'Laba/Rugi'], ['neraca', 'Neraca']]
+export const TAB_LAPORAN: [string, string][] = [['arus_kas', 'Arus Kas'], ['pemasukan', 'Pemasukan'], ['pengeluaran', 'Pengeluaran'], ['laba_rugi', 'Laba/Rugi'], ['neraca', 'Neraca'], ['transaksi', 'Transaksi']]
+/** Tabs actually shown on Laporan Keuangan: Pemasukan and Pengeluaran sit together under Transaksi. */
+export const TAB_TAMPIL = ['arus_kas', 'transaksi', 'laba_rugi', 'neraca'] as const
 export const idGrupSheet = (tabel: string, label: string) => `grupsheet:${tabel}:${label}`
 export const idBaris = (key: string) => `baris:${key}`
 type Teks = (id: string, bawaan: string) => string

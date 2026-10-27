@@ -20,7 +20,7 @@ import { useKategori, useKelompok } from '@/api/kategori'
 import { susunLaporan } from '@/lib/susunLaporan'
 import { sheetDays } from '@/lib/sheetDays'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
-import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
+import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN, TAB_TAMPIL } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import KartuPembagianLaba, { TabelPembagianLaba } from '@/components/KartuPembagianLaba'
@@ -179,21 +179,24 @@ export default function FinancialReportSheet({
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
-            {TAB_LAPORAN.map(([tabel, label]) => (
-              <TabsTrigger key={tabel} value={String(blocks.findIndex((b) => b.tabel === tabel))}>
-                {t(idTab(tabel), label)}
+            {TAB_TAMPIL.map((tabel) => (
+              <TabsTrigger key={tabel} value={String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
+                {t(idTab(tabel), TAB_LAPORAN.find(([id]) => id === tabel)?.[1] ?? tabel)}
               </TabsTrigger>
             ))}
           </TabsList>
         </div>
-        {blocks.map((block, i) => (
+        {blocks.map((block, i) => block.tabel === 'pengeluaran' ? null : (
           <TabsContent key={block.title} value={String(i)} className="min-w-0">
-            {i === 0 ? (
+            {block.tabel === 'pemasukan' ? (
               <div className="min-w-0 space-y-5">
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
                 <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
                 <FinancialPendingReconciliation month={month} />
                 <FinancialSellerBalance month={month} columns={days.length} />
+                {blocks.filter((b) => b.tabel === 'pengeluaran').map((b) => (
+                  <FinancialSheetTable key={b.title} block={b} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
+                ))}
               </div>
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
