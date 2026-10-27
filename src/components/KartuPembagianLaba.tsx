@@ -14,7 +14,7 @@ const NAMA_BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Jul
 const namaBulan = (month: string) => `${NAMA_BULAN[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`
 
 /**
- * Profit split of this month (admin 40%, owner 60%), shown under the Neraca table. Before the month is final (closings
+ * Profit split of this month (Manajer 40%, Owner 60%; the Manajer share keeps the id 'admin'), shown under the Neraca table. Before the month is final (closings
  * cover the 1st to the last day) it is an estimate from the profit so far; only a final month can be filed, into the
  * Pembagian laba rows of the next month's Arus Kas (first period). The backend checks the same. Everyone who opens Laporan Keuangan sees it; only the admin can file it.
  */

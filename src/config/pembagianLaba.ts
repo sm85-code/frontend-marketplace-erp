@@ -1,6 +1,6 @@
 /** Who the monthly net profit is shared with, and how much of it. The whole profit is paid out; none stays in the main cash. The shares add up to 100. */
 export const PENERIMA_LABA = [
-  { id: 'admin', nama: 'Admin', persen: 40 },
+  { id: 'admin', nama: 'Manajer', persen: 40 },
   { id: 'owner', nama: 'Owner', persen: 60 },
 ] as const
 
