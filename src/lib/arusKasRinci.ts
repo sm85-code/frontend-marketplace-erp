@@ -49,7 +49,8 @@ const withCells = (l: Line, cells: Cell[]): Line => ({ ...l, cells, total: total
  * own figure; the group totals (cash in, cash out, transfers) follow those figures, and the opening/closing cash
  * follow the totals, so nothing is left "undivided".
  */
-export function applyRinci(block: Block, days: string[], lembar: Lembar): Block {
+/** `kasKecil`: Kas keluar rows paid out of Kas Kecil; they leave Jumlah kas keluar (Kas Utama) and lower Kas Kecil instead. */
+export function applyRinci(block: Block, days: string[], lembar: Lembar, kasKecil: ReadonlySet<string> = new Set()): Block {
   const labels = block.lines.filter(isGroup).map((g) => g.label)
   const typed = (key: string, d: string) => lembar.sel[`${key}|${d}`]
   const renamed = (l: Line): Line => ({ ...l, def: { ...l.def, kind: 'input', label: nameOf(lembar, l.def.key, l.def.label) } })
@@ -105,7 +106,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       group.push(own, ...kids)
     }
     if (total) {
-      const parents = group.filter((l) => !l.def.induk)
+      const parents = group.filter((l) => !l.def.induk && !kasKecil.has(l.def.key))
       patched.set(
         total.def.key,
         total.cells.map((c, w): Cell => {
@@ -145,7 +146,8 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar): Block 
       const o = w === 0 || close[w - 1].value === null ? kkAwal.cells[w] : { value: close[w - 1].value, manual: false }
       open.push(o)
       const ada = kkAkhir.cells[w].value !== null || akhir?.cells[w].value != null
-      close.push(o.value === null || !ada ? kkAkhir.cells[w] : { value: round(o.value - v('tr_packing', w) - v('tr_ops', w) - v('tr_kk', w)), manual: false })
+      const belanja = [...kasKecil].reduce((s, k) => s + v(k, w), 0)
+      close.push(o.value === null || !ada ? kkAkhir.cells[w] : { value: round(o.value - v('tr_packing', w) - v('tr_ops', w) - v('tr_kk', w) - belanja), manual: false })
     })
     out[out.indexOf(kkAwal)] = withCells(kkAwal, open)
     out[out.indexOf(kkAkhir)] = withCells(kkAkhir, close)

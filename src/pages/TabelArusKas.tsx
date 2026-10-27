@@ -9,7 +9,7 @@ import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
 import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
-import { denganOperasional } from '@/lib/operasionalArusKas'
+import { denganOperasional, kunciKasKecil } from '@/lib/operasionalArusKas'
 import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, hariBerisi, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
@@ -67,7 +67,9 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     [data, lembarHitung, days.join('|'), awalBulan, lembarTampil],
   )
   // Kas keluar rows follow the category order of Kategori Transaksi, then their own up / down order (display only).
-  const block = useMemo(() => urutkanKasKeluar(namai([applyRinci(plainIsi, days, lembarTampil)], lembarHitung, t)[0], lembarHitung, daftarKat), [plainIsi, days, lembarTampil, lembarHitung, t, daftarKat])
+  // Kas keluar rows that hold only Kas Kecil spending: paid out of Kas Kecil, shown as "Belanja Kas Kecil" in its section.
+  const kasKecil = useMemo(() => kunciKasKecil(lembarHitung, plain, daftarKat), [lembarHitung, plain, daftarKat])
+  const block = useMemo(() => urutkanKasKeluar(namai([applyRinci(plainIsi, days, lembarTampil, kasKecil)], lembarHitung, t)[0], lembarHitung, daftarKat), [plainIsi, days, lembarTampil, lembarHitung, t, daftarKat, kasKecil])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
@@ -200,13 +202,18 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       const key = (l: (typeof block.lines)[number]) => (isGroup(l) ? '' : l.def.key)
       const byKey = (k: string) => block.lines.find((l) => key(l) === k)
       const tr = block.lines.filter((l) => grupOf.get(l) === 'Transfer antar kas' && !isGroup(l) && key(l) !== 'transfer')
-      const urut = ['tr_packing', 'tr_kk', 'tr_ops']
-      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l))), byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
+      // Order: Saldo awal, Isi ulang dari Kas Utama, Pengembalian ke Kas Utama, (other rows), Belanja Kas Kecil (+ its
+      // breakdown), Saldo akhir. The old automatic give-back row (tr_kk) shows only if a figure was typed in it.
+      const urut = ['tr_packing', 'tr_ops']
+      const kkKosong = (l: (typeof block.lines)[number] | undefined) => !l || isGroup(l) || l.cells.every((c) => !c.value)
+      const belanja = block.lines.filter((l) => !isGroup(l) && (kasKecil.has(l.def.key) || (!!l.def.induk && kasKecil.has(l.def.induk))))
+      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l)) && !(key(l) === 'tr_kk' && kkKosong(l))), ...belanja, byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
       const lines: typeof block.lines = []
       for (const l of block.lines) {
         const gr = grupOf.get(l)
         if (gr === GRUP_KAS_KECIL || (gr === GRUP_PEMBAGIAN && key(l) !== 'akhir')) continue
         if (gr === 'Transfer antar kas' && !isGroup(l) && key(l) !== 'transfer') continue
+        if (belanja.includes(l)) continue
         lines.push(l)
         if (isGroup(l) && l.label === 'Transfer antar kas') lines.push(...isi)
       }
@@ -218,10 +225,10 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const lines = block.lines.filter((l) => {
       if (isGroup(l)) { grupNow = l.label; return !sembunyi.has(l.label) }
       if (l.def.key === 'akhir') return true
-      return !sembunyi.has(grupNow) && !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key)
+      return !sembunyi.has(grupNow) && !l.def.induk && !KEY_PEMBAGIAN.has(l.def.key) && !kasKecil.has(l.def.key)
     })
     return { ...block, lines }
-  }, [block, hanyaLihat])
+  }, [block, hanyaLihat, kasKecil])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
