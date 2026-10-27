@@ -191,14 +191,16 @@ describe('Kas Kecil (Operasional Eceran)', () => {
     expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-20)
   })
 
-  it('no longer tops Kas Kecil up automatically by what it spent', () => {
+  it('tops Kas Kecil up from Kas Utama by what it spent (imprest), through Transfer antar kas', () => {
     let l = emptyLembar()
     l.baris.push({ id: 'c:e', tabel: RINCI_TABEL, grup: 'Kas keluar', label: 'Eceran' })
     l = setKategori(l, 'c:e', 'Kas keluar', 'atk_eceran', 'lain_keluar')
-    const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l))
-    expect(lembar.sel['rb:tr_packing|2026-10-11']).toBeUndefined()
+    const lembar = denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l), '2026-12-01')
+    // While the week is still running there is no top-up yet.
+    expect(denganOperasional(l, days, kecil, KATEGORI_BAWAAN, arusDari(l), '2026-10-11').sel['rb:tr_packing|2026-10-11']).toBeUndefined()
+    expect(lembar.sel['rb:tr_packing|2026-10-11']).toBe('-30')
     const blok = applyRinci(arusDari(l), days, lembar, kunciKasKecil(l, arusDari(l), KATEGORI_BAWAAN))
-    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(-30)
-    expect(baris(blok, 'transfer').cells[1].value).toBe(0)
+    expect(baris(blok, 'kk_akhir').cells[1].value).toBe(0)
+    expect(baris(blok, 'transfer').cells[1].value).toBe(-30)
   })
 })

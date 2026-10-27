@@ -202,15 +202,24 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       const key = (l: (typeof block.lines)[number]) => (isGroup(l) ? '' : l.def.key)
       const byKey = (k: string) => block.lines.find((l) => key(l) === k)
       const tr = block.lines.filter((l) => grupOf.get(l) === 'Transfer antar kas' && !isGroup(l) && key(l) !== 'transfer')
-      // Order: Saldo awal, Isi ulang dari Kas Utama, Pengembalian ke Kas Utama, (other rows), Belanja Kas Kecil (+ its
-      // breakdown), Saldo akhir. The old automatic give-back row (tr_kk) shows only if a figure was typed in it.
+      // Order (imprest): Saldo awal, Belanja Kas Kecil (+ its breakdown), Saldo sebelum isi ulang, Isi ulang dari Kas Utama
+      // (= the week's spending, at the closing), Pengembalian ke Kas Utama, (other rows), Saldo akhir. The old automatic
+      // give-back row (tr_kk) shows only if a figure was typed in it.
       const urut = ['tr_packing', 'tr_ops']
       const kkKosong = (l: (typeof block.lines)[number] | undefined) => !l || isGroup(l) || l.cells.every((c) => !c.value)
       const belanja = block.lines.filter((l) => !isGroup(l) && (kasKecil.has(l.def.key) || (!!l.def.induk && kasKecil.has(l.def.induk))))
       // The spending row reads "Belanja Kas Kecil" (with the holder in brackets, e.g. [NURUL]); its sub-rows list each spending.
       const namaBelanja = (label: string) => (/^belanja kas kecil/i.test(label) ? label : `Belanja Kas Kecil${/\[[^\]]+\]/.exec(label)?.[0] ? ` ${/\[[^\]]+\]/.exec(label)![0]}` : ''}`)
       const belanjaTampil = new Map(belanja.map((l) => [l, isGroup(l) || l.def.induk ? l : { ...l, def: { ...l.def, label: namaBelanja(l.def.label) } }]))
-      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l)) && !(key(l) === 'tr_kk' && kkKosong(l))), ...belanja.map((l) => belanjaTampil.get(l) ?? l), byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
+      const kkAwal = byKey('kk_awal')
+      const induk = belanja.filter((l) => !isGroup(l) && !l.def.induk)
+      const sebelum = kkAwal && !isGroup(kkAwal) && induk.length
+        ? { ...kkAwal, def: { ...kkAwal.def, key: 'kk_sebelum', label: 'Saldo sebelum isi ulang', kind: 'calc' as const, emphasis: false }, custom: false,
+            cells: kkAwal.cells.map((c, w) => ({ value: c.value === null ? null : Math.round((c.value - induk.reduce((t, l) => t + (isGroup(l) ? 0 : l.cells[w].value ?? 0), 0)) * 100) / 100, manual: false })),
+            total: null as number | null }
+        : undefined
+      if (sebelum) { const v = sebelum.cells.map((c) => c.value).filter((x): x is number => x !== null); sebelum.total = v.length ? v.at(-1)! : null }
+      const isi = [kkAwal, ...belanja.map((l) => belanjaTampil.get(l) ?? l), sebelum, ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l)) && !(key(l) === 'tr_kk' && kkKosong(l))), byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
       const lines: typeof block.lines = []
       for (const l of block.lines) {
         const gr = grupOf.get(l)

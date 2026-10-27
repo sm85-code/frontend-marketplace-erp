@@ -78,7 +78,7 @@ export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: Kategori
  * The sheet as it is shown: the totals of the Operasional entries stand in the row chosen for each category (see
  * barisUntukKategori) and period, unless that cell has a figure typed by hand, which always wins.
  */
-export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block): Lembar {
+export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block, hariIni: string = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)): Lembar {
   const { hasil: tempat, cari } = tempatBaris(lembar, arus, daftar)
   const kasKecil = new Set(daftar.filter((k) => k.kas_kecil).map((k) => k.id))
   const sel = { ...lembar.sel }
@@ -92,10 +92,17 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
     const key = `${KEY_BELANJA_KAS_KECIL}|${days[w]}`
     kecil.set(key, Math.round(((kecil.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
   }
-  // Kas Kecil spending is paid out of Kas Kecil: it no longer fills a give-back in Transfer antar kas nor an automatic top-up
-  // equal to it (only a top-up actually typed in moves money out of Kas Utama). Its rows are taken out of Kas keluar and
+  // Kas Kecil spending is paid out of Kas Kecil: it no longer fills a give-back in Transfer antar kas; Kas Utama pays the
+  // top-up below instead. Its rows are taken out of Kas keluar and
   // shown as "Belanja Kas Kecil" (see kunciKasKecil / applyRinci); Laba/Rugi still counts them as expenses.
-  void kecil
+  // Imprest: at each weekly closing Kas Kecil is filled back from Kas Utama by what it spent, so it returns to its fixed
+  // amount. A week still running is not closed yet: no top-up until it has passed. A figure typed in the top-up row wins.
+  for (const [key, value] of kecil) {
+    const hari = key.slice(KEY_BELANJA_KAS_KECIL.length + 1)
+    if (hari >= hariIni) continue
+    const isi = `${KEY_ISI_ULANG_KAS_KECIL}|${hari}`
+    if (sel[isi] === undefined && value > 0) sel[isi] = String(-value)
+  }
   if (!tempat.size) return { ...lembar, sel }
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
