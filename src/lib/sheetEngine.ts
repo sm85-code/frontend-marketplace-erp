@@ -60,9 +60,9 @@ const num = (value: string | undefined) => {
 const round = (n: number) => Math.round(n * 100) / 100
 
 /** `awal`: the previous month's closing figure of each row, for a month whose first period has no closed report. */
-export function computeSheet(sections: SectionDef[], records: Report[], days: string[], lembar: Lembar, awal?: Record<string, number> | null): Block[] {
+export function computeSheet(sections: SectionDef[], records: Report[], days: string[], lembar: Lembar, awal?: Record<string, number> | null, hariAda?: ReadonlySet<string>): Block[] {
   const recordOf = days.map((d) => records.find((r) => r.tanggal === d))
-  const hasData = days.map((d, w) => !!recordOf[w] || Object.keys(lembar.sel).some((k) => !k.startsWith('ok:') && k.endsWith(`|${d}`)))
+  const hasData = days.map((d, w) => !!recordOf[w] || !!hariAda?.has(d) || Object.keys(lembar.sel).some((k) => !k.startsWith('ok:') && k.endsWith(`|${d}`)))
   const hidden = new Set(lembar.hapus)
 
   // Rows incl. the ones added by hand, inserted at the end of their group.
@@ -157,3 +157,7 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
     }),
   }))
 }
+
+/** Periods that have any figure in the sheet (typed, or filled from Operasional entries): an open week with entries shows its totals. */
+export const hariBerisi = (lembar: Lembar, days: string[]): Set<string> =>
+  new Set(days.filter((d) => Object.keys(lembar.sel).some((k) => !k.startsWith('ok:') && k.endsWith(`|${d}`))))
