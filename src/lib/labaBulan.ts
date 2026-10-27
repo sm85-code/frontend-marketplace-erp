@@ -30,7 +30,7 @@ export function useLabaBulan(month: string, aktif: boolean): number | null {
     const { records, days } = sheetDays(overview.data, month)
     if (!records.length && !Object.keys(lembar.data.lembar.sel).length) return 0
     const { plain } = susunLaporan(overview.data, records, days, lembar.data.lembar ?? emptyLembar(), operasional.data, daftar, kelompok)
-    const baris = plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'laba')
+    const baris = plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'n_laba_ini') ?? plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'laba')
     return baris?.total ?? 0
   }, [overview.data, lembar.data, operasional.data, daftar, kelompok, month])
 }
@@ -84,7 +84,7 @@ export function useLabaBanyakBulan(bulan: string[], aktif: boolean): { laba: num
         return
       }
       const { plain } = susunLaporan(o, records, days, l.lembar ?? emptyLembar(), p, daftar, kelompok)
-      const baris = plain.flatMap((b) => b.lines).find((x): x is Line => !isGroup(x) && x.def.key === 'laba')
+      const baris = plain.flatMap((b) => b.lines).find((x): x is Line => !isGroup(x) && x.def.key === 'n_laba_ini') ?? plain.flatMap((b) => b.lines).find((x): x is Line => !isGroup(x) && x.def.key === 'laba')
       laba.push(baris?.total ?? 0)
     })
     return { laba, kosong }

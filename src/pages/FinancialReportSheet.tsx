@@ -90,6 +90,8 @@ export default function FinancialReportSheet({
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const lineOf = (key: string) => blocks.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)
 
+  // The profit split reads the Neraca: its "Laba/rugi periode berjalan" for the month (finished weeks only while the month runs).
+  const labaNeraca = lineOf('n_laba_ini')?.total ?? lineOf('laba')?.total ?? 0
   const [target, setTarget] = useState<(EditTarget & { week: number }) | null>(null)
   const [addTo, setAddTo] = useState<GroupDef | null>(null)
   const openEdit = (line: Line, week: number) =>
@@ -205,13 +207,13 @@ export default function FinancialReportSheet({
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
                 <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang denganBulanan tanpaUbah={ro} />
-                <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
+                <TabelPembagianLaba month={month} laba={labaNeraca} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
                 <RujukanBiayaProduksi month={month} />
               </div>
             ) : block.tabel === 'neraca' ? (
               <div className="min-w-0 space-y-5">
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
-                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
+                <KartuPembagianLaba month={month} laba={labaNeraca} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
               </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
