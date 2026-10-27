@@ -10,6 +10,7 @@ import BarHalaman from '@/components/daftar/BarHalaman'
 import Spinner from '@/components/Spinner'
 import TabelArusKas from './TabelArusKas'
 import RekeningTukangKayu from './RekeningTukangKayu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const monthNow = () => {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit' }).formatToParts(new Date())
@@ -27,15 +28,27 @@ export default function ArusKas() {
         <Label htmlFor="cash-month">Bulan</Label>
         <Input id="cash-month" type="month" className="w-44" value={month} onChange={(e) => setMonth(e.target.value)} />
       </BarHalaman>
-      {overview.isLoading && <Spinner label="Memuat arus kas…" />}
-      {overview.error && (
-        <div role="alert">
-          <p>{getApiError(overview.error)}</p>
-          <Button onClick={() => void overview.refetch()}>Coba lagi</Button>
+      <Tabs defaultValue="arus" className="min-w-0">
+        <div className="min-w-0 overflow-x-auto">
+          <TabsList className="section-tabs order-status-tabs" aria-label="Bagian arus kas">
+            <TabsTrigger value="arus">Arus Kas</TabsTrigger>
+            <TabsTrigger value="rekening">Rekening</TabsTrigger>
+          </TabsList>
         </div>
-      )}
-      {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat />}
-      <RekeningTukangKayu />
+        <TabsContent value="arus" className="min-w-0 space-y-5">
+          {overview.isLoading && <Spinner label="Memuat arus kas…" />}
+          {overview.error && (
+            <div role="alert">
+              <p>{getApiError(overview.error)}</p>
+              <Button onClick={() => void overview.refetch()}>Coba lagi</Button>
+            </div>
+          )}
+          {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat />}
+        </TabsContent>
+        <TabsContent value="rekening" className="min-w-0">
+          <RekeningTukangKayu />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
