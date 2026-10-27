@@ -16,17 +16,18 @@ const namaBulan = (month: string) => `${NAMA_BULAN[Number(month.slice(5)) - 1]} 
 /**
  * Profit split of this month (admin 40%, owner 60%), shown under the Neraca table. Before the month is final (closings
  * cover the 1st to the last day) it is an estimate from the profit so far; only a final month can be filed, into the
- * Pembagian laba rows of the next month's Arus Kas (first period). The backend checks the same. Only the admin sees this.
+ * Pembagian laba rows of the next month's Arus Kas (first period). The backend checks the same. Everyone who opens Laporan Keuangan sees it; only the admin can file it.
  */
 export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { month: string; laba: number; final: boolean; saldoAwal: SaldoAwalLaba }) {
-  const { user } = useAuth()
+  const { user, bisa } = useAuth()
   const admin = user?.role === 'admin'
+  const lihat = bisa('laporan_keuangan')
   const qc = useQueryClient()
   const next = bulanSetelah(month)
   const aktif = admin && final
   const ovNext = useQuery({ queryKey: ['financial-reports', 'laba-bulan', next], queryFn: () => reports.overview(next), enabled: aktif })
   const manualNext = useQuery({ queryKey: ['financial-manual-sheet', next], queryFn: () => reports.lembarManual(next), enabled: aktif })
-  const hasil = usePembagianLaba(month, laba, saldoAwal, admin)
+  const hasil = usePembagianLaba(month, laba, saldoAwal, lihat)
   const { rugiMasuk, dibagi, rugiKeluar } = hasil
   const riwayat = hasil.siap ? hasil : null
   const bagian = bagiLaba(dibagi)
@@ -45,7 +46,7 @@ export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { 
     },
     onError: (e) => toast.error(getApiError(e)),
   })
-  if (!admin) return null
+  if (!lihat) return null
 
   return (
     <Card>
@@ -78,7 +79,7 @@ export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { 
             </>
           ) : null}
         </dl>
-        {final && dibagi > 0 ? (
+        {admin && final && dibagi > 0 ? (
           <Button variant={sudah ? 'outline' : 'default'} disabled={sudah || save.isPending || !hari || !manualNext.data || !riwayat} onClick={() => save.mutate()}>
             {sudah ? `Sudah diisi di Arus Kas ${namaBulan(next)}` : `Isi pembagian laba di Arus Kas ${namaBulan(next)}`}
           </Button>
@@ -107,10 +108,10 @@ export function CatatanPembagian({ hasil }: { hasil: ReturnType<typeof usePembag
 
 /** The same split as the Neraca card, as its own table under Arus Kas. Read only; the figures come from usePembagianLaba. */
 export function TabelPembagianLaba({ month, laba, final, saldoAwal }: { month: string; laba: number; final: boolean; saldoAwal: SaldoAwalLaba }) {
-  const { user } = useAuth()
-  const admin = user?.role === 'admin'
-  const hasil = usePembagianLaba(month, laba, saldoAwal, admin)
-  if (!admin) return null
+  const { bisa } = useAuth()
+  const lihat = bisa('laporan_keuangan')
+  const hasil = usePembagianLaba(month, laba, saldoAwal, lihat)
+  if (!lihat) return null
   const bagian = bagiLaba(hasil.dibagi)
   const baris: [string, string, string?][] = [
     [final ? 'Laba/rugi bulan ini' : 'Laba/rugi bulan ini (sampai saat ini)', fmtRp(hasil.laba)],
