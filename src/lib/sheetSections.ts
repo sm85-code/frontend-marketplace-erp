@@ -48,7 +48,7 @@ export function sheetSections(data: Overview): SectionDef[] {
         key: string,
         label: string,
         base: RowDef['base'],
-        opt: { kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean; autoHide?: boolean; carry?: string[]; showCarried?: boolean } = {},
+        opt: { manualOpen?: boolean; kind?: 'input' | 'calc'; total?: RowDef['total']; emphasis?: boolean; deps?: Dep[]; total_row?: boolean; autoHide?: boolean; carry?: string[]; showCarried?: boolean } = {},
       ) {
         rows.push({
           key,
@@ -61,6 +61,7 @@ export function sheetSections(data: Overview): SectionDef[] {
           autoHide: opt.autoHide,
           carry: opt.carry,
           showCarried: opt.showCarried,
+          manualOpen: opt.manualOpen,
           deps: opt.deps,
           base,
         })
@@ -170,7 +171,7 @@ export function sheetSections(data: Overview): SectionDef[] {
   e.row('n_stok', 'Stok produk', end('stok'), { total: 'last' })
   e.row('n_kas_ops', 'Kas Kecil', end('kas_operasional'), { total: 'last' })
   e.row('n_iklan', 'Saldo iklan prabayar', end('iklan_prabayar'), { total: 'last' })
-  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last' })
+  e.row('n_piutang', 'Piutang pesanan dalam pengiriman', end('piutang_pengiriman'), { total: 'last', manualOpen: true })
   e.row('n_saldo_toko', 'Saldo tertahan toko / Shopee', end('saldo_toko'), { total: 'last' })
   e.row('n_kas_gaji', 'Kas gaji (disisihkan)', end('kas_gaji'), { total: 'last', deps: [cum('k_gaji')] })
   e.row('jml_aset', 'Jumlah aset', (r) => r.hasil.neraca.aset, { ...calcTotal, total: 'last', deps: [G('neraca', 'Aset')] })

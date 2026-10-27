@@ -238,6 +238,11 @@ export function ringkasDariArusKas(plain: Block[], days: string[], lembar: Lemba
     set(at('jml_ekuitas'), 'calc', ekuitas)
     set(at('jml_kew_ekuitas'), 'calc', plus(utang, ekuitas))
     set(at('selisih'), 'calc', plus(plus(aset, utang, -1), ekuitas, -1))
+    // Month column: the month-end position of each asset row (a hand-typed row not yet typed in the last period keeps its latest typed figure).
+    const jmlAset = at('jml_aset'), selisih = at('selisih')
+    const asetRows = per.get('Aset') ?? []
+    if (jmlAset && asetRows.some((l) => l.total !== null)) jmlAset.total = round(sum(asetRows.map((l) => l.total ?? 0)))
+    if (selisih && jmlAset?.total != null) selisih.total = round(jmlAset.total - (at('jml_utang')?.total ?? 0) - (at('jml_ekuitas')?.total ?? 0))
     return { ...b, lines }
   }
   return plain.map((b) =>
