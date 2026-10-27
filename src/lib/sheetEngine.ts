@@ -51,7 +51,7 @@ export const emptyLembar = (): Lembar => ({ sel: {}, baris: [], hapus: [] })
 export const isGroup = (row: RowDef | GroupDef | Line): row is GroupDef => 'group' in row
 export const cellKey = (row: string, day: string) => `${row}|${day}`
 
-export type Cell = { value: number | null; manual: boolean; /** Ticked as done on the Arus Kas page (only a marker; the figure stays editable in Laporan Keuangan). */ selesai?: boolean }
+export type Cell = { value: number | null; manual: boolean; /** Ticked as done on the Arus Kas page (only a marker; the figure stays editable in Laporan Keuangan). */ selesai?: boolean; /** Read-only status worked out from the sub-rows' ticks (rows with a breakdown on /arus-kas). */ turunan?: 'semua' | 'sebagian' | 'kosong' }
 export type Line = { def: RowDef; custom: boolean; hidden: boolean; cells: Cell[]; total: number | null; totalNote?: string }
 export type Block = { title: string; tabel: string; lines: (Line | GroupDef)[] }
 
