@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { fmtRp, getApiError } from '@/api/client'
 import { bagiLaba, keyPembagian } from '@/config/pembagianLaba'
 import { useAuth } from '@/lib/auth'
-import { bulanAntara, bulanSetelah, hitungBagi, rugiBerjalan, useLabaBanyakBulan } from '@/lib/labaBulan'
+import { bulanSetelah, usePembagianLaba, type SaldoAwalLaba } from '@/lib/labaBulan'
 import { cellKey, emptyLembar } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 
@@ -18,7 +18,7 @@ const namaBulan = (month: string) => `${NAMA_BULAN[Number(month.slice(5)) - 1]} 
  * cover the 1st to the last day) it is an estimate from the profit so far; only a final month can be filed, into the
  * Pembagian laba rows of the next month's Arus Kas (first period). The backend checks the same. Only the admin sees this.
  */
-export default function KartuPembagianLaba({ month, laba, final, mulai }: { month: string; laba: number; final: boolean; mulai?: string }) {
+export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { month: string; laba: number; final: boolean; saldoAwal: SaldoAwalLaba }) {
   const { user } = useAuth()
   const admin = user?.role === 'admin'
   const qc = useQueryClient()
@@ -26,10 +26,9 @@ export default function KartuPembagianLaba({ month, laba, final, mulai }: { mont
   const aktif = admin && final
   const ovNext = useQuery({ queryKey: ['financial-reports', 'laba-bulan', next], queryFn: () => reports.overview(next), enabled: aktif })
   const manualNext = useQuery({ queryKey: ['financial-manual-sheet', next], queryFn: () => reports.lembarManual(next), enabled: aktif })
-  const lalu = bulanAntara(mulai && mulai < month ? mulai : month, month)
-  const riwayat = useLabaBanyakBulan(lalu, admin)
-  const rugiMasuk = riwayat ? rugiBerjalan(riwayat.laba) : 0
-  const { dibagi, rugiKeluar } = hitungBagi(laba, rugiMasuk)
+  const hasil = usePembagianLaba(month, laba, saldoAwal, admin)
+  const { rugiMasuk, dibagi, rugiKeluar } = hasil
+  const riwayat = hasil.siap ? hasil : null
   const bagian = bagiLaba(dibagi)
   const hari = ovNext.data ? sheetDays(ovNext.data, next).days[0] : undefined
   const lembar = manualNext.data?.lembar ?? emptyLembar()
@@ -84,12 +83,63 @@ export default function KartuPembagianLaba({ month, laba, final, mulai }: { mont
             {sudah ? `Sudah diisi di Arus Kas ${namaBulan(next)}` : `Isi pembagian laba di Arus Kas ${namaBulan(next)}`}
           </Button>
         ) : null}
-        {riwayat && riwayat.kosong.length ? (
-          <p className="text-xs text-muted-foreground">Tanpa data (dihitung Rp0): {riwayat.kosong.map(namaBulan).join(', ')}.</p>
-        ) : null}
-        {!lalu.length ? <p className="text-xs text-muted-foreground">Tidak ada data bulan sebelumnya; rugi bawaan dihitung Rp0.</p> : null}
+        <CatatanPembagian hasil={hasil} />
         {!final ? <p className="text-xs text-muted-foreground">Angka bisa berubah. Pembagian laba bisa diisi setelah tutup buku mencakup tanggal 1 sampai akhir bulan.</p> : null}
       </CardContent>
     </Card>
+  )
+}
+
+/** Where the loss brought in comes from: the opening figure typed by hand, and months without any data. */
+export function CatatanPembagian({ hasil }: { hasil: ReturnType<typeof usePembagianLaba> }) {
+  return (
+    <>
+      {hasil.awal ? (
+        <p className="text-xs text-muted-foreground">
+          Saldo laba/rugi sampai {namaBulan(hasil.awal.bulan)} (input manual di saldo awal): {fmtRp(hasil.awal.nilai)}
+          {hasil.awal.nilai > 0 ? ', dianggap sudah dibagi.' : '.'}
+        </p>
+      ) : null}
+      {hasil.kosong.length ? <p className="text-xs text-muted-foreground">Tanpa data (dihitung Rp0): {hasil.kosong.map(namaBulan).join(', ')}.</p> : null}
+    </>
+  )
+}
+
+/** The same split as the Neraca card, as its own table under Arus Kas. Read only; the figures come from usePembagianLaba. */
+export function TabelPembagianLaba({ month, laba, final, saldoAwal }: { month: string; laba: number; final: boolean; saldoAwal: SaldoAwalLaba }) {
+  const { user } = useAuth()
+  const admin = user?.role === 'admin'
+  const hasil = usePembagianLaba(month, laba, saldoAwal, admin)
+  if (!admin) return null
+  const bagian = bagiLaba(hasil.dibagi)
+  const baris: [string, string, string?][] = [
+    [final ? 'Laba/rugi bulan ini' : 'Laba/rugi bulan ini (sampai saat ini)', fmtRp(hasil.laba)],
+    ['Rugi dibawa dari bulan lalu', hasil.siap ? (hasil.rugiMasuk > 0 ? `- ${fmtRp(hasil.rugiMasuk)}` : fmtRp(0)) : '…'],
+    ['Laba yang dibagikan', fmtRp(hasil.dibagi), 'font-semibold'],
+    ...bagian.map((p): [string, string, string] => [`${p.nama} ${p.persen}%`, fmtRp(p.jumlah), 'pl-6']),
+    ...(hasil.rugiKeluar > 0 ? [['Rugi dibawa ke bulan depan', fmtRp(hasil.rugiKeluar), 'text-red-700'] as [string, string, string]] : []),
+  ]
+  return (
+    <div className="min-w-0 space-y-2 rounded-xl border bg-card p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-heading font-semibold">Pembagian laba {namaBulan(month)}</h3>
+        {final ? (
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Final</span>
+        ) : (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Estimasi, belum tutup buku</span>
+        )}
+      </div>
+      <table className="w-full max-w-lg text-sm" aria-label={`Pembagian laba ${namaBulan(month)}`}>
+        <tbody>
+          {baris.map(([label, nilai, cls]) => (
+            <tr key={label} className="border-b last:border-0">
+              <td className={`py-1.5 ${cls ?? ''}`}>{label}</td>
+              <td className={`py-1.5 text-right tabular-nums ${cls === 'pl-6' ? '' : cls ?? ''}`}>{nilai}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <CatatanPembagian hasil={hasil} />
+    </div>
   )
 }

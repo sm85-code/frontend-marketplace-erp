@@ -23,7 +23,7 @@ import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
-import KartuPembagianLaba from '@/components/KartuPembagianLaba'
+import KartuPembagianLaba, { TabelPembagianLaba } from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const months = [
@@ -197,12 +197,13 @@ export default function FinancialReportSheet({
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
                 <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
+                <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
                 <RujukanBiayaProduksi month={month} />
               </div>
             ) : block.tabel === 'neraca' ? (
               <div className="min-w-0 space-y-5">
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
-                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} mulai={data.saldo_awal?.tanggal?.slice(0, 7)} />
+                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
               </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
