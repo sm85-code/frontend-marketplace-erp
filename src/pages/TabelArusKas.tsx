@@ -8,6 +8,7 @@ import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
+import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
 import { denganOperasional } from '@/lib/operasionalArusKas'
 import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
@@ -45,12 +46,14 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     },
   })
   const daftarKat = useKategori()
+  // A month with no closed report yet opens with the previous month's closing figures.
+  const awalBulan = useAwalBulan(month, data)
   // The Operasional entries of the month fill their rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
   const plain = useMemo(
-    () => computeSheet(sheetSections(data), records, days, lembarHitung).find((b) => b.tabel === 'arus_kas')!,
+    () => computeSheet(sheetSections(data), records, days, lembarHitung, awalBulan).find((b) => b.tabel === 'arus_kas')!,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembarHitung, days.join('|')],
+    [data, lembarHitung, days.join('|'), awalBulan],
   )
   const lembarTampil = useMemo(
     () => denganOperasional(lembarHitung, days, operasional.data ?? [], daftarKat, plain),
@@ -219,7 +222,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           </Button>
         </AksiHalaman>
       )}
-      <FinancialSheetTable ketBaris={ketKategori} block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat || tanpaUbah} tanpaTambah={hanyaLihat || tanpaUbah} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} bulanan={denganBulanan ? { rentang: rentangBulan(month), final: data.bulanan?.final ?? false } : undefined} onRenameGroup={hanyaLihat || tanpaUbah ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable ketBaris={ketKategori} block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat || tanpaUbah} tanpaTambah={hanyaLihat || tanpaUbah} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} bulanan={denganBulanan ? { rentang: rentangBulan(month), final: bulanFinal(data, month) } : undefined} onRenameGroup={hanyaLihat || tanpaUbah ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}

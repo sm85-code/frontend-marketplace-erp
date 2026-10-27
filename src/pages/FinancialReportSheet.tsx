@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
 import { useLabel } from '@/api/pengaturanUi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -77,12 +78,13 @@ export default function FinancialReportSheet({
   })
   const daftarKat = useKategori()
   const kelompok = useKelompok()
+  const awalBulan = useAwalBulan(month, data)
   // The Operasional entries of the month fill their Arus Kas rows; a figure typed by hand in a cell wins over them.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, false], queryFn: () => reports.operasionalBulan(month, false) })
   const { plain } = useMemo(
-    () => susunLaporan(data, records, days, lembar, operasional.data ?? [], daftarKat, kelompok),
+    () => susunLaporan(data, records, days, lembar, operasional.data ?? [], daftarKat, kelompok, awalBulan),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, lembar, days.join('|'), operasional.data, daftarKat, kelompok, records],
+    [data, lembar, days.join('|'), operasional.data, daftarKat, kelompok, records, awalBulan],
   )
   const blocks = useMemo(() => namai(plain, lembar, t), [plain, lembar, t])
   const originalLabel = (key: string) => plain.flatMap((b) => b.lines).find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
@@ -163,7 +165,7 @@ export default function FinancialReportSheet({
   ]
   const weekLabel = (i: number) => weekRange(month, i)
   const periodeAwal = periodeBerjalan(month, days.length)
-  const bulanan = { rentang: rentangBulan(month), final: data.bulanan?.final ?? false }
+  const bulanan = { rentang: rentangBulan(month), final: bulanFinal(data, month) }
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
       {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
@@ -203,13 +205,13 @@ export default function FinancialReportSheet({
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
                 <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang denganBulanan tanpaUbah={ro} />
-                <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
+                <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
                 <RujukanBiayaProduksi month={month} />
               </div>
             ) : block.tabel === 'neraca' ? (
               <div className="min-w-0 space-y-5">
                 <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
-                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
+                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={bulanFinal(data, month)} saldoAwal={data.saldo_awal} />
               </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
