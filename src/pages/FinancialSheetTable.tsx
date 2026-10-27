@@ -172,7 +172,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
         <Table aria-label={block.title.slice(3)}>
           <TableBody>
             {block.lines.map((line) => {
-              if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={nomor ? 3 : 2} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
+              if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={nomor ? 3 : 2} onAddRow={onAddRow} tanpaTambah={tanpaTambah || hanyaLihat} onRenameGroup={hanyaLihat ? undefined : onRenameGroup} />
               if (line.hidden || (line.def.induk && lipat?.has(line.def.induk))) return null
               const can = editable(line) && !total && !hanyaLihat
               const rename = !editable(line) && !hanyaLihat && !!onRenameRow && bisaDiganti(line.def.key)
@@ -272,7 +272,7 @@ export default function FinancialSheetTable(props: Props) {
             </TableHeader>
             <TableBody>
               {block.lines.map((line) => {
-                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + (nomor ? 3 : 2)} onAddRow={onAddRow} tanpaTambah={tanpaTambah} onRenameGroup={onRenameGroup} />
+                if (isGroup(line)) return <GroupHead key={`g-${line.label}`} group={line} colSpan={days.length + (nomor ? 3 : 2)} onAddRow={onAddRow} tanpaTambah={tanpaTambah || hanyaLihat} onRenameGroup={hanyaLihat ? undefined : onRenameGroup} />
                 if (line.hidden || (line.def.induk && lipat.has(line.def.induk))) return null
                 const can = editable(line) && !hanyaLihat
                 const rename = !can && !hanyaLihat && !!onRenameRow && bisaDiganti(line.def.key)
