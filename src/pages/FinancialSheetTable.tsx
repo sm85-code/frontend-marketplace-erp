@@ -213,19 +213,21 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
 export default function FinancialSheetTable(props: Props) {
   const { block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, bulanan } = props
   const nomor = bernomor ? nomorBaris(block) : null
-  const [lipatSendiri, setLipatSendiri] = useState<ReadonlySet<string>>(new Set())
+  // Sub-rows (rincian) start folded; the state keeps the rows the user has toggled away from that default.
+  const [dibalik, setDibalik] = useState<ReadonlySet<string>>(new Set())
   const induk = useMemo(() => punyaRincian(block), [block])
+  const lipatSendiri = useMemo(() => new Set([...induk].filter((k) => !dibalik.has(k))), [induk, dibalik])
   const lipat = props.lipat ?? lipatSendiri
   const onLipat =
     props.onLipat ??
     ((key: string) =>
-      setLipatSendiri((sekarang) => {
+      setDibalik((sekarang) => {
         const next = new Set(sekarang)
         if (!next.delete(key)) next.add(key)
         return next
       }))
   const semuaTertutup = induk.size > 0 && [...induk].every((k) => lipat.has(k))
-  const lipatSemua = () => (semuaTertutup ? setLipatSendiri(new Set()) : setLipatSendiri(new Set(induk)))
+  const lipatSemua = () => setDibalik(semuaTertutup ? new Set(induk) : new Set())
   const kembangan = { ...props, lipat, onLipat }
   return (
     <Card className="min-w-0 overflow-hidden">
