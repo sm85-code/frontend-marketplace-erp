@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useAuth } from '@/lib/auth'
 import { useLabel } from '@/api/pengaturanUi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -29,6 +30,7 @@ const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleD
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
 export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat, denganBulanan, tanpaUbah }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean; denganBulanan?: boolean; tanpaUbah?: boolean }) {
   const t = useLabel()
+  const adminCentang = useAuth().user?.role === 'admin'
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
@@ -176,7 +178,8 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   // Kas Kecil balances are worked out (opening + top-up - spending), never typed or ticked.
   const saldoKasKecil = (key: string) => key === 'kk_awal' || key === 'kk_akhir'
-  const bisaCentang = (line: Line) => !line.def.emphasis && line.def.kind === 'input' && !line.def.induk && !saldoKasKecil(line.def.key)
+  // Sub-rows (each spending entry) can be ticked too, by the admin only; a tick never changes a figure (ok:<id>|<day>).
+  const bisaCentang = (line: Line) => !line.def.emphasis && (line.def.induk ? adminCentang : line.def.kind === 'input') && !saldoKasKecil(line.def.key)
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
     const grup = addChildTo ? `${ANAK}${addChildTo}` : addTo?.label
