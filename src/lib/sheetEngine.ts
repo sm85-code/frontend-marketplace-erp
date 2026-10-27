@@ -59,7 +59,8 @@ const num = (value: string | undefined) => {
 }
 const round = (n: number) => Math.round(n * 100) / 100
 
-export function computeSheet(sections: SectionDef[], records: Report[], days: string[], lembar: Lembar): Block[] {
+/** `awal`: the previous month's closing figure of each row, for a month whose first period has no closed report. */
+export function computeSheet(sections: SectionDef[], records: Report[], days: string[], lembar: Lembar, awal?: Record<string, number> | null): Block[] {
   const recordOf = days.map((d) => records.find((r) => r.tanggal === d))
   const hasData = days.map((d, w) => !!recordOf[w] || Object.keys(lembar.sel).some((k) => !k.startsWith('ok:') && k.endsWith(`|${d}`)))
   const hidden = new Set(lembar.hapus)
@@ -85,14 +86,14 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
 
   const baseAt = (row: RowDef, w: number): number => {
     if (recordOf[w]) return num(row.base(recordOf[w]!))
-    if (w === 0) return 0
     const from = row.carry ?? (row.total === 'last' ? [row.key] : [])
+    if (w === 0) return awal ? from.reduce((sum, key) => sum + (awal[key] ?? 0), 0) : 0
     return from.reduce((sum, key) => {
       const source = all.get(key)
       return source ? sum + baseAt(source, w - 1) : sum
     }, 0)
   }
-  const anyBefore = days.map((_, w) => recordOf.slice(0, w).some(Boolean))
+  const anyBefore = days.map((_, w) => !!awal || recordOf.slice(0, w).some(Boolean))
   const shown = new Map<string, (number | undefined)[]>()
   const visiting = new Set<string>()
 
