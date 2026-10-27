@@ -12,7 +12,7 @@ import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
 import { denganOperasional } from '@/lib/operasionalArusKas'
 import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
-import { computeSheet, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
+import { computeSheet, hariBerisi, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
@@ -60,8 +60,14 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lembarHitung, days.join('|'), operasional.data, daftarKat, plain],
   )
+  // Weeks still open whose only figures come from Operasional entries are worked out too (row totals, closing cash).
+  const plainIsi = useMemo(
+    () => computeSheet(sheetSections(data), records, days, lembarHitung, awalBulan, hariBerisi(lembarTampil, days)).find((b) => b.tabel === 'arus_kas')!,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data, lembarHitung, days.join('|'), awalBulan, lembarTampil],
+  )
   // Kas keluar rows follow the category order of Kategori Transaksi, then their own up / down order (display only).
-  const block = useMemo(() => urutkanKasKeluar(namai([applyRinci(plain, days, lembarTampil)], lembarHitung, t)[0], lembarHitung, daftarKat), [plain, days, lembarTampil, lembarHitung, t, daftarKat])
+  const block = useMemo(() => urutkanKasKeluar(namai([applyRinci(plainIsi, days, lembarTampil)], lembarHitung, t)[0], lembarHitung, daftarKat), [plainIsi, days, lembarTampil, lembarHitung, t, daftarKat])
   const [ren, setRen] = useState<{ label: string; group: GroupDef } | null>(null)
   const originalLabel = (key: string) => plain.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? key
   const childIds = new Set(lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup.startsWith(ANAK)).map((b) => b.id))
