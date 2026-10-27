@@ -127,3 +127,14 @@ describe('sheet engine', () => {
     expect(total(b, 'selisih')).toBe(0)
   })
 })
+
+describe('carry-forward of typed values', () => {
+  it('carries the latest typed value (0 included) instead of an older report figure', () => {
+    const rec = { tanggal: '2026-10-05', hasil: { x: '1992000' } } as unknown as Report
+    const sections = [{ tabel: 'neraca', rows: [{ key: 'x', label: 'X', tabel: 'neraca', grup: 'g', kind: 'input', total: 'last', base: (r: Report) => (r as unknown as { hasil: { x: string } }).hasil.x }] }] as unknown as Parameters<typeof computeSheet>[0]
+    const d = ['2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26']
+    const b = computeSheet(sections, [rec], d, { ...emptyLembar(), sel: { 'x|2026-10-12': '0', 'x|2026-10-19': '0' } })
+    const line = b.flatMap((x) => x.lines).find((l): l is Line => !isGroup(l) && l.def.key === 'x')!
+    expect(line.total).toBe(0)
+  })
+})
