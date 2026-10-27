@@ -23,6 +23,7 @@ import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN, TAB_TAMPIL } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/lib/auth'
 import KartuPembagianLaba, { TabelPembagianLaba } from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -57,6 +58,10 @@ export default function FinancialReportSheet({
   month: string
 }) {
   const t = useLabel()
+  const { user, bisa } = useAuth()
+  const admin = user?.role === 'admin'
+  // Roles that only read Laporan Keuangan (e.g. owner) see the figures without pencils, renames or new rows.
+  const ro = !bisa('laporan_keuangan', 'tulis')
   const { records, days } = sheetDays(data, month)
 
   const qc = useQueryClient()
@@ -179,7 +184,7 @@ export default function FinancialReportSheet({
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
-            {TAB_TAMPIL.map((tabel) => (
+            {TAB_TAMPIL.filter((tabel) => admin || tabel !== 'transaksi_erp').map((tabel) => (
               <TabsTrigger key={tabel} value={tabel === 'transaksi_erp' ? 'erp' : String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
                 {t(idTab(tabel), TAB_LAPORAN.find(([id]) => id === tabel)?.[1] ?? tabel)}
               </TabsTrigger>
@@ -190,35 +195,35 @@ export default function FinancialReportSheet({
           <TabsContent key={block.title} value={String(i)} className="min-w-0">
             {block.tabel === 'pemasukan' ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
                 {blocks.filter((b) => b.tabel === 'pengeluaran').map((b) => (
-                  <FinancialSheetTable key={b.title} block={b} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
+                  <FinancialSheetTable key={b.title} block={b} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
                 ))}
               </div>
             ) : block.tabel === 'arus_kas' ? (
               <div className="min-w-0 space-y-5">
-                <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang denganBulanan />
+                <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang denganBulanan tanpaUbah={ro} />
                 <TabelPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
                 <RujukanBiayaProduksi month={month} />
               </div>
             ) : block.tabel === 'neraca' ? (
               <div className="min-w-0 space-y-5">
-                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
                 <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} saldoAwal={data.saldo_awal} />
               </div>
             ) : (
-              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} />
+              <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} bulanan={bulanan} hanyaLihat={ro} />
             )}
           </TabsContent>
         ))}
         {/* Tables read from the ERP's own Shopee data (receivables in shipping, pending reconciliation, seller balance). */}
-        <TabsContent value="erp" className="min-w-0">
+        {admin && <TabsContent value="erp" className="min-w-0">
           <div className="min-w-0 space-y-5">
             <FinancialShippingReceivables until={reportUntil} month={month} columns={days.length} />
             <FinancialPendingReconciliation month={month} />
             <FinancialSellerBalance month={month} columns={days.length} />
           </div>
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
       <EditCellDialog
         target={target}

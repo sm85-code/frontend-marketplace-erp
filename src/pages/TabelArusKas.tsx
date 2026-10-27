@@ -26,7 +26,7 @@ import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
-export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat, denganBulanan }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean; denganBulanan?: boolean }) {
+export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat, denganBulanan, tanpaUbah }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean; denganBulanan?: boolean; tanpaUbah?: boolean }) {
   const t = useLabel()
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
@@ -210,7 +210,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
           </Button>
         </AksiHalaman>
       )}
-      <FinancialSheetTable ketBaris={ketKategori} block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat} tanpaTambah={hanyaLihat} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} bulanan={denganBulanan ? { rentang: rentangBulan(month), final: data.bulanan?.final ?? false } : undefined} onRenameGroup={hanyaLihat ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
+      <FinancialSheetTable ketBaris={ketKategori} block={tampil} days={days} weekLabel={(i) => weekRange(month, i)} onEdit={openEdit} onAddRow={setAddTo} hurufAsli bernomor hanyaLihat={hanyaLihat || tanpaUbah} tanpaTambah={hanyaLihat || tanpaUbah} bisaCentang={tanpaCentang ? undefined : bisaCentang} onCentang={tanpaCentang ? undefined : onCentang} periodeAwal={periodeBerjalan(month, days.length)} bulanan={denganBulanan ? { rentang: rentangBulan(month), final: data.bulanan?.final ?? false } : undefined} onRenameGroup={hanyaLihat || tanpaUbah ? undefined : (group) => setRen({ label: group.tampil ?? group.label, group })} />
       <ArusKasRinciDialog
         target={target}
         onClose={() => setTarget(null)}
