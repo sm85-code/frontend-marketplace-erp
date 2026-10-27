@@ -185,11 +185,25 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     if (!hanyaLihat) {
       // Laporan Keuangan: the profit sharing has its own table below, so its group is left out here (display only; saldo akhir
       // comes from the report). Saldo akhir Kas Utama stays, followed by Kas Kecil.
+      // Transfer antar kas and Kas Kecil are one section, in transaction order: Saldo awal Kas Kecil, top-up, spending,
+      // money returned, (other rows), Saldo akhir Kas Kecil. The two Kas Kecil balances are info only: Jumlah transfer
+      // antar kas is worked out from the transfer rows and does not count them.
       let g = ''
-      const lines = block.lines.filter((l) => {
-        if (isGroup(l)) { g = l.label; return g !== GRUP_PEMBAGIAN }
-        return g !== GRUP_PEMBAGIAN || l.def.key === 'akhir'
-      })
+      const grupOf = new Map<unknown, string>()
+      for (const l of block.lines) { if (isGroup(l)) g = l.label; grupOf.set(l, g) }
+      const key = (l: (typeof block.lines)[number]) => (isGroup(l) ? '' : l.def.key)
+      const byKey = (k: string) => block.lines.find((l) => key(l) === k)
+      const tr = block.lines.filter((l) => grupOf.get(l) === 'Transfer antar kas' && !isGroup(l) && key(l) !== 'transfer')
+      const urut = ['tr_packing', 'tr_kk', 'tr_ops']
+      const isi = [byKey('kk_awal'), ...urut.map(byKey), ...tr.filter((l) => !urut.includes(key(l))), byKey('kk_akhir')].filter((l): l is NonNullable<typeof l> => !!l)
+      const lines: typeof block.lines = []
+      for (const l of block.lines) {
+        const gr = grupOf.get(l)
+        if (gr === GRUP_KAS_KECIL || (gr === GRUP_PEMBAGIAN && key(l) !== 'akhir')) continue
+        if (gr === 'Transfer antar kas' && !isGroup(l) && key(l) !== 'transfer') continue
+        lines.push(l)
+        if (isGroup(l) && l.label === 'Transfer antar kas') lines.push(...isi)
+      }
       return { ...block, lines }
     }
     // Transfer antar kas and Kas Kecil are shown only in Laporan Keuangan; hidden here by group (display only, figures unchanged).
