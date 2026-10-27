@@ -91,3 +91,38 @@ export function useLabaBanyakBulan(bulan: string[], aktif: boolean): { laba: num
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siap, kunci, bulan.join('|'), daftar, kelompok])
 }
+
+/** Opening balance of the books: its "Saldo laba/rugi" is the profit or loss typed in by hand for the time before the ERP. */
+export type SaldoAwalLaba = { tanggal: string; saldo: { saldo_laba?: string } } | null | undefined
+
+const akhirBulan = (tanggal: string) => {
+  const d = new Date(`${tanggal}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.getUTCDate() === 1
+}
+
+/**
+ * The one calculation of a month's profit split, used by the Neraca card and the Arus Kas table alike. The opening "Saldo
+ * laba/rugi" counts as the month it closes: a loss there is carried, a profit is taken as already shared. Then every month
+ * from the opening up to the one before this carries its loss forward; this month's profit covers what is left first.
+ */
+export function usePembagianLaba(month: string, laba: number, saldoAwal: SaldoAwalLaba, aktif: boolean) {
+  const awalBulan = saldoAwal?.tanggal.slice(0, 7)
+  const awalNilai = Number(saldoAwal?.saldo.saldo_laba ?? 0) || 0
+  // The opening dated the month's last day covers that whole month (typed by hand); otherwise that month still counts.
+  const dari = awalBulan ? (akhirBulan(saldoAwal!.tanggal) ? bulanSetelah(awalBulan) : awalBulan) : month
+  const lalu = awalBulan && awalBulan < month ? bulanAntara(dari, month) : []
+  const riwayat = useLabaBanyakBulan(lalu, aktif)
+  const pakaiAwal = !!awalBulan && awalBulan < month
+  const rugiMasuk = riwayat ? rugiBerjalan([pakaiAwal ? awalNilai : 0, ...riwayat.laba]) : 0
+  const { dibagi, rugiKeluar } = hitungBagi(laba, rugiMasuk)
+  return {
+    siap: !!riwayat,
+    laba,
+    rugiMasuk,
+    dibagi,
+    rugiKeluar,
+    kosong: riwayat?.kosong ?? [],
+    awal: pakaiAwal ? { bulan: awalBulan!, nilai: awalNilai } : null,
+  }
+}
