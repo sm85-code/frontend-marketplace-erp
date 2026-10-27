@@ -179,7 +179,16 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   // The Arus Kas page shows the main rows only; the sub-rows (breakdown) are seen and edited in Laporan Keuangan.
   // The profit sharing is for the admin (Laporan Keuangan): the read-only Arus Kas page, which staff open, leaves its rows out.
   const tampil = useMemo(() => {
-    if (!hanyaLihat) return block
+    if (!hanyaLihat) {
+      // Laporan Keuangan: the profit sharing has its own table below, so its group is left out here (display only; saldo akhir
+      // comes from the report). Saldo akhir Kas Utama stays, followed by Kas Kecil.
+      let g = ''
+      const lines = block.lines.filter((l) => {
+        if (isGroup(l)) { g = l.label; return g !== GRUP_PEMBAGIAN }
+        return g !== GRUP_PEMBAGIAN || l.def.key === 'akhir'
+      })
+      return { ...block, lines }
+    }
     // Transfer antar kas and Kas Kecil are shown only in Laporan Keuangan; hidden here by group (display only, figures unchanged).
     const sembunyi = new Set([GRUP_PEMBAGIAN, 'Transfer antar kas', GRUP_KAS_KECIL])
     let grupNow = ''
