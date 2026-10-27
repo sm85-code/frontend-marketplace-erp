@@ -180,7 +180,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   // Kas Kecil balances are worked out (opening + top-up - spending), never typed or ticked.
   const saldoKasKecil = (key: string) => key === 'kk_awal' || key === 'kk_akhir'
   // Sub-rows (each spending entry) can be ticked too; a tick never changes a figure (ok:<id>|<day>).
-  const bisaCentang = (line: Line) => !line.def.emphasis && (line.def.induk ? adminCentang : line.def.kind === 'input') && !saldoKasKecil(line.def.key)
+  const bisaCentang = (line: Line) => !line.cells.some((c) => c.turunan) && !line.def.emphasis && (line.def.induk ? adminCentang : line.def.kind === 'input') && !saldoKasKecil(line.def.key)
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
     const grup = addChildTo ? `${ANAK}${addChildTo}` : addTo?.label
@@ -260,8 +260,21 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
         }
         return [mk(`${totalKey}:sudah`, sudah, ticked), mk(`${totalKey}:belum`, belum, ticked.map((x, w) => (x === null ? null : Math.round(((tot.cells[w].value ?? 0) - x) * 100) / 100)))]
       }
+      // A row with a breakdown is ticked through its sub-rows only: its own box shows a read-only status per period
+      // (all / some / none of that period's non-zero sub-rows ticked). An old tick stored on the row itself is ignored here, not deleted.
+      const turunan = (l: Line): Line => {
+        const kids = bolehRinci(l.def.key) ? anakDi(l.def.key) : []
+        if (!kids.length) return l
+        return { ...l, cells: l.cells.map((c, w) => {
+          const isi = kids.filter((k) => (k.cells[w]?.value ?? 0) !== 0)
+          const n = isi.filter((k) => k.cells[w].selesai).length
+          const st = !isi.length || !n ? 'kosong' as const : n === isi.length ? 'semua' as const : 'sebagian' as const
+          return { ...c, selesai: st === 'semua', turunan: st }
+        }) }
+      }
       const out: typeof block.lines = []
-      for (const l of tampilLines) {
+      for (const l0 of tampilLines) {
+        const l = isGroup(l0) || l0.def.induk ? l0 : turunan(l0)
         out.push(l)
         if (!isGroup(l) && l.def.key === 'kas_masuk') out.push(...status('kas_masuk', 'Kas masuk', 'Sudah masuk', 'Belum masuk'))
         if (!isGroup(l) && l.def.key === 'kas_keluar') out.push(...status('kas_keluar', 'Kas keluar', 'Sudah dibayar', 'Belum dibayar'))

@@ -155,6 +155,23 @@ function Centang({ line, week, checked, onCentang }: { line: Line; week: number;
   )
 }
 
+/** Read-only status of a row ticked through its sub-rows: all, some (partial) or none ticked. */
+function StatusTurunan({ line, st }: { line: Line; st: 'semua' | 'sebagian' | 'kosong' }) {
+  const teks = st === 'semua' ? 'Semua rincian sudah dicentang' : st === 'sebagian' ? 'Sebagian rincian sudah dicentang' : 'Belum ada rincian yang dicentang'
+  return (
+    <input
+      type="checkbox"
+      disabled
+      className="size-4 shrink-0 accent-primary opacity-80"
+      checked={st === 'semua'}
+      ref={(el) => { if (el) el.indeterminate = st === 'sebagian' }}
+      aria-label={`${line.def.label}: ${teks}`}
+      title={`${teks}. Centang di baris rincian.`}
+      data-status-turunan={st}
+    />
+  )
+}
+
 /** Phone layout: pick one period (or the total) and read a two-column list, so nothing scrolls sideways. */
 function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hurufAsli, onRenameRow, onRenameGroup, periodeAwal, bisaCentang, onCentang, bernomor, hanyaLihat, ketBaris, lipat, onLipat, bulanan }: Props) {
   const { pick, setPick } = usePeriodPick(Math.min(periodeAwal ?? days.length - 1, Math.max(days.length - 1, 0)))
@@ -198,6 +215,7 @@ function PhoneTable({ block, days, weekLabel, onEdit, onAddRow, tanpaTambah, hur
                     <span className="inline-flex items-center justify-end gap-3">
                       <Amount value={cell?.value ?? null} manual={!hanyaLihat && !!cell?.manual} warisan={!!line.def.induk} />
                       {total && line.totalNote && <span className="block text-[10px] font-normal text-muted-foreground">{line.totalNote}</span>}
+                      {!total && onCentang && cell?.turunan && <StatusTurunan line={line} st={cell.turunan} />}
                       {!total && onCentang && bisaCentang?.(line) && <Centang line={line} week={pick} checked={!!cell?.selesai} onCentang={onCentang} />}
                     </span>
                   </TableCell>
@@ -309,6 +327,7 @@ export default function FinancialSheetTable(props: Props) {
                       >
                         <span className="inline-flex items-center justify-end gap-3">
                           <Amount value={cell.value} manual={!hanyaLihat && cell.manual} warisan={!!line.def.induk} />
+                          {onCentang && cell.turunan && <StatusTurunan line={line} st={cell.turunan} />}
                           {onCentang && bisaCentang?.(line) && <Centang line={line} week={w} checked={!!cell.selesai} onCentang={onCentang} />}
                         </span>
                       </TableCell>
