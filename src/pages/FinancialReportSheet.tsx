@@ -23,6 +23,7 @@ import { periodeBerjalan, weekRange } from '@/lib/tanggal'
 import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN } from '@/lib/namaBaris'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
+import KartuPembagianLaba from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const months = [
