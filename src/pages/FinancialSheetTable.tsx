@@ -131,7 +131,7 @@ function nomorBaris(block: Block): Map<string, string> {
       n = 0
       continue
     }
-    if (line.hidden || line.def.emphasis || line.def.key.endsWith(':selisih')) continue
+    if (line.hidden || line.def.emphasis || line.def.key.endsWith(':selisih') || line.def.key.startsWith('status:')) continue
     if (line.def.induk) out.set(line.def.key, `${out.get(line.def.induk) ?? n}.${++anak}`)
     else {
       anak = 0

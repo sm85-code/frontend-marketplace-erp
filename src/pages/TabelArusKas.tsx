@@ -30,7 +30,8 @@ const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleD
 /** The cash-flow table with everything Arus Kas offers (rename, split, delete, done tick, numbering); shared by the Arus Kas page and the Laporan Keuangan tab. */
 export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, hanyaLihat, denganBulanan, tanpaUbah }: { data: reports.Overview; month: string; tanpaUnduh?: boolean; tanpaCentang?: boolean; hanyaLihat?: boolean; denganBulanan?: boolean; tanpaUbah?: boolean }) {
   const t = useLabel()
-  const adminCentang = useAuth().user?.role === 'admin'
+  // Sub-rows can be ticked on /arus-kas by whoever may tick there (admin, Staf Keuangan, owner); in Laporan Keuangan by the admin.
+  const adminCentang = useAuth().user?.role === 'admin' || !!hanyaLihat
   const { records, days } = sheetDays(data, month)
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
@@ -178,7 +179,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   // Kas Kecil balances are worked out (opening + top-up - spending), never typed or ticked.
   const saldoKasKecil = (key: string) => key === 'kk_awal' || key === 'kk_akhir'
-  // Sub-rows (each spending entry) can be ticked too, by the admin only; a tick never changes a figure (ok:<id>|<day>).
+  // Sub-rows (each spending entry) can be ticked too; a tick never changes a figure (ok:<id>|<day>).
   const bisaCentang = (line: Line) => !line.def.emphasis && (line.def.induk ? adminCentang : line.def.kind === 'input') && !saldoKasKecil(line.def.key)
   const restore = () => save.mutate({ ...lembar, baris: lembar.baris.filter((b) => !b.id.startsWith('c:hide-')) })
   const onAdd = (label: string) => {
@@ -235,9 +236,39 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       // The /arus-kas page: only Kas Utama [..] (Kas keluar) and Belanja Kas Kecil keep their breakdown; other rows show none.
       const label = new Map(lines.flatMap((l) => (isGroup(l) ? [] : [[l.def.key, l.def.label] as const])))
       const bolehRinci = (k: string) => kasKecil.has(k) || /^kas utama\s*\[/i.test(label.get(k) ?? '')
-      return { ...block, lines: lines.filter((l) => isGroup(l) || !l.def.induk || bolehRinci(l.def.induk)) }
+      // A tick here means received (Kas masuk) / paid (Kas keluar). Display-only summary rows under each Jumlah row: ticked
+      // vs not, per period and month. Kas Utama [..] counts by its sub-rows' ticks. Transfer rows are not part of either.
+      const tampilLines = lines.filter((l) => isGroup(l) || !l.def.induk || bolehRinci(l.def.induk))
+      const anakDi = (k: string) => block.lines.filter((l): l is Line => !isGroup(l) && l.def.induk === k)
+      const status = (totalKey: string, grup: string, sudah: string, belum: string) => {
+        const tot = lines.find((l): l is Line => !isGroup(l) && l.def.key === totalKey)
+        if (!tot) return []
+        const baris = block.lines.filter((l): l is Line => !isGroup(l) && grupOf.get(l) === grup && !l.def.induk && !l.def.emphasis && !kasKecil.has(l.def.key) && !l.hidden)
+        const ticked = days.map((_, w) => {
+          if (tot.cells[w]?.value == null) return null
+          let t = 0
+          for (const b of baris) {
+            const kids = bolehRinci(b.def.key) ? anakDi(b.def.key) : []
+            if (kids.length) for (const k of kids) t += k.cells[w].selesai ? k.cells[w].value ?? 0 : 0
+            else t += b.cells[w].selesai ? b.cells[w].value ?? 0 : 0
+          }
+          return Math.round(t * 100) / 100
+        })
+        const mk = (key: string, label: string, vals: (number | null)[]): Line => {
+          const v = vals.filter((x): x is number => x !== null)
+          return { ...tot, def: { ...tot.def, key: `status:${key}`, label, kind: 'calc', emphasis: false, total: 'sum' }, custom: false, cells: vals.map((value) => ({ value, manual: false })), total: v.length ? Math.round(v.reduce((a, b) => a + b, 0) * 100) / 100 : null }
+        }
+        return [mk(`${totalKey}:sudah`, sudah, ticked), mk(`${totalKey}:belum`, belum, ticked.map((x, w) => (x === null ? null : Math.round(((tot.cells[w].value ?? 0) - x) * 100) / 100)))]
+      }
+      const out: typeof block.lines = []
+      for (const l of tampilLines) {
+        out.push(l)
+        if (!isGroup(l) && l.def.key === 'kas_masuk') out.push(...status('kas_masuk', 'Kas masuk', 'Sudah masuk', 'Belum masuk'))
+        if (!isGroup(l) && l.def.key === 'kas_keluar') out.push(...status('kas_keluar', 'Kas keluar', 'Sudah dibayar', 'Belum dibayar'))
+      }
+      return { ...block, lines: out }
     }
-  }, [block, kasKecil, hanyaLihat])
+  }, [block, kasKecil, hanyaLihat, days])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
