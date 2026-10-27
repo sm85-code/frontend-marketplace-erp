@@ -92,7 +92,10 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
     if (w === 0) return awal ? from.reduce((sum, key) => sum + (awal[key] ?? 0), 0) : 0
     return from.reduce((sum, key) => {
       const source = all.get(key)
-      return source ? sum + baseAt(source, w - 1) : sum
+      if (!source) return sum
+      // A value the admin typed last week (0 included) wins over older report figures.
+      const typed = source.kind === 'input' && !hidden.has(key) ? lembar.sel[cellKey(key, days[w - 1])] : undefined
+      return sum + (typed !== undefined ? num(typed) : baseAt(source, w - 1))
     }, 0)
   }
   const anyBefore = days.map((_, w) => !!awal || recordOf.slice(0, w).some(Boolean))
