@@ -231,9 +231,13 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
         lines.push(l)
         if (isGroup(l) && l.label === 'Transfer antar kas') lines.push(...isi)
       }
-      return { ...block, lines }
+      if (!hanyaLihat) return { ...block, lines }
+      // The /arus-kas page: only Kas Utama [..] (Kas keluar) and Belanja Kas Kecil keep their breakdown; other rows show none.
+      const label = new Map(lines.flatMap((l) => (isGroup(l) ? [] : [[l.def.key, l.def.label] as const])))
+      const bolehRinci = (k: string) => kasKecil.has(k) || /^kas utama\s*\[/i.test(label.get(k) ?? '')
+      return { ...block, lines: lines.filter((l) => isGroup(l) || !l.def.induk || bolehRinci(l.def.induk)) }
     }
-  }, [block, kasKecil])
+  }, [block, kasKecil, hanyaLihat])
   const exportReport = () =>
     exportCsv(`arus-kas-${month}.csv`, [
       ['ARUS KAS'],
