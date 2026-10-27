@@ -12,6 +12,12 @@ export const bulanSebelum = (month: string) => {
   return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`
 }
 
+export const bulanSetelah = (month: string) => {
+  const y = Number(month.slice(0, 4))
+  const m = Number(month.slice(5))
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`
+}
+
 /** Net profit of a month exactly as the Laba/Rugi tab shows it (closed books, typed figures and Operasional entries), or null while it loads. */
 export function useLabaBulan(month: string, aktif: boolean): number | null {
   const overview = useQuery({ queryKey: ['financial-reports', 'laba-bulan', month], queryFn: () => reports.overview(month), enabled: aktif })

@@ -174,7 +174,6 @@ export default function FinancialReportSheet({
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
       </AksiHalaman>
-      <KartuPembagianLaba month={month} days={days} lembar={lembar} menyimpan={save.isPending} onIsi={(next) => save.mutate(next)} />
       <Tabs defaultValue="3" className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
@@ -199,6 +198,11 @@ export default function FinancialReportSheet({
               <div className="min-w-0 space-y-5">
                 <TabelArusKas data={data} month={month} tanpaUnduh tanpaCentang />
                 <RujukanBiayaProduksi month={month} />
+              </div>
+            ) : block.tabel === 'neraca' ? (
+              <div className="min-w-0 space-y-5">
+                <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
+                <KartuPembagianLaba month={month} laba={lineOf('laba')?.total ?? 0} final={data.bulanan?.final ?? false} />
               </div>
             ) : (
               <FinancialSheetTable block={block} days={days} weekLabel={weekLabel} onEdit={openEdit} onAddRow={setAddTo} tanpaTambah={block.tabel === 'pemasukan' || block.tabel === 'pengeluaran'} onRenameRow={renameRow} onRenameGroup={renameGroup} hurufAsli periodeAwal={periodeAwal} />
