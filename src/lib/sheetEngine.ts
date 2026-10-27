@@ -158,7 +158,7 @@ export function computeSheet(sections: SectionDef[], records: Report[], days: st
       const empty = !!row.autoHide && cells.every((c) => !c.value)
       // A hand-typed row whose last period is not typed yet: the month shows the latest typed period's figure.
       const lastTyped = cells.map((c) => c.value !== null).lastIndexOf(true)
-      const totalNote = row.manualOpen && lastTyped >= 0 && lastTyped < days.length - 1 && cells[days.length - 1].value === null ? `dari periode terakhir yang diisi (${days[lastTyped].slice(8, 10)}/${days[lastTyped].slice(5, 7)})` : undefined
+      const totalNote = row.manualOpen && lastTyped >= 0 && lastTyped < days.length - 1 && cells[days.length - 1].value === null ? `dari minggu terakhir diisi (${days[lastTyped].slice(8, 10)}/${days[lastTyped].slice(5, 7)})` : undefined
       return { def: row, custom: custom.has(row.key), hidden: isHidden || empty, cells, total, totalNote }
     }),
   }))
