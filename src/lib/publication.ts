@@ -22,7 +22,7 @@ export function reachableAttributes(
     for (const node of tree) {
       ids.add(node.attribute_id)
       const chosen = values.find((a) => a.attribute_id === node.attribute_id)?.attribute_value_list ?? []
-      for (const v of node.attribute_value_list) if (chosen.some((c) => c.value_id === v.value_id)) visit(v.child_attribute_list ?? [])
+      for (const v of node.attribute_value_list ?? []) if (chosen.some((c) => c.value_id === v.value_id)) visit(v.child_attribute_list ?? [])
     }
   }
   visit(nodes)

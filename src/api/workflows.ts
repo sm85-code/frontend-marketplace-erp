@@ -23,7 +23,7 @@ export interface AttributeNode {
   name: string
   mandatory: boolean
   attribute_info?: { input_type?: number; max_value_count?: number; attribute_unit_list?: string[] }
-  attribute_value_list: { value_id: number; name: string; value_unit?: string; child_attribute_list?: AttributeNode[] }[]
+  attribute_value_list?: { value_id: number; name: string; value_unit?: string; child_attribute_list?: AttributeNode[] }[]
 }
 export interface Tier {
   name: string
