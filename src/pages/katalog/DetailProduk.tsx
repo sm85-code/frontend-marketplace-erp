@@ -19,6 +19,7 @@ import * as endpoints from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
+import { useState } from 'react'
 
 import { fmtRp } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
@@ -35,6 +36,8 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
     queryFn: () => endpoints.getKatalog(id as string),
     enabled: !!id,
   })
+  // Keep the selected tab across re-renders / remounts caused by query refetches or Shopee settings loads.
+  const [tab, setTab] = useState('ringkasan')
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
@@ -50,7 +53,7 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
               {detail.sku && <span className="font-mono text-sm text-muted-foreground">{detail.sku}</span>}
             </div>
             {/* One segment at a time, so a page of many tools does not pile everything on one screen. */}
-            <Tabs defaultValue="ringkasan" className="gap-4">
+            <Tabs value={tab} onValueChange={setTab} className="gap-4">
               <TabsList className="section-tabs">
                 <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
                 {lanjutan && <TabsTrigger value="statistik">Statistik</TabsTrigger>}
