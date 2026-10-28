@@ -21,9 +21,11 @@ export interface Attribute {
 export interface AttributeNode {
   attribute_id: number
   name: string
+  /** Shopee's translations; `name` is English even when Indonesian is requested. */
+  multi_lang?: { language: string; value: string }[]
   mandatory: boolean
   attribute_info?: { input_type?: number; max_value_count?: number; attribute_unit_list?: string[] }
-  attribute_value_list?: { value_id: number; name: string; value_unit?: string; child_attribute_list?: AttributeNode[] }[]
+  attribute_value_list?: { value_id: number; name: string; multi_lang?: { language: string; value: string }[]; value_unit?: string; child_attribute_list?: AttributeNode[] }[]
 }
 export interface Tier {
   name: string
@@ -157,3 +159,9 @@ export interface WalletPage {
 }
 export const walletTransactions = (id: string, params: { dari: string; sampai: string; offset: number }) =>
   api.get<WalletPage>(`${shop(id)}/transaksi-dana`, { params }).then((r) => r.data)
+
+/** Indonesian label of a Shopee attribute or value, falling back to the English name. */
+export const namaId = (x: { name: string; multi_lang?: { language: string; value: string }[] }) =>
+  x.multi_lang?.find((l) => l.language === 'id' && l.value)?.value || x.name
+/** Indonesian category name, falling back to the English one. */
+export const namaKategori = (c: { original_category_name: string; display_category_name?: string }) => c.display_category_name || c.original_category_name

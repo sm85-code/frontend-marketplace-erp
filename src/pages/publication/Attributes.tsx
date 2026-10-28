@@ -1,5 +1,5 @@
 import PilihNative from '@/components/PilihNative'
-import type { Attribute, AttributeNode, AttributeValue } from '@/api/workflows'
+import { namaId, type Attribute, type AttributeNode, type AttributeValue } from '@/api/workflows'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 const selectClass = 'w-full rounded-md border bg-background p-2 text-sm'
@@ -30,10 +30,11 @@ export default function Attributes({
           .flatMap((v) => v.child_attribute_list ?? [])
         const multiple = [4, 5].includes(info.input_type ?? 1)
         const custom = [2, 3, 5].includes(info.input_type ?? 1)
+        const nama = namaId(node)
         return (
           <div key={node.attribute_id} className="space-y-1">
             <Label htmlFor={`attribute-${node.attribute_id}`}>
-              {node.name}
+              {nama}
               {node.mandatory ? ' *' : ''}
             </Label>
             {options.length > 0 && (
@@ -45,19 +46,20 @@ export default function Attributes({
                 onChange={(e) =>
                   update(
                     node.attribute_id,
-                    Array.from(e.target.selectedOptions)
-                      .filter((o) => o.value)
-                      .map((o) => {
-                        const v = options.find((v) => String(v.value_id) === o.value)!
+                    // PilihNative (Radix) hands over only `value`; a native select also has `selectedOptions`.
+                    (e.target.selectedOptions ? Array.from(e.target.selectedOptions, (o) => o.value) : [e.target.value])
+                      .filter((value) => value && options.some((v) => String(v.value_id) === value))
+                      .map((value) => {
+                        const v = options.find((v) => String(v.value_id) === value)!
                         return { value_id: v.value_id, original_value_name: v.name, ...((v.value_unit || chosen[0]?.value_unit) ? { value_unit: v.value_unit || chosen[0]?.value_unit } : {}) }
                       }),
                   )
                 }
               >
-                <option value="">Pilih {node.name}</option>
+                <option value="">Pilih {nama}</option>
                 {options.map((v) => (
                   <option key={v.value_id} value={v.value_id}>
-                    {v.name}
+                    {namaId(v)}
                   </option>
                 ))}
               </PilihNative>
@@ -68,8 +70,8 @@ export default function Attributes({
             {custom && (
               <Input
                 id={options.length ? undefined : `attribute-${node.attribute_id}`}
-                aria-label={`Nilai lain ${node.name}`}
-                placeholder={`Isi ${node.name} jika tidak ada di pilihan`}
+                aria-label={`Nilai lain ${nama}`}
+                placeholder={`Isi ${nama} jika tidak ada di pilihan`}
                 value={chosen.find((v) => v.value_id === 0)?.original_value_name ?? ''}
                 onChange={(e) =>
                   update(node.attribute_id, [
@@ -81,7 +83,7 @@ export default function Attributes({
             )}
             {!!info.attribute_unit_list?.length && (
               <PilihNative
-                aria-label={`Satuan ${node.name}`}
+                aria-label={`Satuan ${nama}`}
                 className={selectClass}
                 value={chosen[0]?.value_unit ?? ''}
                 onChange={(e) =>
