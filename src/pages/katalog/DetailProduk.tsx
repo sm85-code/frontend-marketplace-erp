@@ -12,7 +12,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
-import ShopeeProductTools, { PromosiProduk } from './ShopeeProductTools'
+import { HapusShopee, PromosiProduk, VarianShopee } from './ShopeeProductTools'
 import QueryError from '@/components/QueryError'
 import { useQuery } from '@tanstack/react-query'
 import * as endpoints from '@/api/endpoints'
@@ -42,6 +42,13 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
     const next = new URLSearchParams(params)
     if (value === 'ringkasan') next.delete('tab')
     else next.set('tab', value)
+    setParams(next, { replace: true })
+  }
+  const sub = params.get('bagian') || 'info'
+  const setSub = (value: string) => {
+    const next = new URLSearchParams(params)
+    if (value === 'info') next.delete('bagian')
+    else next.set('bagian', value)
     setParams(next, { replace: true })
   }
 
@@ -90,15 +97,36 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
               {lanjutan && <TabsContent value="promosi"><PromosiProduk detail={detail} /></TabsContent>}
               {(manage || lanjutan) && (
                 <TabsContent value="kelola" className="space-y-4">
-                  <section className="rounded-xl border px-4">
-                    <h2 className="pt-4 font-semibold">Tindakan produk</h2>
-                    {lanjutan && <BarisAksi judul="Edit informasi dan varian" ket="Ubah nama, deskripsi, foto, SKU, dan pengiriman di Shopee."><EditProdukLanjutan detail={detail} label="Edit" /></BarisAksi>}
-                    {manage && <BarisAksi judul="Salin ke toko lain" ket="Buat produk yang sama di toko lain."><Button asChild variant="outline" size="sm"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin</Link></Button></BarisAksi>}
-                    {manage && <BarisAksi judul="Salin ke Master Produk" ket="Simpan produk dan variannya sebagai SKU master."><SalinMasterProduk ids={[detail.id]} label="Salin" /></BarisAksi>}
-                    <BarisAksi judul="Sinkronisasi dari Shopee" ket="Perbarui data produk ini dari Shopee."><Sinkronisasi jenis="katalog" ids={[detail.id]} satu label="Sinkronkan" /></BarisAksi>
-                  </section>
-                  {manage && <section className="rounded-xl border px-4"><KelolaProdukShopee key={detail.id} detail={detail} /></section>}
-                  {lanjutan && <ShopeeProductTools detail={detail} close={onTutup} />}
+                  {/* Sub-tabs, so editing, variants, copying and deleting are not piled on one screen. */}
+                  <Tabs value={sub} onValueChange={setSub} className="gap-4">
+                    <TabsList className="section-tabs" aria-label="Bagian kelola">
+                      <TabsTrigger value="info">Info Produk</TabsTrigger>
+                      {lanjutan && <TabsTrigger value="varian">Varian</TabsTrigger>}
+                      <TabsTrigger value="salin">Salin & Sinkron</TabsTrigger>
+                      {lanjutan && <TabsTrigger value="hapus">Hapus</TabsTrigger>}
+                    </TabsList>
+                    <TabsContent value="info" className="space-y-4">
+                      {lanjutan && <section className="rounded-xl border px-4"><h2 className="pt-4 font-semibold">Informasi produk lengkap</h2><BarisAksi judul="Judul, deskripsi, foto, kategori" ket="Juga merek, atribut, berat, ukuran paket, dan pre-order."><EditProdukLanjutan detail={detail} bagian="item" label="Edit" /></BarisAksi></section>}
+                      {manage && <section className="rounded-xl border px-4"><KelolaProdukShopee key={detail.id} detail={detail} /></section>}
+                    </TabsContent>
+                    {lanjutan && <TabsContent value="varian" className="space-y-4">
+                      <section className="rounded-xl border px-4">
+                        <h2 className="pt-4 font-semibold">Varian di Shopee</h2>
+                        <VarianShopee detail={detail} />
+                        {detail.varian.length > 0 && <BarisAksi judul="Edit varian" ket="Ubah SKU, berat, dan pre-order per varian, atau nama variasi dan pilihannya."><EditProdukLanjutan detail={detail} bagian="varian" label="Edit" /></BarisAksi>}
+                        <p className="pb-4 text-sm text-muted-foreground">Harga dan stok varian diatur di menu Harga & Stok ERP, lalu dikirim ke Shopee dari halaman Akun.</p>
+                      </section>
+                    </TabsContent>}
+                    <TabsContent value="salin" className="space-y-4">
+                      <section className="rounded-xl border px-4">
+                        <h2 className="pt-4 font-semibold">Salin dan sinkronisasi</h2>
+                        {manage && <BarisAksi judul="Salin ke toko lain" ket="Buat produk yang sama di toko lain."><Button asChild variant="outline" size="sm"><Link to={`/katalog/publikasi?source=${encodeURIComponent(detail.akun_id)}&item=${encodeURIComponent(detail.item_id)}`}>Salin</Link></Button></BarisAksi>}
+                        {manage && <BarisAksi judul="Salin ke Master Produk" ket="Simpan produk dan variannya sebagai SKU master."><SalinMasterProduk ids={[detail.id]} label="Salin" /></BarisAksi>}
+                        <BarisAksi judul="Sinkronisasi dari Shopee" ket="Perbarui data produk ini dari Shopee."><Sinkronisasi jenis="katalog" ids={[detail.id]} satu label="Sinkronkan" /></BarisAksi>
+                      </section>
+                    </TabsContent>
+                    {lanjutan && <TabsContent value="hapus"><section className="rounded-xl border px-4"><h2 className="pt-4 font-semibold">Hapus produk</h2><HapusShopee detail={detail} close={onTutup} /></section></TabsContent>}
+                  </Tabs>
                 </TabsContent>
               )}
             </Tabs>
@@ -128,7 +156,7 @@ function TabelVarian({ detail }: { detail: KatalogDetail }) {
       <InfoTip teks={"Nilai bercetak miring mengikuti produk induk."} />
       {!lengkap && (
         <p role="note" className="rounded-md border border-dashed p-2 text-muted-foreground">
-          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi di tab Kelola untuk memperbarui produk tanpa menarik seluruh toko.
+          Berat, ukuran, dan pre-order per varian belum tersimpan untuk produk ini. Gunakan Sinkronisasi di tab Kelola → Salin & Sinkron untuk memperbarui produk tanpa menarik seluruh toko.
         </p>
       )}
       <div className="overflow-x-auto rounded-md border">
