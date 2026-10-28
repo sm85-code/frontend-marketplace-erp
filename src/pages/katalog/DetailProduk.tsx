@@ -8,7 +8,7 @@ import ShopeeEngagement from './ShopeeEngagement'
 import { BarisAksi } from './bagian'
 import { useAuth } from '@/lib/auth'
 import Sinkronisasi from '@/components/Sinkronisasi'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import KelolaProdukShopee from './KelolaProdukShopee'
@@ -19,7 +19,6 @@ import * as endpoints from '@/api/endpoints'
 import { qk } from '@/api/keys'
 import Spinner from '@/components/Spinner'
 import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
 
 import { fmtRp } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
@@ -36,8 +35,15 @@ export default function DetailProduk({ id, onTutup }: { id: string | null; onTut
     queryFn: () => endpoints.getKatalog(id as string),
     enabled: !!id,
   })
-  // Keep the selected tab across re-renders / remounts caused by query refetches or Shopee settings loads.
-  const [tab, setTab] = useState('ringkasan')
+  // Persist selected tab in the URL so it survives full remounts / reloads.
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') || 'ringkasan'
+  const setTab = (value: string) => {
+    const next = new URLSearchParams(params)
+    if (value === 'ringkasan') next.delete('tab')
+    else next.set('tab', value)
+    setParams(next, { replace: true })
+  }
 
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
