@@ -13,7 +13,6 @@ import {
   Store,
   UserCircle,
   Users,
-  Warehouse,
   Hammer,
   ArrowLeftRight,
   Wallet,
@@ -62,7 +61,7 @@ export const NAV: NavItem[] = [
   { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, halaman: 'katalog', grup: 'produk', bawah: 2, posisiBawah: 2 },
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, halaman: 'produk', grup: 'produk' },
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, halaman: 'listing', grup: 'produk' },
-  { to: '/gudang', label: 'Gudang & Stok', shortLabel: 'Stok', icon: Warehouse, halaman: 'gudang', grup: 'produk' },
+  // Gudang & Stok is hidden: stock lives only in Shopee (data and endpoints are kept).
   { to: '/processing/pemetaan', label: 'Pemetaan Order', icon: Hammer, halaman: 'processing', grup: 'processing' },
   { to: '/processing/tukang-kayu', label: 'Tukang Kayu', icon: Users, halaman: 'data_tukang', grup: 'data-produksi' },
   { to: '/processing/supplier', label: 'Supplier', icon: Store, halaman: 'data_supplier', grup: 'data-produksi' },

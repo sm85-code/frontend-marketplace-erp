@@ -154,18 +154,6 @@ export const panduan: Panduan[] = [
     dampak: 'Pemetaan menentukan SKU untuk reservasi dan pembaruan marketplace; salah pemetaan dapat memengaruhi persediaan.',
   },
   {
-    path: '/gudang',
-    judul: 'Gudang & Persediaan',
-    tujuan: 'Catat lokasi, stok fisik, transfer dan riwayat perubahan stok.',
-    langkah: [
-      'Pilih gudang dan SKU, lalu periksa stok tersedia serta stok yang direservasi pesanan.',
-      'Catat stok masuk/penyesuaian sesuai pemeriksaan barang; transfer memindahkan antar gudang.',
-      'Periksa ledger setelah perubahan. Reservasi pesanan bukan barang fisik yang hilang.',
-    ],
-    dampak:
-      'Pencatatan dan transfer mengubah persediaan ERP. Kirim stok ke marketplace hanya melalui tindakan pengiriman stok yang tersedia.',
-  },
-  {
     path: '/settlement',
     judul: 'Dana & Saldo Shopee',
     tujuan: 'Bedakan posisi saldo penjual, pesanan menunggu pencairan, dana dilepas dan mutasi saldo.',
