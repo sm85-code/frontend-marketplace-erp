@@ -23,7 +23,9 @@ export default function Attributes({
       {nodes.map((node) => {
         const chosen = values.find((a) => a.attribute_id === node.attribute_id)?.attribute_value_list ?? []
         const info = node.attribute_info ?? {}
-        const children = node.attribute_value_list
+        // Shopee omits the value list for free-text attributes; without this guard the editor crashed (ErrorBoundary "Muat Ulang").
+        const options = node.attribute_value_list ?? []
+        const children = options
           .filter((v) => chosen.some((c) => c.value_id === v.value_id))
           .flatMap((v) => v.child_attribute_list ?? [])
         const multiple = [4, 5].includes(info.input_type ?? 1)
@@ -34,7 +36,7 @@ export default function Attributes({
               {node.name}
               {node.mandatory ? ' *' : ''}
             </Label>
-            {node.attribute_value_list.length > 0 && (
+            {options.length > 0 && (
               <PilihNative
                 id={`attribute-${node.attribute_id}`}
                 className={selectClass}
@@ -46,14 +48,14 @@ export default function Attributes({
                     Array.from(e.target.selectedOptions)
                       .filter((o) => o.value)
                       .map((o) => {
-                        const v = node.attribute_value_list.find((v) => String(v.value_id) === o.value)!
+                        const v = options.find((v) => String(v.value_id) === o.value)!
                         return { value_id: v.value_id, original_value_name: v.name, ...((v.value_unit || chosen[0]?.value_unit) ? { value_unit: v.value_unit || chosen[0]?.value_unit } : {}) }
                       }),
                   )
                 }
               >
                 <option value="">Pilih {node.name}</option>
-                {node.attribute_value_list.map((v) => (
+                {options.map((v) => (
                   <option key={v.value_id} value={v.value_id}>
                     {v.name}
                   </option>
@@ -65,7 +67,7 @@ export default function Attributes({
             )}
             {custom && (
               <Input
-                id={node.attribute_value_list.length ? undefined : `attribute-${node.attribute_id}`}
+                id={options.length ? undefined : `attribute-${node.attribute_id}`}
                 aria-label={`Nilai lain ${node.name}`}
                 placeholder={`Isi ${node.name} jika tidak ada di pilihan`}
                 value={chosen.find((v) => v.value_id === 0)?.original_value_name ?? ''}
