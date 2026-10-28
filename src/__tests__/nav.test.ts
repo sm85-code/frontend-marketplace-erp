@@ -27,7 +27,7 @@ describe('menu order follows the daily workflow', () => {
     const peta = Object.fromEntries(kelompokNav(filterNav(aksesBawaan('admin'))).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
       harian: ['/dashboard', '/pesanan', '/chat'],
-      produk: ['/katalog', '/produk', '/listing', '/gudang'],
+      produk: ['/katalog', '/produk', '/listing'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],
       keuangan: ['/operasional-umum', '/operasional-packing', '/belanja-supplier', '/belanja-tukang', '/arus-kas', '/laporan-keuangan'],

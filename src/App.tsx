@@ -42,12 +42,12 @@ const ProfilePage = lazy(muat(() => import('@/pages/ProfilePage')))
 const DashboardPage = lazy(muat(() => import('@/pages/DashboardPage')))
 const AkunPage = lazy(muat(() => import('@/pages/AkunPage')))
 const ShopeeCallbackPage = lazy(muat(() => import('@/pages/ShopeeCallbackPage')))
+const EditProdukShopeePage = lazy(muat(() => import('@/pages/katalog/EditProdukShopee')))
 const KatalogDetailPage = lazy(muat(() => import('@/pages/KatalogDetailPage')))
 const PromosiDetailPage = lazy(muat(() => import('@/pages/PromosiDetailPage')))
 const KatalogPage = lazy(muat(() => import('@/pages/KatalogPage')))
 const ProdukPage = lazy(muat(() => import('@/pages/ProdukPage')))
 const ListingPage = lazy(muat(() => import('@/pages/ListingPage')))
-const GudangPage = lazy(muat(() => import('@/pages/GudangPage')))
 const ChatPage = lazy(muat(() => import('@/pages/ChatPage')))
 const PesananPage = lazy(muat(() => import('@/pages/PesananPage')))
 const ReturPage = lazy(muat(() => import('@/pages/ReturPage')))
@@ -146,6 +146,7 @@ export default function App() {
                 path="/katalog"
                 element={<Protected halaman="katalog"><LazyPage><KatalogPage /></LazyPage></Protected>}
               />
+              <Route path="/katalog/:id/edit" element={<Protected halaman="katalog_lanjutan"><LazyPage><EditProdukShopeePage /></LazyPage></Protected>} />
               <Route path="/katalog/:id" element={<Protected halaman="katalog"><LazyPage><KatalogDetailPage /></LazyPage></Protected>} />
               <Route path="/katalog/promosi/:akun/:id" element={<Protected halaman="promosi"><LazyPage><PromosiDetailPage /></LazyPage></Protected>} />
               <Route
@@ -158,7 +159,7 @@ export default function App() {
               />
               <Route
                 path="/gudang"
-                element={<Protected halaman="gudang"><LazyPage><GudangPage /></LazyPage></Protected>}
+                element={<Navigate to="/" replace />}
               />
               <Route path="/chat" element={<Protected halaman="chat"><LazyPage><ChatPage /></LazyPage></Protected>} />
               <Route path="/pesanan" element={<Protected halaman="pesanan"><LazyPage><PesananPage /></LazyPage></Protected>} />
