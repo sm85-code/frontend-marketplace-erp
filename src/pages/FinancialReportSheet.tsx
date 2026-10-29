@@ -7,6 +7,7 @@ import { ArrowDownLeft, ArrowUpRight, TrendingUp, Wallet, Download } from 'lucid
 import * as reports from '@/api/financialReports'
 import type { Overview } from '@/api/financialReports'
 export { sumAmounts } from '@/lib/financialAmounts'
+import FinancialClosePanel from './FinancialClosePanel'
 import FinancialSellerBalance from './FinancialSellerBalance'
 import FinancialShippingReceivables from './FinancialShippingReceivables'
 import FinancialPendingReconciliation from './FinancialPendingReconciliation'
@@ -165,11 +166,31 @@ export default function FinancialReportSheet({
       note: 'Posisi terakhir',
     },
   ]
+  // Match the displayed sheet's cents, and avoid comparing incomplete query results with a saved baseline.
+  const closeValue = (key: string): string | null => {
+    if (!manual.data || !operasional.data || awalBulan === undefined) return null
+    const value = lineOf(key)?.total
+    return value == null ? null : value.toFixed(2)
+  }
   const weekLabel = (i: number) => weekRange(month, i)
   const periodeAwal = periodeBerjalan(month, days.length)
   const bulanan = { rentang: rentangBulan(month), final: bulanFinal(data, month) }
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
+      {admin && (
+        <FinancialClosePanel
+          key={month}
+          data={data}
+          month={month}
+          writable={!ro}
+          live={{
+            pemasukan: closeValue('jml_pemasukan'),
+            pengeluaran: closeValue('jml_pengeluaran'),
+            laba: closeValue('laba'),
+            kas_utama: closeValue('n_kas'),
+          }}
+        />
+      )}
       {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border bg-card px-3 py-2 sm:gap-x-6 sm:px-4 text-sm md:max-w-2xl" aria-label={`Rekap ${months[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`}>
         {summaries.map((s) => (
