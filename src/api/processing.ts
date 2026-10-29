@@ -87,6 +87,9 @@ export type ProcessingCandidateItem = ProcessingCandidate & {
   job?: { id: string; version: number; route: 'tukang' | 'supplier'; stage: string; cancelled: boolean } | null
 }
 export type ProcessingStage = 'draft' | 'produksi' | 'supplier' | 'pengecatan' | 'packing' | 'siap_kirim'
+export type CompletedProcessingStage = Exclude<ProcessingStage, 'draft' | 'siap_kirim'>
+export type ProcessingTimeCorrection = { version: number; stage: CompletedProcessingStage; new_time: string; reason: string }
+export type ProcessingEvent = { action: string; actor: string; at: string; stage?: CompletedProcessingStage; old_time?: string; new_time?: string; reason?: string }
 export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   /** The order item the job was made from; absent for a legacy hand-typed job. */
   item_id?: string
@@ -135,7 +138,7 @@ export type ProcessingJob = Omit<ProcessingCandidate, 'item_id'> & {
   supplier_sku?: string
   supplier_reference?: SupplierCatalogProduct & { read_at: string }
   refresh_catalog_price?: boolean
-  events: { action: string; actor: string; at: string }[]
+  events: ProcessingEvent[]
 }
 export type ProcessingJobEdit = Pick<
   ProcessingJob,
@@ -215,6 +218,8 @@ export const transitionProcessingJob = async (
   stage: Exclude<ProcessingStage, 'draft' | 'siap_kirim'>,
   reopen = false,
 ) => (await api.post(`/processing/jobs/${job.id}/transition`, { version: job.version, stage, reopen })).data
+export const correctProcessingTime = async (jobId: string, payload: ProcessingTimeCorrection) =>
+  (await api.post(`/processing/jobs/${encodeURIComponent(jobId)}/correct-time`, payload)).data
 export const removeProcessingDraft = async (job: ProcessingJob) =>
   (await api.delete(`/processing/jobs/${job.id}`, { params: { version: job.version } })).data
 export const editProcessingPacking = async (
