@@ -13,6 +13,7 @@ import {
   latestMonthlyCutoff,
 } from '@/lib/financialClose'
 import { Button } from '@/components/ui/button'
+import InfoTip from '@/components/InfoTip'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -67,21 +68,14 @@ export default function FinancialClosePanel({
       aria-label="Patokan tutup bulanan"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Patokan bulanan · {month}</h2>
+        <h2 className="flex items-center gap-1 font-semibold">
+          Patokan bulanan · {month}
+          <InfoTip teks="Patokan = angka yang disimpan saat tutup buku bulan ini (pemasukan, pengeluaran, laba/rugi, Kas Utama) sebagai dasar keputusan. Berjalan = angka laporan saat ini. Selisih = berjalan dikurangi patokan; — berarti belum ada. Lembar laporan tetap bisa diedit; perubahan tidak otomatis mengubah patokan, perbarui patokan bila perlu." />
+        </h2>
         <span className="rounded border px-2 py-1 text-sm">
           {complete ? 'Patokan tersimpan' : 'Belum ditutup'}
         </span>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Tutup buku menyimpan patokan keputusan. Laporan berjalan dan lembar
-        keuangan tetap dapat diedit. Perubahan lembar manual tidak otomatis
-        masuk patokan; rekonsiliasi melalui transaksi bertanggal dan saldo
-        akhir.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Selisih hanya dihitung terhadap patokan lengkap: berjalan dikurangi
-        patokan. Angka — berarti belum tersedia.
-      </p>
       <p className="text-sm">
         Tutup buku bulanan {data.akhir_bulan} · Sumber: data ERP · Penyajian {data.jadwal_bulanan}
       </p>

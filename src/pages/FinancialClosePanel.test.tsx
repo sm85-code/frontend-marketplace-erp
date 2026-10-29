@@ -49,7 +49,7 @@ describe('monthly baseline presentation', () => {
     expect(html).toContain('Patokan tersimpan')
     expect(html).toContain('Rp 1,05')
     expect(html).toContain('Rp -0,50')
-    expect(html).toContain('tetap dapat diedit')
+    expect(html).toContain('tetap bisa diedit')
     expect(html).toContain('Perbarui patokan')
   })
   it('disables updating older baselines and explains the latest-only restriction', () => {
