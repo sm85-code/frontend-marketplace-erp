@@ -477,7 +477,10 @@ export function TimeCorrectionDialog({ job, stage, onClose, onSaved }: {
 }) {
   const oldTime = job[COMPLETION_TIMES[stage]]
   const formatted = workTime(oldTime)
-  const [time, setTime] = useState(`${formatted.slice(6, 10)}-${formatted.slice(3, 5)}-${formatted.slice(0, 2)}T${formatted.slice(11)}`)
+  const [time, setTime] = useState(() => oldTime ? new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).format(new Date(oldTime)).replace(' ', 'T') : '')
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -505,7 +508,7 @@ export function TimeCorrectionDialog({ job, stage, onClose, onSaved }: {
           toast.error(getApiError(err))
         } finally { setBusy(false) }
       }}>
-        <Field title="Waktu selesai baru (WIB)"><Input type="datetime-local" required disabled={busy} value={time} onChange={e => setTime(e.target.value)} /></Field>
+        <Field title="Waktu selesai baru (WIB)"><Input type="datetime-local" step={1} required disabled={busy} value={time} onChange={e => setTime(e.target.value)} /></Field>
         <Field title="Alasan koreksi (wajib)"><textarea required maxLength={2000} disabled={busy} value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background p-3" /></Field>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <DialogFooter>

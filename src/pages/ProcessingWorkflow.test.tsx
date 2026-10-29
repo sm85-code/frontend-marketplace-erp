@@ -47,7 +47,7 @@ it('requires a trimmed reason and posts explicit WIB with the current version in
   const post = vi.spyOn(client, 'post').mockResolvedValue({ data: { tersimpan: true } })
   const { onSaved, onClose } = await dialog()
   expect(text()).toContain('Waktu selesai baru (WIB)')
-  expect(tree.root.findByProps({ type: 'datetime-local' }).props.value).toBe('2026-01-02T00:10')
+  expect(tree.root.findByProps({ type: 'datetime-local' }).props.value).toBe('2026-01-02T00:10:00')
   expect(button('Simpan koreksi').props.disabled).toBe(true)
   await change('reason', '  ')
   await submit()
@@ -60,6 +60,20 @@ it('requires a trimmed reason and posts explicit WIB with the current version in
   })
   expect(onSaved).toHaveBeenCalledOnce()
   expect(onClose).toHaveBeenCalledOnce()
+})
+it('preserves seconds and permits a correction between completions in the same minute', async () => {
+  const post = vi.spyOn(client, 'post').mockResolvedValue({ data: { tersimpan: true } })
+  const job = { ...fixture, production_done_at: '2026-01-01T03:00:10Z', painting_done_at: '2026-01-01T03:00:30Z', packing_done_at: '2026-01-01T03:00:50Z' }
+  await act(async () => { tree = create(<TimeCorrectionDialog job={job} stage="pengecatan" onSaved={vi.fn()} onClose={vi.fn()} />) })
+  const input = tree.root.findByProps({ type: 'datetime-local' })
+  expect(input.props.value).toBe('2026-01-01T10:00:30')
+  expect(input.props.step).toBe(1)
+  await change('datetime-local', '2026-01-01T10:00:40')
+  await change('reason', 'Fixture same-minute correction')
+  await submit()
+  expect(post).toHaveBeenCalledWith('/processing/jobs/synthetic/correct-time', {
+    version: 3, stage: 'pengecatan', new_time: '2026-01-01T10:00:40+07:00', reason: 'Fixture same-minute correction',
+  })
 })
 it('disables pending submission and keeps the dialog and reason on a version conflict', async () => {
   let reject!: (error: unknown) => void
