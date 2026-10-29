@@ -47,6 +47,7 @@ export const sources = async (tanggal: string) => (await api.get<{ sumber_utama:
 export const opening = async (tanggal: string, saldo: Balances) => (await api.post('/laporan-keuangan/saldo-awal', { tanggal, saldo })).data
 export const preview = async (data: CloseInput) => (await api.post<Report>('/laporan-keuangan/pratinjau', data)).data
 export const close = async (data: CloseInput) => (await api.post<Report>('/laporan-keuangan/tutup', data)).data
+export const updateClose = async (tanggal: string, data: CloseInput) => (await api.post<Report>(`/laporan-keuangan/${tanggal}/perbarui`, data)).data
 export const reopen = async (tanggal: string, alasan: string) => (await api.post(`/laporan-keuangan/${tanggal}/buka-kembali`, { alasan })).data
 export const history = async () => (await api.get<Audit[]>('/laporan-keuangan/riwayat')).data
 
