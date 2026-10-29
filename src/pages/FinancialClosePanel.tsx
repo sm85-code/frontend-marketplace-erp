@@ -45,9 +45,10 @@ export default function FinancialClosePanel({
   live: LiveCloseValues
   writable: boolean
 }) {
+  // Baseline = the ERP's own monthly close of this month only (Drive-imported weeks are history, not a baseline).
   const saved = latestMonthlyCutoff(data)
-  const monthly = data.laporan_bulanan
-  const complete = !!saved && !!monthly?.lengkap
+  const monthly = saved
+  const complete = !!saved
   const [flow, setFlow] = useState<{
     date: string
     existing?: api.Report
@@ -58,7 +59,8 @@ export default function FinancialClosePanel({
     queryFn: api.history,
     enabled: showHistory,
   })
-  const date = data.berikutnya
+  // Closing is monthly only: the next close is always a month end.
+  const date = data.tutup_berikutnya ?? null
   return (
     <section
       className="space-y-3 rounded-xl border bg-card p-3 sm:p-4"
@@ -67,11 +69,7 @@ export default function FinancialClosePanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">Patokan bulanan · {month}</h2>
         <span className="rounded border px-2 py-1 text-sm">
-          {complete
-            ? 'Patokan tersimpan'
-            : saved
-              ? 'Tersimpan · cakupan belum lengkap'
-              : 'Belum ditutup'}
+          {complete ? 'Patokan tersimpan' : 'Belum ditutup'}
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
@@ -85,7 +83,7 @@ export default function FinancialClosePanel({
         patokan. Angka — berarti belum tersedia.
       </p>
       <p className="text-sm">
-        Cut-off bulanan {data.akhir_bulan} · Penyajian {data.jadwal_bulanan}
+        Tutup buku bulanan {data.akhir_bulan} · Sumber: data ERP · Penyajian {data.jadwal_bulanan}
       </p>
       <div className="overflow-x-auto">
         <table className="block w-full text-sm sm:table">
@@ -97,7 +95,7 @@ export default function FinancialClosePanel({
             <tr>
               <th className="text-left">Nilai</th>
               <th>Berjalan</th>
-              <th>Patokan{!complete ? ' (parsial / belum ada)' : ''}</th>
+              <th>Patokan{!complete ? ' (belum ada)' : ''}</th>
               <th>Selisih</th>
             </tr>
           </thead>
@@ -135,7 +133,7 @@ export default function FinancialClosePanel({
                             'Berjalan',
                             complete
                               ? 'Patokan'
-                              : 'Patokan (parsial / belum ada)',
+                              : 'Patokan (belum ada)',
                             'Selisih',
                           ][i]
                         }
@@ -159,24 +157,24 @@ export default function FinancialClosePanel({
         {writable && saved && (
           <Button
             variant="outline"
-            disabled={data.terakhir !== saved.tanggal}
+            disabled={data.tutup_terakhir !== saved.tanggal}
             onClick={() => setFlow({ date: saved.tanggal, existing: saved })}
           >
             Perbarui patokan
           </Button>
         )}
-        {writable && !saved && date && date <= data.akhir_bulan && (
-          <Button onClick={() => setFlow({ date })}>
-            Siapkan tutup {date}
+        {writable && !saved && date === data.akhir_bulan && (
+          <Button disabled={!cutoffFinished(date)} onClick={() => setFlow({ date })}>
+            Tutup buku {month}
           </Button>
         )}
         <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
           Riwayat audit
         </Button>
       </div>
-      {saved && data.terakhir !== saved.tanggal && (
+      {saved && data.tutup_terakhir !== saved.tanggal && (
         <p className="text-sm">
-          Hanya cut-off terbaru ({data.terakhir}) dapat diperbarui. Patokan
+          Hanya tutup buku terbaru ({data.tutup_terakhir}) dapat diperbarui. Patokan
           bulan ini tidak dapat diperbarui langsung.
         </p>
       )}
@@ -186,7 +184,11 @@ export default function FinancialClosePanel({
             ? 'Saldo awal diperlukan sebelum menutup laporan.'
             : date > data.akhir_bulan
               ? 'Cut-off bulan ini sudah terlewati. Periksa riwayat.'
-              : `Selesaikan cut-off berurutan sampai ${data.akhir_bulan}. Penyajian final tidak berarti patokan sudah tersimpan.`}
+              : date < data.akhir_bulan
+                ? `Tutup buku dulu bulan ${date.slice(0, 7)} (berurutan per bulan).`
+                : cutoffFinished(date)
+                  ? 'Bulan sudah selesai: periksa sumber ERP lalu tutup buku.'
+                  : 'Tutup buku tersedia setelah bulan selesai (setelah 23:59 WIB tanggal terakhir).'}
         </p>
       )}
       {showHistory && (
