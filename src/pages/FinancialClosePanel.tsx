@@ -168,9 +168,11 @@ export default function FinancialClosePanel({
             Tutup buku {month}
           </Button>
         )}
-        <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
-          Riwayat audit
-        </Button>
+        {writable && (
+          <Button variant="outline" onClick={() => setShowHistory(!showHistory)}>
+            Riwayat audit
+          </Button>
+        )}
       </div>
       {saved && data.tutup_terakhir !== saved.tanggal && (
         <p className="text-sm">
