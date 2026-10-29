@@ -4,6 +4,7 @@ import RekapPemetaan from '@/pages/RekapPemetaan'
 import InfoTip from '@/components/InfoTip'
 import { labelVarian, namaDenganVarian } from '@/lib/varianProduk'
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth'
 import SupplierCatalogPanel from './SupplierCatalogPanel'
 import ProcessingColorField from './ProcessingColorField'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -22,6 +23,9 @@ import {
 import { toast } from 'sonner'
 import {
   getProcessingJobs,
+  correctProcessingTime,
+  type CompletedProcessingStage,
+  type ProcessingEvent,
   getProcessingPrices,
   editProcessingJob,
   transitionProcessingJob,
@@ -462,6 +466,73 @@ function MappingEditor({
   )
 }
 
+const COMPLETION_TIMES = { produksi: 'production_done_at', supplier: 'received_at', pengecatan: 'painting_done_at', packing: 'packing_done_at' } as const
+const STAGE_NAMES = { produksi: 'Produksi', supplier: 'Supplier', pengecatan: 'Pengecatan', packing: 'Packing' }
+function applicable(job: ProcessingJob, stage: CompletedProcessingStage) {
+  return stage === 'packing' || (stage === 'supplier' ? job.route === 'supplier' : job.route === 'tukang' && (stage === 'produksi' || job.color !== POL0S))
+}
+
+export function TimeCorrectionDialog({ job, stage, onClose, onSaved }: {
+  job: ProcessingJob; stage: CompletedProcessingStage; onClose: () => void; onSaved: () => Promise<void>
+}) {
+  const oldTime = job[COMPLETION_TIMES[stage]]
+  const formatted = workTime(oldTime)
+  const [time, setTime] = useState(() => oldTime ? new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).format(new Date(oldTime)).replace(' ', 'T') : '')
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const valid = !!time && !!reason.trim() && reason.trim().length <= 2000
+  return <Dialog open onOpenChange={o => { if (!o && !busy) onClose() }}>
+    <DialogContent className="text-left [&_p]:text-left">
+      <DialogHeader>
+        <DialogTitle>Koreksi waktu · {STAGE_NAMES[stage]}</DialogTitle>
+        <DialogDescription>{job.order_number} · {job.produk}</DialogDescription>
+      </DialogHeader>
+      <p className="text-sm text-muted-foreground">Waktu tersimpan: {formatted} WIB</p>
+      <form className="space-y-4" onSubmit={async e => {
+        e.preventDefault()
+        if (busy || !valid) return
+        setBusy(true)
+        setError('')
+        try {
+          // datetime-local is a WIB wall clock, independent of the browser's timezone.
+          await correctProcessingTime(job.id, { version: job.version, stage, new_time: `${time}+07:00`, reason: reason.trim() })
+          await onSaved()
+          onClose()
+          toast.success('Koreksi waktu tersimpan')
+        } catch (err) {
+          setError(getApiError(err))
+          toast.error(getApiError(err))
+        } finally { setBusy(false) }
+      }}>
+        <Field title="Waktu selesai baru (WIB)"><Input type="datetime-local" step={1} required disabled={busy} value={time} onChange={e => setTime(e.target.value)} /></Field>
+        <Field title="Alasan koreksi (wajib)"><textarea required maxLength={2000} disabled={busy} value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background p-3" /></Field>
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        <DialogFooter>
+          <Button type="button" variant="outline" disabled={busy} onClick={onClose}>Batal</Button>
+          <Button type="submit" disabled={busy || !valid}>{busy ? 'Menyimpan…' : 'Simpan koreksi'}</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  </Dialog>
+}
+
+export function ProcessingHistory({ events }: { events: ProcessingEvent[] }) {
+  return <ol className="mt-3 space-y-3">
+    {events.map((e, i) => <li key={i} className="border-l-2 border-primary/20 pl-3">
+      <p className="text-sm capitalize">{e.action.replaceAll('_', ' ')}{e.action === 'koreksi_waktu' && e.stage ? ` · ${STAGE_NAMES[e.stage]}` : ''}</p>
+      {e.action === 'koreksi_waktu' && <>
+        <p className="text-sm">{workTime(e.old_time)} WIB → {workTime(e.new_time)} WIB</p>
+        <p className="whitespace-pre-wrap break-words text-sm">{e.reason}</p>
+      </>}
+      <p className="text-xs text-muted-foreground">{workTime(e.at)} WIB · {e.actor}</p>
+    </li>)}
+  </ol>
+}
+
 function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -512,14 +583,7 @@ function JobDetails({ job, onClose }: { job: ProcessingJob; onClose: () => void 
         </div>
         <details className="rounded-xl border p-3">
           <summary className="cursor-pointer text-sm font-medium">Riwayat pekerjaan</summary>
-          <ol className="mt-3 space-y-3">
-            {job.events.map((e, i) => (
-              <li key={i} className="border-l-2 border-primary/20 pl-3">
-                <p className="text-sm capitalize">{e.action.replaceAll('_', ' ')}</p>
-                <p className="text-xs text-muted-foreground">{workTime(e.at)} WIB</p>
-              </li>
-            ))}
-          </ol>
+          <ProcessingHistory events={job.events} />
         </details>
         {job.source === 'erp' && (
           <Button asChild variant="outline">
@@ -538,6 +602,8 @@ const dariPesanan = (r: { source: string; item_id?: string }) => r.source === 'e
 
 export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCatalog | null | undefined }) {
   const qc = useQueryClient()
+  const { user, akses, bisa } = useAuth()
+  const canCorrect = [user?.role, ...(akses?.roles || [])].some(role => role === 'admin' || role === 'owner')
   const q = useQuery({ queryKey: ['processing-jobs'], queryFn: getProcessingJobs })
   const prices = useQuery({ queryKey: ['processing-prices'], queryFn: getProcessingPrices })
   // The API includes imported rows and applies retirement overrides consistently.
@@ -549,6 +615,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<{ job: ProcessingJob; packingOnly: boolean; catalogMode?: 'manual' | 'otomatis' } | null>(null)
+  const [correcting, setCorrecting] = useState<{ job: ProcessingJob; stage: CompletedProcessingStage } | null>(null)
   const [detail, setDetail] = useState<ProcessingJob | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [now] = useState(() => Date.now())
@@ -571,6 +638,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
     await Promise.all([
       qc.invalidateQueries({ queryKey: ['processing-jobs'] }),
       qc.invalidateQueries({ queryKey: ['processing-candidates'] }),
+      qc.invalidateQueries({ queryKey: ['biaya-produksi'] }),
     ])
   }
   const run = async (job: ProcessingJob, action: () => Promise<unknown>) => {
@@ -639,6 +707,9 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
               </>
             )}
           </Button>
+        )}
+        {completed && applicable(r, meta.stage) && canCorrect && bisa(`processing_${table}`, 'tulis') && (
+          <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => setCorrecting({ job: r, stage: meta.stage })}>Koreksi waktu</Button>
         )}
         <AksiLainnya>
         <Button size="sm" variant="ghost" onClick={() => setDetail(r)}>
@@ -1004,6 +1075,7 @@ export default function ProcessingWorkflow({ catalog }: { catalog: ProcessingCat
           onSaved={refresh}
         />
       )}{' '}
+      {correcting && <TimeCorrectionDialog key={`${correcting.job.id}:${correcting.job.version}:${correcting.stage}`} {...correcting} onClose={() => setCorrecting(null)} onSaved={refresh} />}
       {detail && <JobDetails job={detail} onClose={() => setDetail(null)} />}
     </div>
   )
