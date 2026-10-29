@@ -14,15 +14,18 @@ const record = {
     saldo_akhir: { kas_utama: '100.00' },
   },
 } as Report
-function render(saved: boolean, latest: string, writable = true, complete = true) {
-  const snapshot = { ...record, lengkap: complete }
+function render(saved: boolean, latest: string, writable = true, next = '2026-11-30', drive = false) {
   const data = {
     akhir_bulan: '2026-10-31',
     jadwal_bulanan: '2026-11-03',
-    laporan: saved ? [snapshot] : [],
-    laporan_bulanan: saved ? snapshot : null,
-    terakhir: latest,
-    berikutnya: '2026-11-01',
+    // Drive-imported weeks may sit in laporan/laporan_bulanan; they must never be shown as the baseline.
+    laporan: drive ? [{ ...record, lengkap: false }] : [],
+    laporan_bulanan: drive ? { ...record, lengkap: false } : null,
+    patokan_bulanan: saved ? record : null,
+    tutup_terakhir: saved ? latest : null,
+    tutup_berikutnya: saved ? next : next,
+    terakhir: '2026-10-13',
+    berikutnya: '2026-10-18',
   } as Overview
   return renderToStaticMarkup(
     <QueryClientProvider client={new QueryClient()}>
@@ -50,22 +53,20 @@ describe('monthly baseline presentation', () => {
     expect(html).toContain('Perbarui patokan')
   })
   it('disables updating older baselines and explains the latest-only restriction', () => {
-    expect(render(true, '2026-11-01')).toContain('disabled=""')
-    expect(render(true, '2026-11-01')).toContain('Hanya cut-off terbaru')
+    expect(render(true, '2026-11-30')).toContain('disabled=""')
+    expect(render(true, '2026-11-30')).toContain('Hanya tutup buku terbaru')
   })
-  it('marks an incomplete monthly snapshot as partial and suppresses all variances', () => {
-    const html = render(true, '2026-10-31', true, false)
-    expect(html).toContain('Tersimpan · cakupan belum lengkap')
-    expect(html).toContain('Patokan (parsial / belum ada)')
-    expect(html).toContain('Selisih hanya dihitung terhadap patokan lengkap')
+  it('ignores Drive-imported weeks as a baseline', () => {
+    const html = render(false, '', true, '2026-10-31', true)
+    expect(html).toContain('Belum ditutup')
+    expect(html).toContain('Patokan (belum ada)')
     const rows = html.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/g)!.slice(1)
-    expect(rows).toHaveLength(4)
-    for (const row of rows) {
-      const cells = row.match(/<td\b[^>]*>[\s\S]*?<\/td>/g)!
-      expect(cells[1]).toContain('Rp ')
-      expect(cells[2]).toContain('<span>—</span>')
-      expect(cells[2]).not.toContain('Rp ')
-    }
+    for (const row of rows) expect(row.match(/<td\b[^>]*>[\s\S]*?<\/td>/g)![1]).toContain('<span>—</span>')
+  })
+  it('offers only a monthly close, never a weekly cut-off', () => {
+    const html = render(false, '', true, '2026-10-31')
+    expect(html).toContain('Tutup buku 2026-10')
+    expect(render(false, '', true, '2026-10-18')).not.toContain('Tutup buku 2026-10<')
   })
   it('does not display zero as an unsaved baseline or offer writes to read-only users', () => {
     const html = render(false, '2026-11-01', false)

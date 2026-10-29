@@ -51,10 +51,9 @@ export function exactRp(value: string) {
   const [whole, cents] = normalized.split('.')
   return `Rp ${whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${cents}`
 }
+/** This month's closing baseline: only the ERP's own monthly close, never Drive-imported weeks. */
 export function latestMonthlyCutoff(data: Overview) {
-  return data.laporan.find(
-    (r) => r.tanggal === data.akhir_bulan && r.tutup_bulanan,
-  )
+  return data.patokan_bulanan ?? undefined
 }
 export function cutoffFinished(date: string, now = new Date()) {
   return date < new Date(now.getTime() + 7 * 3600e3).toISOString().slice(0, 10)

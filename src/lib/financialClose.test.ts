@@ -54,7 +54,8 @@ describe('financial close safety', () => {
     expect(
       latestMonthlyCutoff({
         akhir_bulan: '2026-10-31',
-        laporan: [],
+        laporan: [{ tanggal: '2026-10-31', tutup_bulanan: true }],
+        patokan_bulanan: null,
         bulanan: { final: true },
       } as unknown as Overview),
     ).toBeUndefined()

@@ -177,20 +177,6 @@ export default function FinancialReportSheet({
   const bulanan = { rentang: rentangBulan(month), final: bulanFinal(data, month) }
   return (
     <section aria-label="Tabel laporan keuangan" className="min-w-0 space-y-5">
-      {admin && (
-        <FinancialClosePanel
-          key={month}
-          data={data}
-          month={month}
-          writable={!ro}
-          live={{
-            pemasukan: closeValue('jml_pemasukan'),
-            pengeluaran: closeValue('jml_pengeluaran'),
-            laba: closeValue('laba'),
-            kas_utama: closeValue('n_kas'),
-          }}
-        />
-      )}
       {/* One compact strip instead of four cards and a heading: the tables below get the screen. */}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border bg-card px-3 py-2 sm:gap-x-6 sm:px-4 text-sm md:max-w-2xl" aria-label={`Rekap ${months[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`}>
         {summaries.map((s) => (
@@ -209,8 +195,8 @@ export default function FinancialReportSheet({
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
-            {TAB_TAMPIL.filter((tabel) => admin || tabel !== 'transaksi_erp').map((tabel) => (
-              <TabsTrigger key={tabel} value={tabel === 'transaksi_erp' ? 'erp' : String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
+            {TAB_TAMPIL.filter((tabel) => admin || (tabel !== 'transaksi_erp' && tabel !== 'tutup_buku')).map((tabel) => (
+              <TabsTrigger key={tabel} value={tabel === 'transaksi_erp' ? 'erp' : tabel === 'tutup_buku' ? 'tutup' : String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
                 {t(idTab(tabel), TAB_LAPORAN.find(([id]) => id === tabel)?.[1] ?? tabel)}
               </TabsTrigger>
             ))}
@@ -241,6 +227,21 @@ export default function FinancialReportSheet({
             )}
           </TabsContent>
         ))}
+        {/* Monthly closing has its own tab after Laba/Rugi, so it never pushes the report tabs down. */}
+        {admin && <TabsContent value="tutup" className="min-w-0">
+          <FinancialClosePanel
+            key={month}
+            data={data}
+            month={month}
+            writable={!ro}
+            live={{
+              pemasukan: closeValue('jml_pemasukan'),
+              pengeluaran: closeValue('jml_pengeluaran'),
+              laba: closeValue('laba'),
+              kas_utama: closeValue('n_kas'),
+            }}
+          />
+        </TabsContent>}
         {/* Tables read from the ERP's own Shopee data (receivables in shipping, pending reconciliation, seller balance). */}
         {admin && <TabsContent value="erp" className="min-w-0">
           <div className="min-w-0 space-y-5">

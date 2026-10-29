@@ -39,6 +39,8 @@ export type Report = { estimasi_bumi_tani?: string; estimasi_cakupan_drive?: str
 export type Overview = {
   sumber_utama: 'google_drive' | 'erp'; asal: { url: string; tab: string; read_at: string } | null; akhir_bulan: string; jadwal_bulanan: string; mingguan: { mulai: string; tanggal: string; jadwal_laporan: string; laporan: Report | null }[]; laporan_bulanan: Report | null; legacy: Report[]; saldo_awal: { tanggal: string; saldo: Balances } | null;
   laporan: Report[]; berikutnya: string | null; terakhir: string | null;
+  /** The ERP's own monthly close for this month (never Drive-imported history), and the next/last monthly close dates. */
+  patokan_bulanan?: Report | null; tutup_berikutnya?: string | null; tutup_terakhir?: string | null;
   bulanan: { final: boolean; pemasukan: string; pengeluaran: string; laba: string; saldo_akhir: Balances | null }
 }
 export type Audit = { id: string; tanggal: string; action: string; alasan: string; oleh: string; waktu: string }

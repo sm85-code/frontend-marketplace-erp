@@ -82,8 +82,11 @@ async function setup(existing = true) {
           data={
             {
               akhir_bulan: date,
-              laporan: existing ? [saved] : [],
-              laporan_bulanan: existing ? saved : null,
+              laporan: [],
+              laporan_bulanan: null,
+              patokan_bulanan: existing ? saved : null,
+              tutup_terakhir: existing ? date : null,
+              tutup_berikutnya: date,
               terakhir: date,
               berikutnya: date,
             } as any
@@ -100,7 +103,7 @@ async function setup(existing = true) {
       </QueryClientProvider>,
     )
   })
-  await click(existing ? 'Perbarui patokan' : `Siapkan tutup ${date}`)
+  await click(existing ? 'Perbarui patokan' : `Tutup buku ${date.slice(0, 7)}`)
   return { preview, reopen, invalidate }
 }
 async function confirm() {
