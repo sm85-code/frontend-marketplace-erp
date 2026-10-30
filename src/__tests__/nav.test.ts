@@ -95,8 +95,20 @@ describe('Pemetaan Order and every menu of Data Produksi are separate pages', ()
   const proses = (halaman: Record<string, 'baca' | 'tulis'>) => filterNav(akses(halaman)).map((n) => n.to).filter((to) => to.startsWith('/processing/'))
 
   it('shows each staff member only the menus they were given', () => {
-    expect(proses({ processing: 'tulis' })).toEqual(['/processing/pemetaan'])
+    expect(proses({ processing_tukang: 'tulis' })).toEqual(['/processing/pemetaan'])
     expect(proses({ data_tukang: 'tulis', data_template: 'baca' })).toEqual(['/processing/tukang-kayu', '/processing/template'])
+  })
+
+  it.each(['processing_tukang', 'processing_supplier', 'processing_pengecatan', 'processing_packing'])('shows Pemetaan Order for %s at either level without a parent permission', (tab) => {
+    for (const level of ['baca', 'tulis'] as const) {
+      expect(proses({ [tab]: level })).toEqual(['/processing/pemetaan'])
+    }
+  })
+
+  it('hides Pemetaan Order without tabs, including an obsolete parent permission', () => {
+    expect(proses({})).toEqual([])
+    expect(proses({ processing: 'tulis' })).toEqual([])
+    expect(proses({ data_tukang: 'tulis' })).not.toContain('/processing/pemetaan')
   })
 
   it('shows Katalog Produk Non Kayu when either of its tabs is given', () => {
