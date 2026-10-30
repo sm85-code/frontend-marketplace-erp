@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import * as api from '@/api/commerce'
 import { shopeeDiagnostic } from '@/lib/shopeeDiagnostic'
-import { fmtDateTime, getApiError } from '@/api/client'
+import { fmtDateTime } from '@/api/client'
 import type { KatalogDetail } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
 import { Button } from '@/components/ui/button'
@@ -14,9 +14,18 @@ export function ErrorDetails({ error, result }: { error?: unknown; result?: api.
   const diagnostic = useMemo(() => result?.diagnostic || shopeeDiagnostic(error), [error, result?.diagnostic])
   if (!error && !result?.failures.length) return null
   return <div role="alert" className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
-    {!!error && <p>{getApiError(error)}</p>}
-    {result?.failures.map(f => <p key={f.item_id || f.comment_id}>{f.item_id ? `Produk ${f.item_id}` : `Ulasan ${f.comment_id}`}: {f.message || f.error}</p>)}
-    {diagnostic && <><p className="break-all text-xs">Kode: {diagnostic.error || 'Kegagalan per item'} · Request ID: {diagnostic.request_id || 'tidak tersedia'}</p><details><summary className="cursor-pointer py-2">Rincian untuk pemeriksaan</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(diagnostic, null, 2)}</pre><Button type="button" variant="outline" size="sm" onClick={() => { void navigator.clipboard.writeText(JSON.stringify(diagnostic, null, 2)).then(() => toast.success('Diagnostik disalin. Bisa dibagikan untuk pemeriksaan.'), () => toast.error('Belum dapat menyalin. Salin teks rincian di atas.')) }}>Salin diagnostik error</Button></details></>}
+    <p>{result?.failures.length ? 'Sebagian atau seluruh item ditolak Shopee. Periksa status sebelum mengirim ulang.'
+      : diagnostic?.source === 'erp_permission' ? 'Boost ditolak oleh izin ERP. Hubungi admin untuk akses Katalog Lanjutan.'
+      : diagnostic?.source === 'erp_account_scope' ? 'Izin ERP kamu tidak mencakup toko ini. Hubungi admin.'
+      : diagnostic?.source === 'erp_account_mismatch' ? 'Produk tidak cocok dengan toko yang dipilih. Muat ulang katalog.'
+      : diagnostic?.source === 'shopee_permission' ? 'Izin API Shopee untuk fitur ini ditolak. Hubungi admin aplikasi Shopee Open Platform.'
+      : diagnostic?.error === 'http_403' || diagnostic?.source === 'erp_forbidden' ? 'Penyebab penolakan belum terverifikasi. Hubungi dukungan dengan kode pemeriksaan.'
+      : 'Hasil belum terkonfirmasi. Periksa status sebelum mengirim ulang.'}</p>
+    {diagnostic?.source === 'client_fallback' && <p className="text-xs text-muted-foreground">Kode lokal dari browser, belum tercatat di log server. Sertakan waktu kejadian dan toko saat menghubungi dukungan.</p>}
+    {diagnostic && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(diagnostic.diagnostic_id) && <>
+      <p className="break-all text-xs">Kode pemeriksaan: {diagnostic.diagnostic_id}</p>
+      <Button type="button" variant="outline" size="sm" onClick={() => { void navigator.clipboard.writeText(diagnostic.diagnostic_id).then(() => toast.success('Kode pemeriksaan disalin.'), () => toast.error('Belum dapat menyalin. Salin kode di atas.')) }}>Salin kode pemeriksaan</Button>
+    </>}
   </div>
 }
 
