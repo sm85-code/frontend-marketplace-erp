@@ -1,0 +1,36 @@
+[
+  {
+    "name": "desktop",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "horizontalOverflow": false,
+    "tableOverflowContained": true,
+    "browserErrors": 0,
+    "mockActionConfirmed": true,
+    "structuredKeywordEditor": true,
+    "scheduleRowLoaded": true,
+    "nullTrendPreserved": true,
+    "screenshots": 7,
+    "networkWrites": 0,
+    "apiRequests": 0
+  },
+  {
+    "name": "mobile",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "horizontalOverflow": false,
+    "tableOverflowContained": true,
+    "browserErrors": 0,
+    "mockActionConfirmed": true,
+    "structuredKeywordEditor": true,
+    "scheduleRowLoaded": true,
+    "nullTrendPreserved": true,
+    "screenshots": 7,
+    "networkWrites": 0,
+    "apiRequests": 0
+  }
+]

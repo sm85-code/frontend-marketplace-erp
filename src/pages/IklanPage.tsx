@@ -1,3 +1,4 @@
+import Agen from './iklan/Agen'
 import InfoTip from '@/components/InfoTip'
 import GmvMax from './iklan/GmvMax'
 import FormDialog from '@/components/FormDialog'
@@ -79,7 +80,7 @@ export default function IklanPage() {
   const [params, setParams] = useSearchParams()
   // Local state is the source of truth (reading it back from the URL raced when tabs were clicked quickly); the URL
   // only follows, so F5 and shared links keep the tab.
-  const [tab, setTab] = useState(() => (params.get('tab') === 'gmv' ? 'gmv' : params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' ? 'kampanye' : 'performa'))
+  const [tab, setTab] = useState(() => (params.get('tab') === 'agen' ? 'agen' : params.get('tab') === 'gmv' ? 'gmv' : params.get('tab') === 'catatan' ? 'catatan' : params.get('tab') === 'kampanye' ? 'kampanye' : 'performa'))
 
   return (
     <div className="space-y-4">
@@ -94,9 +95,11 @@ export default function IklanPage() {
           <TabsTrigger value="performa">Performa</TabsTrigger>
           <TabsTrigger value="kampanye">Kampanye Shopee</TabsTrigger>
           <TabsTrigger value="gmv">Shop GMV Max</TabsTrigger>
+          <TabsTrigger value="agen">Agen</TabsTrigger>
           <TabsTrigger value="catatan">Catatan</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="agen"><Agen /></TabsContent>
         <TabsContent value="gmv"><GmvMax /></TabsContent>
         <TabsContent value="performa">
           <PerformaShopee />
