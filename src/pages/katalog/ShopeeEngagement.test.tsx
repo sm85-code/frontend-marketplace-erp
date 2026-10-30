@@ -45,6 +45,21 @@ describe('Shopee response diagnostics', () => {
     const html = renderToStaticMarkup(<ErrorDetails error={{ response: { data: { detail: { diagnostic: { ...report, diagnostic_id: 'SECRET PRIVATE' } } } } }} />)
     expect(html).not.toMatch(/SECRET|PRIVATE|Salin kode pemeriksaan/)
   })
+  it.each([
+    { status: 403, source: 'shopee_permission', code: 'error_api_permission', message: 'Izin API Shopee' },
+    { status: 504, source: 'shopee', code: 'http_504', message: 'Periksa status sebelum mengirim ulang' },
+  ])('uses server preflight diagnostic for HTTP $status, never browser fallback', ({ status, source, code, message }) => {
+    const preflightError = { response: { status, data: { detail: {
+      message: 'Boost belum dikirim. PRIVATE SECRET',
+      diagnostic: { ...report, endpoint: '/api/v2/product/get_item_base_info', source, error: code, request_id: null },
+    } } } }
+    const html = renderToStaticMarkup(<ErrorDetails error={preflightError} />)
+    expect(html).toContain(message)
+    expect(html).toContain(`Kode pemeriksaan: ${report.diagnostic_id}`)
+    expect(html).toContain('Salin kode pemeriksaan')
+    expect(html).not.toMatch(/lokal|SECRET|PRIVATE|access_token|get_item_base_info|trace-123/)
+    expect(html).not.toContain('izin ERP')
+  })
   it('offers safe generic guidance for unknown errors', () => {
     const html = renderToStaticMarkup(<ErrorDetails error={{ response: { status: 502, data: { detail: { message: 'PRIVATE SECRET' } } } }} />)
     expect(html).toContain('Periksa status sebelum mengirim ulang')
