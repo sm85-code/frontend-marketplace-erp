@@ -1,3 +1,4 @@
+import { PEMETAAN_ORDER } from '@/lib/akses'
 import type { LucideIcon } from 'lucide-react'
 import {
   Bot,
@@ -62,7 +63,7 @@ export const NAV: NavItem[] = [
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, halaman: 'produk', grup: 'produk' },
   { to: '/listing', label: 'Pemetaan Produk Toko', icon: Link2, halaman: 'listing', grup: 'produk' },
   // Gudang & Stok is hidden: stock lives only in Shopee (data and endpoints are kept).
-  { to: '/processing/pemetaan', label: 'Pemetaan Order', icon: Hammer, halaman: 'processing', grup: 'processing' },
+  { to: '/processing/pemetaan', label: 'Pemetaan Order', icon: Hammer, halaman: PEMETAAN_ORDER, grup: 'processing' },
   { to: '/processing/tukang-kayu', label: 'Tukang Kayu', icon: Users, halaman: 'data_tukang', grup: 'data-produksi' },
   { to: '/processing/supplier', label: 'Supplier', icon: Store, halaman: 'data_supplier', grup: 'data-produksi' },
   { to: '/processing/produk-kayu', label: 'Katalog Produk Kayu', icon: Package, halaman: 'data_produk_kayu', grup: 'data-produksi' },

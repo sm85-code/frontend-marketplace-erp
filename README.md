@@ -31,8 +31,14 @@ for managing many marketplace shops (Shopee, TikTokShop, Lazada, Blibli) from on
 | `/staff` | Staff accounts + per-shop assignment | `GET/POST /users`, `GET/POST/DELETE /staff-akun` |
 | `/profile` | Own profile + link to change password | — |
 
-`staff`-role accounts see only Dashboard, Toko, Pesanan and Profile, scoped server-side to the
-shops assigned via `/staff-akun` (see backend `akun_ids_diizinkan`/`pastikan_akses_akun`).
+Page visibility and actions follow the role editor's `baca`/`tulis` checkboxes. Shop access
+is scoped server-side (see backend `akun_ids_diizinkan`/`pastikan_akses_akun`).
+
+Pemetaan Order (`/processing/pemetaan`) appears when any of `processing_tukang`,
+`processing_supplier`, `processing_pengecatan`, or `processing_packing` has `baca` or
+`tulis`. The page uses the same rule; there is no parent `processing` checkbox.
+Each tab's writes require its own `tulis`, and Data Produksi menus keep their own
+permissions. This does not change role defaults or saved role data.
 
 Desktop has a fixed sidebar. On mobile you get a top bar with a drawer, and a bottom tab bar.
 

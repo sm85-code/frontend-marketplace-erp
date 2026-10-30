@@ -1,3 +1,4 @@
+import { PEMETAAN_ORDER } from '@/lib/akses'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
@@ -33,7 +34,7 @@ function NonKayuTabs() {
 
 /** The page of the role settings behind each screen: Pemetaan Order, and one page per menu of Data Produksi. */
 const HALAMAN_LAYAR: Record<string, string> = {
-  pemetaan: 'processing',
+  pemetaan: PEMETAAN_ORDER,
   'tukang-kayu': 'data_tukang',
   supplier: 'data_supplier',
   'produk-kayu': 'data_produk_kayu',

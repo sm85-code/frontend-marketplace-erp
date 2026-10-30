@@ -13,3 +13,6 @@ export function bisa(akses: AksesSaya | null | undefined, halaman: string, perlu
 
 /** Stand-in when the settings cannot be read: an admin still has everything, anybody else nothing. */
 export const AKSES_ADMIN_CADANGAN = (role: string): AksesSaya => ({ role, nama: role, akses_toko: 'semua', halaman: {} })
+
+/** Pemetaan Order is accessible through any of its four role-editor tabs. */
+export const PEMETAAN_ORDER = 'processing_tukang|processing_supplier|processing_pengecatan|processing_packing'
