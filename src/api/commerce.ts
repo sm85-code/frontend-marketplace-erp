@@ -47,7 +47,7 @@ export const hourlyAds = (id: string, tanggal: string, campaign_id?: string) => 
 export interface ShopConnection {id:string;status:string;otorisasi_tersedia:boolean;perlu_otorisasi_ulang:boolean;sinkron_pesanan_at:string|null;sinkron_penuh_at:string|null}
 export const shopConnections=()=>api.get<ShopConnection[]>('/koneksi-toko').then(r=>r.data)
 
-export interface ShopeeDiagnostic { diagnostic_id: string; time: string; endpoint: string; account_id: string | null; request_id: string | null; error: string; message: string; failures: { item_id?: string; comment_id?: string; error: string; message: string }[] }
+export interface ShopeeDiagnostic { source?: string; diagnostic_id: string; time: string; endpoint: string; account_id: string | null; request_id: string | null; error: string; message: string; failures: { item_id?: string; comment_id?: string; error: string; message: string }[] }
 export interface EngagementResult { ok: boolean; success_ids: string[]; failures: { item_id?: string; comment_id?: string; error: string; message: string }[]; request_id: string | null; diagnostic: ShopeeDiagnostic | null; warnings: string[] }
 export interface ProductComment { comment_id: string; item_id: string; comment: string; rating_star: number | null; buyer_username: string | null; create_time: number | null; reply: string }
 export interface CommentPage { items: ProductComment[]; more: boolean; next_cursor: string; request_id: string | null }
