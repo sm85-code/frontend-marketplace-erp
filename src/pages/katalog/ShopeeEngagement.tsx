@@ -18,6 +18,7 @@ export function ErrorDetails({ error, result }: { error?: unknown; result?: api.
       : diagnostic?.source === 'erp_permission' ? 'Boost ditolak oleh izin ERP. Hubungi admin untuk akses Katalog Lanjutan.'
       : diagnostic?.source === 'erp_account_scope' ? 'Izin ERP kamu tidak mencakup toko ini. Hubungi admin.'
       : diagnostic?.source === 'erp_account_mismatch' ? 'Produk tidak cocok dengan toko yang dipilih. Muat ulang katalog.'
+      : diagnostic?.source === 'erp_origin' ? 'Permintaan lintas situs ditolak ERP. Buka ulang dari alamat ERP resmi.'
       : diagnostic?.source === 'shopee_permission' ? 'Izin API Shopee untuk fitur ini ditolak. Hubungi admin aplikasi Shopee Open Platform.'
       : diagnostic?.error === 'http_403' || diagnostic?.source === 'erp_forbidden' ? 'Penyebab penolakan belum terverifikasi. Hubungi dukungan dengan kode pemeriksaan.'
       : 'Hasil belum terkonfirmasi. Periksa status sebelum mengirim ulang.'}</p>

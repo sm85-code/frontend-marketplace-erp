@@ -35,6 +35,12 @@ describe('Shopee response diagnostics', () => {
     expect(html).toContain(source === 'erp_account_scope' ? 'tidak mencakup toko ini' : 'tidak cocok dengan toko yang dipilih')
     expect(html).not.toMatch(/SECRET|Izin API Shopee/)
   })
+  it('distinguishes ERP origin protection without suggesting a bypass', () => {
+    const html = renderToStaticMarkup(<ErrorDetails error={error('erp_origin')} />)
+    expect(html).toContain('Permintaan lintas situs ditolak ERP')
+    expect(html).toContain('alamat ERP resmi')
+    expect(html).not.toMatch(/SECRET|Izin API Shopee/)
+  })
   it('never renders a malformed support code as raw diagnostics', () => {
     const html = renderToStaticMarkup(<ErrorDetails error={{ response: { data: { detail: { diagnostic: { ...report, diagnostic_id: 'SECRET PRIVATE' } } } } }} />)
     expect(html).not.toMatch(/SECRET|PRIVATE|Salin kode pemeriksaan/)
