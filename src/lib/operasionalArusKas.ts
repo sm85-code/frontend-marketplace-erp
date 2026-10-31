@@ -24,13 +24,15 @@ export function indeksPeriode(days: string[], tanggal: string): number {
 /**
  * Where the amount of each category lands: in the row (or sub-row, for a row broken down into sub-rows) of Kas keluar that
  * was given that category, the first one in table order when several were. Rows and sub-rows added by hand always count; a
- * row Arus Kas started with only counts once a category was chosen for it. Hidden rows are skipped. A category no row was
+ * row Arus Kas started with counts once a category was chosen for it, or its effective category belongs to a supplier /
+ * tukang page (which can link parties to that row even when its category is the default). Hidden rows are skipped. A category no row was
  * given stays unused. Each place is the prefix of the sheet's keys for that row (`<prefix>|<date>`).
  */
 const kunciNama = (kategori: string, nama: string) => `${kategori}|${nama.trim().toLocaleLowerCase('id-ID')}`
 
 function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   const dipakai = new Set(kategoriOperasional(daftar).map((k) => k.id))
+  const pihak = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
   const hasil = new Map<string, string>()
   const perNama = new Map<string, string>()
   const kurung = new Map<string, { kunci: string; prefix: string }[]>()
@@ -58,7 +60,11 @@ function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   for (const r of baris) {
     const anak = anakDari(lembar, r.key)
     if (anak.length) for (const a of anak) catat(kategoriRincian(lembar, a.id, r.key, GRUP_KELUAR, daftar), a.id, nameOf(lembar, a.id, a.label))
-    else if (!r.bawaan || dipilih(r.key)) catat(kategoriDari(lembar, r.key, GRUP_KELUAR, daftar), r.prefix, r.nama)
+    else {
+      const kategori = kategoriDari(lembar, r.key, GRUP_KELUAR, daftar)
+      // setKategori removes an override equal to the default; party links must still find that row.
+      if (!r.bawaan || dipilih(r.key) || pihak.has(kategori)) catat(kategori, r.prefix, r.nama)
+    }
   }
   /** Row for a party name: same name, same name in brackets, or a bracketed short name inside it ("[PUDIN]" for MAHPUDIN). */
   const cari = (kategori: string, uraian: string): string | undefined => {
@@ -119,6 +125,16 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   }
   for (const [key, value] of total) if (sel[key] === undefined && value > 0) sel[key] = String(value)
   return { ...lembar, sel }
+}
+
+/** Compare against the same routing with manual values removed, without changing the saved sheet. */
+export function konflikOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block) {
+  const otomatis = denganOperasional({ ...lembar, sel: {} }, days, items, daftar, arus).sel
+  return Object.entries(otomatis).flatMap(([key, value]) => {
+    const manual = lembar.sel[key]
+    if (key.startsWith(`${KEY_ISI_ULANG_KAS_KECIL}|`) || manual === undefined || Number(manual) === Number(value)) return []
+    return [{ key, manual, otomatis: Number(value) }]
+  })
 }
 
 /**

@@ -2,9 +2,9 @@ import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { describe, expect, it } from 'vitest'
 import { KATEGORI_BAWAAN } from '@/api/kategori'
 import type { Overview, Report } from '@/api/financialReports'
-import { applyRinci, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { setKategori } from './kategoriKeuangan'
-import { denganOperasional, indeksPeriode } from './operasionalArusKas'
+import { denganOperasional, indeksPeriode, konflikOperasional } from './operasionalArusKas'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -148,6 +148,79 @@ describe('Belanja Tukang: one Arus Kas row per tukang, one Pengeluaran row', () 
     const p = blocks.find((b) => b.tabel === 'pengeluaran')!.lines.filter((x): x is Line => !isGroup(x) && x.def.key === 'p:belanja_tukang')
     expect(p).toHaveLength(1)
     expect(p[0].cells[1].value).toBe(140)
+  })
+})
+
+describe('October 2026 JOKO regression: default category on a renamed built-in row', () => {
+  // Live configuration: category `tukang` is offered on Belanja Tukang. JOKO keeps its default category;
+  // YONO/AYI/NUR have explicit overrides. The backend has already mapped the party names to these labels.
+  const daftar = KATEGORI_BAWAAN.map((k) => k.id === 'tukang' ? { ...k, nama: 'Belanja Tukang', operasional: 'tukang' as const } : k)
+  const akhir = ['2026-10-25', '2026-10-31']
+  const items = [
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [JOKO]', jumlah: '1150000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [YONO]', jumlah: '3025000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [AYI]', jumlah: '2200000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [NUR]', jumlah: '1825000.00' },
+  ]
+  const setup = () => {
+    let l = emptyLembar()
+    for (const [key, nama] of [['k_tukang', 'JOKO'], ['k_pembelian', 'YONO'], ['k_operasional', 'AYI'], ['k_langganan', 'NUR']]) {
+      l.baris.push({ id: keyNama(key), tabel: RINCI_TABEL, grup: 'nama', label: `Tukang [${nama}]` })
+      l = setKategori(l, key, 'Kas keluar', 'tukang')
+    }
+    return l
+  }
+  const tampil = (l: Lembar) => denganOperasional(l, akhir, items, daftar, arusDari(l))
+
+  it('puts Rp1,150,000 in JOKO during 26–31 Oct, without adding it to YONO', () => {
+    const l = setup()
+    const hasil = tampil(l)
+    expect(hasil.sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
+    expect(hasil.sel['rb:k_tukang|2026-10-31']).toBe('1150000')
+    expect(hasil.sel['rb:k_operasional|2026-10-31']).toBe('2200000')
+    expect(hasil.sel['rb:k_langganan|2026-10-31']).toBe('1825000')
+    expect(Object.keys(hasil.sel).some((k) => k.endsWith('|2026-10-25'))).toBe(false)
+    const blocks = computeSheet(sheetSections(data), akhir.map(record), akhir, hasil)
+    const ringkas = ringkasDariArusKas(blocks, akhir, hasil, daftar)
+    const row = (tabel: string, key: string) => ringkas.find((b) => b.tabel === tabel)!.lines.find((x): x is Line => !isGroup(x) && x.def.key === key)!
+    expect(row('pengeluaran', 'p:tukang').cells[1].value).toBe(8200000)
+    expect(row('laba_rugi', 'c_hpp').cells[1].value).toBe(8200000)
+    expect(l.sel).toEqual({})
+  })
+
+  it.each(['0', '42'])('preserves manual JOKO value %s and still keeps its payment out of YONO', (manual) => {
+    const l = setup()
+    l.sel['rb:k_tukang|2026-10-31'] = manual
+    const hasil = tampil(l)
+    expect(hasil.sel['rb:k_tukang|2026-10-31']).toBe(manual)
+    expect(hasil.sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
+    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toContainEqual({ key: 'rb:k_tukang|2026-10-31', manual, otomatis: 1150000 })
+  })
+
+  it('does not flag a numerically equal manual value', () => {
+    const l = setup()
+    l.sel['rb:k_tukang|2026-10-31'] = '1150000.00'
+    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toEqual([])
+  })
+
+  it('recalculates totals only after the manual cell is explicitly removed', () => {
+    const l = setup()
+    const key = 'rb:k_tukang|2026-10-31'
+    l.sel[key] = '0'
+    const total = (sheetValue: Lembar) => {
+      const shown = tampil(sheetValue)
+      const blocks = computeSheet(sheetSections(data), akhir.map(record), akhir, shown)
+      const arus = applyRinci(blocks.find((b) => b.tabel === 'arus_kas')!, akhir, shown)
+      const kas = arus.lines.find((x): x is Line => !isGroup(x) && x.def.key === 'kas_keluar')!
+      const ringkas = ringkasDariArusKas(blocks, akhir, shown, daftar)
+      const row = (tabel: string, id: string) => ringkas.find((b) => b.tabel === tabel)!.lines.find((x): x is Line => !isGroup(x) && x.def.key === id)!.cells[1].value
+      return [kas.cells[1].value, row('pengeluaran', 'p:tukang'), row('laba_rugi', 'c_hpp')]
+    }
+    expect(total(l)).toEqual([7050000, 7050000, 7050000])
+    const sel = { ...l.sel }
+    delete sel[key]
+    expect(total({ ...l, sel })).toEqual([8200000, 8200000, 8200000])
+    expect(l.sel[key]).toBe('0')
   })
 })
 
