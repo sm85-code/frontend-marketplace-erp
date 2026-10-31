@@ -42,9 +42,14 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const save = useMutation({
     mutationFn: (next: Lembar) => (hanyaLihat ? reports.saveLembarArusKas : reports.saveLembarManual)(month, manual.data?.version ?? 0, next),
     // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
-    onMutate: (next: Lembar) => qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old)),
+    onMutate: (next: Lembar) => {
+      const previous = qc.getQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month])
+      qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old))
+      return { previous }
+    },
     onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),
-    onError: (error) => {
+    onError: (error, _next, context) => {
+      if (context?.previous) qc.setQueryData(['financial-manual-sheet', month], context.previous)
       toast.error(getApiError(error))
       void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
     },
@@ -126,8 +131,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   const cellId = (t: RinciTarget & { week: number }) => (t.split ? `${t.key}|${days[t.week]}` : `${keyNilaiDasar(t.key)}|${days[t.week]}`)
   const commit = (next: Lembar) => {
-    save.mutate(next)
-    setTarget(null)
+    save.mutate(next, { onSuccess: () => setTarget(null) })
   }
   const withName = (key: string, label: string): Lembar['baris'] => {
     const rest = lembar.baris.filter((b) => b.id !== keyNama(key))
