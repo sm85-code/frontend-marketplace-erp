@@ -127,6 +127,16 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   return { ...lembar, sel }
 }
 
+/** Compare against the same routing with manual values removed, without changing the saved sheet. */
+export function konflikOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block) {
+  const otomatis = denganOperasional({ ...lembar, sel: {} }, days, items, daftar, arus).sel
+  return Object.entries(otomatis).flatMap(([key, value]) => {
+    const manual = lembar.sel[key]
+    if (key.startsWith(`${KEY_ISI_ULANG_KAS_KECIL}|`) || manual === undefined || Number(manual) === Number(value)) return []
+    return [{ key, manual, otomatis: Number(value) }]
+  })
+}
+
 /**
  * Kas keluar rows (and rows added there by hand) that hold only Kas Kecil spending: each of their categories (their own, or
  * every sub-row's) is marked "Dibayar dari Kas Kecil". They are paid out of Kas Kecil, not Kas Utama.

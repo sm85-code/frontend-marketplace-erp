@@ -10,7 +10,7 @@ import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
 import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
-import { denganOperasional, kunciKasKecil } from '@/lib/operasionalArusKas'
+import { denganOperasional, konflikOperasional, kunciKasKecil } from '@/lib/operasionalArusKas'
 import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, hariBerisi, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import FinancialSheetTable, { rentangBulan } from './FinancialSheetTable'
 import { AddRowDialog, RenameDialog } from './FinancialSheetDialogs'
 import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
+import KonflikOperasional from './KonflikOperasional'
 
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
@@ -190,6 +191,10 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     setAddChildTo(null)
   }
   const nameOfKey = (key: string) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? ''
+  const konflik = konflikOperasional(lembarHitung, days, operasional.data ?? [], daftarKat, plain).map((k) => {
+    const prefix = k.key.slice(0, k.key.lastIndexOf('|'))
+    return { ...k, label: nameOfKey(prefix.startsWith('rb:') ? prefix.slice(3) : prefix) || prefix }
+  })
 
   const tampil = useMemo(() => {
     // Laporan Keuangan and the read-only /arus-kas page show the same layout and figures.
@@ -290,6 +295,11 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
+      <KonflikOperasional konflik={konflik} onOtomatis={hanyaLihat || tanpaUbah || save.isPending ? undefined : (key) => {
+        const sel = { ...lembar.sel }
+        delete sel[key]
+        save.mutate({ ...lembar, sel })
+      }} />
       {anyHidden && !hanyaLihat && (
         <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
           Tampilkan baris yang dihapus

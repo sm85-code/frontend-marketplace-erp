@@ -4,7 +4,7 @@ import { KATEGORI_BAWAAN } from '@/api/kategori'
 import type { Overview, Report } from '@/api/financialReports'
 import { applyRinci, keyNama, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
 import { setKategori } from './kategoriKeuangan'
-import { denganOperasional, indeksPeriode } from './operasionalArusKas'
+import { denganOperasional, indeksPeriode, konflikOperasional } from './operasionalArusKas'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -194,6 +194,33 @@ describe('October 2026 JOKO regression: default category on a renamed built-in r
     const hasil = tampil(l)
     expect(hasil.sel['rb:k_tukang|2026-10-31']).toBe(manual)
     expect(hasil.sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
+    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toContainEqual({ key: 'rb:k_tukang|2026-10-31', manual, otomatis: 1150000 })
+  })
+
+  it('does not flag a numerically equal manual value', () => {
+    const l = setup()
+    l.sel['rb:k_tukang|2026-10-31'] = '1150000.00'
+    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toEqual([])
+  })
+
+  it('recalculates totals only after the manual cell is explicitly removed', () => {
+    const l = setup()
+    const key = 'rb:k_tukang|2026-10-31'
+    l.sel[key] = '0'
+    const total = (sheetValue: Lembar) => {
+      const shown = tampil(sheetValue)
+      const blocks = computeSheet(sheetSections(data), akhir.map(record), akhir, shown)
+      const arus = applyRinci(blocks.find((b) => b.tabel === 'arus_kas')!, akhir, shown)
+      const kas = arus.lines.find((x): x is Line => !isGroup(x) && x.def.key === 'kas_keluar')!
+      const ringkas = ringkasDariArusKas(blocks, akhir, shown, daftar)
+      const row = (tabel: string, id: string) => ringkas.find((b) => b.tabel === tabel)!.lines.find((x): x is Line => !isGroup(x) && x.def.key === id)!.cells[1].value
+      return [kas.cells[1].value, row('pengeluaran', 'p:tukang'), row('laba_rugi', 'c_hpp')]
+    }
+    expect(total(l)).toEqual([7050000, 7050000, 7050000])
+    const sel = { ...l.sel }
+    delete sel[key]
+    expect(total({ ...l, sel })).toEqual([8200000, 8200000, 8200000])
+    expect(l.sel[key]).toBe('0')
   })
 })
 
