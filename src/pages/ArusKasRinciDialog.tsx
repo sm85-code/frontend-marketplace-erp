@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Kategori } from '@/lib/kategoriKeuangan'
 
-export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; split: boolean; /** Category choices for a row of cash in / cash out without sub-rows, and for each sub-row (which follows its row until another is chosen). */ opsi?: Kategori[]; kategori?: string; /** The row has sub-rows: its category is chosen on each of them. */ kategoriDiRincian?: boolean }
+export type RinciTarget = { key: string; label: string; total: boolean; child?: boolean; anak?: boolean; period: string; current: number | null; manual: boolean; sumber?: 'otomatis' | 'manual'; split: boolean; /** Category choices for a row of cash in / cash out without sub-rows, and for each sub-row (which follows its row until another is chosen). */ opsi?: Kategori[]; kategori?: string; /** The row has sub-rows: its category is chosen on each of them. */ kategoriDiRincian?: boolean }
 
 /** Name and figure of one line of the cash-flow breakdown for one period. */
 export default function ArusKasRinciDialog({
@@ -22,7 +22,7 @@ export default function ArusKasRinciDialog({
 }: {
   target: RinciTarget | null
   onClose: () => void
-  onSave: (label: string, value: string, kategori?: string) => void
+  onSave: (label: string, value: string, kategori?: string, sumber?: 'otomatis' | 'manual') => void
   onClearValue: () => void
   onDeleteRow: () => void
   onAddSplit: () => void
@@ -46,24 +46,25 @@ export default function ArusKasRinciDialog({
   )
 }
 
-function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChild }: { target: RinciTarget; onSave: (l: string, v: string, k?: string) => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void; onAddChild: () => void }) {
+function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChild }: { target: RinciTarget; onSave: (l: string, v: string, k?: string, sumber?: 'otomatis' | 'manual') => void; onClearValue: () => void; onDeleteRow: () => void; onAddSplit: () => void; onAddChild: () => void }) {
   const [label, setLabel] = useState(target.label)
   const [value, setValue] = useState(target.current === null ? '' : String(target.current))
+  const [sumber, setSumber] = useState(target.sumber)
   const [kategori, setKategori] = useState(target.kategori ?? '')
-  const valid = !!label.trim() && (target.total || /^-?\d+(\.\d+)?$/.test(value))
+  const valid = !!label.trim() && (target.total || sumber === 'otomatis' || /^-?\d+(\.\d+)?$/.test(value))
   return (
     <form
       className="space-y-4"
       onSubmit={(e) => {
         e.preventDefault()
-        if (valid) onSave(label.trim(), value, target.opsi ? kategori : undefined)
+        if (valid) onSave(label.trim(), value, target.opsi ? kategori : undefined, sumber)
       }}
     >
       <DialogHeader>
         <DialogTitle>{target.total ? 'Ubah nama baris' : target.child ? 'Rincian baris' : target.split ? 'Baris tambahan' : 'Ubah baris'}</DialogTitle>
         <DialogDescription>
           Periode {target.period}
-          {target.manual ? ' · angka ini diisi manual' : ' · angka otomatis dari laporan keuangan'}
+          {(sumber ? sumber === 'manual' : target.manual) ? ' · angka ini diisi manual' : ' · angka otomatis dari laporan keuangan'}
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
@@ -87,10 +88,17 @@ function Form({ target, onSave, onClearValue, onDeleteRow, onAddSplit, onAddChil
         <p className="text-xs text-muted-foreground">Baris ini punya rincian. Komponen Pemasukan atau Pengeluaran dipilih di tiap rincian (1.1, 1.2, dst), jadi satu baris bisa masuk ke beberapa komponen.</p>
       )}
       {!target.total && <div className="space-y-2">
+        {sumber && !target.anak && <div className="space-y-2">
+          <Label htmlFor="rinci-sumber">Sumber nilai</Label>
+          <select id="rinci-sumber" value={sumber} onChange={(e) => setSumber(e.target.value as 'otomatis' | 'manual')} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+            <option value="otomatis">Otomatis</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>}
         <Label htmlFor="rinci-amount">Nilai periode ini (Rp)</Label>
-        <MoneyInput id="rinci-amount" disabled={target.anak} value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
+        <MoneyInput id="rinci-amount" disabled={target.anak || sumber === 'otomatis'} value={value} onChange={(e) => setValue(e.target.value)} placeholder="0" />
         {target.current !== null && <p className="text-xs text-muted-foreground">Sekarang {fmtRp(target.current)}. Jumlah kelompok dan saldo kas mengikuti angka ini{target.anak ? ' (dihitung dari jumlah rinciannya)' : ''}.</p>}
-        {target.manual && (
+        {(sumber ? sumber === 'manual' : target.manual) && (
           <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={onClearValue}>
             Kembalikan ke angka otomatis
           </button>

@@ -10,7 +10,7 @@ import { exportCsv } from '@/lib/exportData'
 import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
 import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
-import { denganOperasional, konflikOperasional, kunciKasKecil } from '@/lib/operasionalArusKas'
+import { denganOperasional, kunciKasKecil, kunciOperasional, manualDipilih, pilihSumber } from '@/lib/operasionalArusKas'
 import { geser, sekategori, urutkanKasKeluar } from '@/lib/urutArusKas'
 import { kategoriDari, kategoriRincian, opsiKategori, setKategori } from '@/lib/kategoriKeuangan'
 import { computeSheet, hariBerisi, emptyLembar, isGroup, type GroupDef, type Lembar, type Line } from '@/lib/sheetEngine'
@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button'
 import FinancialSheetTable, { rentangBulan } from './FinancialSheetTable'
 import { AddRowDialog, RenameDialog } from './FinancialSheetDialogs'
 import ArusKasRinciDialog, { type RinciTarget } from './ArusKasRinciDialog'
-import KonflikOperasional from './KonflikOperasional'
 
 const dateLabel = (date: string) => new Date(`${date}T12:00:00+07:00`).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
@@ -57,7 +56,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const daftarKat = useKategori()
   // A month with no closed report yet opens with the previous month's closing figures.
   const awalBulan = useAwalBulan(month, data)
-  // The Operasional entries of the month fill their rows; a figure typed by hand in a cell wins over them.
+  // Operasional fills its rows by default; an explicit manual selection overrides each cell.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
   const plain = useMemo(
     () => computeSheet(sheetSections(data), records, days, lembarHitung, awalBulan).find((b) => b.tabel === 'arus_kas')!,
@@ -104,12 +103,16 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const adaRincian = anakDari(lembar, line.def.key).length > 0
     // A row with sub-rows has no category of its own: each sub-row (1.1, 1.2, ...) picks where its figure goes.
     const opsi = line.def.emphasis || adaRincian ? undefined : opsiKategori(grup, daftarKat)
+    const prefix = splitIds.has(line.def.key) ? line.def.key : keyNilaiDasar(line.def.key)
     setTarget({
       key: line.def.key,
       label: line.def.label,
       period: weekRange(month, week),
       current: line.cells[week]?.value ?? null,
       manual: line.cells[week]?.manual ?? false,
+      sumber: kunciOperasional(lembar, plain, daftarKat).has(prefix)
+        ? manualDipilih(lembar, `${prefix}|${days[week]}`) ? 'manual' : 'otomatis'
+        : undefined,
       split: splitIds.has(line.def.key),
       child: childIds.has(line.def.key),
       anak: adaRincian,
@@ -137,11 +140,11 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     const rest = lembar.baris.filter((b) => b.id !== keyNama(key))
     return label === originalLabel(key) ? rest : [...rest, { id: keyNama(key), tabel: RINCI_TABEL, grup: 'nama', label }]
   }
-  const onSave = (label: string, value: string, kategori?: string) => {
+  const onSave = (label: string, value: string, kategori?: string, sumber?: 'otomatis' | 'manual') => {
     if (!target) return
-    const sel = target.total || target.anak ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
+    const sel = target.total || target.anak || sumber === 'otomatis' ? lembar.sel : { ...lembar.sel, [cellId(target)]: value }
     const baris = target.split ? lembar.baris.map((b) => (b.id === target.key ? { ...b, label } : b)) : withName(target.key, label)
-    const next = { ...lembar, sel, baris }
+    const next = sumber ? pilihSumber({ ...lembar, sel, baris }, cellId(target), sumber) : { ...lembar, sel, baris }
     const grup = grupDari(target.key)
     // A sub-row's default is its row's category; choosing that one again removes its own choice.
     const bawaan = target.child ? kategoriDari(lembar, indukDari(target.key), grup, daftarKat) : undefined
@@ -151,7 +154,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     if (!target) return
     const sel = { ...lembar.sel }
     delete sel[cellId(target)]
-    commit({ ...lembar, sel })
+    commit(pilihSumber({ ...lembar, sel }, cellId(target), 'otomatis'))
   }
   const onDeleteRow = () => {
     if (!target || target.total) return
@@ -177,7 +180,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     if (checked) {
       sel[flag] = '1'
     } else {
-      if (sel[flag] === '2') delete sel[valueKey] // older ticks froze the figure; unticking gives it back
+      if (sel[flag] === '2' && !manualDipilih(lembar, valueKey)) delete sel[valueKey] // Keep an explicitly selected manual amount.
       delete sel[flag]
     }
     save.mutate({ ...lembar, sel })
@@ -195,10 +198,6 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     setAddChildTo(null)
   }
   const nameOfKey = (key: string) => block.lines.find((l): l is Line => !isGroup(l) && l.def.key === key)?.def.label ?? ''
-  const konflik = konflikOperasional(lembarHitung, days, operasional.data ?? [], daftarKat, plain).map((k) => {
-    const prefix = k.key.slice(0, k.key.lastIndexOf('|'))
-    return { ...k, label: nameOfKey(prefix.startsWith('rb:') ? prefix.slice(3) : prefix) || prefix }
-  })
 
   const tampil = useMemo(() => {
     // Laporan Keuangan and the read-only /arus-kas page show the same layout and figures.
@@ -299,11 +298,6 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
-      <KonflikOperasional konflik={konflik} onOtomatis={hanyaLihat || tanpaUbah || save.isPending ? undefined : (key) => {
-        const sel = { ...lembar.sel }
-        delete sel[key]
-        save.mutate({ ...lembar, sel })
-      }} />
       {anyHidden && !hanyaLihat && (
         <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
           Tampilkan baris yang dihapus

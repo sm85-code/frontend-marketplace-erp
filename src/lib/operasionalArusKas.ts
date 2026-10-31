@@ -1,3 +1,4 @@
+import { barisOtomatis } from '@/lib/barisArusKasPilihan'
 import { anakDari, hidden, keyKategori, keyNilaiDasar, nameOf, splitsOf } from '@/lib/arusKasRinci'
 import { GRUP_KELUAR, kategoriDari, kategoriRincian } from '@/lib/kategoriKeuangan'
 import { isGroup, type Block, type Lembar, type Line } from '@/lib/sheetEngine'
@@ -34,10 +35,12 @@ function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   const dipakai = new Set(kategoriOperasional(daftar).map((k) => k.id))
   const pihak = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
   const hasil = new Map<string, string>()
+  const semua = new Set<string>()
   const perNama = new Map<string, string>()
   const kurung = new Map<string, { kunci: string; prefix: string }[]>()
   const catat = (kategori: string, prefix: string, nama: string) => {
     if (!dipakai.has(kategori)) return
+    semua.add(prefix)
     if (!hasil.has(kategori)) hasil.set(kategori, prefix)
     const k = kunciNama(kategori, nama)
     if (!perNama.has(k)) perNama.set(k, prefix)
@@ -70,22 +73,33 @@ function tempatBaris(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]) {
   const cari = (kategori: string, uraian: string): string | undefined => {
     const tepat = perNama.get(kunciNama(kategori, uraian))
     if (tepat) return tepat
-    const u = uraian.trim().toLocaleLowerCase('id-ID')
-    return u ? (kurung.get(kategori) ?? []).find((x) => x.kunci.length >= 3 && u.includes(x.kunci))?.prefix : undefined
+    return barisOtomatis((kurung.get(kategori) ?? []).map((x) => ({ nama: `[${x.kunci}]`, prefix: x.prefix })), uraian)?.prefix
   }
-  return { hasil, perNama, cari }
+  return { hasil, semua, cari }
 }
 
 export function barisUntukKategori(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Map<string, string> {
   return tempatBaris(lembar, arus, daftar).hasil
 }
 
+/** Per-cell selection uses the existing sheet metadata envelope; legacy sel values carry no selection. */
+export const keySumber = (cell: string) => `c:src-${cell.replace(/[^\w-]/g, '_')}`
+export const manualDipilih = (lembar: Lembar, cell: string) => lembar.baris.some((b) => b.id === keySumber(cell) && b.label === 'manual')
+export function pilihSumber(lembar: Lembar, cell: string, sumber: 'otomatis' | 'manual'): Lembar {
+  const baris = lembar.baris.filter((b) => b.id !== keySumber(cell))
+  if (sumber === 'manual') baris.push({ id: keySumber(cell), tabel: 'arus_rinci', grup: 'sumber', label: 'manual' })
+  return { ...lembar, baris }
+}
+export function kunciOperasional(lembar: Lembar, arus: Block, daftar: KategoriTransaksi[]): Set<string> {
+  return tempatBaris(lembar, arus, daftar).semua
+}
+
 /**
  * The sheet as it is shown: the totals of the Operasional entries stand in the row chosen for each category (see
- * barisUntukKategori) and period, unless that cell has a figure typed by hand, which always wins.
+ * barisUntukKategori) and period, unless manual was explicitly selected for that cell.
  */
 export function denganOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block, hariIni: string = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)): Lembar {
-  const { hasil: tempat, cari } = tempatBaris(lembar, arus, daftar)
+  const { hasil: tempat, semua, cari } = tempatBaris(lembar, arus, daftar)
   const kasKecil = new Set(daftar.filter((k) => k.kas_kecil).map((k) => k.id))
   const sel = { ...lembar.sel }
   // Entries paid out of Kas Kecil: still an expense in their Kas keluar row, but Kas Utama gets them back in Transfer antar
@@ -113,6 +127,11 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
   // Belanja Supplier: an entry whose description is a supplier's name goes to the Arus Kas row (or sub-row) of the same
   // category named after that supplier, so each supplier has its own row; all of them still add up in the one category.
   const halamanSupplier = new Set(daftar.filter((k) => k.operasional === 'supplier' || k.operasional === 'tukang').map((k) => k.id))
+  // Work on the display copy only. Keep every historical value in the saved sheet.
+  for (const prefix of semua) for (const day of days) {
+    const key = `${prefix}|${day}`
+    if (!manualDipilih(lembar, key) && sel[key] !== undefined) sel[key] = '0'
+  }
   const total = new Map<string, number>()
   for (const it of items) {
     // A supplier / tukang set to "tidak disambung" (its entries come with uraian '-') goes to no row.
@@ -123,18 +142,8 @@ export function denganOperasional(lembar: Lembar, days: string[], items: Operasi
     const key = `${prefix}|${days[w]}`
     total.set(key, Math.round(((total.get(key) ?? 0) + Number(it.jumlah)) * 100) / 100)
   }
-  for (const [key, value] of total) if (sel[key] === undefined && value > 0) sel[key] = String(value)
+  for (const [key, value] of total) if (!manualDipilih(lembar, key)) sel[key] = String(value)
   return { ...lembar, sel }
-}
-
-/** Compare against the same routing with manual values removed, without changing the saved sheet. */
-export function konflikOperasional(lembar: Lembar, days: string[], items: OperasionalItem[], daftar: KategoriTransaksi[], arus: Block) {
-  const otomatis = denganOperasional({ ...lembar, sel: {} }, days, items, daftar, arus).sel
-  return Object.entries(otomatis).flatMap(([key, value]) => {
-    const manual = lembar.sel[key]
-    if (key.startsWith(`${KEY_ISI_ULANG_KAS_KECIL}|`) || manual === undefined || Number(manual) === Number(value)) return []
-    return [{ key, manual, otomatis: Number(value) }]
-  })
 }
 
 /**

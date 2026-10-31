@@ -16,7 +16,7 @@ const LEGACY_GRUP = ['pool', 'k_prod', 'k_cat']
 const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 
-const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-') || id.startsWith('c:kt-') || id.startsWith('c:ur-')
+const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-') || id.startsWith('c:kt-') || id.startsWith('c:ur-') || id.startsWith('c:src-')
 export const ANAK = 'anak:'
 export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id) && !b.grup.startsWith(ANAK))
 /** Sub-rows (breakdown) of a row; the same list for every period, only the figures differ. */
