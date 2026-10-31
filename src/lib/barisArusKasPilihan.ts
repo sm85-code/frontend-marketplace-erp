@@ -8,17 +8,18 @@ export type BarisPilihan = { id: string; nama: string; kategori: string; kategor
 
 const kecil = (s: string) => s.replace(/\s+/g, ' ').trim().toLocaleLowerCase('id-ID')
 
-/** Would the automatic match pick this row for the party: same name, name in brackets, or bracketed short name inside it. */
-export function cocokOtomatis(namaBaris: string, pihak: string): boolean {
-  const b = kecil(namaBaris)
-  const p = kecil(pihak)
-  if (!p) return false
-  if (b === p) return true
-  const isi = /\[([^\]]+)\]/.exec(namaBaris)?.[1]
-  if (!isi) return false
-  const k = kecil(isi)
-  return k === p || (k.length >= 3 && p.includes(k))
+/** Exact names beat whole-word nicknames, which beat historical substring aliases (MAHPUDIN -> PUDIN). */
+export function prioritasNama(namaBaris: string, pihak: string): number {
+  const b = kecil(namaBaris), p = kecil(pihak)
+  if (!p) return 0
+  const k = kecil(/\[([^\]]+)\]/.exec(namaBaris)?.[1] ?? '')
+  if (b === p || k === p) return 3
+  if (k.length < 3) return 0
+  if (p.split(/[^\p{L}\p{N}]+/u).includes(k)) return 2
+  return p.includes(k) ? 1 : 0
 }
+
+export const cocokOtomatis = (namaBaris: string, pihak: string): boolean => prioritasNama(namaBaris, pihak) > 0
 
 /**
  * The Kas keluar rows (and sub-rows) added in Arus Kas that a supplier / tukang can be linked to, with their category.
@@ -47,7 +48,11 @@ export function barisKasKeluar(lembar: Lembar, daftar: KategoriTransaksi[], kate
 
 /** The row the automatic match fills for a party: same name or same name in brackets first, else a short bracketed name inside it. */
 export function barisOtomatis<T extends { nama: string }>(pilihan: T[], pihak: string): T | undefined {
-  const p = kecil(pihak)
-  const tepat = pilihan.find((b) => kecil(b.nama) === p || kecil(/\[([^\]]+)\]/.exec(b.nama)?.[1] ?? '') === p)
-  return tepat ?? pilihan.find((b) => cocokOtomatis(b.nama, pihak))
+  let hasil: T | undefined
+  let terbaik = 0
+  for (const b of pilihan) {
+    const nilai = prioritasNama(b.nama, pihak)
+    if (nilai > terbaik) { hasil = b; terbaik = nilai }
+  }
+  return hasil
 }

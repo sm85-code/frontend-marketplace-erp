@@ -2,9 +2,9 @@ import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { describe, expect, it } from 'vitest'
 import { KATEGORI_BAWAAN } from '@/api/kategori'
 import type { Overview, Report } from '@/api/financialReports'
-import { applyRinci, keyNama, keyNilaiDasar, RINCI_TABEL } from './arusKasRinci'
+import { applyRinci, keyNama, keyNilaiDasar, RINCI_TABEL, splitsOf } from './arusKasRinci'
 import { setKategori } from './kategoriKeuangan'
-import { denganOperasional, indeksPeriode, konflikOperasional } from './operasionalArusKas'
+import { denganOperasional, indeksPeriode, pilihSumber } from './operasionalArusKas'
 import { ringkasDariArusKas } from './ringkasArusKas'
 import { computeSheet, emptyLembar, isGroup, type Lembar, type Line } from './sheetEngine'
 import { sheetSections } from './sheetSections'
@@ -62,7 +62,7 @@ describe('Operasional entries in Arus Kas', () => {
     expect(l.sel[`c:a1|${days[1]}`]).toBe('175')
     expect(l.sel[`c:a1|${days[0]}`]).toBeUndefined()
     expect(Object.keys(l.sel).some((k) => k.includes('gaji'))).toBe(false)
-    const typed = barisA()
+    const typed = pilihSumber(barisA(), `c:a1|${days[1]}`, 'manual')
     typed.sel[`c:a1|${days[1]}`] = '10'
     expect(pakai(typed).sel[`c:a1|${days[1]}`]).toBe('10')
   })
@@ -153,14 +153,14 @@ describe('Belanja Tukang: one Arus Kas row per tukang, one Pengeluaran row', () 
 
 describe('October 2026 JOKO regression: default category on a renamed built-in row', () => {
   // Live configuration: category `tukang` is offered on Belanja Tukang. JOKO keeps its default category;
-  // YONO/AYI/NUR have explicit overrides. The backend has already mapped the party names to these labels.
+  // YONO/AYI/NUR have explicit category overrides; historical entries can still contain full names.
   const daftar = KATEGORI_BAWAAN.map((k) => k.id === 'tukang' ? { ...k, nama: 'Belanja Tukang', operasional: 'tukang' as const } : k)
   const akhir = ['2026-10-25', '2026-10-31']
   const items = [
-    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [JOKO]', jumlah: '1150000.00' },
-    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [YONO]', jumlah: '3025000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'JOKO WAHYONO', jumlah: '1150000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'CAHYONO', jumlah: '3025000.00' },
     { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [AYI]', jumlah: '2200000.00' },
-    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'Tukang [NUR]', jumlah: '1825000.00' },
+    { tanggal: '2026-10-31', kategori: 'tukang', uraian: 'AHMAD NUR ALIM', jumlah: '1825000.00' },
   ]
   const setup = () => {
     let l = emptyLembar()
@@ -188,24 +188,48 @@ describe('October 2026 JOKO regression: default category on a renamed built-in r
     expect(l.sel).toEqual({})
   })
 
-  it.each(['0', '42'])('preserves manual JOKO value %s and still keeps its payment out of YONO', (manual) => {
+  it.each(['0', '42'])('uses automatic JOKO over unselected historical value %s without changing saved data', (manual) => {
     const l = setup()
     l.sel['rb:k_tukang|2026-10-31'] = manual
-    const hasil = tampil(l)
-    expect(hasil.sel['rb:k_tukang|2026-10-31']).toBe(manual)
-    expect(hasil.sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
-    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toContainEqual({ key: 'rb:k_tukang|2026-10-31', manual, otomatis: 1150000 })
+    expect(tampil(l).sel['rb:k_tukang|2026-10-31']).toBe('1150000')
+    expect(l.sel['rb:k_tukang|2026-10-31']).toBe(manual)
   })
 
-  it('does not flag a numerically equal manual value', () => {
-    const l = setup()
-    l.sel['rb:k_tukang|2026-10-31'] = '1150000.00'
-    expect(konflikOperasional(l, akhir, items, daftar, arusDari(l))).toEqual([])
+  it.each(['0', '42', '1150000.00'])('honors explicit manual JOKO %s', (manual) => {
+    const l = pilihSumber(setup(), 'rb:k_tukang|2026-10-31', 'manual')
+    l.sel['rb:k_tukang|2026-10-31'] = manual
+    expect(tampil(l).sel['rb:k_tukang|2026-10-31']).toBe(manual)
+    expect(tampil(l).sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
   })
 
-  it('recalculates totals only after the manual cell is explicitly removed', () => {
+  it('keeps manual selection isolated to its worker and period', () => {
+    const l = pilihSumber(setup(), 'rb:k_tukang|2026-10-31', 'manual')
+    l.sel['rb:k_tukang|2026-10-31'] = '0'
+    const entries = [...items, { ...items[0], tanggal: '2026-10-25' }]
+    const shown = denganOperasional(l, akhir, entries, daftar, arusDari(l))
+    expect(shown.sel['rb:k_tukang|2026-10-25']).toBe('1150000')
+    expect(shown.sel['rb:k_tukang|2026-10-31']).toBe('0')
+    expect(shown.sel['rb:k_pembelian|2026-10-31']).toBe('3025000')
+  })
+
+  it('includes both ends of 26–31 October without leaking adjacent dates', () => {
     const l = setup()
+    const entries = ['2026-10-25', '2026-10-26', '2026-10-31', '2026-11-01'].map(tanggal => ({ tanggal, kategori: 'tukang', uraian: 'JOKO WAHYONO', jumlah: '10' }))
+    const shown = denganOperasional(l, akhir, entries, daftar, arusDari(l))
+    expect(shown.sel['rb:k_tukang|2026-10-25']).toBe('10')
+    expect(shown.sel['rb:k_tukang|2026-10-31']).toBe('20')
+  })
+
+  it('uses zero when automatic entries disappear while preserving saved history', () => {
+    const l = setup()
+    l.sel['rb:k_tukang|2026-10-31'] = '99'
+    expect(denganOperasional(l, akhir, [], daftar, arusDari(l)).sel['rb:k_tukang|2026-10-31']).toBe('0')
+    expect(l.sel['rb:k_tukang|2026-10-31']).toBe('99')
+  })
+
+  it('recalculates totals when explicit manual selection returns to automatic', () => {
     const key = 'rb:k_tukang|2026-10-31'
+    const l = pilihSumber(setup(), key, 'manual')
     l.sel[key] = '0'
     const total = (sheetValue: Lembar) => {
       const shown = tampil(sheetValue)
@@ -217,9 +241,7 @@ describe('October 2026 JOKO regression: default category on a renamed built-in r
       return [kas.cells[1].value, row('pengeluaran', 'p:tukang'), row('laba_rugi', 'c_hpp')]
     }
     expect(total(l)).toEqual([7050000, 7050000, 7050000])
-    const sel = { ...l.sel }
-    delete sel[key]
-    expect(total({ ...l, sel })).toEqual([8200000, 8200000, 8200000])
+    expect(total(pilihSumber(l, key, 'otomatis'))).toEqual([8200000, 8200000, 8200000])
     expect(l.sel[key]).toBe('0')
   })
 })
@@ -275,5 +297,48 @@ describe('Kas Kecil (Operasional Eceran)', () => {
     const blok = applyRinci(arusDari(l), days, lembar, kunciKasKecil(l, arusDari(l), KATEGORI_BAWAAN))
     expect(baris(blok, 'kk_akhir').cells[1].value).toBe(0)
     expect(baris(blok, 'transfer').cells[1].value).toBe(-30)
+  })
+})
+
+describe.each(['belanja_supplier', 'belanja_tukang'])('source defaults across all %s rows', (kategori) => {
+  const akhir = ['2026-10-25', '2026-10-31']
+  const setup = () => {
+    let l = emptyLembar()
+    // Include a built-in row, an added row, and children with duplicate names.
+    l.baris.push({ id: keyNama('k_pembelian'), tabel: RINCI_TABEL, grup: 'nama', label: 'Supplier [RIZKI]' })
+    l = setKategori(l, 'k_pembelian', 'Kas keluar', kategori)
+    for (const [id, grup, label] of [
+      ['c:packing', 'Kas keluar', 'Packing [RIZKI]'],
+      ['c:parent', 'Kas keluar', 'Parent'],
+      ['c:child1', 'anak:c:parent', 'Duplicate'],
+      ['c:child2', 'anak:c:parent', 'Duplicate'],
+      ['c:duplicate', 'Kas keluar', 'Packing [RIZKI]'],
+    ]) l.baris.push({ id, tabel: RINCI_TABEL, grup, label })
+    for (const id of ['c:packing', 'c:parent', 'c:duplicate']) l = setKategori(l, id, 'Kas keluar', kategori, 'lain_keluar')
+    return l
+  }
+  const entries = [
+    { tanggal: '2026-10-24', kategori, uraian: 'Supplier [RIZKI]', jumlah: '423000' },
+    { tanggal: '2026-10-24', kategori, uraian: 'Packing [RIZKI]', jumlah: '12500' },
+  ]
+  const prefixes = ['rb:k_pembelian', 'c:packing', 'c:child1', 'c:child2', 'c:duplicate']
+  it('resets every historical value by default, keeping distinct named destinations separate', () => {
+    const l = setup()
+    for (const prefix of prefixes) for (const day of akhir) l.sel[`${prefix}|${day}`] = '999'
+    const shown = denganOperasional(l, akhir, entries, KATEGORI_BAWAAN, arusDari(l))
+    expect(prefixes.map(p => shown.sel[`${p}|${akhir[0]}`])).toEqual(['423000', '12500', '0', '0', '0'])
+    expect(prefixes.map(p => shown.sel[`${p}|${akhir[1]}`])).toEqual(['0', '0', '0', '0', '0'])
+    expect(Object.values(l.sel).every(v => v === '999')).toBe(true)
+  })
+  it.each(prefixes)('honors explicit manual zero on %s after serialization, isolated to one period', (prefix) => {
+    const cell = `${prefix}|${akhir[0]}`
+    const l = pilihSumber(setup(), cell, 'manual')
+    l.sel[cell] = '0'
+    const reloaded = JSON.parse(JSON.stringify(l)) as Lembar
+    const shown = denganOperasional(reloaded, akhir, [...entries, ...entries.map(i => ({ ...i, tanggal: akhir[1] }))], KATEGORI_BAWAAN, arusDari(reloaded))
+    expect(shown.sel[cell]).toBe('0')
+    if (prefix === 'rb:k_pembelian') expect(shown.sel[`${prefix}|${akhir[1]}`]).toBe('423000')
+    if (prefix === 'c:packing') expect(shown.sel[`${prefix}|${akhir[1]}`]).toBe('12500')
+    expect(splitsOf(reloaded).map(b => b.id)).not.toContain(reloaded.baris.at(-1)!.id)
   })
 })

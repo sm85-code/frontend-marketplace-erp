@@ -38,3 +38,13 @@ test('automatic row prefers an exact name', () => {
   expect(barisOtomatis(rows, 'CAHYONO')?.nama).toBe('Tukang Kayu [YONO]')
   expect(barisOtomatis(rows, 'SURYAMAN')).toBeUndefined()
 })
+
+test('whole-word JOKO beats YONO inside WAHYONO regardless of row order', () => {
+  const rows = [{ nama: 'Tukang [YONO]' }, { nama: 'Tukang [JOKO]' }, { nama: 'Tukang [NUR]' }, { nama: 'Tukang [AYI]' }]
+  for (const pilihan of [rows, [...rows].reverse()]) {
+    expect(barisOtomatis(pilihan, ' JOKO   WAHYONO ')?.nama).toBe('Tukang [JOKO]')
+    expect(barisOtomatis(pilihan, 'CAHYONO')?.nama).toBe('Tukang [YONO]')
+    expect(barisOtomatis(pilihan, 'AHMAD NUR ALIM')?.nama).toBe('Tukang [NUR]')
+    expect(barisOtomatis(pilihan, 'Tukang [AYI]')?.nama).toBe('Tukang [AYI]')
+  }
+})
