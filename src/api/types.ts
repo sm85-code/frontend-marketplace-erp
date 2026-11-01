@@ -852,6 +852,8 @@ export interface HalamanDef {
   id: string
   label: string
   grup: string
+  /** The sidebar group id of the app ("harian", "info-toko", …). Only the text of the group comes from Kelola Aplikasi. */
+  grup_id?: string
   /** Which levels exist for the page: some are only read, some only an action. */
   tingkat: Tingkat[]
 }
