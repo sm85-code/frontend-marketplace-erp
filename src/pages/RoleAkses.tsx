@@ -1,7 +1,7 @@
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
-import { kunciGrup, labelAkses, namaGrupAkses, urutGrupAkses } from '@/lib/namaAkses'
+import { halamanTampil, kunciGrup, labelAkses, namaGrupAkses, urutGrupAkses } from '@/lib/namaAkses'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
@@ -83,7 +83,7 @@ export default function RoleAkses() {
   const t = useLabel()
   const grup = useMemo(() => {
     const peta = new Map<string, HalamanDef[]>()
-    for (const h of data?.halaman ?? []) {
+    for (const h of halamanTampil(data?.halaman ?? [])) {
       const kunci = kunciGrup(h)
       const isi = peta.get(kunci)
       if (isi) isi.push(h)

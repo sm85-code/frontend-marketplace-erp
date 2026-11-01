@@ -23,6 +23,18 @@ export function petaMenuHalaman(items = NAV): Record<string, string[]> {
 
 const PETA = petaMenuHalaman()
 
+/**
+ * Pages the role table never lists. "Pengaturan push Shopee" is an internal page (the Shopee push settings and their
+ * log; only the roles that already have it can open it): the admin does not hand it out from here, so its row is left
+ * out of the table. A role that already has it keeps it — the value still travels back on save, it is just not shown.
+ */
+const TAK_DITAMPILKAN = new Set(['push_shopee'])
+
+/** The rows the role table offers for editing: the server's list without the pages kept out of it. */
+export function halamanTampil(halaman: HalamanDef[]): HalamanDef[] {
+  return halaman.filter((h) => !TAK_DITAMPILKAN.has(h.id))
+}
+
 /** The group a permission row belongs to: the id the server sends, falling back to its older group text. */
 export const kunciGrup = (h: HalamanDef) => h.grup_id ?? h.grup
 
