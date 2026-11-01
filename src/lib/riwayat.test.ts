@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { KUNCI_PENJAGA, pasangPenjaga } from './riwayat'
+import { KUNCI_PENJAGA, langkahTutup, pasangPenjaga } from './riwayat'
 
 const buat = (state: unknown, sudah = false) => {
   const simpan = new Map<string, string>(sudah ? [[KUNCI_PENJAGA, '1']] : [])
@@ -33,5 +33,17 @@ describe('guard entry for the Back button', () => {
     const { riwayat, simpan } = buat(null)
     expect(pasangPenjaga(riwayat, simpan)).toBe(true)
     expect(riwayat.replaceState).toHaveBeenCalledWith({ penjaga: true }, '')
+  })
+})
+
+describe('closing a sub-page', () => {
+  it('goes back one step when the app has a step to go back to', () => {
+    // Opened from the page it belongs to (the Katalog form's detail page): going back leaves no extra entry behind, so
+    // the phone's Back button cannot land on the sub-page again.
+    expect(langkahTutup('langkah-2', '/katalog/x?tab=kelola')).toEqual({ mundur: true })
+  })
+
+  it('opens the page it belongs to in place when it was opened straight (link or refresh)', () => {
+    expect(langkahTutup('default', '/katalog/x?tab=kelola')).toEqual({ mundur: false, alamat: '/katalog/x?tab=kelola' })
   })
 })

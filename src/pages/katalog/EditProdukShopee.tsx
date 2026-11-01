@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Plus, Trash2, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,6 +10,7 @@ import { fmtRp, getApiError } from '@/api/client'
 import { qk } from '@/api/keys'
 import type { KatalogDetail } from '@/api/types'
 import { useConfirm } from '@/components/ConfirmProvider'
+import { useTutupHalaman } from '@/lib/riwayat'
 import MoneyInput from '@/components/MoneyInput'
 import PilihNative from '@/components/PilihNative'
 import QueryError from '@/components/QueryError'
@@ -44,8 +45,10 @@ export default function EditProdukShopeePage() {
 }
 
 function Editor({ detail, initial }: { detail: KatalogDetail; initial: management.ItemSettings }) {
-  const navigate = useNavigate(), confirm = useConfirm(), qc = useQueryClient()
-  const kembali = () => navigate(`/katalog/${detail.id}?tab=kelola`)
+  const confirm = useConfirm(), qc = useQueryClient()
+  // Leaving the form goes back to the detail page the form was opened from, so the phone's Back button does not land on
+  // the form again. Opened straight (link or refresh) there is no step to go back to, so the detail page opens in place.
+  const kembali = useTutupHalaman(`/katalog/${detail.id}?tab=kelola`)
   // Informasi produk
   const [name, setName] = useState(initial.item_name)
   const [description, setDescription] = useState(initial.description ?? '')

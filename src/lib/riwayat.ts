@@ -3,13 +3,27 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useConfirm } from '@/components/ConfirmProvider'
 
 /**
+ * How a sub-page closes: back one step when the app has a step to go back to (so the Back button does not bounce between
+ * the page and the one it was opened from), otherwise the fallback page is opened in place of the current entry.
+ */
+export type LangkahTutup = { mundur: true } | { mundur: false; alamat: string }
+
+export function langkahTutup(key: string, cadangan: string): LangkahTutup {
+  return key !== 'default' ? { mundur: true } : { mundur: false, alamat: cadangan }
+}
+
+/**
  * Closing a detail page goes back one step when the app has a step to go back to (so the Back button does not bounce
  * between list and detail), and otherwise opens `cadangan` in place of the current entry.
  */
 export function useTutupHalaman(cadangan: string) {
   const navigate = useNavigate()
   const location = useLocation()
-  return () => (location.key !== 'default' ? navigate(-1) : navigate(cadangan, { replace: true }))
+  return () => {
+    const langkah = langkahTutup(location.key, cadangan)
+    if (langkah.mundur) navigate(-1)
+    else navigate(langkah.alamat, { replace: true })
+  }
 }
 
 export const KUNCI_PENJAGA = 'ampel-penjaga-riwayat'
