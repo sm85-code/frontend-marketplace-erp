@@ -66,3 +66,27 @@ const hariIniWib = () => new Date(Date.now() + 7 * 3600e3).toISOString().slice(0
  * also those filled from the Google Drive import without a closing record. Closed books make it final too.
  */
 export const bulanFinal = (data: reports.Overview, month: string) => !!data.bulanan?.final || (data.akhir_bulan ?? `${month}-31`) < hariIniWib()
+
+/**
+ * Kas Utama of the month, for the summary strip. The month's own figure wins (Neraca row, then the Arus Kas closing); a
+ * month without one yet shows the position carried in from the month before — the same figure the sheet prints as "Saldo
+ * awal Kas Utama". The typed opening balance is the closing of the books' opening month (Akhir September), so it answers
+ * for that month only: read as a later month's position it would report September's cash as that month's.
+ */
+export function kasUtamaBulan(input: {
+  month: string
+  neraca: number | null
+  arusKas: number | null
+  awalBulan: Record<string, number> | null | undefined
+  saldoAwal: { tanggal: string; saldo: { kas_utama?: string } } | null | undefined
+}): number | null {
+  const sendiri = input.neraca ?? input.arusKas
+  if (sendiri != null) return sendiri
+  const bawaan = input.awalBulan?.akhir ?? input.awalBulan?.n_kas
+  if (bawaan != null) return bawaan
+  if (input.saldoAwal?.tanggal.slice(0, 7) !== input.month) return null
+  const teks = input.saldoAwal?.saldo.kas_utama
+  if (!teks) return null
+  const angka = Number(teks)
+  return Number.isFinite(angka) ? angka : null
+}

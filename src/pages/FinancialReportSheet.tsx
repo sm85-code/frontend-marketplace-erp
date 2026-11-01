@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
+import { bulanFinal, kasUtamaBulan, useAwalBulan } from '@/lib/awalBulan'
 import { useLabel } from '@/api/pengaturanUi'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -161,7 +161,7 @@ export default function FinancialReportSheet({
     { label: t(idTab('laba_rugi'), 'Laba / Rugi'), value: lineOf('laba')?.total ?? null, icon: TrendingUp, note: 'Akumulasi periode terisi' },
     {
       label: 'Kas Utama',
-      value: lineOf('n_kas')?.total ?? lineOf('akhir')?.total ?? data.saldo_awal?.saldo.kas_utama ?? null,
+      value: kasUtamaBulan({ month, neraca: lineOf('n_kas')?.total ?? null, arusKas: lineOf('akhir')?.total ?? null, awalBulan, saldoAwal: data.saldo_awal }),
       icon: Wallet,
       note: 'Posisi terakhir',
     },
