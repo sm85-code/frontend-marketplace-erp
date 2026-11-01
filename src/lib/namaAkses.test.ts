@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { HalamanDef } from '@/api/types'
 import { idGrup, idMenu, NAV } from '@/config/nav'
-import { kunciGrup, labelAkses, namaGrupAkses, petaMenuHalaman, urutGrupAkses } from './namaAkses'
+import { halamanTampil, kunciGrup, labelAkses, namaGrupAkses, petaMenuHalaman, urutGrupAkses } from './namaAkses'
 
 /** A permission row as the server sends it (group id + default label). */
 const baris = (id: string, label: string, grup: string): HalamanDef => ({ id, label, grup, grup_id: grup, tingkat: ['baca', 'tulis'] })
@@ -67,5 +67,12 @@ describe('nama halaman dan kelompok di tabel role', () => {
   it('reads the group id of a row, falling back to the older group text', () => {
     expect(kunciGrup({ id: 'pesanan', label: 'Pesanan', grup: 'Harian', tingkat: ['baca'] })).toBe('Harian')
     expect(kunciGrup(baris('pesanan', 'Pesanan', 'harian'))).toBe('harian')
+  })
+
+  it('leaves the internal Shopee push page out of the rows the role table offers', () => {
+    const semua = [baris('arus_kas', 'Arus Kas (tulis = centang)', 'keuangan'), baris('push_shopee', 'Pengaturan push Shopee', 'pengaturan'), baris('kategori_transaksi', 'Kategori Transaksi', 'pengaturan')]
+    expect(halamanTampil(semua).map((h) => h.id)).toEqual(['arus_kas', 'kategori_transaksi'])
+    expect(halamanTampil([])).toEqual([])
+    expect(semua).toHaveLength(3) // the list it came from is untouched: the role keeps the value it already has
   })
 })
