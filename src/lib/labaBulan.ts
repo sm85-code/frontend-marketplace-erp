@@ -126,3 +126,12 @@ export function usePembagianLaba(month: string, laba: number, saldoAwal: SaldoAw
     awal: pakaiAwal ? { bulan: awalBulan!, nilai: awalNilai } : null,
   }
 }
+
+/**
+ * The opening "Saldo laba/rugi" typed by hand is only shown in the month that reads it as last month's balance — the
+ * month right after the one it closes. Later months already carry it inside the loss brought in, so printing it again
+ * would present a September figure as if it belonged to them.
+ */
+export function catatanSaldoAwal(awal: { bulan: string; nilai: number } | null, month: string) {
+  return awal && bulanSetelah(awal.bulan) === month ? awal : null
+}

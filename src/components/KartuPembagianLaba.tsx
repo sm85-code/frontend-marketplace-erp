@@ -6,7 +6,7 @@ import * as reports from '@/api/financialReports'
 import { fmtRp, getApiError } from '@/api/client'
 import { bagiLaba, keyPembagian } from '@/config/pembagianLaba'
 import { useAuth } from '@/lib/auth'
-import { bulanSetelah, usePembagianLaba, type SaldoAwalLaba } from '@/lib/labaBulan'
+import { bulanSetelah, catatanSaldoAwal, usePembagianLaba, type SaldoAwalLaba } from '@/lib/labaBulan'
 import { cellKey, emptyLembar } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
 
@@ -84,7 +84,7 @@ export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { 
             {sudah ? `Sudah diisi di Arus Kas ${namaBulan(next)}` : `Isi pembagian laba di Arus Kas ${namaBulan(next)}`}
           </Button>
         ) : null}
-        <CatatanPembagian hasil={hasil} />
+        <CatatanPembagian hasil={hasil} month={month} />
         {!final ? <p className="text-xs text-muted-foreground">Angka bisa berubah. Pembagian laba bisa diisi setelah tutup buku mencakup tanggal 1 sampai akhir bulan.</p> : null}
       </CardContent>
     </Card>
@@ -92,13 +92,14 @@ export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { 
 }
 
 /** Where the loss brought in comes from: the opening figure typed by hand, and months without any data. */
-export function CatatanPembagian({ hasil }: { hasil: ReturnType<typeof usePembagianLaba> }) {
+export function CatatanPembagian({ hasil, month }: { hasil: ReturnType<typeof usePembagianLaba>; month: string }) {
+  const awal = catatanSaldoAwal(hasil.awal, month)
   return (
     <>
-      {hasil.awal ? (
+      {awal ? (
         <p className="text-xs text-muted-foreground">
-          Saldo laba/rugi sampai {namaBulan(hasil.awal.bulan)} (input manual di saldo awal): {fmtRp(hasil.awal.nilai)}
-          {hasil.awal.nilai > 0 ? ', dianggap sudah dibagi.' : '.'}
+          Saldo laba/rugi sampai {namaBulan(awal.bulan)} (input manual di saldo awal): {fmtRp(awal.nilai)}
+          {awal.nilai > 0 ? ', dianggap sudah dibagi.' : '.'}
         </p>
       ) : null}
       {hasil.kosong.length ? <p className="text-xs text-muted-foreground">Tanpa data (dihitung Rp0): {hasil.kosong.map(namaBulan).join(', ')}.</p> : null}
@@ -140,7 +141,7 @@ export function TabelPembagianLaba({ month, laba, final, saldoAwal }: { month: s
           ))}
         </tbody>
       </table>
-      <CatatanPembagian hasil={hasil} />
+      <CatatanPembagian hasil={hasil} month={month} />
     </div>
   )
 }
