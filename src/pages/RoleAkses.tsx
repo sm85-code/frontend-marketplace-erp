@@ -1,7 +1,7 @@
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
-import { idGrupAkses } from '@/config/roles'
+import { kunciGrup, labelAkses, namaGrupAkses, urutGrupAkses } from '@/lib/namaAkses'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
@@ -82,13 +82,14 @@ export default function RoleAkses() {
 
   const t = useLabel()
   const grup = useMemo(() => {
-    const out: { nama: string; items: HalamanDef[] }[] = []
+    const peta = new Map<string, HalamanDef[]>()
     for (const h of data?.halaman ?? []) {
-      const g = out.find((x) => x.nama === h.grup)
-      if (g) g.items.push(h)
-      else out.push({ nama: h.grup, items: [h] })
+      const kunci = kunciGrup(h)
+      const isi = peta.get(kunci)
+      if (isi) isi.push(h)
+      else peta.set(kunci, [h])
     }
-    return out
+    return urutGrupAkses([...peta.keys()]).map((kunci) => ({ kunci, items: peta.get(kunci) ?? [] }))
   }, [data])
 
   const set = (halaman: string, tingkat: Tingkat | undefined) =>
@@ -177,22 +178,23 @@ export default function RoleAkses() {
                 </TableHeader>
                 <TableBody>
                   {grup.map((g) => (
-                    <Fragment key={g.nama}>
+                    <Fragment key={g.kunci}>
                       <TableRow className="bg-muted/50 hover:bg-muted/50">
                         <TableCell colSpan={3} className="font-semibold">
-                          {t(idGrupAkses(g.nama), g.nama)}
+                          {namaGrupAkses(t, g.kunci)}
                         </TableCell>
                       </TableRow>
                       {g.items.map((h) => {
                         const sekarang = terkunci ? h.tingkat[h.tingkat.length - 1] : draft.halaman[h.id]
+                        const label = labelAkses(t, h)
                         return (
                           <TableRow key={h.id}>
-                            <TableCell>{h.label}</TableCell>
+                            <TableCell>{label}</TableCell>
                             {(['baca', 'tulis'] as const).map((kolom) => (
                               <TableCell key={kolom} className="text-center">
                                 {h.tingkat.includes(kolom) ? (
                                   <Checkbox
-                                    aria-label={`${kolom === 'baca' ? 'Baca' : 'Tulis'} ${h.label}`}
+                                    aria-label={`${kolom === 'baca' ? 'Baca' : 'Tulis'} ${label}`}
                                     checked={tercentang(sekarang, kolom)}
                                     disabled={terkunci}
                                     onCheckedChange={(v) => set(h.id, ubahCentang(h.tingkat, draft.halaman[h.id], kolom, v === true))}

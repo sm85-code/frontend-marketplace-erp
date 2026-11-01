@@ -16,7 +16,7 @@ import PengaturanAsistenAI from '@/pages/PengaturanAsistenAI'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GRUP_NAV, NAV, idGrup, idMenu } from '@/config/nav'
-import { GRUP_AKSES, idGrupAkses, ROLE_LABELS } from '@/config/roles'
+import { ROLE_LABELS } from '@/config/roles'
 import { bisa } from '@/lib/akses'
 import { useAuth } from '@/lib/auth'
 import { idBaris, idGrupSheet, idJudul, idTab, TAB_LAPORAN } from '@/lib/namaBaris'
@@ -70,7 +70,6 @@ const KATEGORI: Record<KategoriTeks, Bagian[]> = {
     },
   ],
   role: [
-    { judul: 'Kelompok halaman di pengaturan role', keterangan: 'Judul kelompok pada tabel hak akses di Kelola Pengguna dan Role.', teks: GRUP_AKSES.map((g) => ({ id: idGrupAkses(g), nama: 'Kelompok', bawaan: g })) },
     { judul: 'Nama role bawaan', keterangan: 'Role buatan sendiri diberi nama di Kelola Pengguna.', teks: Object.entries(ROLE_LABELS).map(([id, nama]) => ({ id: `role:${id}`, nama: 'Role', bawaan: nama })) },
   ],
   menu: [
@@ -112,7 +111,7 @@ const KETERANGAN_KATEGORI: Record<Kategori, string> = {
   bawah: 'Pilih sampai 4 menu untuk bilah bawah layar HP tiap role.',
   laporan: 'Nama tab, judul tabel, kelompok, dan baris tetap di Laporan Keuangan.',
   kategori: 'Kategori pemasukan dan pengeluaran beserta laporan yang dituju.',
-  role: 'Nama role bawaan dan judul kelompok pada pengaturan hak akses.',
+  role: 'Nama role bawaan. Judul kelompok dan nama halaman pada tabel hak akses memakai teks di Menu & Judul Halaman.',
   aplikasi: 'Nama aplikasi, keterangan di bawahnya, dan logo di sidebar serta layar HP.',
   ai: 'Pengaturan Asisten AI.',
 }
