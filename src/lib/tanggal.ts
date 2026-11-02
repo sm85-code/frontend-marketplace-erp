@@ -21,14 +21,14 @@ export function periodeBerjalan(month: string, count: number, today = hariIniWib
   return Math.min(Math.max(Math.floor(days / 7), 0), count - 1)
 }
 
-// Monday-Saturday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28/09 - 03/10".
+// Monday-Sunday of the n-th reporting week of a month (the same weeks the Shopee tables use), e.g. "28/09 - 04/10".
 export function weekRange(month: string, index: number): string {
   const first = new Date(`${month}-01T12:00:00Z`)
   const monday = new Date(first)
   monday.setUTCDate(first.getUTCDate() - ((first.getUTCDay() + 6) % 7) + index * 7)
-  const saturday = new Date(monday)
-  saturday.setUTCDate(monday.getUTCDate() + 5)
-  return rentang(monday.toISOString().slice(0, 10), saturday.toISOString().slice(0, 10))
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  return rentang(monday.toISOString().slice(0, 10), sunday.toISOString().slice(0, 10))
 }
 
 
