@@ -16,6 +16,11 @@ export function sheetDays(data: Overview, month: string): { records: Report[]; d
       next = next < data.akhir_bulan && sunday > data.akhir_bulan ? data.akhir_bulan : sunday
     }
   }
-  if (!days.length) for (const w of data.mingguan) if (w.tanggal.startsWith(month)) days.push(w.tanggal)
+  if (!days.length) {
+    // Include boundary weeks by overlap, retaining their original end dates as column keys.
+    const first = `${month}-01`
+    const last = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0, 12)).toISOString().slice(0, 10)
+    for (const w of data.mingguan) if (w.mulai <= last && w.tanggal >= first) days.push(w.tanggal)
+  }
   return { records, days }
 }
