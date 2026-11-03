@@ -6,6 +6,7 @@ import * as reports from '@/api/financialReports'
 import { fmtRp, getApiError } from '@/api/client'
 import { bagiLaba, keyPembagian } from '@/config/pembagianLaba'
 import { useAuth } from '@/lib/auth'
+import { cacheLembarManual } from '@/lib/financialSheetCache'
 import { bulanSetelah, catatanSaldoAwal, usePembagianLaba, type SaldoAwalLaba } from '@/lib/labaBulan'
 import { cellKey, emptyLembar } from '@/lib/sheetEngine'
 import { sheetDays } from '@/lib/sheetDays'
@@ -41,7 +42,7 @@ export default function KartuPembagianLaba({ month, laba, final, saldoAwal }: { 
       return reports.saveLembarManual(next, manualNext.data.version, { ...lembar, sel })
     },
     onSuccess: (saved) => {
-      qc.setQueryData(['financial-manual-sheet', next], saved)
+      cacheLembarManual(qc, next, saved)
       toast.success(`Pembagian laba diisi di Arus Kas ${namaBulan(next)}`)
     },
     onError: (e) => toast.error(getApiError(e)),

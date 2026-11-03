@@ -8,6 +8,7 @@ import { susunLaporan } from '@/lib/susunLaporan'
 import { applyRinci } from '@/lib/arusKasRinci'
 import { kunciKasKecil } from '@/lib/operasionalArusKas'
 import { bulanAntara, bulanSetelah } from '@/lib/labaBulan'
+import { denganPembagian, usePembagianBanyakBulan } from '@/lib/lembarPembagian'
 
 /** Each row's last shown figure of a month: what the next month opens with (Saldo awal Kas Utama = Saldo akhir, Kas Kecil, Neraca). */
 export function posisiAkhir(blocks: Block[]): Record<string, number> {
@@ -26,18 +27,19 @@ export function posisiAkhir(blocks: Block[]): Record<string, number> {
  * month from the first month after the books' opening (Oktober 2026 opens from the typed opening balance). `null` when the
  * month already has a closed report at its start (or is the first month), `undefined` while loading.
  */
-export function useAwalBulan(month: string, data: reports.Overview | undefined): Record<string, number> | null | undefined {
+export function useAwalBulan(month: string, data: reports.Overview | undefined, hanyaLihat = false): Record<string, number> | null | undefined {
   const awalBulan = data?.saldo_awal?.tanggal.slice(0, 7)
   const pertama = awalBulan ? bulanSetelah(awalBulan) : undefined
   const { records } = data ? sheetDays(data, month) : { records: [] }
   const butuh = !!data && !!pertama && pertama < month && !records.length
   const bulan = butuh ? bulanAntara(pertama!, month) : []
-  const ov = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-reports', 'laba-bulan', m], queryFn: () => reports.overview(m) })) })
-  const lb = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-manual-sheet', m], queryFn: () => reports.lembarManual(m) })) })
-  const op = useQueries({ queries: bulan.map((m) => ({ queryKey: ['operasional-arus-kas', m, false], queryFn: () => reports.operasionalBulan(m, false) })) })
+  const ov = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-reports', 'laba-bulan', m, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.overviewArusKas : reports.overview)(m) })) })
+  const lb = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-manual-sheet', m, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.lembarArusKas : reports.lembarManual)(m) })) })
+  const op = useQueries({ queries: bulan.map((m) => ({ queryKey: ['operasional-arus-kas', m, hanyaLihat], queryFn: () => reports.operasionalBulan(m, hanyaLihat) })) })
+  const pembagian = usePembagianBanyakBulan(bulan, hanyaLihat)
   const daftar = useKategori()
   const kelompok = useKelompok()
-  const siap = ov.every((q) => q.data) && lb.every((q) => q.data) && op.every((q) => q.data)
+  const siap = pembagian.every(p => p !== undefined) && ov.every((q) => q.data) && lb.every((q) => q.data) && op.every((q) => q.data)
   const kunci = [ov, lb, op].flat().map((q) => q.dataUpdatedAt).join('|')
   return useMemo(() => {
     if (!data) return undefined
@@ -47,15 +49,17 @@ export function useAwalBulan(month: string, data: reports.Overview | undefined):
     bulan.forEach((m, i) => {
       const o = ov[i].data!
       const { records: rs, days } = sheetDays(o, m)
-      const { plain, sheet, lembarTampil } = susunLaporan(o, rs, days, lb[i].data!.lembar ?? emptyLembar(), op[i].data!, daftar, kelompok, rs.length ? null : awal)
+      const saved = lb[i].data!.lembar ?? emptyLembar()
+      const lembar = pembagian[i] == null ? saved : denganPembagian(saved, days[0], pembagian[i])
+      const { plain, sheet, lembarTampil } = susunLaporan(o, rs, days, lembar, op[i].data!, daftar, kelompok, rs.length ? null : awal)
       // Kas Utama and Kas Kecil closing as the Arus Kas table shows them (rolled forward in applyRinci).
       const blok = sheet.find((b) => b.tabel === 'arus_kas')!
-      const arus = applyRinci(blok, days, lembarTampil, kunciKasKecil(lb[i].data!.lembar ?? emptyLembar(), blok, daftar))
+      const arus = applyRinci(blok, days, lembarTampil, kunciKasKecil(lembar, blok, daftar))
       awal = { ...(awal ?? {}), ...posisiAkhir(plain), ...posisiAkhir([arus]) }
     })
     return awal
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, butuh, siap, kunci, bulan.join('|'), daftar, kelompok])
+  }, [data, butuh, siap, kunci, pembagian.join('|'), bulan.join('|'), daftar, kelompok])
 }
 
 /** Today's date in WIB (YYYY-MM-DD). */

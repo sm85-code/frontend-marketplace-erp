@@ -19,10 +19,10 @@ export const bulanSetelah = (month: string) => {
 }
 
 /** Net profit of a month exactly as the Laba/Rugi tab shows it (closed books, typed figures and Operasional entries), or null while it loads. */
-export function useLabaBulan(month: string, aktif: boolean): number | null {
-  const overview = useQuery({ queryKey: ['financial-reports', 'laba-bulan', month], queryFn: () => reports.overview(month), enabled: aktif })
-  const lembar = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => reports.lembarManual(month), enabled: aktif })
-  const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, false], queryFn: () => reports.operasionalBulan(month, false), enabled: aktif })
+export function useLabaBulan(month: string, aktif: boolean, hanyaLihat = false): number | null {
+  const overview = useQuery({ queryKey: ['financial-reports', 'laba-bulan', month, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.overviewArusKas : reports.overview)(month), enabled: aktif })
+  const lembar = useQuery({ queryKey: ['financial-manual-sheet', month, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.lembarArusKas : reports.lembarManual)(month), enabled: aktif })
+  const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, hanyaLihat], queryFn: () => reports.operasionalBulan(month, hanyaLihat), enabled: aktif })
   const daftar = useKategori()
   const kelompok = useKelompok()
   return useMemo(() => {
@@ -62,11 +62,11 @@ export function hitungBagi(laba: number, rugiMasuk: number): { dibagi: number; r
 }
 
 /** Net profit of each month (same figure as their Laba/Rugi tab) and which months have no data at all. */
-export function useLabaBanyakBulan(bulan: string[], aktif: boolean): { laba: number[]; kosong: string[] } | null {
+export function useLabaBanyakBulan(bulan: string[], aktif: boolean, hanyaLihat = false): { laba: number[]; kosong: string[] } | null {
   const opt = (m: string) => ({ enabled: aktif && bulan.length > 0, m })
-  const ov = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-reports', 'laba-bulan', m], queryFn: () => reports.overview(m), enabled: opt(m).enabled })) })
-  const lb = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-manual-sheet', m], queryFn: () => reports.lembarManual(m), enabled: opt(m).enabled })) })
-  const op = useQueries({ queries: bulan.map((m) => ({ queryKey: ['operasional-arus-kas', m, false], queryFn: () => reports.operasionalBulan(m, false), enabled: opt(m).enabled })) })
+  const ov = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-reports', 'laba-bulan', m, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.overviewArusKas : reports.overview)(m), enabled: opt(m).enabled })) })
+  const lb = useQueries({ queries: bulan.map((m) => ({ queryKey: ['financial-manual-sheet', m, ...(hanyaLihat ? ['arus-kas'] : [])], queryFn: () => (hanyaLihat ? reports.lembarArusKas : reports.lembarManual)(m), enabled: opt(m).enabled })) })
+  const op = useQueries({ queries: bulan.map((m) => ({ queryKey: ['operasional-arus-kas', m, hanyaLihat], queryFn: () => reports.operasionalBulan(m, hanyaLihat), enabled: opt(m).enabled })) })
   const daftar = useKategori()
   const kelompok = useKelompok()
   const siap = ov.every((q) => q.data) && lb.every((q) => q.data) && op.every((q) => q.data)
@@ -101,19 +101,24 @@ const akhirBulan = (tanggal: string) => {
   return d.getUTCDate() === 1
 }
 
-/**
- * The one calculation of a month's profit split, used by the Neraca card and the Arus Kas table alike. The opening "Saldo
- * laba/rugi" counts as the month it closes: a loss there is carried, a profit is taken as already shared. Then every month
- * from the opening up to the one before this carries its loss forward; this month's profit covers what is left first.
- */
-export function usePembagianLaba(month: string, laba: number, saldoAwal: SaldoAwalLaba, aktif: boolean) {
+/** History and opening loss used by both live allocations and reconstructed month closes. */
+export function riwayatPembagian(month: string, saldoAwal: SaldoAwalLaba) {
   const awalBulan = saldoAwal?.tanggal.slice(0, 7)
   const awalNilai = Number(saldoAwal?.saldo.saldo_laba ?? 0) || 0
   // The opening dated the month's last day covers that whole month (typed by hand); otherwise that month still counts.
   const dari = awalBulan ? (akhirBulan(saldoAwal!.tanggal) ? bulanSetelah(awalBulan) : awalBulan) : month
   const lalu = awalBulan && awalBulan < month ? bulanAntara(dari, month) : []
-  const riwayat = useLabaBanyakBulan(lalu, aktif)
-  const pakaiAwal = !!awalBulan && awalBulan < month
+  return { lalu, awalBulan, awalNilai, pakaiAwal: !!awalBulan && awalBulan < month }
+}
+
+/**
+ * The one calculation of a month's profit split, used by the Neraca card and the Arus Kas table alike. The opening "Saldo
+ * laba/rugi" counts as the month it closes: a loss there is carried, a profit is taken as already shared. Then every month
+ * from the opening up to the one before this carries its loss forward; this month's profit covers what is left first.
+ */
+export function usePembagianLaba(month: string, laba: number, saldoAwal: SaldoAwalLaba, aktif: boolean, hanyaLihat = false) {
+  const { lalu, awalBulan, awalNilai, pakaiAwal } = riwayatPembagian(month, saldoAwal)
+  const riwayat = useLabaBanyakBulan(lalu, aktif, hanyaLihat)
   const rugiMasuk = riwayat ? rugiBerjalan([pakaiAwal ? awalNilai : 0, ...riwayat.laba]) : 0
   const { dibagi, rugiKeluar } = hitungBagi(laba, rugiMasuk)
   return {

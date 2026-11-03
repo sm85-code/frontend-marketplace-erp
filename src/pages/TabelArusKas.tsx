@@ -17,7 +17,9 @@ import { computeSheet, hariBerisi, emptyLembar, isGroup, type GroupDef, type Lem
 import { sheetDays } from '@/lib/sheetDays'
 import { namai, setNamaGrup } from '@/lib/namaBaris'
 import { periodeBerjalan, weekRange } from '@/lib/tanggal'
-import { GRUP_PEMBAGIAN, KEY_PEMBAGIAN } from '@/config/pembagianLaba'
+import { GRUP_PEMBAGIAN } from '@/config/pembagianLaba'
+import { useLembarPembagian } from '@/lib/lembarPembagian'
+import { cacheLembarManual } from '@/lib/financialSheetCache'
 import { GRUP_KAS_KECIL, sheetSections } from '@/lib/sheetSections'
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
@@ -36,8 +38,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   const qc = useQueryClient()
   const manual = useQuery({ queryKey: ['financial-manual-sheet', month], queryFn: () => (hanyaLihat ? reports.lembarArusKas(month) : reports.lembarManual(month)) })
   const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
-  // The read-only page (opened by staff) does not know the profit sharing: its figures are those without it. What is saved still keeps the admin's entries.
-  const lembarHitung: Lembar = useMemo(() => (hanyaLihat ? { ...lembar, sel: Object.fromEntries(Object.entries(lembar.sel).filter(([k]) => !KEY_PEMBAGIAN.has(k.split('|')[0]))) } : lembar), [lembar, hanyaLihat]) // eslint-disable-line react-hooks/exhaustive-deps
+  const lembarHitung = useLembarPembagian(lembar, month, days, !!hanyaLihat)
   const save = useMutation({
     mutationFn: (next: Lembar) => (hanyaLihat ? reports.saveLembarArusKas : reports.saveLembarManual)(month, manual.data?.version ?? 0, next),
     // Show the change at once (ticks especially); the saved version replaces it, an error reloads the real one.
@@ -46,7 +47,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
       qc.setQueryData<reports.LembarManualResponse>(['financial-manual-sheet', month], (old) => (old ? { ...old, lembar: next } : old))
       return { previous }
     },
-    onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),
+    onSuccess: (saved) => cacheLembarManual(qc, month, saved),
     onError: (error, _next, context) => {
       if (context?.previous) qc.setQueryData(['financial-manual-sheet', month], context.previous)
       toast.error(getApiError(error))
@@ -55,7 +56,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   })
   const daftarKat = useKategori()
   // A month with no closed report yet opens with the previous month's closing figures.
-  const awalBulan = useAwalBulan(month, data)
+  const awalBulan = useAwalBulan(month, data, !!hanyaLihat)
   // Operasional fills its rows by default; an explicit manual selection overrides each cell.
   const operasional = useQuery({ queryKey: ['operasional-arus-kas', month, !!hanyaLihat], queryFn: () => reports.operasionalBulan(month, !!hanyaLihat) })
   const plain = useMemo(

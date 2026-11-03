@@ -5,6 +5,8 @@ import type { Overview, Report } from '@/api/financialReports'
 import { KATEGORI_BAWAAN, KELOMPOK_BAWAAN } from '@/api/kategori'
 import { keyNama, keySelesai, RINCI_TABEL } from '@/lib/arusKasRinci'
 import { setKategori } from '@/lib/kategoriKeuangan'
+import { cacheLembarManual } from '@/lib/financialSheetCache'
+import * as engine from '@/lib/sheetEngine'
 import { emptyLembar, isGroup, type Lembar, type Line } from '@/lib/sheetEngine'
 import { susunLaporan } from '@/lib/susunLaporan'
 import TabelArusKas from './TabelArusKas'
@@ -12,8 +14,8 @@ import FinancialSheetTable from './FinancialSheetTable'
 import ArusKasRinciDialog from './ArusKasRinciDialog'
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
-const api = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), op: vi.fn(), error: vi.fn() }))
-vi.mock('@/api/financialReports', () => ({ lembarManual: api.read, lembarArusKas: api.read, saveLembarManual: api.save, saveLembarArusKas: api.save, operasionalBulan: api.op }))
+const api = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), op: vi.fn(), overview: vi.fn(), adminOverview: vi.fn(), adminRead: vi.fn(), error: vi.fn() }))
+vi.mock('@/api/financialReports', () => ({ overview: api.adminOverview, overviewArusKas: api.overview, lembarManual: api.adminRead, lembarArusKas: api.read, saveLembarManual: api.save, saveLembarArusKas: api.save, operasionalBulan: api.op }))
 vi.mock('@/lib/auth', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }))
 vi.mock('@/api/pengaturanUi', () => ({ useLabel: () => (s: string, fallback?: string) => fallback ?? s }))
 vi.mock('@/api/kategori', async (importOriginal) => {
@@ -73,8 +75,11 @@ async function edit(value: string, sumber?: 'manual' | 'otomatis') {
 }
 async function reload() { await act(async () => { tree.unmount() }); await mount() }
 beforeEach(() => {
-  vi.clearAllMocks(); activeData = data; server = { version: 7, lembar: fixture() }
+  vi.restoreAllMocks(); vi.clearAllMocks(); activeData = data; server = { version: 7, lembar: fixture() }
   api.read.mockImplementation(async () => structuredClone(server))
+  api.adminRead.mockImplementation((...args) => api.read(...args))
+  api.overview.mockResolvedValue(undefined)
+  api.adminOverview.mockImplementation((...args) => api.overview(...args))
   api.op.mockResolvedValue(items)
   api.save.mockImplementation(async (_month: string, version: number, lembar: Lembar) => {
     if (version !== server.version) throw new Error('version conflict')
@@ -255,5 +260,171 @@ describe('RIZKI supplier mapping with two distinct destinations', () => {
     expect((await open('c:packing')).target.sumber).toBe('otomatis')
     expect(value('kas_keluar')).toBe(435500)
     expect(JSON.stringify(tree.toJSON())).not.toContain('Perbedaan nilai manual')
+  })
+})
+
+
+describe('latest finalized prior-month distribution (display only)', () => {
+  const prior = '2026-09'
+  const priorDay = '2026-09-30'
+  let priorOverview: Overview
+  let priorSheet: Lembar
+  let snapshot: string
+  beforeEach(() => {
+    priorOverview = { laporan: [{ ...record, tanggal: priorDay }], akhir_bulan: priorDay, bulanan: { final: true }, saldo_awal: { tanggal: '2026-08-31', saldo: { ...zero } } } as unknown as Overview
+    priorSheet = emptyLembar()
+    priorSheet.sel[`rb:k_prod|${priorDay}`] = '1000'
+    server.lembar = emptyLembar()
+    server.lembar.sel[`pl_admin|${day}`] = '4'
+    server.lembar.sel[`pl_owner|${day}`] = '6'
+    activeData = { ...data, laporan: [{ ...record, hasil: { ...record.hasil, saldo_awal: { ...zero, kas_utama: '5000' }, saldo_akhir: { ...zero, kas_utama: '5000' } } }] }
+    api.read.mockImplementation(async (m: string) => structuredClone(m === prior ? { version: 2, lembar: priorSheet } : server))
+    api.overview.mockImplementation(async () => structuredClone(priorOverview))
+    api.op.mockResolvedValue([])
+    snapshot = JSON.stringify(server)
+  })
+  it.each([true, false])('updates shares and cash when prior Laba Rugi changes, view=%s, without persistence', async (hanyaLihat) => {
+    const compute = vi.spyOn(engine, 'computeSheet')
+    await mount({ hanyaLihat })
+    expect(value('akhir')).toBe(4000)
+    const latestSheet = () => compute.mock.calls.filter(c => c[2][0] === day).at(-1)![3]
+    expect(latestSheet().sel[`pl_admin|${day}`]).toBe('400')
+    expect(latestSheet().sel[`pl_owner|${day}`]).toBe('600')
+    priorSheet.sel[`rb:k_prod|${priorDay}`] = '2000'
+    await act(async () => { cacheLembarManual(client, prior, { version: 3, lembar: structuredClone(priorSheet) }) })
+    await flush()
+    expect(value('akhir')).toBe(3000)
+    expect(latestSheet().sel[`pl_admin|${day}`]).toBe('800')
+    expect(latestSheet().sel[`pl_owner|${day}`]).toBe('1200')
+    expect(JSON.stringify(server)).toBe(snapshot)
+    expect(api.save).not.toHaveBeenCalled()
+    compute.mockRestore()
+  })
+  it.each([-300, -1500])('covers carried opening losses %s before sharing', async (loss) => {
+    priorOverview.saldo_awal!.saldo.saldo_laba = String(loss)
+    await mount({ hanyaLihat: true })
+    expect(value('akhir')).toBe(loss === -300 ? 4300 : 5000)
+    expect(api.save).not.toHaveBeenCalled()
+  })
+  it('carries losses from earlier Laba Rugi through read-only history', async () => {
+    priorOverview.saldo_awal!.tanggal = '2026-07-31'
+    const lossSheet = emptyLembar()
+    lossSheet.sel['rb:k_prod|2026-08-31'] = '-300'
+    api.read.mockImplementation(async (m: string) => structuredClone(m === '2026-08' ? { version: 1, lembar: lossSheet } : m === prior ? { version: 2, lembar: priorSheet } : server))
+    api.overview.mockImplementation(async (m: string) => structuredClone(m === '2026-08' ? { ...priorOverview, laporan: [{ ...record, tanggal: '2026-08-31' }] } : priorOverview))
+    await mount({ hanyaLihat: true })
+    await flush()
+    expect(value('akhir')).toBe(4300)
+    expect(api.op).toHaveBeenCalledWith('2026-08', true)
+    expect(api.adminOverview).not.toHaveBeenCalled()
+    expect(api.adminRead).not.toHaveBeenCalled()
+  })
+  it('overrides only the first reporting day and preserves every other stored cell', async () => {
+    const first = '2026-10-04'
+    activeData = { ...activeData, laporan: [{ ...activeData.laporan[0], tanggal: first }, ...activeData.laporan] }
+    server.lembar.sel[`pl_admin|${first}`] = '1'
+    server.lembar.sel[`pl_owner|${first}`] = '2'
+    const saved = JSON.stringify(server)
+    await mount({ hanyaLihat: true })
+    expect(value('akhir', 0)).toBe(4000)
+    expect(value('akhir', 1)).toBe(3990)
+    expect(JSON.stringify(server)).toBe(saved)
+    expect(api.save).not.toHaveBeenCalled()
+  })
+  it('loads opening cash through read routes when the selected month has no reports', async () => {
+    activeData = { ...activeData, laporan: [], mingguan: [{ mulai: '2026-10-01', tanggal: day }], saldo_awal: priorOverview.saldo_awal } as unknown as Overview
+    await mount({ hanyaLihat: true })
+    await flush()
+    expect(value('akhir')).toBe(0) // September closes at 1000; its 1000 profit leaves in October.
+    expect(api.adminOverview).not.toHaveBeenCalled()
+    expect(api.adminRead).not.toHaveBeenCalled()
+    expect(api.op.mock.calls.every(c => c[1] === true)).toBe(true)
+    expect(api.save).not.toHaveBeenCalled()
+  })
+  it('carries automatically adjusted closes across consecutive no-report months with stale saved shares', async () => {
+    const opening = { tanggal: '2026-07-31', saldo: { ...zero, kas_utama: '5000', saldo_laba: '-200' } }
+    const months = ['2026-07', '2026-08', '2026-09', '2026-10', '2026-11']
+    const sheets = Object.fromEntries(months.map(m => [m, emptyLembar()]))
+    const overviews = Object.fromEntries(months.map(m => [m, {
+      laporan: [], akhir_bulan: `${m}-${m === '2026-09' || m === '2026-11' ? '30' : '31'}`, bulanan: { final: true }, saldo_awal: opening,
+      mingguan: [{ mulai: `${m}-01`, tanggal: `${m}-${m === '2026-09' || m === '2026-11' ? '30' : '31'}` }],
+    } as unknown as Overview]))
+    overviews['2026-08'].laporan = [{ ...record, tanggal: '2026-08-31', hasil: { ...record.hasil, saldo_awal: opening.saldo, saldo_akhir: opening.saldo } }]
+    sheets['2026-08'].sel['rb:k_prod|2026-08-31'] = '-300'
+    sheets['2026-09'].sel['rb:k_prod|2026-09-30'] = '1000'
+    overviews['2026-10'].mingguan.unshift({ mulai: '2026-10-01', tanggal: '2026-10-04', jadwal_laporan: '2026-10-04', laporan: null })
+    sheets['2026-10'].sel['rb:k_prod|2026-10-04'] = '2000'
+    sheets['2026-10'].sel['pl_admin|2026-10-31'] = '3'
+    sheets['2026-10'].sel['pl_owner|2026-10-31'] = '4'
+    for (const m of months.slice(1)) {
+      sheets[m].sel[`pl_admin|${overviews[m].mingguan[0].tanggal}`] = '4'
+      sheets[m].sel[`pl_owner|${overviews[m].mingguan[0].tanggal}`] = '6'
+    }
+    const saved = JSON.stringify(sheets)
+    api.read.mockImplementation(async (m: string) => ({ version: 1, lembar: structuredClone(sheets[m]) }))
+    api.overview.mockImplementation(async (m: string) => structuredClone(overviews[m]))
+    api.op.mockResolvedValue([])
+    const show = async (m: string) => {
+      await act(async () => { tree.update(<QueryClientProvider client={client}><TabelArusKas data={overviews[m]} month={m} hanyaLihat tanpaUnduh tanpaCentang /></QueryClientProvider>) })
+      await flush()
+      await flush()
+    }
+    activeData = overviews['2026-10']
+    await mount({ hanyaLihat: true })
+    await flush()
+    // August loses 300; September first covers that plus the opening loss of 200.
+    // August closes at 4700, September at 5700; October pays only September's remaining 500.
+    expect.soft(value('awal')).toBe(5700)
+    expect.soft(value('akhir')).toBe(7200)
+    expect.soft(value('akhir', 1)).toBe(7193) // Later-period saved shares remain intact.
+    await show('2026-11')
+    // November must carry October's adjusted close, before paying October's own 2000 profit.
+    expect.soft(value('awal')).toBe(7193)
+    expect(value('akhir')).toBe(5193)
+    expect(JSON.stringify(sheets)).toBe(saved)
+    expect(api.save).not.toHaveBeenCalled()
+    expect(api.adminOverview).not.toHaveBeenCalled()
+    expect(api.adminRead).not.toHaveBeenCalled()
+    expect(api.op.mock.calls.every(c => c[1] === true)).toBe(true)
+    const lines = tree.root.findByType(FinancialSheetTable).props.block.lines
+    expect(lines.some((l: Line) => isGroup(l) ? l.label === 'Pembagian laba' : /^(pl_|jml_pembagian)/.test(l.def.key))).toBe(false)
+  })
+  it('does not override a prior month which is not final', async () => {
+    // Use a future reporting boundary to exercise bulanFinal without depending on the test clock.
+    priorOverview.akhir_bulan = '2999-09-30'
+    priorOverview.bulanan.final = false
+    await mount({ hanyaLihat: true })
+    expect(value('akhir')).toBe(4990)
+    expect(JSON.stringify(server)).toBe(snapshot)
+  })
+  it('treats an elapsed prior month as final without a close-book snapshot', async () => {
+    priorOverview.bulanan.final = false
+    priorOverview.akhir_bulan = priorDay
+    await mount({ hanyaLihat: true })
+    expect(value('akhir')).toBe(4000)
+    expect(api.adminOverview).not.toHaveBeenCalled()
+    expect(api.adminRead).not.toHaveBeenCalled()
+    expect(api.save).not.toHaveBeenCalled()
+  })
+  it('uses only read routes and hides allocation group, recipients and totals on the general page', async () => {
+    await mount({ hanyaLihat: true })
+    expect(value('akhir')).toBe(4000)
+    expect(api.overview).toHaveBeenCalledWith(prior)
+    expect(api.read).toHaveBeenCalledWith(prior)
+    expect(api.op).toHaveBeenCalledWith(prior, true)
+    expect(api.adminOverview).not.toHaveBeenCalled()
+    expect(api.adminRead).not.toHaveBeenCalled()
+    const lines = tree.root.findByType(FinancialSheetTable).props.block.lines
+    expect(lines.some((l: Line) => isGroup(l) ? l.label === 'Pembagian laba' : /^(pl_|jml_pembagian)/.test(l.def.key))).toBe(false)
+    expect(api.save).not.toHaveBeenCalled()
+  })
+  it('both views calculate the same ending cash', async () => {
+    await mount({ hanyaLihat: true })
+    const general = value('akhir')
+    await act(async () => tree.unmount())
+    client.clear()
+    await mount()
+    expect(value('akhir')).toBe(general)
+    expect(general).toBe(4000)
   })
 })
