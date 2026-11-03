@@ -26,6 +26,7 @@ import { bisaDiganti, idTab, namai, setNamaBaris, setNamaGrup, TAB_LAPORAN, TAB_
 import { AksiHalaman } from '@/components/daftar'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
+import { cacheLembarManual } from '@/lib/financialSheetCache'
 import KartuPembagianLaba, { TabelPembagianLaba } from '@/components/KartuPembagianLaba'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -71,7 +72,7 @@ export default function FinancialReportSheet({
   const lembar: Lembar = manual.data?.lembar ?? emptyLembar()
   const save = useMutation({
     mutationFn: (next: Lembar) => reports.saveLembarManual(month, manual.data?.version ?? 0, next),
-    onSuccess: (saved) => qc.setQueryData(['financial-manual-sheet', month], saved),
+    onSuccess: (saved) => cacheLembarManual(qc, month, saved),
     onError: (error) => {
       toast.error(getApiError(error))
       void qc.invalidateQueries({ queryKey: ['financial-manual-sheet', month] })
