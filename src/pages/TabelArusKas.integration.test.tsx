@@ -63,6 +63,13 @@ function row(id: string) {
   return table.props.block.lines.find((l: Line) => !isGroup(l) && l.def.key === id) as Line
 }
 function value(id: string, period = 0) { return row(id).cells[period].value }
+async function waitForValue(id: string, expected: number) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (value(id) === expected) return
+    await flush()
+  }
+  expect(value(id)).toBe(expected)
+}
 function reports() {
   const { plain } = susunLaporan(data, [record], [day], server.lembar, items, daftar, KELOMPOK_BAWAAN, null, '2026-11-02')
   const get = (t: string, k: string) => (plain.find(b => b.tabel === t)!.lines.find(l => !isGroup(l) && l.def.key === k) as Line).cells[0].value
@@ -286,14 +293,13 @@ describe('latest finalized prior-month distribution (display only)', () => {
   it.each([true, false])('updates shares and cash when prior Laba Rugi changes, view=%s, without persistence', async (hanyaLihat) => {
     const compute = vi.spyOn(engine, 'computeSheet')
     await mount({ hanyaLihat })
-    expect(value('akhir')).toBe(4000)
+    await waitForValue('akhir', 4000)
     const latestSheet = () => compute.mock.calls.filter(c => c[2][0] === day).at(-1)![3]
     expect(latestSheet().sel[`pl_admin|${day}`]).toBe('400')
     expect(latestSheet().sel[`pl_owner|${day}`]).toBe('600')
     priorSheet.sel[`rb:k_prod|${priorDay}`] = '2000'
     await act(async () => { cacheLembarManual(client, prior, { version: 3, lembar: structuredClone(priorSheet) }) })
-    await flush()
-    expect(value('akhir')).toBe(3000)
+    await waitForValue('akhir', 3000)
     expect(latestSheet().sel[`pl_admin|${day}`]).toBe('800')
     expect(latestSheet().sel[`pl_owner|${day}`]).toBe('1200')
     expect(JSON.stringify(server)).toBe(snapshot)
