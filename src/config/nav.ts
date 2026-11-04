@@ -1,4 +1,4 @@
-import { PEMETAAN_ORDER } from '@/lib/akses'
+import { PEMETAAN_ORDER, PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT } from '@/lib/akses'
 import type { LucideIcon } from 'lucide-react'
 import {
   Bot,
@@ -77,12 +77,12 @@ export const NAV: NavItem[] = [
   { to: '/belanja-tukang', label: 'Belanja Tukang', icon: HardHat, halaman: 'belanja_tukang', grup: 'keuangan' },
   { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
   { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
-  { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
-  { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: 'info_toko', grup: 'info-toko' },
+  { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: PENGATURAN_TOKO, grup: 'info-toko' },
+  { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: PERFORMA_TOKO, grup: 'info-toko' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: 'iklan', grup: 'info-toko' },
-  { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: 'settlement', grup: 'info-toko' },
-  { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
-  { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', grup: 'pengaturan' },
+  { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: SETTLEMENT, grup: 'info-toko' },
+  { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', halamanLain: ['toko_penjualan'], grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
+  { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', halamanLain: ['kelola_role'], grup: 'pengaturan' },
   { to: '/kelola-aplikasi', label: 'Kelola Aplikasi', icon: SlidersHorizontal, halaman: 'kelola_aplikasi', halamanLain: ['kategori_transaksi'], grup: 'pengaturan' },
   { to: '/asisten', label: 'Asisten AI', icon: Bot, halaman: 'asisten', grup: 'pengaturan' },
   { to: '/profile', label: 'Profil Saya', shortLabel: 'Profil', icon: UserCircle, halaman: '*', grup: 'pengaturan', bawah: 6, posisiBawah: 6 },

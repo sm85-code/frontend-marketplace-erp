@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import InfoTip from '@/components/InfoTip'
 import { useStockSettings } from '@/lib/stock-settings'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -58,6 +59,7 @@ const kolomProduk = (mapping: ReturnType<typeof pemetaanProduk>): KolomTabel<Pro
 ]
 
 export default function ProdukPage() {
+  const bolehTulis = useBolehTulis()
   const { warehouseEnabled } = useStockSettings()
   const qc = useQueryClient()
   const confirm = useConfirm()
@@ -192,7 +194,7 @@ export default function ProdukPage() {
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Produk & Varian">
         <Sinkronisasi jenis="produk" ids={pilih.daftar.map(p => p.id)} />
-        <Button onClick={openCreate}>Tambah Produk</Button>
+        {bolehTulis && <Button onClick={openCreate}>Tambah Produk</Button>}
       </BarHalaman>
 
       <Input aria-label="Cari produk" placeholder="Cari nama atau SKU…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-sm" />

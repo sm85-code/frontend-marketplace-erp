@@ -15,6 +15,7 @@ import ProcessingWorkflow from './ProcessingWorkflow'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Spinner from '@/components/Spinner'
+import { ModeTulisProvider, TandaHanyaBaca } from '@/lib/modeTulis'
 
 function NonKayuTabs() {
   const { bisa } = useAuth()
@@ -26,8 +27,8 @@ function NonKayuTabs() {
         {manual && <TabsTrigger value="manual">Katalog Manual</TabsTrigger>}
         {otomatis && <TabsTrigger value="otomatis">Katalog Otomatis</TabsTrigger>}
       </TabsList>
-      {otomatis && <TabsContent value="otomatis"><SupplierCatalogPanel /></TabsContent>}
-      {manual && <TabsContent value="manual"><ProcessingPrices kind="non_kayu" /></TabsContent>}
+      {otomatis && <TabsContent value="otomatis"><ModeTulisProvider boleh={bisa('data_katalog_otomatis', 'tulis')}><SupplierCatalogPanel /></ModeTulisProvider></TabsContent>}
+      {manual && <TabsContent value="manual"><ModeTulisProvider boleh={bisa('data_katalog_manual', 'tulis')}><ProcessingPrices kind="non_kayu" /></ModeTulisProvider></TabsContent>}
     </Tabs>
   )
 }
@@ -110,7 +111,12 @@ export default function ProcessingPage() {
           </Button>
         </div>
       )}
-      <section key={page} className="min-w-0">{current.content}</section>
+      <section key={page} className="min-w-0">
+        <ModeTulisProvider boleh={page === 'pemetaan' || page === 'produk-non-kayu' || !HALAMAN_LAYAR[page] || bisa(HALAMAN_LAYAR[page], 'tulis')}>
+          {page !== 'pemetaan' && page !== 'produk-non-kayu' && <TandaHanyaBaca />}
+          {current.content}
+        </ModeTulisProvider>
+      </section>
     </div>
   )
 }

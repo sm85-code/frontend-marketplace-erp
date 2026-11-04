@@ -1,3 +1,6 @@
+import { useAuth } from '@/lib/auth'
+import { TAB_SETTLEMENT } from '@/lib/akses'
+import { ModeTulisProvider } from '@/lib/modeTulis'
 import { varianStatus } from '@/lib/warnaStatus'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import SaldoToko from './settlement/SaldoToko'
@@ -62,6 +65,9 @@ function kolomSettlement(akunMap: Map<string, AkunMarketplace>): KolomTabel<Sett
 }
 
 export default function SettlementPage() {
+  const { bisa } = useAuth()
+  const danaTulis = bisa(TAB_SETTLEMENT.dana, 'tulis')
+  const tabAwal = (Object.keys(TAB_SETTLEMENT) as (keyof typeof TAB_SETTLEMENT)[]).find((k) => bisa(TAB_SETTLEMENT[k])) ?? 'saldo'
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [manualOpen, setManualOpen] = useState(false)
@@ -110,20 +116,25 @@ export default function SettlementPage() {
     <div className="space-y-4">
       <BarHalaman judul="Dana & Saldo Shopee" />
 
-      <Tabs defaultValue="saldo">
-        <TabsList className="section-tabs"><TabsTrigger value="saldo">Saldo Penjual</TabsTrigger><TabsTrigger value="pendapatan">Menunggu Pencairan</TabsTrigger><TabsTrigger value="dana">Dana Dilepas</TabsTrigger><TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger></TabsList>
-        <TabsContent value="pendapatan"><PendapatanShopee /></TabsContent>
-        <TabsContent value="saldo"><SaldoToko /></TabsContent>
-        <TabsContent value="mutasi"><TransaksiDana /></TabsContent>
-        <TabsContent value="dana">
-          <DanaShopee />
+      <Tabs defaultValue={tabAwal}>
+        <TabsList className="section-tabs">
+          {bisa(TAB_SETTLEMENT.saldo) && <TabsTrigger value="saldo">Saldo Penjual</TabsTrigger>}
+          {bisa(TAB_SETTLEMENT.pendapatan) && <TabsTrigger value="pendapatan">Menunggu Pencairan</TabsTrigger>}
+          {bisa(TAB_SETTLEMENT.dana) && <TabsTrigger value="dana">Dana Dilepas</TabsTrigger>}
+          {bisa(TAB_SETTLEMENT.mutasi) && <TabsTrigger value="mutasi">Mutasi Saldo</TabsTrigger>}
+        </TabsList>
+        {bisa(TAB_SETTLEMENT.pendapatan) && <TabsContent value="pendapatan"><PendapatanShopee /></TabsContent>}
+        {bisa(TAB_SETTLEMENT.saldo) && <TabsContent value="saldo"><SaldoToko /></TabsContent>}
+        {bisa(TAB_SETTLEMENT.mutasi) && <TabsContent value="mutasi"><TransaksiDana /></TabsContent>}
+        {bisa(TAB_SETTLEMENT.dana) && <TabsContent value="dana">
+          <ModeTulisProvider boleh={danaTulis}><DanaShopee /></ModeTulisProvider>
           <details className="mt-4 rounded-xl border bg-card p-4" onToggle={e => setManualOpen(e.currentTarget.open)}>
             <summary className="cursor-pointer text-sm font-medium">Catatan manual pencairan (terpisah dari data Shopee)</summary>
 
       <Card>
         <CardHeader>
           <CardTitle>Catatan Manual Pencairan</CardTitle>
-          <Button className="self-start" onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>Catat Manual</Button>
+          {danaTulis && <Button className="self-start" onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>Catat Manual</Button>}
         </CardHeader>
         <CardContent>
           {queryError && <QueryError error={queryError} retry={retryQuery} />}
@@ -139,7 +150,7 @@ export default function SettlementPage() {
                 namaDari={(s) => `settlement ${fmtDate(s.periode_mulai)}`}
                 urutAwal={{ kunci: 'periode', arah: 'desc' }}
                 aksi={(s) =>
-                  s.status !== 'paid' && (
+                  danaTulis && s.status !== 'paid' && (
                     <Button size="sm" variant="outline" onClick={() => markPaidMut.mutate(s.id)}>
                       Tandai Dibayar
                     </Button>
@@ -153,7 +164,7 @@ export default function SettlementPage() {
         </CardContent>
       </Card>
         </details>
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
 
       <FormDialog open={dialogOpen} values={form} busy={createMut.isPending} onOpenChange={setDialogOpen}>

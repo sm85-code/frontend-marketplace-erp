@@ -46,7 +46,7 @@ describe('tabel role', () => {
     expect(html).not.toContain('Pengaturan push Shopee')
     expect(html).not.toContain('push_shopee')
     expect(html).toContain('Kategori Transaksi')
-    expect(html).toContain('Arus Kas (tulis = centang)')
+    expect(html).toContain('>Arus Kas<') // short menu name, no full label
   })
 
   it('leaves no empty group title behind when the internal page was the only row of a group', () => {

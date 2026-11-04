@@ -1,12 +1,14 @@
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabel } from '@/api/pengaturanUi'
-import { halamanTampil, kunciGrup, labelAkses, namaGrupAkses, urutGrupAkses } from '@/lib/namaAkses'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { halamanTampil, namaGrupAkses } from '@/lib/namaAkses'
+import { namaMenu } from '@/lib/namaMenu'
+import { centangSimpul, klikSimpul, pohonAkses } from '@/lib/pohonAkses'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
 import { buatRole, daftarRole, hapusRole, ubahRole } from '@/api/roles'
-import type { HalamanDef, RoleDef, RoleIsian, Tingkat } from '@/api/types'
+import type { RoleDef, RoleIsian, Tingkat } from '@/api/types'
 import QueryError from '@/components/QueryError'
 import Spinner from '@/components/Spinner'
 import { useConfirm } from '@/components/ConfirmProvider'
@@ -19,15 +21,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useAuth } from '@/lib/auth'
-import { samaAkses, tercentang, ubahCentang } from '@/lib/centangAkses'
+import { samaAkses } from '@/lib/centangAkses'
 
 const BARU = '__baru__'
 const KOSONG: RoleIsian = { nama: '', keterangan: '', akses_toko: 'semua', halaman: {} }
 
-const isianDari = (r: RoleDef): RoleIsian => ({ nama: r.nama, keterangan: r.keterangan, akses_toko: r.akses_toko, halaman: { ...r.halaman } })
+/** Only the keys the server still lists: an old page key (before it was split into tabs) is dropped, its tabs carry it. */
+const hanyaDikenal = (halaman: Record<string, Tingkat>, dikenal: Set<string>) =>
+  Object.fromEntries(Object.entries(halaman).filter(([k]) => dikenal.has(k))) as Record<string, Tingkat>
+const isianDari = (r: RoleDef, dikenal: Set<string>): RoleIsian => ({ nama: r.nama, keterangan: r.keterangan, akses_toko: r.akses_toko, halaman: hanyaDikenal(r.halaman, dikenal) })
+
+const INDENT = ['pl-2', 'pl-7', 'pl-12'] as const
 
 /** Roles and what each may reach: the shops, the pages, and read or write per page. Admin only. */
-export default function RoleAkses() {
+export default function RoleAkses({ bolehUbah = true }: { bolehUbah?: boolean }) {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const { muatUlangAkses } = useAuth()
@@ -37,18 +44,19 @@ export default function RoleAkses() {
 
   const role = data?.roles.find((r) => r.id === pilih)
   const baru = pilih === BARU
-  const terkunci = !!role?.terkunci
+  const terkunci = !!role?.terkunci || !bolehUbah
+  const dikenal = useMemo(() => new Set((data?.halaman ?? []).map((h) => h.id)), [data])
   // Reload the form when another role is picked or the saved one changes (not while the user is typing).
   useEffect(() => {
     if (baru) setDraft(KOSONG)
-    else if (role) setDraft(isianDari(role))
-  }, [pilih, role, baru])
+    else if (role) setDraft(isianDari(role, dikenal))
+  }, [pilih, role, baru, dikenal])
 
   const berubah = useMemo(() => {
     if (baru) return draft.nama.trim() !== '' || Object.keys(draft.halaman).length > 0
     if (!role) return false
-    return draft.nama !== role.nama || draft.keterangan !== role.keterangan || draft.akses_toko !== role.akses_toko || !samaAkses(draft.halaman, role.halaman)
-  }, [draft, role, baru])
+    return draft.nama !== role.nama || draft.keterangan !== role.keterangan || draft.akses_toko !== role.akses_toko || !samaAkses(draft.halaman, hanyaDikenal(role.halaman, dikenal))
+  }, [draft, role, baru, dikenal])
 
   const sesudah = async () => {
     await qc.invalidateQueries({ queryKey: ['roles'] })
@@ -81,24 +89,12 @@ export default function RoleAkses() {
   }
 
   const t = useLabel()
-  const grup = useMemo(() => {
-    const peta = new Map<string, HalamanDef[]>()
-    for (const h of halamanTampil(data?.halaman ?? [])) {
-      const kunci = kunciGrup(h)
-      const isi = peta.get(kunci)
-      if (isi) isi.push(h)
-      else peta.set(kunci, [h])
-    }
-    return urutGrupAkses([...peta.keys()]).map((kunci) => ({ kunci, items: peta.get(kunci) ?? [] }))
-  }, [data])
-
-  const set = (halaman: string, tingkat: Tingkat | undefined) =>
-    setDraft((d) => {
-      const next = { ...d.halaman }
-      if (tingkat) next[halaman] = tingkat
-      else delete next[halaman]
-      return { ...d, halaman: next }
-    })
+  const pohon = useMemo(() => pohonAkses(halamanTampil(data?.halaman ?? [])), [data])
+  const namaSimpul = (n: (typeof pohon)[number]) => (n.grup ? namaGrupAkses(t, n.grup) : n.menu ? namaMenu(t, n.menu) : n.label)
+  const isiTerkunci = useMemo(
+    () => Object.fromEntries((data?.halaman ?? []).map((h) => [h.id, h.tingkat[h.tingkat.length - 1]])) as Record<string, Tingkat>,
+    [data],
+  )
 
   if (isLoading) return <Spinner column label="Memuat role…" />
   if (error) return <QueryError error={error} retry={refetch} />
@@ -126,7 +122,7 @@ export default function RoleAkses() {
               {r.terkunci ? <Badge variant="secondary">Terkunci</Badge> : r.sistem ? <Badge variant="secondary">Bawaan</Badge> : null}
             </button>
           ))}
-          <Button type="button" variant={baru ? 'default' : 'outline'} className="mt-2 w-full" onClick={() => setPilih(BARU)}>
+          <Button type="button" variant={baru ? 'default' : 'outline'} className={bolehUbah ? 'mt-2 w-full' : 'hidden'} onClick={() => setPilih(BARU)}>
             + Tambah role
           </Button>
         </CardContent>
@@ -137,7 +133,8 @@ export default function RoleAkses() {
           <CardTitle>{baru ? 'Role baru' : (role?.nama ?? 'Role')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {terkunci && <p className="text-sm text-muted-foreground">Admin selalu punya semua akses dan tidak bisa diubah, supaya tidak ada yang terkunci.</p>}
+          {!bolehUbah && <p role="status" className="text-sm text-muted-foreground">Hanya baca: kamu bisa melihat role, tapi tidak bisa mengubahnya.</p>}
+          {role?.terkunci && <p className="text-sm text-muted-foreground">Admin selalu punya semua akses dan tidak bisa diubah, supaya tidak ada yang terkunci.</p>}
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="role-nama">Nama role</Label>
@@ -177,40 +174,36 @@ export default function RoleAkses() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {grup.map((g) => (
-                    <Fragment key={g.kunci}>
-                      <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={3} className="font-semibold">
-                          {namaGrupAkses(t, g.kunci)}
+                  {pohon.map((n) => {
+                    const akses = role?.terkunci ? isiTerkunci : draft.halaman
+                    const label = namaSimpul(n)
+                    return (
+                      <TableRow key={n.id} data-tingkatan={n.tingkatan} className={n.tingkatan === 0 ? 'bg-muted/50 hover:bg-muted/50' : undefined}>
+                        <TableCell className={`${INDENT[n.tingkatan]} ${n.tingkatan === 0 ? 'font-semibold' : n.tingkatan === 1 ? 'font-medium' : 'text-muted-foreground'}`}>
+                          {label}
                         </TableCell>
+                        {(['baca', 'tulis'] as const).map((kolom) => {
+                          const c = centangSimpul(n.kunci, akses, kolom)
+                          return (
+                            <TableCell key={kolom} className="text-center">
+                              {c === null ? (
+                                <span aria-hidden className="text-muted-foreground">
+                                  —
+                                </span>
+                              ) : (
+                                <Checkbox
+                                  aria-label={`${kolom === 'baca' ? 'Baca' : 'Tulis'} ${label}`}
+                                  checked={c}
+                                  disabled={terkunci}
+                                  onCheckedChange={() => setDraft((d) => ({ ...d, halaman: klikSimpul(n.kunci, d.halaman, kolom) }))}
+                                />
+                              )}
+                            </TableCell>
+                          )
+                        })}
                       </TableRow>
-                      {g.items.map((h) => {
-                        const sekarang = terkunci ? h.tingkat[h.tingkat.length - 1] : draft.halaman[h.id]
-                        const label = labelAkses(t, h)
-                        return (
-                          <TableRow key={h.id}>
-                            <TableCell>{label}</TableCell>
-                            {(['baca', 'tulis'] as const).map((kolom) => (
-                              <TableCell key={kolom} className="text-center">
-                                {h.tingkat.includes(kolom) ? (
-                                  <Checkbox
-                                    aria-label={`${kolom === 'baca' ? 'Baca' : 'Tulis'} ${label}`}
-                                    checked={tercentang(sekarang, kolom)}
-                                    disabled={terkunci}
-                                    onCheckedChange={(v) => set(h.id, ubahCentang(h.tingkat, draft.halaman[h.id], kolom, v === true))}
-                                  />
-                                ) : (
-                                  <span aria-hidden className="text-muted-foreground">
-                                    —
-                                  </span>
-                                )}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        )
-                      })}
-                    </Fragment>
-                  ))}
+                    )
+                  })}
                 </TableBody>
               </Table>
             </TableShell>
@@ -222,7 +215,7 @@ export default function RoleAkses() {
                 {baru ? 'Buat role' : 'Simpan role'}
               </Button>
               {berubah && !baru && (
-                <Button type="button" variant="outline" onClick={() => role && setDraft(isianDari(role))}>
+                <Button type="button" variant="outline" onClick={() => role && setDraft(isianDari(role, dikenal))}>
                   Batalkan perubahan
                 </Button>
               )}

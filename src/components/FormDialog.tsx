@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { Dialog } from '@/components/ui/dialog'
 import { useConfirm } from '@/components/ConfirmProvider'
+import { useBolehTulis } from '@/lib/modeTulis'
 
 /** User dismissal is guarded; closing after a successful save remains controlled by the caller. */
 export default function FormDialog({
@@ -8,15 +9,20 @@ export default function FormDialog({
   onOpenChange,
   values,
   busy = false,
+  boleh,
   children,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   values: unknown
   busy?: boolean
+  /** Whether the form may be used; defaults to the page's Tulis access. A form of a role with only Baca never opens. */
+  boleh?: boolean
   children: ReactNode
 }) {
   const confirm = useConfirm()
+  const halamanTulis = useBolehTulis()
+  const bolehIsi = boleh ?? halamanTulis
   const initial = useRef('')
   const wasOpen = useRef(false)
   const asking = useRef(false)
@@ -53,7 +59,7 @@ export default function FormDialog({
   }
   return (
     <Dialog
-      open={open}
+      open={open && bolehIsi}
       onOpenChange={(next) => {
         void change(next)
       }}

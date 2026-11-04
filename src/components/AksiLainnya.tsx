@@ -6,7 +6,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
-export default function AksiLainnya({ children, className }: { children: ReactNode; className?: string }) {
+import { useBolehTulis } from '@/lib/modeTulis'
+/** Row and page actions (edit, delete, …). Hidden for a role with only Baca, unless `baca` says it also holds reading actions. */
+export default function AksiLainnya({ children, className, baca = false }: { children: ReactNode; className?: string; baca?: boolean }) {
+  const bolehTulis = useBolehTulis()
+  if (!bolehTulis && !baca) return null
   return (
     <Popover>
       <PopoverTrigger asChild>

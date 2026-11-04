@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import InfoTip from '@/components/InfoTip'
 import TombolRefresh from '@/components/TombolRefresh'
@@ -96,6 +97,7 @@ export default function ReturPage() {
 }
 
 function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: string }; close: () => void }) {
+  const bolehTulis = useBolehTulis()
   const confirm = useConfirm()
   const qc = useQueryClient()
   const [disputeBusy, setDisputeBusy] = useState(false)
@@ -139,7 +141,7 @@ function DetailRetur({ selected, close }: { selected: { akunId: string; nomor: s
       </dl>
       <TabelData label="Barang dalam retur" items={r.items} kolom={items} idDari={(i) => `${i.item_id}:${i.model_id}:${r.items.indexOf(i)}`} namaDari={(i) => i.nama} />
       <p className="text-muted-foreground">Nominal refund item hanya ditampilkan jika diberikan Shopee; harga item bukan pengganti refund. Pastikan barang benar-benar diterima dan diperiksa sebelum mencatat penambahan stok ERP.</p>
-      <div className="flex flex-wrap gap-2"><Button variant="destructive" disabled={approve.isPending || disputeBusy || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || disputeBusy || detail.isFetching} onClick={() => { void detail.refetch() }}>Refresh Detail</Button></div>
+      <div className={bolehTulis ? 'flex flex-wrap gap-2' : 'hidden'}><Button variant="destructive" disabled={approve.isPending || disputeBusy || confirmed || detail.isFetching} onClick={onApprove}>Setujui Retur / Refund</Button><Button variant="outline" disabled={approve.isPending || disputeBusy || detail.isFetching} onClick={() => { void detail.refetch() }}>Refresh Detail</Button></div>
       <SengketaForm shop={selected.akunId} sn={selected.nomor} disabled={approve.isPending || confirmed} onBusy={setDisputeBusy} onComplete={() => setConfirmed(true)} />
       {approve.error && <p role="alert" className="break-words text-destructive">{getApiError(approve.error)} Refresh detail sebelum mencoba ulang.</p>}
       {approve.data && <p role="status" className="break-words">Persetujuan dikonfirmasi Shopee. {approve.data.warnings.join(' ')} {approve.data.request_id && `Request ID: ${approve.data.request_id}`}</p>}

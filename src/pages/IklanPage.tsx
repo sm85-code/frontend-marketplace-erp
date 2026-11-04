@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import Agen from './iklan/Agen'
 import InfoTip from '@/components/InfoTip'
 import GmvMax from './iklan/GmvMax'
@@ -46,6 +47,7 @@ function kolomCampaign(akunMap: Map<string, AkunMarketplace>): KolomTabel<IklanC
 }
 
 export default function IklanPage() {
+  const bolehTulis = useBolehTulis()
 
   const qc = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -117,7 +119,7 @@ export default function IklanPage() {
                   <CardTitle>Catatan kampanye</CardTitle>
                   <InfoTip teks={"Pengingat pribadi di ERP. Tidak membuat atau mengubah iklan di Shopee."} />
                 </div>
-                <Button onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
+                <Button className={bolehTulis ? undefined : 'hidden'} onClick={() => setDialogOpen(true)} disabled={!akunList?.length}>
                   Tambah catatan
                 </Button>
               </div>

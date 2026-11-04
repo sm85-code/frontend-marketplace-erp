@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import { useState } from 'react'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
@@ -163,11 +164,12 @@ export function AksiPesanan({
   cetakSibuk: boolean
 }) {
   const { user } = useAuth()
+  const bolehTulis = useBolehTulis()
   const [hapusBuka, setHapusBuka] = useState(false)
   return (
     <div className="flex items-stretch justify-end gap-2 md:min-w-[15rem]">
-      {bisaDiproses(p) && <Button size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onProses(p)} disabled={cetakSibuk}>{labelProses(p)}</Button>}
-      {bisaDicetak(p) && (
+      {bolehTulis && bisaDiproses(p) && <Button size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onProses(p)} disabled={cetakSibuk}>{labelProses(p)}</Button>}
+      {bolehTulis && bisaDicetak(p) && (
         <Button variant={sudahDicetak(p) ? 'outline' : 'default'} size="sm" className="h-auto min-h-11 min-w-0 flex-1 whitespace-normal px-3 py-2 leading-snug md:flex-none" onClick={() => onCetak(p)} disabled={cetakSibuk}>
           {sudahDicetak(p) ? 'Cetak ulang resi' : 'Cetak resi'}
         </Button>

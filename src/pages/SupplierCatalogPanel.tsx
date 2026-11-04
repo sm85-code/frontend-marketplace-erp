@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import InfoTip from '@/components/InfoTip'
 import AksiLainnya from '@/components/AksiLainnya'
 import { useState } from 'react'
@@ -11,6 +12,7 @@ import { Field } from './processingShared'
 import { cn } from '@/lib/utils'
 
 export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedId?: string; onPick?: (product: SupplierCatalogProduct) => void }) {
+  const bolehTulis = useBolehTulis()
   const qc = useQueryClient()
   const connection = useQuery({queryKey: ['supplier-catalog-connection'], queryFn: getSupplierCatalogConnection})
   const catalog = useQuery({queryKey: ['supplier-catalog'], queryFn: getSupplierCatalog, enabled: !!connection.data?.connected, retry: false})
@@ -36,12 +38,12 @@ export default function SupplierCatalogPanel({ selectedId, onPick }: { selectedI
         {connection.data?.connected ? <>
           <Button type="button" size="sm" variant="outline" disabled={catalog.isFetching} onClick={() => void catalog.refetch()}>{catalog.isFetching ? 'Memuat…' : 'Refresh'}</Button>
           <AksiLainnya className="size-8"><Button type="button" size="sm" variant="ghost" onClick={() => setLogin(v => !v)}>Hubungkan ulang</Button></AksiLainnya>
-        </> : <Button type="button" size="sm" variant="outline" onClick={() => setLogin(v => !v)}>Hubungkan katalog</Button>}
+        </> : bolehTulis && <Button type="button" size="sm" variant="outline" onClick={() => setLogin(v => !v)}>Hubungkan katalog</Button>}
       </div>
     </div>
     {connection.isLoading && <p className="text-sm text-muted-foreground">Memeriksa koneksi…</p>}
     {connection.error && <p role="alert" className="text-sm text-destructive">{getApiError(connection.error)}</p>}
-    {login && <div className="space-y-3 rounded-xl bg-muted/30 p-3">
+    {bolehTulis && login && <div className="space-y-3 rounded-xl bg-muted/30 p-3">
       <InfoTip teks={"Masuk sekali dengan akun admin sumber katalog untuk menghubungkan katalog. Kata sandi tidak disimpan."} />
       <Field title="Username akun katalog"><Input autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} /></Field>
       <Field title="Kata sandi akun katalog"><Input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></Field>

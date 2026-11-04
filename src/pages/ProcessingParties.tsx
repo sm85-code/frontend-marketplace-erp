@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search, Pencil } from 'lucide-react'
@@ -25,6 +26,7 @@ export default function ProcessingParties({
   kind: 'tukang' | 'supplier'
   items: ProcessingParty[]
 }) {
+  const bolehTulis = useBolehTulis()
   const menu = useNamaMenu()
   const title = menu(kind === 'tukang' ? '/processing/tukang-kayu' : '/processing/supplier')
   const qc = useQueryClient()
@@ -43,7 +45,7 @@ export default function ProcessingParties({
     { kunci: 'no_wa', judul: 'No. WA', nilai: r => r.no_wa || '', sel: r => <span className="whitespace-nowrap tabular-nums">{r.no_wa || '—'}</span> },
     { kunci: 'no_rekening', judul: 'No. Rekening', nilai: r => r.no_rekening || '', sel: r => <span className="whitespace-nowrap tabular-nums">{r.no_rekening || '—'}</span> },
     { kunci: 'nama_bank', judul: 'Nama Bank', nilai: r => r.nama_bank || '', sel: r => r.nama_bank || '—' },
-    { kunci: 'aksi', judul: 'Aksi', sel: r => (
+    { kunci: 'aksi', judul: 'Aksi', sel: (r: ProcessingParty) => !bolehTulis ? <span className="text-muted-foreground">—</span> : (
       <Button variant="outline" size="sm" aria-label={`Edit ${r.nama}`} onClick={() => {
         setAdding(false)
         setError('')
@@ -57,6 +59,7 @@ export default function ProcessingParties({
         <h2 className="sr-only">Daftar {title}</h2>
         <div className="flex items-center gap-2">
           <Button
+            className={bolehTulis ? undefined : 'hidden'}
             onClick={() => {
               setAdding(true)
               setError('')

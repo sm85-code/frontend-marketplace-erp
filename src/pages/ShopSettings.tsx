@@ -13,15 +13,29 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/lib/auth'
+import { TAB_PENGATURAN_TOKO } from '@/lib/akses'
+import { KunciBaca } from '@/lib/modeTulis'
 const field = 'w-full rounded-lg border bg-background p-2'
 
 export default function ShopSettings({ id, name, close }: { id: string; name: string; close: () => void }) {
   return <Dialog open onOpenChange={v => { if (!v) close() }}><DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Pengaturan Toko · {name}</DialogTitle></DialogHeader><ShopSettingsContent id={id}/></DialogContent></Dialog>
 }
 
+const TAB_TOKO = [
+  { id: 'profil', label: 'Profil', isi: (id: string) => <Profile id={id} /> },
+  { id: 'jasa-kirim', label: 'Pengiriman', isi: (id: string) => <Channels id={id} /> },
+  { id: 'alamat', label: 'Alamat', isi: (id: string) => <Addresses id={id} /> },
+  { id: 'libur', label: 'Mode Libur', isi: (id: string) => <Holiday id={id} /> },
+] as const
+
+/** Each tab has its own access: without Baca it is hidden, with only Baca its form is read-only. */
 export function ShopSettingsContent({id}: {id:string}) {
-  const [tab, setTab] = useState('profil')
-  return <Tabs value={tab} onValueChange={setTab}><TabsList className="section-tabs w-full"><TabsTrigger value="profil">Profil</TabsTrigger><TabsTrigger value="jasa-kirim">Pengiriman</TabsTrigger><TabsTrigger value="alamat">Alamat</TabsTrigger><TabsTrigger value="libur">Mode Libur</TabsTrigger></TabsList><TabsContent value="profil"><Profile id={id}/></TabsContent><TabsContent value="jasa-kirim"><Channels id={id}/></TabsContent><TabsContent value="alamat"><Addresses id={id}/></TabsContent><TabsContent value="libur"><Holiday id={id}/></TabsContent></Tabs>
+  const { bisa } = useAuth()
+  const tabs = TAB_TOKO.filter((t) => bisa(TAB_PENGATURAN_TOKO[t.id]))
+  const [tab, setTab] = useState<string>(tabs[0]?.id ?? 'profil')
+  if (!tabs.length) return <p className="text-sm text-muted-foreground">Kamu belum diberi akses ke tab Pengaturan Toko.</p>
+  return <Tabs value={tab} onValueChange={setTab}><TabsList className="section-tabs w-full">{tabs.map((t) => <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>)}</TabsList>{tabs.map((t) => <TabsContent key={t.id} value={t.id}><KunciBaca boleh={bisa(TAB_PENGATURAN_TOKO[t.id], 'tulis')}>{t.isi(id)}</KunciBaca></TabsContent>)}</Tabs>
 }
 
 function useSave(id: string, section: string) {

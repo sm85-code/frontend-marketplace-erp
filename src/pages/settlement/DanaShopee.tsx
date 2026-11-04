@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import QueryError from '@/components/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
@@ -44,6 +45,7 @@ const potong = (v: string) => fmtRp(-Math.abs(Number(v)))
 
 /** Money Shopee released, pulled by the ERP itself: totals per shop, then one row per order. */
 export default function DanaShopee() {
+  const bolehTulis = useBolehTulis()
   const qc = useQueryClient()
   const f = useFilterDaftar(AWAL)
   const [hariSinkron, setHariSinkron] = useState('14')
@@ -152,7 +154,7 @@ export default function DanaShopee() {
           </Medan>
           <FilterPilih id="dana-hari" label="Sinkronisasi dari Shopee" nilai={hariSinkron} onUbah={setHariSinkron} opsi={HARI_SINKRON} />
           <FilterAksi>
-            <Button onClick={() => sinkronMut.mutate()} disabled={sinkronMut.isPending || tokoSinkron.length === 0}>
+            <Button className={bolehTulis ? undefined : 'hidden'} onClick={() => sinkronMut.mutate()} disabled={!bolehTulis || sinkronMut.isPending || tokoSinkron.length === 0}>
               {sinkronMut.isPending ? 'Sedang sinkronisasi…' : 'Sinkronisasi sekarang'}
             </Button>
           </FilterAksi>

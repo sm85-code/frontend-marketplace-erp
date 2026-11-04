@@ -94,7 +94,10 @@ export default function StaffPage() {
   const t = useLabel()
   const adalahAdmin = bisa('kelola_pengguna', 'tulis')
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'role' ? 'role' : 'pengguna'
+  const penggunaBaca = bisa('kelola_pengguna')
+  const roleBaca = bisa('kelola_role')
+  const roleTulis = bisa('kelola_role', 'tulis')
+  const tab = (params.get('tab') === 'role' && roleBaca) || !penggunaBaca ? 'role' : 'pengguna'
   const { data: roleDaftar } = useQuery({ queryKey: ['roles'], queryFn: daftarRole, enabled: adalahAdmin })
   const roleMap = new Map((roleDaftar?.roles ?? []).map((r) => [r.id, r]))
   const namaRole = (id: string) => t(`role:${id}`, roleMap.get(id)?.nama ?? ROLE_LABELS[id] ?? id)
@@ -193,19 +196,19 @@ export default function StaffPage() {
     <div className="space-y-4">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Kelola Pengguna">
-        {tab === 'pengguna' && <><Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button>
+        {tab === 'pengguna' && adalahAdmin && <><Button onClick={() => { setUserForm((f) => ({ ...f, role: peranBoleh[0] ?? 'staff' })); setUserDialog(true) }}>Tambah Akun</Button>
           <AksiLainnya><Button variant="outline" onClick={() => setAssignDialog(true)} disabled={!staffUsers.length || !akunList?.length}>
             Tugaskan ke Toko
           </Button></AksiLainnya></>}
       </BarHalaman>
       <Tabs value={tab} onValueChange={(v) => setParams(v === 'role' ? { tab: 'role' } : {}, { replace: true })}>
-        {adalahAdmin && (
+        {penggunaBaca && roleBaca && (
           <TabsList className="section-tabs">
             <TabsTrigger value="pengguna">Pengguna</TabsTrigger>
             <TabsTrigger value="role">Role</TabsTrigger>
           </TabsList>
         )}
-        <TabsContent value="pengguna" className="space-y-4">
+        {penggunaBaca && <TabsContent value="pengguna" className="space-y-4">
 
       <Card>
         <CardHeader>
@@ -272,15 +275,15 @@ export default function StaffPage() {
           </>
         </CardContent>
       </Card>
-        </TabsContent>
-        {adalahAdmin && (
+        </TabsContent>}
+        {roleBaca && (
           <TabsContent value="role">
-            <RoleAkses />
+            <RoleAkses bolehUbah={roleTulis} />
           </TabsContent>
         )}
       </Tabs>
 
-      <FormDialog open={userDialog} values={userForm} busy={createUserMut.isPending} onOpenChange={setUserDialog}>
+      <FormDialog boleh={adalahAdmin} open={userDialog} values={userForm} busy={createUserMut.isPending} onOpenChange={setUserDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah Akun</DialogTitle>
@@ -340,7 +343,7 @@ export default function StaffPage() {
         </DialogContent>
       </FormDialog>
 
-<FormDialog open={editUser !== null} values={editForm} busy={updateUserMut.isPending} onOpenChange={(open) => !open && setEditUser(null)}>
+<FormDialog boleh={adalahAdmin} open={editUser !== null} values={editForm} busy={updateUserMut.isPending} onOpenChange={(open) => !open && setEditUser(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Akun</DialogTitle>
@@ -398,7 +401,7 @@ export default function StaffPage() {
         </DialogContent>
       </FormDialog>
 
-      <FormDialog open={assignDialog} values={assignForm} busy={assignMut.isPending} onOpenChange={setAssignDialog}>
+      <FormDialog boleh={adalahAdmin} open={assignDialog} values={assignForm} busy={assignMut.isPending} onOpenChange={setAssignDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tugaskan Staff ke Toko</DialogTitle>
