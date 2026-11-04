@@ -47,6 +47,7 @@ import DialogPengiriman from './pesanan/DialogPengiriman'
 import { prosesBatchPengiriman } from '@/lib/pengiriman'
 import type { PengaturanPengiriman } from '@/api/types'
 import { AksiPesanan, kolomPesanan } from './pesanan/kolom'
+import { useBolehTulis } from '@/lib/modeTulis'
 
 const DEFAULT_PER_HALAMAN = 25
 const AWAL = { tahap: 'menunggu_kurir', toko: '', q: '', tanggal: 'semua', dari: '', sampai: '', resi: '', urut: 'tanggal:desc' }
@@ -275,8 +276,9 @@ export default function PesananPage() {
       : `Tersinkron dari Shopee pukul ${jam}`
   }
 
+  const bolehTulis = useBolehTulis()
   const isiAksiLainnya = <>
-          <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />
+          {bolehTulis && <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />}
           <Button asChild variant="ghost" className="w-full justify-start gap-2"><Link to="/pesanan/retur"><Undo2 className="size-4" aria-hidden="true" /> Retur & Refund</Link></Button>
           <div className="order-mobile-view flex items-center justify-between gap-3 border-t pt-2 md:hidden" role="group" aria-label="Tampilan pesanan di HP">
         <span className="px-2 text-sm text-muted-foreground">Tampilan di HP</span>
@@ -292,7 +294,7 @@ export default function PesananPage() {
       <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
         <div className="hidden md:contents">
         {bisa('pesanan_manual', 'tulis') && <Button onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /> Pesanan Manual</Button>}
-        <AksiLainnya>{isiAksiLainnya}</AksiLainnya>
+        <AksiLainnya baca>{isiAksiLainnya}</AksiLainnya>
         </div>
       </BarHalaman>
 
@@ -302,7 +304,7 @@ export default function PesananPage() {
           <div className="flex items-end gap-2 max-md:-mr-[3.25rem]">
             <div className="min-w-0 flex-1 [&_label]:sr-only"><FilterCari id="pesanan-cari" placeholder="No. pesanan, pembeli, resi, produk" nilai={f.nilai.q} onUbah={(q) => f.ubah({ q })} /></div>
             {bisa('pesanan_manual', 'tulis') && <Button size="icon" className="!h-11 !w-11 shrink-0 md:hidden" aria-label="Pesanan Manual" title="Pesanan Manual" onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /></Button>}
-            <AksiLainnya className="!h-11 !w-11 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
+            <AksiLainnya baca className="!h-11 !w-11 shrink-0 md:hidden">{isiAksiLainnya}</AksiLainnya>
           </div>
           <div ref={statusScroll} className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg">
             <TabsList aria-label="Status pesanan" className="section-tabs order-status-tabs">

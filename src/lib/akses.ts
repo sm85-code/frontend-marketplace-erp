@@ -16,3 +16,23 @@ export const AKSES_ADMIN_CADANGAN = (role: string): AksesSaya => ({ role, nama: 
 
 /** Pemetaan Order is accessible through any of its four role-editor tabs. */
 export const PEMETAAN_ORDER = 'processing_tukang|processing_supplier|processing_pengecatan|processing_packing'
+
+/**
+ * Pages that became tabs. The old key (info_toko, settlement) still opens them until the role is saved again from the
+ * role editor, so the order in which the app and the server are deployed cannot lock anybody out.
+ */
+export const TAB_PENGATURAN_TOKO = {
+  profil: 'pengaturan_toko_profil|info_toko',
+  'jasa-kirim': 'pengaturan_toko_pengiriman|info_toko',
+  alamat: 'pengaturan_toko_alamat|info_toko',
+  libur: 'pengaturan_toko_libur|info_toko',
+} as const
+export const PENGATURAN_TOKO = Object.values(TAB_PENGATURAN_TOKO).join('|')
+export const PERFORMA_TOKO = 'performa_toko|info_toko'
+export const TAB_SETTLEMENT = {
+  saldo: 'settlement_saldo|settlement',
+  pendapatan: 'settlement_pendapatan|settlement',
+  dana: 'settlement_dana|settlement',
+  mutasi: 'settlement_mutasi|settlement',
+} as const
+export const SETTLEMENT = Object.values(TAB_SETTLEMENT).join('|')

@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import { PaginasiLanjut } from '@/components/daftar/Paginasi'
 import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
@@ -75,6 +76,7 @@ export default function AssistantPage({embedded=false}:{embedded?:boolean}) {
  return <AssistantWorkspace key={user?.id??'anonymous'} embedded={embedded}/>
 }
 function AssistantWorkspace({embedded}:{embedded:boolean}) {
+  const bolehTulis = useBolehTulis()
   const qc=useQueryClient(),{user}=useAuth()
   const [params,setParams]=useSearchParams()
   const [floatingConversation,setFloatingConversation]=useState('')
@@ -125,7 +127,7 @@ function AssistantWorkspace({embedded}:{embedded:boolean}) {
   }
   function selectConversation(id:string){if(embedded)setFloatingConversation(id);else setParams(id?{percakapan:id}:{},{replace:true});setHistoryPage(1);mutation.reset()}
   const pre=embedded?'floating-':''
-  const kirimMati=!!(embedded&&resource&&!detail.data)||mutation.isPending||busy||!status.data?.available||(!pending&&(!prompt.trim()||(mode==='perintah'&&!selectedShop)))
+  const kirimMati=!bolehTulis||!!(embedded&&resource&&!detail.data)||mutation.isPending||busy||!status.data?.available||(!pending&&(!prompt.trim()||(mode==='perintah'&&!selectedShop)))
   return <div className={`mx-auto flex max-w-5xl flex-col gap-3 ${embedded?'':'pb-24'}`}>
     <div className="flex flex-wrap items-center justify-between gap-2">
       {!embedded&&<BarHalaman judul="Asisten AI" />}

@@ -53,7 +53,7 @@ export default function FormPesananManual({ open, onOpenChange }: { open: boolea
     !!dipilih && (!internal || !!form.kode_pesanan.trim()) && !!form.deadline && items.every((it) => it.produk.trim() && Number(it.qty) >= 1)
 
   return (
-    <FormDialog open={open} values={{ form, items }} busy={simpan.isPending} onOpenChange={onOpenChange}>
+    <FormDialog boleh open={open} values={{ form, items }} busy={simpan.isPending} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Pesanan Manual</DialogTitle>

@@ -7,6 +7,8 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
 import { AuthProvider, useAuth } from '@/lib/auth'
+import { PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT } from '@/lib/akses'
+import { ModeTulisProvider } from '@/lib/modeTulis'
 import type { Tingkat } from '@/api/types'
 
 // Semua kode halaman diunduh diam-diam setelah login, supaya pindah halaman
@@ -106,7 +108,8 @@ function Protected({ children, halaman, perlu = 'baca' }: { children: ReactNode;
   }
   if (!akses) return <PageFallback />
   if (halaman && ![halaman].flat().some((h) => bisa(h, perlu))) return <Navigate to={bisa('dashboard') ? '/dashboard' : '/profile'} replace />
-  return <Layout>{children}</Layout>
+  const bolehTulis = !halaman || [halaman].flat().some((h) => bisa(h, 'tulis'))
+  return <Layout><ModeTulisProvider boleh={bolehTulis}>{children}</ModeTulisProvider></Layout>
 }
 
 export default function App() {
@@ -128,8 +131,8 @@ export default function App() {
               <Route path="/profile" element={<Protected><LazyPage><ProfilePage /></LazyPage></Protected>} />
               <Route path="/asisten" element={<Protected halaman="asisten"><LazyPage><AssistantPage /></LazyPage></Protected>} />
               <Route path="/otomasi-produk" element={<Protected halaman="otomasi"><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
-              <Route path="/pengaturan-toko" element={<Protected halaman="info_toko"><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
-              <Route path="/performa-toko" element={<Protected halaman="info_toko"><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
+              <Route path="/pengaturan-toko" element={<Protected halaman={PENGATURAN_TOKO}><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
+              <Route path="/performa-toko" element={<Protected halaman={PERFORMA_TOKO}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
               <Route path="/processing/template" element={<Protected halaman="data_template"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected><LazyPage><ProcessingPage /></LazyPage></Protected>} />
               <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
@@ -141,7 +144,7 @@ export default function App() {
               <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
-              <Route path="/toko" element={<Protected halaman="kelola_toko"><LazyPage><AkunPage /></LazyPage></Protected>} />
+              <Route path="/toko" element={<Protected halaman={["kelola_toko", "toko_penjualan"]}><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route
                 path="/katalog"
                 element={<Protected halaman="katalog"><LazyPage><KatalogPage /></LazyPage></Protected>}
@@ -172,7 +175,7 @@ export default function App() {
               />
               <Route
                 path="/settlement"
-                element={<Protected halaman="settlement"><LazyPage><SettlementPage /></LazyPage></Protected>}
+                element={<Protected halaman={SETTLEMENT}><LazyPage><SettlementPage /></LazyPage></Protected>}
               />
               <Route
 path="/iklan"
@@ -185,7 +188,7 @@ path="/iklan"
               />
               <Route
                 path="/staff"
-                element={<Protected halaman="kelola_pengguna"><LazyPage><StaffPage /></LazyPage></Protected>}
+                element={<Protected halaman={["kelola_pengguna", "kelola_role"]}><LazyPage><StaffPage /></LazyPage></Protected>}
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<LazyPage><NotFoundPage /></LazyPage>} />

@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import { DropdownMenu } from 'radix-ui'
@@ -138,6 +139,7 @@ function ReplyComposer({ clearKey, attachment, sending, inputDisabled, blocked, 
 }
 
 export default function ChatPage() {
+  const bolehTulis = useBolehTulis()
   const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
   const orderId = params.get('pesanan') ?? ''
@@ -444,7 +446,7 @@ export default function ChatPage() {
             </option>
           ))}
         </PilihNative>
-        <Button variant="secondary" className="gap-2" disabled={syncChat.isPending || upload.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
+        <Button variant="secondary" className="gap-2" disabled={!bolehTulis || syncChat.isPending || upload.isPending} onClick={() => {setHistorySearch(null);syncChat.mutate({ shopId: shop })}}>
           <RefreshCw className={`size-4 ${syncChat.isPending ? 'animate-spin' : ''}`}/><span className="hidden sm:inline">{shop ? 'Sinkronisasi toko' : 'Sinkronisasi semua'}</span><span className="sr-only sm:hidden">{shop ? 'Sinkronisasi toko ini' : 'Sinkronisasi seluruh toko'}</span>
         </Button>
 
@@ -550,7 +552,7 @@ export default function ChatPage() {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild><Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label="Opsi percakapan"><MoreVertical className="size-5"/></Button></DropdownMenu.Trigger>
                   <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={8} className="z-50 min-w-56 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg">
-                    <DropdownMenu.Item disabled={markRead.isPending || !selected?.conversation_id} onSelect={()=>markRead.mutate()} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted data-[disabled]:opacity-50"><CheckCheck className="size-4"/>Tandai sudah dibaca</DropdownMenu.Item>
+                    <DropdownMenu.Item disabled={!bolehTulis || markRead.isPending || !selected?.conversation_id} onSelect={()=>markRead.mutate()} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted data-[disabled]:opacity-50"><CheckCheck className="size-4"/>Tandai sudah dibaca</DropdownMenu.Item>
                     {!!history.data?.page_result.next_offset && history.data.page_result.next_offset !== '0' && <DropdownMenu.Item onSelect={()=>{setOlder(messages);setOffset(history.data!.page_result.next_offset!)}} className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-muted"><History className="size-4"/>Pesan lebih lama</DropdownMenu.Item>}
                   </DropdownMenu.Content></DropdownMenu.Portal>
                 </DropdownMenu.Root>
@@ -615,7 +617,8 @@ export default function ChatPage() {
                 )}
               </div>
               {context.error && <QueryError error={context.error} retry={context.refetch} />}
-              <section aria-label="Form balas chat" className="mt-1 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2">
+              {!bolehTulis && <p role="status" className="mt-1 rounded-lg border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">Hanya baca: kamu bisa melihat chat, tapi tidak bisa membalas.</p>}
+              <section aria-label="Form balas chat" className={bolehTulis ? 'mt-1 min-w-0 shrink-0 space-y-2 rounded-2xl border border-border bg-background p-2' : 'hidden'}>
               <input ref={galleryInput} className="hidden" type="file" accept="image/jpeg,image/png" aria-label="Pilih gambar dari galeri" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               <input ref={cameraInput} className="hidden" type="file" accept="image/*" capture="environment" aria-label="Ambil gambar dengan kamera" onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}}/>
               {upload.isPending && <p role="status" className="px-1 text-xs">Mengunggah foto… Pesan belum dikirim.</p>}

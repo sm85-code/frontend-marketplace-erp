@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import Paginasi from '@/components/daftar/Paginasi'
 import { Plus, SlidersHorizontal } from 'lucide-react'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -35,6 +36,7 @@ import { useNamaMenu } from '@/lib/namaMenu'
 const TANPA_MODEL = 'Tanpa model'
 
 export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produksi' | 'pengecatan' | 'non_kayu' | 'packing' }) {
+  const bolehTulis = useBolehTulis()
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['processing-prices', 'catalog'], queryFn: getProcessingCatalogPrices })
   const confirm = useConfirm()
@@ -115,7 +117,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
     } catch (err) { toast.error(getApiError(err)) }
     finally { await qc.invalidateQueries({queryKey: ['processing-prices']}); setChanging(false) }
   }
-  const rowActions = (price: ProcessingPrice) => <div className="flex items-center gap-2">
+  const rowActions = (price: ProcessingPrice) => !bolehTulis ? <span className="text-muted-foreground">—</span> : <div className="flex items-center gap-2">
     <Button variant="outline" size="sm" disabled={changing} onClick={() => {
       setAdding(false); setEkstra([]); setHargaKombinasi({}); setUseHierarchy(!!price.structure_model_id); setModeCat(price.kind === 'pengecatan' && !price.production_price_id ? 'manual' : 'otomatis'); setCariModel(''); setError(''); setEdit(price.kind === 'non_kayu' ? { ...price, varian: varianDari(price) } : price.kind === 'pengecatan' && !price.production_price_id && price.produk === TANPA_MODEL ? { ...price, produk: '' } : price)
     }}>Edit</Button>
@@ -190,7 +192,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
                 </Button>
               </p>
             )}
-            {kind === 'produksi' && selection.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-2">
+            {bolehTulis && kind === 'produksi' && selection.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/20 p-2">
               <span className="mr-auto text-sm">{selection.length} produk dipilih · maksimal 100</span>
               <Button variant="ghost" size="sm" disabled={!selected.size} onClick={() => setSelected(new Set())}>Bersihkan pilihan</Button>
               <Button size="sm" disabled={!selection.length || changing} onClick={() => setBulk(selection.map(p => ({...p})))}>Susun Struktur Massal</Button>
@@ -211,7 +213,7 @@ export default function ProcessingPrices({ kind: selectedKind }: { kind?: 'produ
             </Button>}
               <Button
                 variant="default"
-                className="h-9 shrink-0 px-2.5 sm:px-3"
+                className={bolehTulis ? 'h-9 shrink-0 px-2.5 sm:px-3' : 'hidden'}
                 aria-label={kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
                 title={kind === 'non_kayu' ? 'Tambah produk manual' : kind === 'packing' ? 'Tambah tarif packing' : kind === 'produksi' ? 'Tambah produk kayu' : 'Tambah tarif pengecatan'}
                 onClick={() => {

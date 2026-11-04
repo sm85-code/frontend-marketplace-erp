@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import HapusPesananManual from '@/components/HapusPesananManual'
 import { Copy } from 'lucide-react'
 import api from '@/api/client'
@@ -39,6 +40,7 @@ import {
 } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
+  const bolehTulis = useBolehTulis()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -334,7 +336,7 @@ export default function PesananDetailPage() {
             <p className="text-muted-foreground">Stok tetap direservasi sampai Shopee mengonfirmasi pembatalan. Setelah mengirim keputusan, sinkronkan status jika belum berubah.</p>
             {pesanan.catatan_sinkron && <p role="status" className="break-words text-muted-foreground">{pesanan.catatan_sinkron}</p>}
             {pembatalanPembeliMut.error && <p role="alert" className="break-words text-destructive">{getApiError(pembatalanPembeliMut.error)} Sinkronkan status sebelum mencoba lagi.</p>}
-            <div className="flex flex-wrap gap-2">
+            <div className={bolehTulis ? 'flex flex-wrap gap-2' : 'hidden'}>
               <Button variant="destructive" disabled={pembatalanPembeliMut.isPending || keputusanTerkirimId === pesanan.id || syncMut.isPending}
                 onClick={() => onPembatalanPembeli('ACCEPT')}>Terima Pembatalan</Button>
               <Button variant="outline" disabled={pembatalanPembeliMut.isPending || keputusanTerkirimId === pesanan.id || syncMut.isPending}
@@ -343,7 +345,7 @@ export default function PesananDetailPage() {
           </CardContent>
         </Card>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className={bolehTulis ? 'flex flex-wrap gap-2' : 'hidden'}>
         {!ikutMp && action && (
           <Button onClick={onAction} disabled={statusMut.isPending}>
             {action.label}

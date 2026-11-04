@@ -1,3 +1,4 @@
+import { useBolehTulis } from '@/lib/modeTulis'
 import PilihProduk from '@/components/PilihProduk'
 import { useTokoAktif } from '@/lib/tokoAktif'
 import { FilterPilih } from '@/components/daftar'
@@ -60,6 +61,7 @@ function kolomListing({
 }
 
 export default function ListingPage() {
+  const bolehTulis = useBolehTulis()
   const qc = useQueryClient()
   const [q,setQ]=useState('')
   const [toko,setToko]=useTokoAktif()
@@ -126,7 +128,7 @@ export default function ListingPage() {
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
       <BarHalaman judul="Pemetaan Produk Toko">
         <Sinkronisasi jenis="listing" ids={pilih.daftar.map(p => p.id)} />
-        <Button onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
+        <Button className={bolehTulis ? undefined : 'hidden'} onClick={() => setDialogOpen(true)} disabled={!produkList?.length || !akunList?.length}>
           Tambah Listing
         </Button>
       </BarHalaman>

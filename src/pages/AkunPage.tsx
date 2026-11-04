@@ -1,3 +1,4 @@
+import { KunciBaca } from '@/lib/modeTulis'
 import { varianStatus } from '@/lib/warnaStatus'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import AutoOrderSettings from '@/components/AutoOrderSettings'
@@ -47,7 +48,7 @@ export default function AkunPage() {
   const { bisa } = useAuth()
   const qc = useQueryClient()
   const confirm = useConfirm()
-  const [tab, setTab] = useState('toko')
+  const [tab, setTab] = useState(() => (bisa('kelola_toko') ? 'toko' : bisa('toko_penjualan') ? 'penjualan' : 'dropoff'))
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AkunMarketplace | null>(null)
   const [form, setForm] = useState({ platform: 'shopee', nama_toko: '', id_toko_eksternal: '', catatan: '' })
@@ -252,11 +253,11 @@ export default function AkunPage() {
       </BarHalaman>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="section-tabs w-full">
-          <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>
-          <TabsTrigger value="penjualan">Toko Internal &amp; Reseller</TabsTrigger>
+          {bisa('kelola_toko') && <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>}
+          {bisa('toko_penjualan') && <TabsTrigger value="penjualan">Toko Internal &amp; Reseller</TabsTrigger>}
           {bisa('otomasi') && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
         </TabsList>
-        <TabsContent value="toko" className="space-y-4">
+        {bisa('kelola_toko') && <TabsContent value="toko" className="space-y-4">
 
       <Card>
         <CardContent className="pt-4">
@@ -284,17 +285,17 @@ export default function AkunPage() {
         </CardContent>
       </Card>
 
-        </TabsContent>
-        <TabsContent value="penjualan" className="space-y-4"><TokoPenjualanTab /></TabsContent>
+        </TabsContent>}
+        {bisa('toko_penjualan') && <TabsContent value="penjualan" className="space-y-4"><TokoPenjualanTab /></TabsContent>}
         {bisa('otomasi') && <>
-          <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><AutoOrderSettings /></TabsContent>
+          <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><KunciBaca boleh={bisa('otomasi', 'tulis')}><AutoOrderSettings /></KunciBaca></TabsContent>
           <TabsContent value="otomasi">
             <div className="divide-y rounded-xl border bg-card">{(akunList ?? []).filter(a => a.platform === 'shopee').map(a => <div key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2"><span className="min-w-0 flex-1 truncate text-sm font-medium">{a.nama_toko}</span><div className="flex gap-1"><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=rating`}>Balasan Rating</Link></Button><Button size="sm" variant="outline" asChild><Link to={`/otomasi-produk?toko=${encodeURIComponent(a.id)}&tab=boost`}>Boost</Link></Button></div></div>)}</div>
             {!isLoading && !(akunList ?? []).some(a => a.platform === 'shopee') && <p className="py-8 text-center text-muted-foreground">Belum ada toko Shopee.</p>}
           </TabsContent>
         </>}
       </Tabs>
-      <FormDialog open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
+      <FormDialog boleh={bisa('kelola_toko', 'tulis')} open={dialogOpen} values={form} busy={createMut.isPending || updateMut.isPending} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Toko' : 'Tambah Toko'}</DialogTitle>

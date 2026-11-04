@@ -95,7 +95,7 @@ function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk
 export default function TokoPenjualanTab() {
   const qc = useQueryClient()
   const { bisa } = useAuth()
-  const bisaTulis = bisa('kelola_toko', 'tulis')
+  const bisaTulis = bisa('toko_penjualan', 'tulis')
   const { data, isLoading, error, refetch } = useTokoPenjualan()
   const [dialog, setDialog] = useState<{ toko: TokoPenjualan | null } | null>(null)
   const namaPlatform = (id: string) => data?.platform.find((p) => p.id === id)?.label ?? PLATFORM_TOKO.find((p) => p.id === id)?.label ?? id
