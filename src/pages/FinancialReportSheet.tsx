@@ -63,6 +63,8 @@ export default function FinancialReportSheet({
   const t = useLabel()
   const { user, bisa } = useAuth()
   const admin = user?.role === 'admin'
+  const bisaLembar = bisa('laporan_keuangan')
+  const bisaTutup = bisa('laporan_tutup_buku')
   // Roles that only read Laporan Keuangan (e.g. owner) see the figures without pencils, renames or new rows.
   const ro = !bisa('laporan_keuangan', 'tulis')
   const { records, days } = sheetDays(data, month)
@@ -192,11 +194,11 @@ export default function FinancialReportSheet({
           <Download className="h-4 w-4" /> Unduh laporan
         </Button>
       </AksiHalaman>
-      <Tabs defaultValue="3" className="min-w-0">
+      <Tabs defaultValue={bisaLembar ? "3" : "tutup"} className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian laporan keuangan">
             {/* Arus Kas first; the value stays the index of its table so contents keep their place. */}
-            {TAB_TAMPIL.filter((tabel) => admin || tabel !== 'transaksi_erp').map((tabel) => (
+            {TAB_TAMPIL.filter((tabel) => (admin || tabel !== 'transaksi_erp') && (tabel === 'tutup_buku' ? bisaTutup : bisaLembar)).map((tabel) => (
               <TabsTrigger key={tabel} value={tabel === 'transaksi_erp' ? 'erp' : tabel === 'tutup_buku' ? 'tutup' : String(blocks.findIndex((b) => b.tabel === (tabel === 'transaksi' ? 'pemasukan' : tabel)))}>
                 {t(idTab(tabel), TAB_LAPORAN.find(([id]) => id === tabel)?.[1] ?? tabel)}
               </TabsTrigger>
@@ -230,12 +232,12 @@ export default function FinancialReportSheet({
         ))}
         {/* Monthly closing has its own tab after Laba/Rugi, so it never pushes the report tabs down. */}
         {/* Everyone who can open this page sees the baseline; only admins with write access can close. */}
-        <TabsContent value="tutup" className="min-w-0">
+        {bisaTutup && <TabsContent value="tutup" className="min-w-0">
           <FinancialClosePanel
             key={month}
             data={data}
             month={month}
-            writable={admin && !ro}
+            writable={bisa('laporan_tutup_buku', 'tulis')}
             live={{
               pemasukan: closeValue('jml_pemasukan'),
               pengeluaran: closeValue('jml_pengeluaran'),
@@ -243,7 +245,7 @@ export default function FinancialReportSheet({
               kas_utama: closeValue('n_kas'),
             }}
           />
-        </TabsContent>
+        </TabsContent>}
         {/* Tables read from the ERP's own Shopee data (receivables in shipping, pending reconciliation, seller balance). */}
         {admin && <TabsContent value="erp" className="min-w-0">
           <div className="min-w-0 space-y-5">

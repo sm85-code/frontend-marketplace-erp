@@ -1,3 +1,5 @@
+import { TAB_TEMPLATE } from "@/lib/akses";
+import { KunciBaca } from "@/lib/modeTulis";
 import InfoTip from '@/components/InfoTip'
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1071,27 +1073,30 @@ function TemplateLoader({ kind }: { kind: DocumentKind }) {
 }
 export default function DocumentTemplatesPage() {
   const { bisa } = useAuth();
-  if (!bisa("data_template", "tulis"))
-    return <p role="alert">Template hanya dapat diakses admin.</p>;
+  const jenis = (["INV", "PO"] as const).filter((k) => bisa(TAB_TEMPLATE[k]));
+  if (!jenis.length)
+    return <p role="alert">Template hanya dapat diakses pengguna yang diberi akses.</p>;
   return (
     <div className="min-w-0 space-y-4 text-left" data-text-align="preserve">
       <BarHalaman
         judul="Template"
         deskripsi="Desain dokumen invoice dan purchase order."
       />
-      <Tabs defaultValue="INV" className="min-w-0">
+      <Tabs defaultValue={jenis[0]} className="min-w-0">
         <TabsList className="section-tabs">
-          <TabsTrigger value="INV">Invoice (INV)</TabsTrigger>
-          <TabsTrigger value="PO">Purchase Order (PO)</TabsTrigger>
+          {jenis.includes("INV") && <TabsTrigger value="INV">Invoice (INV)</TabsTrigger>}
+          {jenis.includes("PO") && <TabsTrigger value="PO">Purchase Order (PO)</TabsTrigger>}
         </TabsList>
-        {(["INV", "PO"] as const).map((kind) => (
+        {jenis.map((kind) => (
           <TabsContent
             key={kind}
             value={kind}
             forceMount
             className="min-w-0 data-[state=inactive]:hidden"
           >
-            <TemplateLoader kind={kind} />
+            <KunciBaca boleh={bisa(TAB_TEMPLATE[kind], "tulis")}>
+              <TemplateLoader kind={kind} />
+            </KunciBaca>
           </TabsContent>
         ))}
       </Tabs>

@@ -1,4 +1,4 @@
-import { PEMETAAN_ORDER, PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT } from '@/lib/akses'
+import { IKLAN, PEMETAAN_ORDER, PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT, TEMPLATE } from '@/lib/akses'
 import type { LucideIcon } from 'lucide-react'
 import {
   Bot,
@@ -70,16 +70,16 @@ export const NAV: NavItem[] = [
   { to: '/processing/produk-non-kayu', label: 'Katalog Produk Non Kayu', icon: Link2, halaman: 'data_katalog_otomatis|data_katalog_manual', grup: 'data-produksi' },
   { to: '/processing/tarif-pengecatan', label: 'Tarif Pengecatan', icon: Hammer, halaman: 'data_tarif_pengecatan', grup: 'data-produksi' },
   { to: '/processing/tarif-packing', label: 'Tarif Packing', icon: Boxes, halaman: 'data_tarif_packing', grup: 'data-produksi' },
-  { to: '/processing/template', label: 'Template', icon: FilePenLine, halaman: 'data_template', grup: 'data-produksi' },
+  { to: '/processing/template', label: 'Template', icon: FilePenLine, halaman: TEMPLATE, grup: 'data-produksi' },
   { to: '/operasional-umum', label: 'Kas Utama', icon: Wallet, halaman: 'operasional_umum', grup: 'keuangan' },
   { to: '/operasional-packing', label: 'Kas Kecil', icon: PackageOpen, halaman: 'operasional_packing', grup: 'keuangan' },
   { to: '/belanja-supplier', label: 'Belanja Supplier', icon: Truck, halaman: 'belanja_supplier', grup: 'keuangan' },
   { to: '/belanja-tukang', label: 'Belanja Tukang', icon: HardHat, halaman: 'belanja_tukang', grup: 'keuangan' },
-  { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', grup: 'keuangan' },
-  { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', grup: 'keuangan' },
+  { to: '/arus-kas', label: 'Arus Kas', icon: ArrowLeftRight, halaman: 'arus_kas', halamanLain: ['arus_kas_rekening'], grup: 'keuangan' },
+  { to: '/laporan-keuangan', label: 'Laporan Keuangan', icon: Receipt, halaman: 'laporan_keuangan', halamanLain: ['laporan_tutup_buku'], grup: 'keuangan' },
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: PENGATURAN_TOKO, grup: 'info-toko' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: PERFORMA_TOKO, grup: 'info-toko' },
-  { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: 'iklan', grup: 'info-toko' },
+  { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: IKLAN, grup: 'info-toko' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: SETTLEMENT, grup: 'info-toko' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', halamanLain: ['toko_penjualan'], grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', halamanLain: ['kelola_role'], grup: 'pengaturan' },

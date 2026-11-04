@@ -31,7 +31,7 @@ const hanyaDikenal = (halaman: Record<string, Tingkat>, dikenal: Set<string>) =>
   Object.fromEntries(Object.entries(halaman).filter(([k]) => dikenal.has(k))) as Record<string, Tingkat>
 const isianDari = (r: RoleDef, dikenal: Set<string>): RoleIsian => ({ nama: r.nama, keterangan: r.keterangan, akses_toko: r.akses_toko, halaman: hanyaDikenal(r.halaman, dikenal) })
 
-const INDENT = ['pl-2', 'pl-7', 'pl-12'] as const
+const INDENT = ['0.5rem', '1.5rem', '2.75rem'] as const
 
 /** Roles and what each may reach: the shops, the pages, and read or write per page. Admin only. */
 export default function RoleAkses({ bolehUbah = true }: { bolehUbah?: boolean }) {
@@ -179,7 +179,12 @@ export default function RoleAkses({ bolehUbah = true }: { bolehUbah?: boolean })
                     const label = namaSimpul(n)
                     return (
                       <TableRow key={n.id} data-tingkatan={n.tingkatan} className={n.tingkatan === 0 ? 'bg-muted/50 hover:bg-muted/50' : undefined}>
-                        <TableCell className={`${INDENT[n.tingkatan]} ${n.tingkatan === 0 ? 'font-semibold' : n.tingkatan === 1 ? 'font-medium' : 'text-muted-foreground'}`}>
+                        {/* Inline padding: the phone table style sets a fixed cell padding that would flatten the tree. */}
+                        <TableCell
+                          className={n.tingkatan === 0 ? 'font-semibold' : n.tingkatan === 1 ? 'font-medium' : 'text-muted-foreground'}
+                          style={{ paddingLeft: INDENT[n.tingkatan] }}
+                        >
+                          {n.tingkatan > 0 && <span aria-hidden className="mr-1.5 text-muted-foreground/70">{n.tingkatan === 1 ? '▸' : '·'}</span>}
                           {label}
                         </TableCell>
                         {(['baca', 'tulis'] as const).map((kolom) => {

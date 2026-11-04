@@ -21,7 +21,7 @@ const monthNow = () => {
 
 export default function FinancialReportsPage() {
   const { bisa } = useAuth()
-  const allowed = bisa('laporan_keuangan')
+  const allowed = bisa('laporan_keuangan') || bisa('laporan_tutup_buku')
   const [month, setMonth] = useState(monthNow)
   const overview = useQuery({
     queryKey: ['financial-reports', month],

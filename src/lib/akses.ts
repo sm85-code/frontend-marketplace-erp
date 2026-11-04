@@ -36,3 +36,13 @@ export const TAB_SETTLEMENT = {
   mutasi: 'settlement_mutasi|settlement',
 } as const
 export const SETTLEMENT = Object.values(TAB_SETTLEMENT).join('|')
+export const TAB_IKLAN = {
+  performa: 'iklan_performa|iklan',
+  kampanye: 'iklan_kampanye|iklan',
+  gmv: 'iklan_gmv|iklan',
+  agen: 'iklan_agen|iklan',
+  catatan: 'iklan_catatan|iklan',
+} as const
+export const IKLAN = Object.values(TAB_IKLAN).join('|')
+export const TAB_TEMPLATE = { INV: 'data_template_inv|data_template', PO: 'data_template_po|data_template' } as const
+export const TEMPLATE = Object.values(TAB_TEMPLATE).join('|')
