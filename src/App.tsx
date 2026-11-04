@@ -7,7 +7,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import Layout from '@/components/Layout'
 import Spinner from '@/components/Spinner'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import { PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT } from '@/lib/akses'
+import { IKLAN, PENGATURAN_TOKO, PERFORMA_TOKO, SETTLEMENT, TEMPLATE } from '@/lib/akses'
 import { ModeTulisProvider } from '@/lib/modeTulis'
 import type { Tingkat } from '@/api/types'
 
@@ -133,7 +133,7 @@ export default function App() {
               <Route path="/otomasi-produk" element={<Protected halaman="otomasi"><LazyPage><EngagementAutomationPage /></LazyPage></Protected>} />
               <Route path="/pengaturan-toko" element={<Protected halaman={PENGATURAN_TOKO}><LazyPage><ShopSettingsPage /></LazyPage></Protected>} />
               <Route path="/performa-toko" element={<Protected halaman={PERFORMA_TOKO}><LazyPage><PerformaTokoPage /></LazyPage></Protected>} />
-              <Route path="/processing/template" element={<Protected halaman="data_template"><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
+              <Route path="/processing/template" element={<Protected halaman={TEMPLATE}><LazyPage><DocumentTemplatesPage /></LazyPage></Protected>} />
               <Route path="/processing/*" element={<Protected><LazyPage><ProcessingPage /></LazyPage></Protected>} />
               <Route path="/operasional-umum" element={<Protected halaman="operasional_umum"><LazyPage><OperasionalUmumPage /></LazyPage></Protected>} />
               <Route path="/kelola-aplikasi" element={<Protected halaman={["kelola_aplikasi", "kategori_transaksi"]}><LazyPage><KelolaAplikasiPage /></LazyPage></Protected>} />
@@ -141,8 +141,8 @@ export default function App() {
               <Route path="/belanja-supplier" element={<Protected halaman="belanja_supplier"><LazyPage><BelanjaSupplierPage /></LazyPage></Protected>} />
               <Route path="/belanja-tukang" element={<Protected halaman="belanja_tukang"><LazyPage><BelanjaTukangPage /></LazyPage></Protected>} />
               <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
-              <Route path="/arus-kas" element={<Protected halaman="arus_kas"><LazyPage><ArusKas /></LazyPage></Protected>} />
-              <Route path="/laporan-keuangan/*" element={<Protected halaman="laporan_keuangan"><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
+              <Route path="/arus-kas" element={<Protected halaman={["arus_kas", "arus_kas_rekening"]}><LazyPage><ArusKas /></LazyPage></Protected>} />
+              <Route path="/laporan-keuangan/*" element={<Protected halaman={["laporan_keuangan", "laporan_tutup_buku"]}><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected halaman={["kelola_toko", "toko_penjualan"]}><LazyPage><AkunPage /></LazyPage></Protected>} />
               <Route
@@ -179,12 +179,12 @@ export default function App() {
               />
               <Route
 path="/iklan"
-                element={<Protected halaman="iklan"><LazyPage><IklanPage /></LazyPage></Protected>}
+                element={<Protected halaman={IKLAN}><LazyPage><IklanPage /></LazyPage></Protected>}
               />
-              <Route path="/iklan/toko/:akun/kampanye/:id" element={<Protected halaman="iklan"><LazyPage><KampanyeDetailPage /></LazyPage></Protected>} />
+              <Route path="/iklan/toko/:akun/kampanye/:id" element={<Protected halaman={IKLAN}><LazyPage><KampanyeDetailPage /></LazyPage></Protected>} />
               <Route
                 path="/iklan/:id"
-                element={<Protected halaman="iklan"><LazyPage><IklanDetailPage /></LazyPage></Protected>}
+                element={<Protected halaman={IKLAN}><LazyPage><IklanDetailPage /></LazyPage></Protected>}
               />
               <Route
                 path="/staff"

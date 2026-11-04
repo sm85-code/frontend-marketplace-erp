@@ -1,3 +1,4 @@
+import { TAB_IKLAN } from '@/lib/akses'
 import { cloneElement, isValidElement, useId, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { agenApi, BATAS_AWAL, JENIS, type AgenApi, type Batas, type Hasil } from '@/api/agen'
@@ -35,7 +36,7 @@ function KataEditor({ value, negatif, onChange }: { value: string; negatif: bool
 
 export default function Agen() {
   const { bisa } = useAuth()
-  const baca = bisa('iklan', 'baca'), tulis = bisa('iklan', 'tulis')
+  const baca = bisa(TAB_IKLAN.agen, 'baca'), tulis = bisa(TAB_IKLAN.agen, 'tulis')
   const akun = useQuery({ queryKey: ['akun'], queryFn: () => listAkun(), enabled: baca })
   return <div className="min-w-0 space-y-3">{akun.isLoading && <p role="status">Memuat daftar toko…</p>}{akun.error && <p role="alert" className="text-destructive">Gagal memuat daftar toko: {getApiError(akun.error)}</p>}{baca && !akun.isLoading && !akun.error && !akun.data?.some(a => a.platform === 'shopee') && <p>Belum ada toko Shopee tersedia.</p>}<AgenView api={agenApi} toko={(akun.data ?? []).filter(a => a.platform === 'shopee').map(a => ({ id: a.id, nama: a.nama_toko }))} baca={baca} tulis={tulis} /></div>
 }

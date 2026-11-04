@@ -18,9 +18,11 @@ const monthNow = () => {
 }
 export default function ArusKas() {
   const { user, bisa } = useAuth()
-  const allowed = !!user && bisa('arus_kas')
+  const arus = bisa('arus_kas')
+  const rekening = bisa('arus_kas_rekening')
+  const allowed = !!user && (arus || rekening)
   const [month, setMonth] = useState(monthNow)
-  const overview = useQuery({ queryKey: ['financial-reports', month], queryFn: () => reports.overviewArusKas(month), enabled: allowed })
+  const overview = useQuery({ queryKey: ['financial-reports', month], queryFn: () => reports.overviewArusKas(month), enabled: !!user && arus })
   if (!allowed) return <p role="alert">Arus kas hanya dapat diakses admin dan staf.</p>
   return (
     <div className="financial-page min-w-0 space-y-5 text-left">
@@ -28,14 +30,14 @@ export default function ArusKas() {
         <Label htmlFor="cash-month">Bulan</Label>
         <Input id="cash-month" type="month" className="w-44" value={month} onChange={(e) => setMonth(e.target.value)} />
       </BarHalaman>
-      <Tabs defaultValue="arus" className="min-w-0">
+      <Tabs defaultValue={arus ? 'arus' : 'rekening'} className="min-w-0">
         <div className="min-w-0 overflow-x-auto">
           <TabsList className="section-tabs order-status-tabs" aria-label="Bagian arus kas">
-            <TabsTrigger value="arus">Arus Kas</TabsTrigger>
-            <TabsTrigger value="rekening">Rekening</TabsTrigger>
+            {arus && <TabsTrigger value="arus">Arus Kas</TabsTrigger>}
+            {rekening && <TabsTrigger value="rekening">Rekening</TabsTrigger>}
           </TabsList>
         </div>
-        <TabsContent value="arus" className="min-w-0 space-y-5">
+        {arus && <TabsContent value="arus" className="min-w-0 space-y-5">
           {overview.isLoading && <Spinner label="Memuat arus kas…" />}
           {overview.error && (
             <div role="alert">
@@ -44,10 +46,10 @@ export default function ArusKas() {
             </div>
           )}
           {overview.data && <TabelArusKas data={overview.data} month={month} hanyaLihat denganBulanan tanpaCentang={!bisa('arus_kas', 'tulis') && user?.role !== 'owner'} />}
-        </TabsContent>
-        <TabsContent value="rekening" className="min-w-0">
+        </TabsContent>}
+        {rekening && <TabsContent value="rekening" className="min-w-0">
           <RekeningTukangKayu />
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
     </div>
   )
