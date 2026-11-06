@@ -1,3 +1,4 @@
+import OrderBridgePanel from '@/components/OrderBridgePanel'
 import PilihNative from '@/components/PilihNative'
 import InfoTip from '@/components/InfoTip'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -7,6 +8,8 @@ import { toast } from 'sonner'
 import { getApiError } from '@/api/client'
 import {
   buatTokoPenjualan,
+  hapusToko,
+  relasiToko,
   kunciTokoPenjualan,
   NAMA_JENIS,
   PLATFORM_TOKO,
@@ -37,8 +40,8 @@ const formDari = (t: TokoPenjualan): Form => ({ nama: t.nama, jenis: t.jenis, pl
 const alasan = (f: Form) =>
   f.nama.trim() === '' ? 'Isi nama toko' : !/^([A-Za-z]{2})?$/.test(f.kode.trim()) ? 'Kode harus 2 huruf' : f.jenis === 'reseller' && f.kode.trim() === '' ? 'Kode penjual wajib untuk reseller' : null
 
-function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk: boolean; onSimpan: (f: Form) => void }) {
-  const [f, setF] = useState<Form>(awal ? formDari(awal) : FORM_KOSONG)
+function FormToko({ awal, sibuk, onSimpan, jenis }: { jenis: JenisToko; awal: TokoPenjualan | null; sibuk: boolean; onSimpan: (f: Form) => void }) {
+  const [f, setF] = useState<Form>(awal ? formDari(awal) : { ...FORM_KOSONG, jenis })
   const kurang = alasan(f)
   return (
     <form
@@ -54,18 +57,18 @@ function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk
       </DialogHeader>
       <div className="space-y-2">
         <Label htmlFor="tp-nama">Nama toko</Label>
-        <Input id="tp-nama" maxLength={120} value={f.nama} onChange={(e) => setF({ ...f, nama: e.target.value })} />
+        <Input disabled={!!awal?.easyboss_shop_id} id="tp-nama" maxLength={120} value={f.nama} onChange={(e) => setF({ ...f, nama: e.target.value })} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="tp-jenis">Jenis</Label>
-          <PilihNative id="tp-jenis" className={selectCls} value={f.jenis} onChange={(e) => setF({ ...f, jenis: e.target.value as JenisToko })}>
+          <PilihNative disabled={!!awal?.easyboss_shop_id} id="tp-jenis" className={selectCls} value={f.jenis} onChange={(e) => setF({ ...f, jenis: e.target.value as JenisToko })}>
             {(Object.keys(NAMA_JENIS) as JenisToko[]).map((j) => <option key={j} value={j}>{NAMA_JENIS[j]}</option>)}
           </PilihNative>
         </div>
         <div className="space-y-2">
           <Label htmlFor="tp-platform">Platform</Label>
-          <PilihNative id="tp-platform" className={selectCls} value={f.platform} onChange={(e) => setF({ ...f, platform: e.target.value })}>
+          <PilihNative disabled={!!awal?.easyboss_shop_id} id="tp-platform" className={selectCls} value={f.platform} onChange={(e) => setF({ ...f, platform: e.target.value })}>
             {PLATFORM_TOKO.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
           </PilihNative>
         </div>
@@ -92,12 +95,27 @@ function FormToko({ awal, sibuk, onSimpan }: { awal: TokoPenjualan | null; sibuk
 }
 
 /** Kelola Toko, tab Toko Internal & Reseller: the shops that sell through the business without a marketplace connection. */
-export default function TokoPenjualanTab() {
+export default function TokoPenjualanTab({ jenis = 'internal' }: { jenis?: JenisToko }) {
   const qc = useQueryClient()
   const { bisa } = useAuth()
   const bisaTulis = bisa('toko_penjualan', 'tulis')
   const { data, isLoading, error, refetch } = useTokoPenjualan()
   const [dialog, setDialog] = useState<{ toko: TokoPenjualan | null } | null>(null)
+  const [hapus, setHapus] = useState<{ toko: TokoPenjualan; can_delete: boolean; relations: Record<string, number> } | null>(null)
+  const cekHapus = useMutation({
+    mutationFn: async (toko: TokoPenjualan) => ({ toko, ...await relasiToko(toko.id) }),
+    onSuccess: setHapus,
+    onError: (e) => toast.error(getApiError(e)),
+  })
+  const hapusMut = useMutation({
+    mutationFn: async () => {
+      if (!hapus) return
+      if (hapus.can_delete) await hapusToko(hapus.toko.id)
+      else await ubahTokoPenjualan(hapus.toko.id, { nama: hapus.toko.nama, jenis: hapus.toko.jenis, platform: hapus.toko.platform, keterangan: hapus.toko.keterangan, kode: hapus.toko.kode || null, aktif: false })
+    },
+    onSuccess: () => { setHapus(null); void qc.invalidateQueries({ queryKey: kunciTokoPenjualan }) },
+    onError: (e) => toast.error(getApiError(e)),
+  })
   const namaPlatform = (id: string) => data?.platform.find((p) => p.id === id)?.label ?? PLATFORM_TOKO.find((p) => p.id === id)?.label ?? id
   const sesudah = () => {
     setDialog(null)
@@ -119,14 +137,18 @@ export default function TokoPenjualanTab() {
     { kunci: 'nama', judul: 'Nama Toko', kelas: 'font-medium', sel: (t) => t.nama, nilai: (t) => t.nama },
     { kunci: 'jenis', judul: 'Jenis', sel: (t) => NAMA_JENIS[t.jenis], nilai: (t) => t.jenis },
     { kunci: 'platform', judul: 'Platform', sel: (t) => namaPlatform(t.platform), nilai: (t) => t.platform },
+    { kunci: 'sumber', judul: 'Sumber / ID EasyBoss', sel: t => `${t.sumber || 'manual'} · ${t.easyboss_shop_id || '—'}` },
+    { kunci: 'sinkron', judul: 'Sinkronisasi', sel: t => <span>{t.sinkron_status || 'manual'}{t.sinkron_at && <small className="block">{new Date(t.sinkron_at).toLocaleString('id-ID')}</small>}</span> },
     { kunci: 'kode', judul: 'Kode', kelas: 'font-mono', sel: (t) => t.kode || '—', nilai: (t) => t.kode },
     { kunci: 'keterangan', judul: 'Keterangan', sel: (t) => t.keterangan || '—' },
     { kunci: 'status', judul: 'Status', sel: (t) => <Badge variant={t.aktif ? 'default' : 'secondary'}>{t.aktif ? 'Aktif' : 'Nonaktif'}</Badge>, nilai: (t) => (t.aktif ? 0 : 1) },
   ]
   return (
+    <div className="space-y-4">
+    {jenis === 'internal' && <OrderBridgePanel />}
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle>Toko Internal &amp; Reseller</CardTitle>
+        <CardTitle>Toko {NAMA_JENIS[jenis]}</CardTitle>
         {bisaTulis && (
           <Button onClick={() => setDialog({ toko: null })}>
             <Plus aria-hidden="true" /> Tambah toko
@@ -134,20 +156,20 @@ export default function TokoPenjualanTab() {
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        <InfoTip teks={"Toko sendiri dan reseller yang tidak terhubung ke marketplace. Kode penjual dipakai di kode pesanan produksi. Toko tidak dihapus, hanya dinonaktifkan."} />
+        <InfoTip teks={"Toko yang memiliki histori transaksi hanya dapat dinonaktifkan. Periksa pratinjau sebelum menghubungkan toko manual ke EasyBoss."} />
         {isLoading && <Spinner column label="Memuat toko…" />}
         {error && <QueryError error={error} retry={refetch} />}
         {data && (
           <>
             <TabelLokal
               label="Toko internal dan reseller"
-              items={data.items}
+              items={data.items.filter(t => t.jenis === jenis)}
               kolom={kolom}
               idDari={(t) => t.id}
               namaDari={(t) => t.nama}
               urutAwal={{ kunci: 'status', arah: 'asc' }}
               minWidth={760}
-              aksi={bisaTulis ? (t) => <Button size="sm" variant="outline" aria-label={`Edit ${t.nama}`} onClick={() => setDialog({ toko: t })}>Edit</Button> : undefined}
+              aksi={bisaTulis ? (t) => <div className="flex gap-2"><Button size="sm" variant="outline" aria-label={`Edit ${t.nama}`} onClick={() => setDialog({ toko: t })}>Edit</Button><Button size="sm" variant="outline" disabled={cekHapus.isPending} onClick={() => cekHapus.mutate(t)}>Hapus / Nonaktifkan</Button></div> : undefined}
               kartu={(t) => (
                 <article key={t.id} className={`min-w-0 space-y-2 rounded-xl border p-4 ${t.aktif ? '' : 'opacity-60'}`}>
                   <div className="flex items-start justify-between gap-2">
@@ -155,20 +177,32 @@ export default function TokoPenjualanTab() {
                     <Badge variant={t.aktif ? 'default' : 'secondary'}>{t.aktif ? 'Aktif' : 'Nonaktif'}</Badge>
                   </div>
                   <p className="teks-kecil text-muted-foreground">{NAMA_JENIS[t.jenis]} · {namaPlatform(t.platform)} · Kode {t.kode || '—'}</p>
+                  <p className="break-all text-xs">{t.sumber || 'manual'} · {t.easyboss_shop_id || '—'} · {t.sinkron_status || 'manual'}</p>
+                  {bisaTulis && <Button size="sm" variant="outline" disabled={cekHapus.isPending} onClick={() => cekHapus.mutate(t)}>Hapus / Nonaktifkan</Button>}
                   {t.keterangan && <p className="text-sm">{t.keterangan}</p>}
                   {bisaTulis && <Button size="sm" variant="outline" aria-label={`Edit ${t.nama}`} onClick={() => setDialog({ toko: t })}>Edit</Button>}
                 </article>
               )}
             />
-            {data.items.length === 0 && <p className="py-6 text-center text-muted-foreground">Belum ada toko internal atau reseller.</p>}
+            {data.items.filter(t => t.jenis === jenis).length === 0 && <p className="py-6 text-center text-muted-foreground">Belum ada toko internal atau reseller.</p>}
           </>
         )}
       </CardContent>
       <Dialog open={!!dialog} onOpenChange={(buka) => !buka && setDialog(null)}>
         <DialogContent className="max-w-md">
-          {dialog && <FormToko key={dialog.toko?.id ?? 'baru'} awal={dialog.toko} sibuk={simpan.isPending} onSimpan={(f) => simpan.mutate(f)} />}
+          {dialog && <FormToko key={dialog.toko?.id ?? 'baru'} jenis={jenis} awal={dialog.toko} sibuk={simpan.isPending} onSimpan={(f) => simpan.mutate(f)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!hapus} onOpenChange={buka => !buka && setHapus(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{hapus?.can_delete ? 'Hapus toko?' : 'Nonaktifkan toko?'}</DialogTitle>
+            <DialogDescription>{hapus?.toko.nama} — {hapus?.can_delete ? 'Tidak ditemukan relasi. Penghapusan permanen diperiksa ulang saat konfirmasi.' : 'Toko memiliki relasi transaksi. Histori akan dipertahankan.'}</DialogDescription>
+          </DialogHeader>
+          {hapus && <ul className="break-all text-sm">{Object.entries(hapus.relations).map(([name, count]) => <li key={name}>{name}: {count}</li>)}</ul>}
+          <DialogFooter><Button variant="outline" onClick={() => setHapus(null)}>Batal</Button><Button disabled={hapusMut.isPending} onClick={() => hapusMut.mutate()}>{hapus?.can_delete ? 'Hapus permanen' : 'Nonaktifkan'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
+    </div>
   )
 }

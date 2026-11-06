@@ -79,7 +79,7 @@ export default function FormPesananManual({ open, onOpenChange }: { open: boolea
                   ))}
                 </SelectContent>
               </Select>
-              {toko && daftar.length === 0 && <p className="mt-1 text-xs text-muted-foreground">Belum ada toko. Tambahkan di Kelola Toko → Toko Internal & Reseller.</p>}
+              {toko && daftar.length === 0 && <p className="mt-1 text-xs text-muted-foreground">Belum ada toko. Tambahkan di Kelola Toko → Toko Internal / Toko Reseller.</p>}
             </Medan>
             {internal && (
               <Medan label="Kode pesanan" untuk="pm-kode">

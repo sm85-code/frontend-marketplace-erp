@@ -13,6 +13,11 @@ export interface TokoPenjualan {
   kode: string
   keterangan: string
   aktif: boolean
+  sumber?: string
+  easyboss_shop_id?: string | null
+  marketplace_shop_id?: string | null
+  sinkron_status?: string
+  sinkron_at?: string | null
 }
 
 export interface TokoPenjualanDaftar {
@@ -45,3 +50,6 @@ export const buatTokoPenjualan = (isian: IsianToko) => api.post<TokoPenjualan>('
 export const ubahTokoPenjualan = (id: string, isian: IsianToko & { aktif: boolean }) => api.put<TokoPenjualan>(`/toko-penjualan/${id}`, isian).then((r) => r.data)
 export const useTokoPenjualan = () => useQuery({ queryKey: KUNCI, queryFn: daftarTokoPenjualan })
 export const kunciTokoPenjualan = KUNCI
+
+export const relasiToko = (id: string) => api.get<{can_delete: boolean; relations: Record<string, number>}>(`/toko-penjualan/${id}/relasi`).then(r => r.data)
+export const hapusToko = (id: string) => api.delete(`/toko-penjualan/${id}`, { params: { konfirmasi: true } })
