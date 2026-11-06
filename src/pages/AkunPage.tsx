@@ -254,7 +254,7 @@ export default function AkunPage() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="section-tabs w-full">
           {bisa('kelola_toko') && <TabsTrigger value="toko">Toko &amp; Sinkronisasi</TabsTrigger>}
-          {bisa('toko_penjualan') && <TabsTrigger value="penjualan">Toko Internal &amp; Reseller</TabsTrigger>}
+          {bisa('toko_penjualan') && <><TabsTrigger value="penjualan">Toko Internal</TabsTrigger><TabsTrigger value="reseller">Toko Reseller</TabsTrigger></>}
           {bisa('otomasi') && <><TabsTrigger value="dropoff">Drop Off</TabsTrigger><TabsTrigger value="otomasi">Balasan &amp; Boost</TabsTrigger></>}
         </TabsList>
         {bisa('kelola_toko') && <TabsContent value="toko" className="space-y-4">
@@ -286,7 +286,8 @@ export default function AkunPage() {
       </Card>
 
         </TabsContent>}
-        {bisa('toko_penjualan') && <TabsContent value="penjualan" className="space-y-4"><TokoPenjualanTab /></TabsContent>}
+        {bisa('toko_penjualan') && <TabsContent value="penjualan" className="space-y-4"><TokoPenjualanTab jenis="internal" /></TabsContent>}
+        {bisa('toko_penjualan') && <TabsContent value="reseller" className="space-y-4"><TokoPenjualanTab jenis="reseller" /></TabsContent>}
         {bisa('otomasi') && <>
           <TabsContent value="dropoff" forceMount className="data-[state=inactive]:hidden"><KunciBaca boleh={bisa('otomasi', 'tulis')}><AutoOrderSettings /></KunciBaca></TabsContent>
           <TabsContent value="otomasi">
