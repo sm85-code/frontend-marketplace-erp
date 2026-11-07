@@ -174,7 +174,7 @@ export default function PesananDetailPage() {
   const action = nextActionLabel(pesanan.status)
   // Orders pulled from Shopee follow Shopee: they are processed and printed from here, and the
   // status (shipped, completed, cancelled) arrives with the next sync -- no manual Kirim/Selesaikan.
-  const ikutMp = ikutMarketplace(pesanan)
+  const ikutMp = ikutMarketplace(pesanan) || Boolean(pesanan.platform_sumber)
   const diproses = sudahDiproses(pesanan)
   const akunId = pesanan.akun_id
   const selesai = pesanan.status === 'completed' || pesanan.status === 'cancelled'
@@ -251,9 +251,13 @@ export default function PesananDetailPage() {
             <div className="whitespace-pre-wrap break-words font-medium">{pesanan.alamat_penerima || pesanan.kota || '—'}</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Total</div>
-            <div className="font-medium">{fmtMoney(pesanan.total, pesanan.currency)}</div>
+            <div className="text-xs text-muted-foreground">{pesanan.platform_sumber ? 'Nilai Pesanan' : 'Total'}</div>
+            <div className="font-medium">{pesanan.total_sumber_tersedia === false ? 'Belum tersedia' : fmtMoney(pesanan.total, pesanan.currency)}</div>
           </div>
+          {pesanan.dibayar_pembeli != null && <div>
+            <div className="text-xs text-muted-foreground">Dibayar Pembeli</div>
+            <div className="font-medium">{fmtMoney(pesanan.dibayar_pembeli, pesanan.currency)}</div>
+          </div>}
           <div>
             <div className="text-xs text-muted-foreground">{pesanan.dipesan_at ? 'Tanggal Pesan (WIB)' : 'Masuk ERP (WIB)'}</div>
             <div className="font-medium">{fmtDateTime(pesanan.dipesan_at ?? pesanan.created_at)}</div>
@@ -318,11 +322,11 @@ export default function PesananDetailPage() {
                   <div className="font-medium">{item.nama_produk}</div>
                   {item.model_name && <div className="text-xs text-muted-foreground">{item.model_name}</div>}
                   <div className="text-xs text-muted-foreground">
-                    {item.qty} × {fmtMoney(item.harga_satuan, pesanan.currency)}
+                    {item.qty} × {item.harga_sumber_tersedia === false ? 'Harga belum tersedia' : fmtMoney(item.harga_satuan, pesanan.currency)}
                   </div>
                 </div>
               </div>
-              <div className="whitespace-nowrap text-right font-semibold">{fmtMoney(item.subtotal, pesanan.currency)}</div>
+              <div className="whitespace-nowrap text-right font-semibold">{item.harga_sumber_tersedia === false ? 'Belum tersedia' : fmtMoney(item.subtotal, pesanan.currency)}</div>
             </div>
           ))}
         </CardContent>

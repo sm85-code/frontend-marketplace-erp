@@ -123,6 +123,7 @@ export interface ItemPesanan {
   foto?: string | null
   item_id_eksternal?: string | null
   harga_satuan: string
+  harga_sumber_tersedia?: boolean | null
   qty: number
   subtotal: string
 }
@@ -140,6 +141,10 @@ export interface ResiGabunganHasil {
 
 export interface Pesanan {
   /** Source display identity; internal IDs remain unchanged for actions and deduplication. */
+  status_sumber?: string
+  label_status_sumber?: string
+  total_sumber_tersedia?: boolean | null
+  dibayar_pembeli?: string | null
   nomor_pesanan_asli?: string
   platform_sumber?: string
   nama_toko?: string

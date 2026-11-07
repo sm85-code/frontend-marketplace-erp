@@ -13,3 +13,11 @@ describe('Identitas pesanan EasyBoss', () => {
     expect(platformPesanan({ platform: 'shopee' })).toBe('Shopee')
   })
 })
+
+import { labelStatus } from './pesanan'
+
+it('menampilkan status sumber tanpa mengubah status operasional', () => {
+  const p = { status: 'to_ship' as const, status_marketplace: null, label_status_sumber: 'Menunggu Penyerahan ke Kurir' }
+  expect(labelStatus(p)).toBe('Menunggu Penyerahan ke Kurir')
+  expect(p.status).toBe('to_ship')
+})

@@ -39,7 +39,8 @@ export function sudahDiproses(p: Pick<Pesanan, 'status_marketplace'>): boolean {
 }
 
 /** Status label; a processed to_ship order is waiting for the courier, not "needs processing". */
-export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'metode_pengiriman'>): string {
+export function labelStatus(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'metode_pengiriman' | 'label_status_sumber'>): string {
+  if (p.label_status_sumber) return p.label_status_sumber
   if (p.status_marketplace === 'IN_CANCEL') return 'Permintaan Pembatalan Pembeli'
   if (p.status === 'to_ship' && p.status_marketplace === 'RETRY_SHIP') return 'Perlu Jadwal Ulang Pickup'
   if (p.status !== 'to_ship' || !sudahDiproses(p)) return STATUS_LABELS[p.status]
