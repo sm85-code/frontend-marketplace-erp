@@ -139,6 +139,10 @@ export interface ResiGabunganHasil {
 }
 
 export interface Pesanan {
+  /** Source display identity; internal IDs remain unchanged for actions and deduplication. */
+  nomor_pesanan_asli?: string
+  platform_sumber?: string
+  nama_toko?: string
   id: string
   platform: Platform
   id_eksternal: string

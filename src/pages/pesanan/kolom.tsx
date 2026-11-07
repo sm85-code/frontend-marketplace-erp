@@ -8,7 +8,7 @@ import type { Pesanan } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { PLATFORM_LABELS } from '@/config/roles'
+import { nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
 import { bisaDicetak, bisaDiproses, labelProses, labelStatus, sudahDicetak } from '@/lib/pesanan'
 import { ItemRingkas } from './ItemRingkas'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -36,10 +36,10 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       sel: (p) => (
         <>
           <div className="flex items-center gap-1">
-            <span className="min-w-0 break-all font-mono font-medium">{p.id_eksternal}</span>
-            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${p.id_eksternal}`} title="Salin kode pesanan" disabled={!p.id_eksternal} onClick={async () => {
+            <span className="min-w-0 break-all font-mono font-medium">{nomorPesanan(p)}</span>
+            <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${nomorPesanan(p)}`} title="Salin kode pesanan" disabled={!nomorPesanan(p)} onClick={async () => {
               try {
-                await navigator.clipboard.writeText(p.id_eksternal || '')
+                await navigator.clipboard.writeText(nomorPesanan(p) || '')
                 toast.success('Kode pesanan disalin')
               } catch {
                 toast.error('Gagal menyalin kode pesanan. Coba lagi.')
@@ -47,7 +47,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
             }}><Copy className="h-4 w-4" /></Button>
           </div>
           <div className="teks-kecil truncate text-muted-foreground">
-            {PLATFORM_LABELS[p.platform]}
+            {platformPesanan(p)}
             {p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}
           </div>
         </>
@@ -67,7 +67,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       ),
     },
     { kunci: 'toko',
-      bawaan: false, judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (p) => namaToko(p.akun_id) },
+      bawaan: false, judul: 'Toko', kelas: 'min-w-[110px]', urut: { kunci: 'toko' }, sel: (p) => p.nama_toko || namaToko(p.akun_id) },
     {
       kunci: 'status',
       judul: 'Status',

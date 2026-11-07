@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PLATFORM_LABELS } from '@/config/roles'
+import { nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ALASAN_BATAL,
@@ -216,7 +216,7 @@ export default function PesananDetailPage() {
         <Button asChild variant="ghost" size="sm">
           <Link to="/pesanan">← Kembali</Link>
         </Button>
-        <h1 className="page-h1 font-heading text-xl font-bold">Pesanan #{pesanan.id_eksternal}</h1>
+        <h1 className="page-h1 font-heading text-xl font-bold">Pesanan #{nomorPesanan(pesanan)}</h1>
         <Badge>{labelStatus(pesanan)}</Badge>
       </div>
 
@@ -228,11 +228,11 @@ export default function PesananDetailPage() {
         <CardContent className="grid grid-cols-2 gap-3 text-sm">
           <div className="col-span-2 min-w-0 md:hidden">
             <div className="text-xs text-muted-foreground">Toko</div>
-            <div className="break-words font-medium">{pesanan.akun_id ? (shops.data?.find(shop => shop.id === pesanan.akun_id)?.nama_toko ?? (shops.isPending ? 'Memuat…' : 'Toko tidak tersedia')) : 'Tanpa toko'}</div>
+            <div className="break-words font-medium">{pesanan.nama_toko || (pesanan.akun_id ? (shops.data?.find(shop => shop.id === pesanan.akun_id)?.nama_toko ?? (shops.isPending ? 'Memuat…' : 'Toko tidak tersedia')) : 'Tanpa toko')}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Platform</div>
-            <div className="font-medium">{PLATFORM_LABELS[pesanan.platform]}</div>
+            <div className="font-medium">{platformPesanan(pesanan)}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Pembeli</div>
