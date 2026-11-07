@@ -255,7 +255,7 @@ export default function PesananDetailPage() {
             <div className="font-medium">{pesanan.total_sumber_tersedia === false ? 'Belum tersedia' : fmtMoney(pesanan.total, pesanan.currency)}</div>
           </div>
           {pesanan.dibayar_pembeli != null && <div>
-            <div className="text-xs text-muted-foreground">Dibayar Pembeli</div>
+            <div className="text-xs text-muted-foreground">{pesanan.cod ? 'Tagihan COD' : 'Dibayar Pembeli'}</div>
             <div className="font-medium">{fmtMoney(pesanan.dibayar_pembeli, pesanan.currency)}</div>
           </div>}
           <div>
