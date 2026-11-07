@@ -13,7 +13,7 @@ import { Plus, RefreshCw, Undo2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
 import { toast } from 'sonner'
 import { Copy } from 'lucide-react'
-import { PLATFORM_LABELS } from '@/config/roles'
+import { nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
 import type { Pesanan, ResiGabunganHasil } from '@/api/types'
@@ -242,7 +242,7 @@ export default function PesananPage() {
         title: 'Cetak ulang resi?',
         description: `${sudah.length} dari ${dicetak.length} pesanan terpilih resinya sudah pernah dicetak (${sudah
           .slice(0, 3)
-          .map((p) => `#${p.id_eksternal}`)
+          .map((p) => `#${nomorPesanan(p)}`)
           .join(', ')}${sudah.length > 3 ? ', …' : ''}). Tetap cetak semuanya?`,
       })
       if (!ok) return
@@ -370,11 +370,11 @@ export default function PesananPage() {
                 }
                 return <>
                   <div className="flex items-start gap-3">
-                    {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${p.id_eksternal}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
+                    {bisaDipilih(p) && <Checkbox className="mt-1 shrink-0" aria-label={`Pilih pesanan ${nomorPesanan(p)}`} checked={pilih.ada(p.id)} onCheckedChange={(v) => pilih.ubah(p, v === true)} />}
                     <div className="grid min-w-0 flex-1 grid-cols-2 gap-x-4">
                       <div className="min-w-0 break-words">
-                        <div className="flex items-start gap-1"><span className="min-w-0 break-all font-mono text-sm font-medium">{p.id_eksternal}</span>{p.id_eksternal && <Button size="icon" variant="ghost" className="-mt-1.5 h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${p.id_eksternal}`} title="Salin kode pesanan" onClick={() => salin(p.id_eksternal!, 'Kode pesanan')}><Copy className="h-4 w-4" /></Button>}</div>
-                        <div className="teks-kecil break-words text-muted-foreground">{PLATFORM_LABELS[p.platform]}{p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}</div>
+                        <div className="flex items-start gap-1"><span className="min-w-0 break-all font-mono text-sm font-medium">{nomorPesanan(p)}</span>{nomorPesanan(p) && <Button size="icon" variant="ghost" className="-mt-1.5 h-8 w-8 shrink-0" aria-label={`Salin kode pesanan ${nomorPesanan(p)}`} title="Salin kode pesanan" onClick={() => salin(nomorPesanan(p)!, 'Kode pesanan')}><Copy className="h-4 w-4" /></Button>}</div>
+                        <div className="teks-kecil break-words text-muted-foreground">{platformPesanan(p)}{p.nama_pembeli ? ` · ${p.nama_pembeli}` : ''}</div>
                       </div>
                       <div className="min-w-0 break-words">
                         <div className="flex items-start gap-1"><span className="min-w-0 break-all font-mono text-sm">{p.nomor_resi || '—'}</span>{p.nomor_resi && <Button size="icon" variant="ghost" className="-mt-1.5 h-8 w-8 shrink-0" aria-label={`Salin nomor resi ${p.nomor_resi}`} title="Salin nomor resi" onClick={() => salin(p.nomor_resi!, 'Nomor resi')}><Copy className="h-4 w-4" /></Button>}</div>
@@ -405,7 +405,7 @@ export default function PesananPage() {
           items={items}
           kolom={semuaKolom.filter((k) => k.kunci === 'kota' || kolom.tampil.includes(k.kunci))}
           idDari={(p) => p.id}
-          namaDari={(p) => `pesanan ${p.id_eksternal}`}
+          namaDari={(p) => `pesanan ${nomorPesanan(p)}`}
           urut={urutSekarang}
           onUrut={(kunci, arahAwal) => f.ubah({ urut: urutKeTeks(ubahUrut(urutSekarang, kunci, arahAwal)) })}
           pilihan={{
@@ -436,7 +436,7 @@ export default function PesananPage() {
 
       </TabsContent>
 
-      <BarPilihan terlihat={items.filter(p=>pilih.ada(p.id)).length} ringkasan={dipilih.map(p=><div key={p.id}>{p.id_eksternal} · {p.nama_pembeli}</div>)} jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
+      <BarPilihan terlihat={items.filter(p=>pilih.ada(p.id)).length} ringkasan={dipilih.map(p=><div key={p.id}>{nomorPesanan(p)} · {p.nama_pembeli}</div>)} jumlah={dipilih.length} satuan="pesanan" onBatal={pilih.kosongkan} sibuk={sedangBekerja}>
         {idProses.length > 0 && (
           <>
             <Button onClick={prosesLaluCetak} disabled={sedangBekerja}>
