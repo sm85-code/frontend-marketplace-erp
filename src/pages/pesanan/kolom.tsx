@@ -125,7 +125,7 @@ export function kolomPesanan({ namaToko }: { namaToko: (akunId: string | null) =
       bawaan: false,
       kelas: 'whitespace-nowrap',
       urut: { kunci: 'total', arahAwal: 'desc', label: ['Terkecil', 'Terbesar'] },
-      sel: (p) => fmtMoney(p.total, p.currency),
+      sel: (p) => p.total_sumber_tersedia === false ? 'Belum tersedia' : fmtMoney(p.total, p.currency),
     },
     {
       kunci: 'kurir',
