@@ -556,3 +556,6 @@ export const getShopPerformance = (id: string) => api.get<ShopPerformance>(`/aku
 export type ProductStats = { sale: number | null; views: number | null; likes: number | null; rating_star: number | null; comment_count: number | null; diambil_at: string }
 export const getProductStats = (id: string) => api.get<ProductStats>(`/katalog-shopee/${encodeURIComponent(id)}/statistik`).then(r => r.data)
 export const ubahPromosi = (akun: string, id: string, data: { nama?: string; mulai_at?: number; selesai_at?: number }) => api.patch<import('./types').MutasiMarketplace>(`/akun/${encodeURIComponent(akun)}/promosi/${encodeURIComponent(id)}`, data).then(r => r.data)
+
+export async function listTokoPenugasan(): Promise<import('@/api/types').TokoAkses[]> { return (await api.get('/staff-akun/toko-pilihan')).data }
+export async function listTokoAkses(): Promise<import('@/api/types').TokoAkses[]> { return (await api.get('/pesanan/toko-pilihan')).data }

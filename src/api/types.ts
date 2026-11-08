@@ -893,3 +893,5 @@ export interface RoleIsian {
   akses_toko: 'semua' | 'ditugaskan'
   halaman: Record<string, Tingkat>
 }
+
+export interface TokoAkses { id: string; nama_toko: string; platform: string; jenis: 'internal' | 'marketplace' }

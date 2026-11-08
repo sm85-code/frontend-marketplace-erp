@@ -27,7 +27,9 @@ import { daftarRole } from '@/api/roles'
 import { PLATFORM_LABELS, ROLE_LABELS, rolesYangBolehDibuat } from '@/config/roles'
 import RoleAkses from '@/pages/RoleAkses'
 import { useAuth } from '@/lib/auth'
-import type { AkunMarketplace, Role, StaffAkun, User } from '@/api/types'
+import type { TokoAkses, Role, StaffAkun, User } from '@/api/types'
+
+const labelToko = (a: TokoAkses) => `${a.jenis === 'internal' ? 'Internal · ' : ''}${PLATFORM_LABELS[a.platform as keyof typeof PLATFORM_LABELS] ?? (a.platform === 'webapp' ? 'Web App' : a.platform)}`
 
 /** Main role first, then the extra ones the account holds. */
 const semuaRole = (u: User) => [u.role, ...(u.peran_tambahan ?? [])]
@@ -72,12 +74,12 @@ function kolomPenugasan({
   akunMap,
 }: {
   userMap: Map<string, User>
-  akunMap: Map<string, AkunMarketplace>
+  akunMap: Map<string, TokoAkses>
 }): KolomTabel<StaffAkun>[] {
   const staff = (r: StaffAkun) => userMap.get(r.user_id)?.nama ?? '—'
   const toko = (r: StaffAkun) => {
     const a = akunMap.get(r.akun_id)
-    return a ? `${a.nama_toko} (${PLATFORM_LABELS[a.platform]})` : '—'
+    return a ? `${a.nama_toko} (${labelToko(a)})` : '—'
   }
   return [
     { kunci: 'staff', judul: 'Staff', sel: staff, nilai: staff },
@@ -111,7 +113,7 @@ export default function StaffPage() {
   const [assignForm, setAssignForm] = useState({ user_id: '', akun_ids: [] as string[] })
 
   const { data: users, isLoading, error: queryError, refetch: retryQuery } = useQuery({ queryKey: qk.users(), queryFn: endpoints.listUsers })
-  const { data: akunList } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
+  const { data: akunList } = useQuery({ queryKey: ['staff-toko-options'], queryFn: endpoints.listTokoPenugasan })
   const { data: staffAkun } = useQuery({ queryKey: qk.staffAkun(), queryFn: () => endpoints.listStaffAkun() })
 
   const akunMap = new Map((akunList ?? []).map((a) => [a.id, a]))
@@ -432,7 +434,7 @@ export default function StaffPage() {
                   return <label key={a.id} className="flex items-start gap-2 rounded-md p-2 hover:bg-muted">
                     <Checkbox className="mt-0.5 shrink-0" aria-label={`Tugaskan ke ${a.nama_toko}`} checked={assigned || assignForm.akun_ids.includes(a.id)} disabled={!assignForm.user_id || assigned || assignMut.isPending}
                       onCheckedChange={checked => setAssignForm(f => ({ ...f, akun_ids: checked === true ? [...f.akun_ids, a.id] : f.akun_ids.filter(id => id !== a.id) }))} />
-                    <span className="min-w-0 break-words text-sm">{a.nama_toko} — {PLATFORM_LABELS[a.platform]}{assigned && <span className="block text-xs text-muted-foreground">Sudah ditugaskan</span>}</span>
+                    <span className="min-w-0 break-words text-sm">{a.nama_toko} — {labelToko(a)}{assigned && <span className="block text-xs text-muted-foreground">Sudah ditugaskan</span>}</span>
                   </label>
                 })}
               </div>
