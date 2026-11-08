@@ -97,7 +97,7 @@ export default function DashboardPage() {
   })
 
   const tahap = Object.fromEntries((d?.per_tahap ?? []).map((t) => [t.tahap, t])) as Record<string, { jumlah: number; nilai: string }>
-  const orderUrl = (tahap: TahapPesanan | '' = '', akun = toko) => tautanPesanan(akun, tahap, preset)
+  const orderUrl = (tahap: TahapPesanan | '' = '', akun = toko) => akun ? tautanPesanan(akun, tahap, preset) : undefined
 
   return (
     <div className="space-y-4">

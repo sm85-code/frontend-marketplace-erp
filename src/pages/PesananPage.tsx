@@ -56,7 +56,8 @@ const PILIHAN_RESI = [
   { value: 'sudah', label: 'Sudah dicetak' },
 ]
 
-export default function PesananPage() {
+export default function PesananPage({ sumber = 'shopee' }: { sumber?: 'shopee' | 'easyboss' }) {
+  const easyboss = sumber === 'easyboss'
   const qc = useQueryClient()
   const { bisa } = useAuth()
   const [perHalaman,setPerHalaman]=useState(DEFAULT_PER_HALAMAN)
@@ -70,7 +71,7 @@ export default function PesananPage() {
 
   const { dari, sampai } = rentangTanggal(f.nilai.tanggal as PresetTanggal, { dari: f.nilai.dari, sampai: f.nilai.sampai })
   const statusScroll = useRef<HTMLDivElement>(null)
-  const kriteria = { q: f.nilai.q || undefined, dari, sampai, akun_id: f.nilai.toko || undefined, tahap: tahapDariTautan(f.nilai.tahap) || undefined }
+  const kriteria = { sumber, q: f.nilai.q || undefined, dari, sampai, akun_id: f.nilai.toko || undefined, tahap: tahapDariTautan(f.nilai.tahap) || undefined }
   const { data: ringkasan } = useQuery({
     queryKey: qk.pesananRingkasan(kriteria),
     queryFn: () => endpoints.ringkasanPesanan(kriteria),
@@ -105,13 +106,26 @@ export default function PesananPage() {
   // Opening or refreshing this page pulls fresh orders from Shopee in the background (the server
   // throttles each shop to once a minute); the page then keeps asking every minute while visible.
   const sinkron = useQuery({
-    queryKey: ['pesanan-sinkron'],
+    queryKey: ['pesanan-sinkron', 'shopee'],
+    enabled: !easyboss,
     queryFn: () => endpoints.sinkronPesananOtomatis(false),
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
     staleTime: 0,
     retry: false,
   })
+  const statusEb = useQuery({ queryKey: ['pesanan-sinkron', 'easyboss'], queryFn: endpoints.statusSinkronEasyboss,
+    enabled: easyboss, refetchInterval: 60_000, refetchIntervalInBackground: false })
+  const sinkronEb = useMutation({ mutationFn: endpoints.sinkronEasyboss,
+    onSuccess: (hasil) => {
+      qc.invalidateQueries({ queryKey: ['pesanan'] })
+      qc.invalidateQueries({ queryKey: ['pesanan-sinkron', 'easyboss'] })
+      if (hasil.status === 'failed' || hasil.failed > 0) toast.error(hasil.error || 'Sebagian pesanan gagal disinkronkan. Periksa Order Bridge.')
+      else toast.success('Pesanan EasyBoss disinkronkan')
+    }, onError: e => toast.error(getApiError(e)) })
+  useEffect(() => {
+    if (easyboss && statusEb.dataUpdatedAt) qc.invalidateQueries({ queryKey: ['pesanan'] })
+  }, [easyboss, statusEb.dataUpdatedAt, qc])
   const sinkronData = sinkron.data
   useEffect(() => {
     if (sinkronData && sinkronData.jumlah_baru + sinkronData.jumlah_diperbarui > 0) {
@@ -266,6 +280,11 @@ export default function PesananPage() {
   }
 
   function labelSinkron(): string {
+    if (easyboss) {
+      if (statusEb.isPending) return 'Memeriksa sinkronisasi EasyBoss…'
+      if (statusEb.isError) return 'Status sinkron EasyBoss gagal dibaca.'
+      return statusEb.data?.terakhir ? `Sinkron EasyBoss terakhir pukul ${fmtTime(statusEb.data.terakhir)}` : 'Belum ada sinkronisasi EasyBoss.'
+    }
     if (sinkron.isPending) return 'Menyinkronkan dari Shopee…'
     if (sinkron.isError) return 'Sinkron Shopee gagal.'
     if (!sinkronData?.aktif) return 'Sinkron otomatis Shopee belum aktif di server.'
@@ -278,8 +297,9 @@ export default function PesananPage() {
 
   const bolehTulis = useBolehTulis()
   const isiAksiLainnya = <>
-          {bolehTulis && <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />}
-          <Button asChild variant="ghost" className="w-full justify-start gap-2"><Link to="/pesanan/retur"><Undo2 className="size-4" aria-hidden="true" /> Retur & Refund</Link></Button>
+          {bolehTulis && !easyboss && <Sinkronisasi menu ikon={<RefreshCw className="size-4" aria-hidden="true" />} jenis="pesanan" ids={pilih.daftar.map(p => p.id)} akunId={f.nilai.toko || undefined} />}
+          {bolehTulis && easyboss && bisa('toko_penjualan', 'tulis') && <Button variant="ghost" className="w-full justify-start gap-2" disabled={sinkronEb.isPending} onClick={() => sinkronEb.mutate()}><RefreshCw className="size-4" aria-hidden="true" /> Sinkronisasi</Button>}
+          {!easyboss && <Button asChild variant="ghost" className="w-full justify-start gap-2"><Link to="/pesanan/retur"><Undo2 className="size-4" aria-hidden="true" /> Retur & Refund</Link></Button>}
           <div className="order-mobile-view flex items-center justify-between gap-3 border-t pt-2 md:hidden" role="group" aria-label="Tampilan pesanan di HP">
         <span className="px-2 text-sm text-muted-foreground">Tampilan di HP</span>
         <div className="inline-flex rounded-lg border bg-card p-1">
@@ -291,7 +311,7 @@ export default function PesananPage() {
   return (
     <Tabs value={tahapDariTautan(f.nilai.tahap) || 'semua'} onValueChange={(tahap) => f.ubah({ tahap: tahap === 'semua' ? '' : tahap })} className="block min-w-0 space-y-4 pb-24">
       {queryError && <QueryError error={queryError} retry={retryQuery} />}
-      <BarHalaman judul="Pesanan" deskripsi={labelSinkron()}>
+      <BarHalaman judul={easyboss ? "Pesanan EasyBoss" : "Pesanan"} deskripsi={labelSinkron()}>
         <div className="hidden md:contents">
         {bisa('pesanan_manual', 'tulis') && <Button onClick={() => setFormBuka(true)}><Plus aria-hidden="true" /> Pesanan Manual</Button>}
         <AksiLainnya baca>{isiAksiLainnya}</AksiLainnya>
