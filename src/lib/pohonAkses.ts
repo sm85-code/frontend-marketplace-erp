@@ -13,6 +13,7 @@ export const LETAK_AKSES: Record<string, [string, string | null]> = {
   dashboard: ['/dashboard', null],
   laporan_ringkas: ['/dashboard', 'Ringkasan stok kritis'],
   pesanan: ['/pesanan', null],
+  pesanan_easyboss: ['/pesanan-easyboss', null],
   pesanan_manual: ['/pesanan', 'Buat & hapus pesanan manual'],
   retur: ['/pesanan', 'Retur & Refund'],
   chat: ['/chat', null],

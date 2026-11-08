@@ -14,7 +14,7 @@ describe('filterNav', () => {
 
   it('staff gets the shared pages and Arus Kas, in workflow order', () => {
     const paths = filterNav(aksesBawaan('staff')).map((n) => n.to)
-    expect(paths).toEqual(['/dashboard', '/pesanan', '/chat', '/katalog', '/arus-kas', '/profile'])
+    expect(paths).toEqual(['/dashboard', '/pesanan', '/pesanan-easyboss', '/chat', '/katalog', '/arus-kas', '/profile'])
   })
 })
 
@@ -26,7 +26,7 @@ describe('menu order follows the daily workflow', () => {
   it('groups the admin menu as agreed (Toko lives under Pengaturan; Iklan and Dana & Saldo Shopee sit in Info Toko)', () => {
     const peta = Object.fromEntries(kelompokNav(filterNav(aksesBawaan('admin'))).map((g) => [g.grup.id, g.items.map((n) => n.to)]))
     expect(peta).toEqual({
-      harian: ['/dashboard', '/pesanan', '/chat'],
+      harian: ['/dashboard', '/pesanan', '/pesanan-easyboss', '/chat'],
       produk: ['/katalog', '/produk', '/listing'],
       processing: ['/processing/pemetaan'],
       'data-produksi': ['/processing/tukang-kayu', '/processing/supplier', '/processing/produk-kayu', '/processing/produk-non-kayu', '/processing/tarif-pengecatan', '/processing/tarif-packing', '/processing/template'],

@@ -58,6 +58,7 @@ export const SLOT_BAWAH = 4
 export const NAV: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: Home, halaman: 'dashboard', grup: 'harian', bawah: 1, posisiBawah: 1 },
   { to: '/pesanan', label: 'Pesanan', icon: Receipt, halaman: 'pesanan', grup: 'harian', bawah: 4, posisiBawah: 4 },
+  { to: '/pesanan-easyboss', label: 'Pesanan EasyBoss', icon: Receipt, halaman: 'pesanan_easyboss', grup: 'harian' },
   { to: '/chat', label: 'Chat', icon: MessageSquare, halaman: 'chat', grup: 'harian', bawah: 3, posisiBawah: 3 },
   { to: '/katalog', label: 'Katalog Shopee', shortLabel: 'Katalog', icon: LayoutGrid, halaman: 'katalog', grup: 'produk', bawah: 2, posisiBawah: 2 },
   { to: '/produk', label: 'Produk (SKU)', shortLabel: 'Produk', icon: Package, halaman: 'produk', grup: 'produk' },

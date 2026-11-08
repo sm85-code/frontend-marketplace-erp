@@ -1,4 +1,5 @@
 import { useBolehTulis } from '@/lib/modeTulis'
+import { useAuth } from '@/lib/auth'
 import HapusPesananManual from '@/components/HapusPesananManual'
 import { Copy } from 'lucide-react'
 import api from '@/api/client'
@@ -9,7 +10,7 @@ import { FotoItem } from './pesanan/ItemRingkas'
 import DialogPengiriman from './pesanan/DialogPengiriman'
 import type { PengaturanPengiriman } from '@/api/types'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import * as endpoints from '@/api/endpoints'
 import type { TemplateResi } from '@/api/endpoints'
@@ -23,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
+import { halamanPesanan, detailPesanan, nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   ALASAN_BATAL,
@@ -39,8 +40,10 @@ import {
 } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
-  const bolehTulis = useBolehTulis()
+  const modeTulis = useBolehTulis()
+  const { bisa } = useAuth()
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const confirm = useConfirm()
@@ -57,6 +60,8 @@ export default function PesananDetailPage() {
     queryFn: () => endpoints.getPesanan(id!),
     enabled: Boolean(id),
   })
+
+  const bolehTulis = modeTulis && bisa(pesanan?.platform_sumber ? 'pesanan_easyboss' : 'pesanan', 'tulis')
 
   const shops = useQuery({
     queryKey: qk.akun(),
@@ -169,6 +174,7 @@ export default function PesananDetailPage() {
 
   if (error) return <QueryError error={error} retry={refetch} />
   if (isLoading || !pesanan) return <Spinner column label="Memuat pesanan…" />
+  if (!location.pathname.startsWith(halamanPesanan(pesanan) + "/")) return <Navigate to={detailPesanan(pesanan)} replace />
 
   const action = nextActionLabel(pesanan.status)
   // Orders pulled from Shopee follow Shopee: they are processed and printed from here, and the
@@ -212,7 +218,7 @@ export default function PesananDetailPage() {
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link to="/pesanan">← Kembali</Link>
+          <Link to={halamanPesanan(pesanan)}>← Kembali</Link>
         </Button>
         <h1 className="page-h1 font-heading text-xl font-bold">Pesanan #{nomorPesanan(pesanan)}</h1>
         <Badge>{labelStatus(pesanan)}</Badge>
@@ -358,7 +364,7 @@ export default function PesananDetailPage() {
             Batalkan
           </Button>
         )}
-        <HapusPesananManual p={pesanan} onDihapus={() => navigate('/pesanan', { replace: true })} />
+        <HapusPesananManual p={pesanan} onDihapus={() => navigate(halamanPesanan(pesanan), { replace: true })} />
         {ikutMp && bisaDiproses(pesanan) && (
           <Button onClick={onProses} disabled={prosesMut.isPending}>
             {labelProses(pesanan)}

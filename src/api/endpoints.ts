@@ -236,6 +236,7 @@ export const listPesanan = (params: { platform?: string; akun_id?: string; statu
   api.get<Pesanan[]>('/pesanan', { params }).then((r) => r.data)
 
 export interface FilterPesanan {
+  sumber?: 'shopee' | 'easyboss'
   akun_id?: string
   tahap?: string
   resi?: string
@@ -246,11 +247,11 @@ export interface FilterPesanan {
 
 /** Server-side filtered and paged list for the Pesanan page. */
 export const daftarPesanan = (params: FilterPesanan & { urut?: string; halaman?: number; per_halaman?: number }) =>
-  api.get<PesananHalaman>('/pesanan/daftar', { params }).then((r) => r.data)
+  api.get<PesananHalaman>(`${params.sumber === 'easyboss' ? '/pesanan-easyboss' : '/pesanan'}/daftar`, { params }).then((r) => r.data)
 
 /** Counts for the status and shop chips (each row ignores its own filter). */
-export const ringkasanPesanan = (params: Pick<FilterPesanan, 'akun_id' | 'tahap' | 'q' | 'dari' | 'sampai'>) =>
-  api.get<RingkasanPesanan>('/pesanan/ringkasan', { params }).then((r) => r.data)
+export const ringkasanPesanan = (params: Pick<FilterPesanan, 'sumber' | 'akun_id' | 'tahap' | 'q' | 'dari' | 'sampai'>) =>
+  api.get<RingkasanPesanan>(`${params.sumber === 'easyboss' ? '/pesanan-easyboss' : '/pesanan'}/ringkasan`, { params }).then((r) => r.data)
 
 export const laporanDashboard = (dari: string, sampai: string, akun_id?: string) =>
   api.get<Dashboard>('/laporan/dashboard', { params: { dari, sampai, akun_id } }).then((r) => r.data)
@@ -559,3 +560,6 @@ export const ubahPromosi = (akun: string, id: string, data: { nama?: string; mul
 
 export async function listTokoPenugasan(): Promise<import('@/api/types').TokoAkses[]> { return (await api.get('/staff-akun/toko-pilihan')).data }
 export async function listTokoAkses(): Promise<import('@/api/types').TokoAkses[]> { return (await api.get('/pesanan/toko-pilihan')).data }
+
+export const statusSinkronEasyboss = () => api.get<{ aktif: boolean; terakhir: string | null }>('/pesanan-easyboss/sinkron').then(r => r.data)
+export const sinkronEasyboss = () => api.post<{ status: string; failed: number; error?: string }>('/order-bridge/orders', null, { timeout: 300_000 }).then(r => r.data)

@@ -165,13 +165,15 @@ export default function App() {
                 element={<Navigate to="/" replace />}
               />
               <Route path="/chat" element={<Protected halaman="chat"><LazyPage><ChatPage /></LazyPage></Protected>} />
-              <Route path="/pesanan" element={<Protected halaman="pesanan"><LazyPage><PesananPage /></LazyPage></Protected>} />
+              <Route path="/pesanan" element={<Protected halaman="pesanan"><LazyPage><PesananPage key="shopee" /></LazyPage></Protected>} />
+              <Route path="/pesanan-easyboss" element={<Protected halaman="pesanan_easyboss"><LazyPage><PesananPage key="easyboss" sumber="easyboss" /></LazyPage></Protected>} />
+              <Route path="/pesanan-easyboss/:id" element={<Protected halaman="pesanan_easyboss"><LazyPage><PesananDetailPage /></LazyPage></Protected>} />
               <Route path="/pesanan/retur" element={<Protected halaman="retur"><LazyPage><ReturPage /></LazyPage></Protected>} />
               <Route path="/katalog/publikasi" element={<Protected halaman="publikasi"><LazyPage><PublicationPage /></LazyPage></Protected>} />
               <Route path="/katalog/promosi" element={<Protected halaman="promosi"><LazyPage><PromosiPage /></LazyPage></Protected>} />
               <Route
                 path="/pesanan/:id"
-                element={<Protected halaman="pesanan"><LazyPage><PesananDetailPage /></LazyPage></Protected>}
+                element={<Protected halaman={["pesanan", "pesanan_easyboss"]}><LazyPage><PesananDetailPage /></LazyPage></Protected>}
               />
               <Route
                 path="/settlement"

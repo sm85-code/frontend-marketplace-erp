@@ -8,7 +8,7 @@ import type { Pesanan } from '@/api/types'
 import type { KolomTabel } from '@/components/daftar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
+import { detailPesanan, nomorPesanan, platformPesanan } from '@/lib/identitasPesanan'
 import { bisaDicetak, bisaDiproses, labelProses, labelStatus, sudahDicetak } from '@/lib/pesanan'
 import { ItemRingkas } from './ItemRingkas'
 import AksiLainnya from '@/components/AksiLainnya'
@@ -175,7 +175,7 @@ export function AksiPesanan({
         </Button>
       )}
       <Button asChild size="sm" variant="outline" className="h-auto min-h-11 shrink-0 px-4">
-        <Link to={`/pesanan/${p.id}`}>Detail</Link>
+        <Link to={detailPesanan(p)}>Detail</Link>
       </Button>
       {bisaHapusManual(p, user?.role) && (
         <>

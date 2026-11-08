@@ -22,3 +22,7 @@ describe('dashboard links to orders', () => {
     expect(tahapDariTautan('perlu_diproses')).toBe('perlu_diproses')
   })
 })
+
+it('routes internal EasyBoss shops to their inbox', () => {
+  expect(tautanPesanan('internal:shop', 'dikirim', '30')).toBe('/pesanan-easyboss?toko=internal%3Ashop&tahap=dikirim&tanggal=30')
+})
