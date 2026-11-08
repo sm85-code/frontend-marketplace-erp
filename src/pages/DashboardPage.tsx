@@ -37,7 +37,7 @@ function Bagian({ judul, deskripsi, children }: { judul: string; deskripsi?: str
 }
 
 const KOLOM_TOKO: KolomTabel<DashboardToko>[] = [
-  { kunci: 'nama_toko', judul: 'Toko', kelas: 'min-w-[180px] max-w-[260px] break-words font-medium', sel: (t) => <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id ?? '')}>{t.nama_toko}</Link>, nilai: (t) => t.nama_toko },
+  { kunci: 'nama_toko', judul: 'Toko', kelas: 'min-w-[180px] max-w-[260px] break-words font-medium', sel: (t) => t.akun_id ? <Link className="font-medium text-primary hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-primary" to={tautanPesanan(t.akun_id)}>{t.nama_toko}</Link> : <span>{t.nama_toko}</span>, nilai: (t) => t.nama_toko },
   { kunci: 'pesanan', judul: 'Pesanan', rata: 'kanan', sel: (t) => <Angka n={t.pesanan} />, nilai: (t) => t.pesanan },
   { kunci: 'omzet', judul: 'Nilai Pesanan', rata: 'kanan', kelas: 'whitespace-nowrap', sel: (t) => fmtRp(t.omzet), nilai: (t) => Number(t.omzet) },
   { kunci: 'belum_bayar', judul: 'Belum Bayar', rata: 'kanan', sel: (t) => <Angka n={t.belum_bayar} />, nilai: (t) => t.belum_bayar },
@@ -139,7 +139,7 @@ export default function DashboardPage() {
               label="Ringkasan pesanan per toko"
               items={semuaBaris ? d.per_toko : d.per_toko.filter((t) => t.pesanan > 0)}
               kolom={KOLOM_TOKO}
-              idDari={(t) => t.akun_id ?? 'none'}
+              idDari={(t) => t.toko_key ?? t.akun_id ?? 'none'}
               namaDari={(t) => t.nama_toko}
               urutAwal={{ kunci: 'omzet', arah: 'desc' }}
               minWidth={1050}

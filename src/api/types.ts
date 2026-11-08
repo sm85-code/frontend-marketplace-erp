@@ -591,6 +591,7 @@ export interface RingkasanPesanan {
 // --- Dashboard tables ---
 
 export interface DashboardToko {
+  toko_key?: string
   akun_id: string | null
   nama_toko: string
   pesanan: number
