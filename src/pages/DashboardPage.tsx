@@ -83,7 +83,7 @@ function BarisMetrik({ icon: Icon, label, nilai, href }: { icon: ComponentType<{
 export default function DashboardPage() {
   const [semuaBaris, setSemuaBaris] = useState(false)
   const { user } = useAuth()
-  const { data: semuaToko } = useQuery({ queryKey: qk.akun(), queryFn: () => endpoints.listAkun() })
+  const { data: semuaToko } = useQuery({ queryKey: ['order-shop-options'], queryFn: endpoints.listTokoAkses })
   const [preset, setPreset] = useState<PresetTanggal>('14')
   const [toko,setToko]=useTokoAktif()
   // Whole local days, so the key (and the request) stays the same all day long instead of changing every render.
