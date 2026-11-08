@@ -85,8 +85,8 @@ export function pecahBatch<T>(items: T[], ukuran: number): T[][] {
 }
 
 /** A pulled order that is arranged on Shopee and still waits for the courier: its label can be printed. */
-export function bisaDicetak(p: Pick<Pesanan, 'status' | 'status_marketplace'>): boolean {
-  return ikutMarketplace(p) && p.status === 'to_ship' && p.status_marketplace === 'PROCESSED'
+export function bisaDicetak(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'resi_bridge_tersedia'>): boolean {
+  return Boolean(p.resi_bridge_tersedia) || (ikutMarketplace(p) && p.status === 'to_ship' && p.status_marketplace === 'PROCESSED')
 }
 
 /** The joined label file the server sends as base64, as a PDF blob ready for a tab. */
@@ -122,7 +122,7 @@ export function sudahDicetak(p: Pick<Pesanan, 'resi_dicetak_at'>): boolean {
 export type FilterResi = 'semua' | 'belum' | 'sudah'
 
 /** Label filter for the order list: only orders whose label can be printed take part ('belum' / 'sudah'). */
-export function cocokFilterResi(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'resi_dicetak_at'>, f: FilterResi): boolean {
+export function cocokFilterResi(p: Pick<Pesanan, 'status' | 'status_marketplace' | 'resi_dicetak_at' | 'resi_bridge_tersedia'>, f: FilterResi): boolean {
   if (f === 'semua') return true
   return bisaDicetak(p) && sudahDicetak(p) === (f === 'sudah')
 }
