@@ -142,6 +142,7 @@ export interface ResiGabunganHasil {
 export interface Pesanan {
   /** Source display identity; internal IDs remain unchanged for actions and deduplication. */
   status_sumber?: string
+  resi_bridge_tersedia?: boolean
   label_status_sumber?: string
   total_sumber_tersedia?: boolean | null
   dibayar_pembeli?: string | null

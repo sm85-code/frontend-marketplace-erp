@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ALASAN_BATAL,
   adaPembatalanPembeli,
-  bisaDiproses,
+  bisaDicetak, bisaDiproses,
   bisaDibatalkan,
   ikutMarketplace,
   labelStatus,
@@ -36,7 +36,6 @@ import {
   bukaDokumenResi,
   nextActionLabel,
   sudahDicetak,
-  sudahDiproses,
 } from '@/lib/pesanan'
 
 export default function PesananDetailPage() {
@@ -175,7 +174,6 @@ export default function PesananDetailPage() {
   // Orders pulled from Shopee follow Shopee: they are processed and printed from here, and the
   // status (shipped, completed, cancelled) arrives with the next sync -- no manual Kirim/Selesaikan.
   const ikutMp = ikutMarketplace(pesanan) || Boolean(pesanan.platform_sumber)
-  const diproses = sudahDiproses(pesanan)
   const akunId = pesanan.akun_id
   const selesai = pesanan.status === 'completed' || pesanan.status === 'cancelled'
 
@@ -366,14 +364,14 @@ export default function PesananDetailPage() {
             {labelProses(pesanan)}
           </Button>
         )}
-        {ikutMp && diproses && pesanan.status === 'to_ship' && (
+        {bisaDicetak(pesanan) && (
           <>
             <Button variant="outline" onClick={() => onCetak('THERMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
-              Cetak Resi (A6)
+              {pesanan.resi_bridge_tersedia ? 'Cetak Resi' : 'Cetak Resi (A6)'}
             </Button>
-            <Button variant="ghost" onClick={() => onCetak('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
+            {!pesanan.resi_bridge_tersedia && <Button variant="ghost" onClick={() => onCetak('NORMAL_AIR_WAYBILL')} disabled={cetakMut.isPending}>
               Resi A4
-            </Button>
+            </Button>}
             <Button variant="ghost" onClick={() => tandaiMut.mutate(!sudahDicetak(pesanan))} disabled={tandaiMut.isPending}>
               {sudahDicetak(pesanan) ? 'Hapus tanda cetak' : 'Tandai sudah dicetak'}
             </Button>
