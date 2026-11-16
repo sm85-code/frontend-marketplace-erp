@@ -1,3 +1,4 @@
+import SummaryAccess from './SummaryAccess'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -236,6 +237,7 @@ export default function KelolaAplikasi() {
           <KategoriTransaksiPage tertanam />
         </Suspense>
       )}
+      {kategori === 'role' && !cari && akses?.role === 'admin' && <SummaryAccess />}
       {isLoading && <Spinner label="Memuat pengaturan…" />}
       {error && <QueryError error={error} retry={refetch} />}
       {data && kategori === 'bawah' && !cari && <KelolaMenuBawah data={data} bisaUbah={bisaUbah} />}

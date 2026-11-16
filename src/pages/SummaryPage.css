@@ -1,0 +1,34 @@
+.erp-summary { min-width: 0; max-width: 100%; }
+.erp-summary .summary-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.erp-summary .summary-tabs button { padding: 8px 12px; font-size: 14px; border-bottom: 2px solid transparent; cursor: pointer; }
+.erp-summary .summary-tabs button[aria-selected=true] { border-bottom-color: var(--primary); font-weight: 600; }
+.erp-summary .summary-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.erp-summary label { min-width: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.erp-summary select, .erp-summary input { width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); font-size: 13px; }
+.erp-summary .summary-range { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; }
+.erp-summary .summary-range label { flex: 1; }
+.erp-summary .summary-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.erp-summary .summary-kpi { border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-width: 0; }
+.erp-summary .summary-kpi span, .erp-summary .summary-kpi small { display: block; font-size: 11px; color: var(--muted-foreground); }
+.erp-summary .summary-kpi strong { font-size: clamp(13px,3.6vw,20px); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.erp-summary .summary-extra { border: 0; padding: 2px 8px; }
+.erp-summary .summary-extra strong { font-size: 14px; }
+.erp-summary .summary-notice { border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 12px; }
+.erp-summary .summary-notice p { margin-top: 5px; color: var(--muted-foreground); }
+.erp-summary summary { cursor: pointer; }
+.erp-summary .summary-chart-box { height: 190px; width: 100%; min-width: 0; }
+.erp-summary .summary-chart summary { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.erp-summary .summary-scroll { width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 6px; }
+.erp-summary table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.erp-summary th, .erp-summary td { border-bottom: 1px solid var(--border); padding: 7px 8px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.erp-summary th:first-child { text-align: left; min-width: 145px; max-width: 240px; white-space: normal; overflow-wrap: anywhere; }
+.erp-summary tbody th { font-weight: 400; }
+.erp-summary thead, .erp-summary tfoot, .erp-summary .summary-subtotal { background: var(--muted); font-weight: 600; }
+.erp-summary .summary-expand { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; margin-right: 5px; border: 1px solid var(--border); border-radius: 5px; background: var(--background); font-size: 18px; cursor: pointer; }
+.erp-summary .summary-shop { padding-left: 45px; }
+.erp-summary .summary-paging { display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: 4px; margin-top: 8px; }
+@media (min-width: 640px) {
+  .erp-summary .summary-filters, .erp-summary .summary-kpis { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .erp-summary .summary-chart-box { height: 230px; }
+  .erp-summary table { font-size: 13px; }
+}
