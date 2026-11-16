@@ -131,3 +131,27 @@ describe('arus kas breakdown', () => {
     expect(line(b, 'awal')!.cells[1].value).toBe(1400)
   })
 })
+
+it('dynamic cash rows preserve totals, order children, and archive without losing recorded figures', () => {
+  const l = emptyLembar()
+  l.baris.push(
+    { id: 'c:cash', tabel: RINCI_TABEL, grup: 'Kas masuk', label: 'Saldo baru' },
+    { id: 'c:one', tabel: RINCI_TABEL, grup: 'anak:c:cash', label: 'Lazada' },
+    { id: 'c:two', tabel: RINCI_TABEL, grup: 'anak:c:cash', label: 'Toko lain' },
+    { id: 'c:ur-c_two', tabel: RINCI_TABEL, grup: 'urutan', label: '0' },
+    { id: 'c:ur-c_one', tabel: RINCI_TABEL, grup: 'urutan', label: '1' },
+  )
+  l.sel['c:one|2026-10-04'] = '100'
+  l.sel['c:two|2026-10-04'] = '200'
+  const b = build(l)
+  expect(line(b, 'c:cash')!.cells[0].value).toBe(300)
+  expect(line(b, 'kas_masuk')!.cells[0].value).toBe(950)
+  const children = b.lines.filter((x): x is Line => !isGroup(x) && x.def.induk === 'c:cash')
+  expect(children.map(x => x.def.key)).toEqual(['c:two', 'c:one'])
+  l.baris.push({ id: 'c:archive-c_one', tabel: RINCI_TABEL, grup: 'arsip', label: 'arsip' })
+  expect(line(build(l), 'kas_masuk')!.cells[0].value).toBe(950)
+  delete l.sel['c:one|2026-10-04']
+  expect(line(build(l), 'c:one')).toBeUndefined()
+  expect(line(build(l), 'kas_masuk')!.cells[0].value).toBe(850)
+  expect(line(build(l), 'c:archive-c_one')).toBeUndefined()
+})
