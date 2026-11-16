@@ -65,6 +65,7 @@ const OperasionalPackingPage = lazy(muat(() => import('@/pages/OperasionalPackin
 const BelanjaSupplierPage = lazy(muat(() => import('@/pages/BelanjaSupplier')))
 const BelanjaTukangPage = lazy(muat(() => import('@/pages/BelanjaTukang')))
 const FinancialReportsPage = lazy(muat(() => import('@/pages/FinancialReportsPage')))
+const SaldoEasyBossPage = lazy(muat(() => import('@/pages/SaldoEasyBossPage')))
 const SettlementPage = lazy(muat(() => import('@/pages/SettlementPage')))
 const IklanPage = lazy(muat(() => import('@/pages/IklanPage')))
 const KampanyeDetailPage = lazy(muat(() => import('@/pages/KampanyeDetailPage')))
@@ -174,6 +175,10 @@ export default function App() {
               <Route
                 path="/pesanan/:id"
                 element={<Protected halaman={["pesanan", "pesanan_easyboss"]}><LazyPage><PesananDetailPage /></LazyPage></Protected>}
+              />
+              <Route
+                path="/saldo-easyboss"
+                element={<Protected halaman="saldo_easyboss"><LazyPage><SaldoEasyBossPage /></LazyPage></Protected>}
               />
               <Route
                 path="/settlement"
