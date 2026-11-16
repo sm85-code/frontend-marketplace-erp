@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { muatSaldoEasyBoss } from '@/api/saldoEasyBoss'
 import { useQuery } from '@tanstack/react-query'
-import api, { fmtRp, fmtDate } from '@/api/client'
+import { fmtRp, fmtDate } from '@/api/client'
 import { BarHalaman, TabelLokal, type KolomTabel } from '@/components/daftar'
 import PilihNative from '@/components/PilihNative'
 import QueryError from '@/components/QueryError'
@@ -11,7 +12,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 
 type Row = { key: string; platform: string; toko: string; no_pesanan: string; dibuat: string | null; status_label: string; nilai_pesanan: number | null; perkiraan_dana_cair: number | null; biaya_sudah_dipotong: boolean | null; status_pencairan: string; catatan?: string }
 type Store = { id: string; nama: string; platform: string; total: number; jumlah: number; tanpa_angka: number }
-type Result = { perlu_verifikasi: (Row & { status_platform: string })[]; loading?: boolean; pesanan: Row[]; jumlah: number; total: number; total_platform: Record<string, number>; per_toko: Store[]; toko: Store[]; status: string[]; lengkap: boolean; tanpa_angka: number; diambil_wib: string; catatan: string; cakupan: { platform: string; tab: string; terbaca: number; total: number; lengkap: boolean }[] }
+type Result = { refreshing?: boolean; stale?: boolean; refresh_error?: string | null; perlu_verifikasi: (Row & { status_platform: string })[]; loading?: boolean; pesanan: Row[]; jumlah: number; total: number; total_platform: Record<string, number>; per_toko: Store[]; toko: Store[]; status: string[]; lengkap: boolean; tanpa_angka: number; diambil_wib: string; catatan: string; cakupan: { platform: string; tab: string; terbaca: number; total: number; lengkap: boolean }[] }
 const marketplace = (p: string) => p === 'tiktok' ? 'TikTok Shop' : 'Lazada'
 const biaya = (v: boolean | null) => v === true ? 'Sudah diperhitungkan' : v === false ? 'Belum diperhitungkan' : 'Belum terverifikasi'
 const field = 'w-full rounded-lg border bg-background p-2 text-sm'
@@ -32,7 +33,7 @@ export default function SaldoEasyBossPage() {
   const [toko, setToko] = useState('')
   const [status, setStatus] = useState('')
   const [search, setSearch] = useState('')
-  const q = useQuery({ queryKey: ['saldo-easyboss', platform, toko, status, search, page], queryFn: async () => (await api.get<Result>('/saldo-easyboss', { params: { platform, toko, status, search, page, page_size: 100 } })).data, staleTime: 600000, retry: false, refetchOnWindowFocus: false, refetchInterval: query => query.state.data?.loading ? 3000 : false })
+  const q = useQuery({ queryKey: ['saldo-easyboss', platform, toko, status, search, page], queryFn: ({ signal }) => muatSaldoEasyBoss<Result>({ platform, toko, status, search, page, page_size: 100 }, signal), staleTime: 60000, retry: false, refetchOnWindowFocus: true, refetchInterval: query => query.state.data?.refreshing ? 5000 : false })
   const data = q.data?.loading ? undefined : q.data
   return <div className="space-y-4">
     <BarHalaman judul="Saldo EasyBoss" />
@@ -45,6 +46,7 @@ export default function SaldoEasyBossPage() {
     {(q.isPending || q.data?.loading) && <Spinner column label="Memuat semua paket EasyBoss… Pembacaan pertama dapat memerlukan beberapa menit." />}
     {q.error && <QueryError error={q.error} retry={q.refetch} />}
     {data && <>
+      {(data.stale || data.refreshing) && <p role="status" className="text-xs text-muted-foreground">Menampilkan data terakhir ({data.diambil_wib} WIB). {data.refresh_error ? 'Pembaruan belum berhasil; estimasi ini belum diperbarui.' : 'Pembaruan berjalan di latar belakang.'}</p>}
       {!data.lengkap && <p role="alert" className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950">Data belum lengkap. Angka di bawah merupakan subtotal pesanan yang berhasil dibaca, bukan seluruh saldo tertahan. {data.cakupan.filter(c => !c.lengkap).map(c => `${marketplace(c.platform)}: ${c.terbaca} dari ${c.total} paket (${c.tab === 'all' ? 'semua status' : 'pengiriman'}).`).join(' ')}</p>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[[data.lengkap ? 'Total Perkiraan Dana' : 'Subtotal Perkiraan Dana', fmtRp(data.jumlah && data.tanpa_angka === data.jumlah ? null : data.total)], ['TikTok Shop', fmtRp(data.total_platform.tiktok)], ['Lazada', fmtRp(data.total_platform.lazada)], ['Pesanan relevan', String(data.jumlah)]].map(([label, value]) => <div key={label} className="rounded-lg border bg-card p-3"><div className="text-xs text-muted-foreground">{label}</div><div className="mt-1 break-words text-base font-semibold tabular-nums sm:text-lg">{value}</div></div>)}
