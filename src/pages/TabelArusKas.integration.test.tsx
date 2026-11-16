@@ -309,7 +309,7 @@ describe('latest finalized prior-month distribution (display only)', () => {
   it.each([-300, -1500])('covers carried opening losses %s before sharing', async (loss) => {
     priorOverview.saldo_awal!.saldo.saldo_laba = String(loss)
     await mount({ hanyaLihat: true })
-    expect(value('akhir')).toBe(loss === -300 ? 4300 : 5000)
+    await waitForValue('akhir', loss === -300 ? 4300 : 5000)
     expect(api.save).not.toHaveBeenCalled()
   })
   it('carries losses from earlier Laba Rugi through read-only history', async () => {
