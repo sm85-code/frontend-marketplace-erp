@@ -81,6 +81,7 @@ export const NAV: NavItem[] = [
   { to: '/pengaturan-toko', label: 'Pengaturan Toko', icon: Store, halaman: PENGATURAN_TOKO, grup: 'info-toko' },
   { to: '/performa-toko', label: 'Performa Toko', icon: Store, halaman: PERFORMA_TOKO, grup: 'info-toko' },
   { to: '/iklan', label: 'Iklan', icon: Megaphone, halaman: IKLAN, grup: 'info-toko' },
+  { to: '/saldo-easyboss', label: 'Saldo EasyBoss', icon: Boxes, halaman: 'saldo_easyboss', grup: 'info-toko' },
   { to: '/settlement', label: 'Dana & Saldo Shopee', icon: Boxes, halaman: SETTLEMENT, grup: 'info-toko' },
   { to: '/toko', label: 'Kelola Toko', icon: Store, halaman: 'kelola_toko', halamanLain: ['toko_penjualan'], grup: 'pengaturan', bawah: 5, posisiBawah: 5 },
   { to: '/staff', label: 'Kelola Pengguna', icon: Users, halaman: 'kelola_pengguna', halamanLain: ['kelola_role'], grup: 'pengaturan' },
