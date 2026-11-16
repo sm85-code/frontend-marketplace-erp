@@ -16,11 +16,13 @@ const LEGACY_GRUP = ['pool', 'k_prod', 'k_cat']
 const round = (n: number) => Math.round(n * 100) / 100
 const num = (v: string | undefined) => (v !== undefined && Number.isFinite(Number(v)) ? Number(v) : 0)
 
-const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-') || id.startsWith('c:kt-') || id.startsWith('c:ur-') || id.startsWith('c:src-')
+const meta = (id: string) => id.startsWith('c:nm-') || id.startsWith('c:hide-') || id.startsWith('c:kt-') || id.startsWith('c:ur-') || id.startsWith('c:src-') || id.startsWith('c:archive-')
 export const ANAK = 'anak:'
 export const splitsOf = (lembar: Lembar) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && !meta(b.id) && !b.grup.startsWith(ANAK))
 /** Sub-rows (breakdown) of a row; the same list for every period, only the figures differ. */
 export const anakDari = (lembar: Lembar, key: string) => lembar.baris.filter((b) => b.tabel === RINCI_TABEL && b.grup === `${ANAK}${key}`)
+export const archived = (lembar: Lembar, key: string) => lembar.baris.some(b => b.id === `c:archive-${safe(key)}`)
+const hasFigures = (lembar: Lembar, key: string) => Object.keys(lembar.sel).some(k => k.startsWith(`${key}|`) || k.startsWith(`rb:${key}|`))
 export const hidden = (lembar: Lembar, key: string) => lembar.baris.some((b) => b.id === keySembunyi(key))
 export const nameOf = (lembar: Lembar, key: string, fallback: string) => lembar.baris.find((b) => b.id === keyNama(key))?.label ?? fallback
 const groupOf = (grup: string, labels: string[]) => (labels.includes(grup) ? grup : LEGACY_GRUP.includes(grup) ? labels[0] : undefined)
@@ -56,6 +58,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar, kasKeci
   const renamed = (l: Line): Line => ({ ...l, def: { ...l.def, kind: 'input', label: nameOf(lembar, l.def.key, l.def.label) } })
   const out: (Line | GroupDef)[] = []
   const patched = new Map<string, Cell[]>()
+  const order = (key: string) => Number(lembar.baris.find(r => r.id === `c:ur-${safe(key)}`)?.label ?? 10000)
   const all = block.lines
   let i = 0
   while (i < all.length) {
@@ -71,6 +74,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar, kasKeci
     const shown: Line[] = []
     for (const o of rows) {
       if (hidden(lembar, o.def.key)) continue
+      if (archived(lembar, o.def.key) && !hasFigures(lembar, o.def.key) && !anakDari(lembar, o.def.key).some(r => hasFigures(lembar, r.id))) continue
       const cells = o.cells.map((c, w): Cell => {
         const t = typed(keyNilaiDasar(o.def.key), days[w])
         return t !== undefined ? { value: num(t), manual: true } : c
@@ -79,6 +83,7 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar, kasKeci
     }
     for (const r of splitsOf(lembar)) {
       if (groupOf(r.grup, labels) !== head.label) continue
+      if (archived(lembar, r.id) && !hasFigures(lembar, r.id) && !anakDari(lembar, r.id).some(k => hasFigures(lembar, k.id))) continue
       const cells = days.map((d, w): Cell => {
         const t = typed(r.id, d)
         if (t !== undefined) return { value: num(t), manual: true }
@@ -89,8 +94,8 @@ export function applyRinci(block: Block, days: string[], lembar: Lembar, kasKeci
       shown.push(added)
     }
     const group: Line[] = []
-    for (const l0 of shown) {
-      const kids = anakDari(lembar, l0.def.key).map((r) => {
+    for (const l0 of shown.sort((a,b) => order(a.def.key)-order(b.def.key))) {
+      const kids = anakDari(lembar, l0.def.key).filter(r => !archived(lembar, r.id) || hasFigures(lembar, r.id)).sort((a,b) => order(a.id)-order(b.id)).map((r) => {
         const cells = days.map((d, w): Cell => {
           const t = typed(r.id, d)
           if (t !== undefined) return { value: num(t), manual: true }

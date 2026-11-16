@@ -1,3 +1,4 @@
+import KelolaBarisKas from './KelolaBarisKas'
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import { useLabel } from '@/api/pengaturanUi'
@@ -7,7 +8,7 @@ import { Download } from 'lucide-react'
 import * as reports from '@/api/financialReports'
 import { getApiError } from '@/api/client'
 import { exportCsv } from '@/lib/exportData'
-import { ANAK, anakDari, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
+import { ANAK, anakDari, archived, applyRinci, keyKategori, keyNama, keyNilaiDasar, keySelesai, keySembunyi, RINCI_TABEL, splitsOf } from '@/lib/arusKasRinci'
 import { useKategori } from '@/api/kategori'
 import { bulanFinal, useAwalBulan } from '@/lib/awalBulan'
 import { denganOperasional, kunciKasKecil, kunciOperasional, manualDipilih, pilihSumber } from '@/lib/operasionalArusKas'
@@ -99,6 +100,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     return group
   }
   const openEdit = (line: Line, week: number) => {
+    if (archived(lembar, line.def.key)) { toast.info('Baris diarsipkan. Aktifkan melalui Kelola Baris Kas.'); return }
     if (line.def.key.endsWith(':selisih') || saldoKasKecil(line.def.key)) return
     const grup = grupDari(line.def.key)
     const adaRincian = anakDari(lembar, line.def.key).length > 0
@@ -159,6 +161,11 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
   }
   const onDeleteRow = () => {
     if (!target || target.total) return
+    const parent = target.child ? indukDari(target.key) : target.key
+    if (kategoriDari(lembar, parent, grupDari(parent), daftarKat) === 'saldo_toko') {
+      toast.info('Gunakan Kelola Baris Kas untuk mengarsipkan baris tanpa menghapus histori.')
+      return
+    }
     if (!target.split) {
       commit({ ...lembar, baris: [...lembar.baris, { id: keySembunyi(target.key), tabel: RINCI_TABEL, grup: 'sembunyi', label: 'sembunyi' }] })
       return
@@ -299,6 +306,7 @@ export default function TabelArusKas({ data, month, tanpaUnduh, tanpaCentang, ha
     ])
   return (
     <section aria-label="Tabel arus kas" className="min-w-0 space-y-5">
+      {adminCentang && !hanyaLihat && !tanpaUbah && <KelolaBarisKas month={month} />}
       {anyHidden && !hanyaLihat && (
         <button type="button" className="text-sm text-primary underline-offset-2 hover:underline" onClick={restore}>
           Tampilkan baris yang dihapus
