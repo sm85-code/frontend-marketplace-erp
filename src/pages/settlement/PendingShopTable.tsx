@@ -39,23 +39,23 @@ export default function PendingShopTable<T extends PendingRow>({ rows, dates }: 
   return <div className="space-y-3">
     <input aria-label="Cari pesanan menunggu pencairan" placeholder="Cari toko, pesanan, produk…" className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
     <div className="max-w-full overflow-x-auto rounded-md border">
-      <Table aria-label="Pesanan menunggu pencairan" className="min-w-[360px]">
-        <TableHeader><TableRow><TableHead className="w-10 px-1"><span className="sr-only">Rincian</span></TableHead><TableHead>Toko / Pesanan</TableHead><TableHead className="text-right">Jml.</TableHead><TableHead className="text-right">Menunggu Pencairan</TableHead></TableRow></TableHeader>
+      <Table aria-label="Pesanan menunggu pencairan" className="table-fixed min-w-[320px]">
+        <TableHeader><TableRow><TableHead className="w-11 px-1" style={{ paddingLeft: 4 }}><span className="sr-only">Rincian</span></TableHead><TableHead>Toko / Pesanan</TableHead><TableHead className="w-10 px-1 text-right">Jml.</TableHead><TableHead className="w-28 px-1 text-right" style={{ paddingRight: 8 }}>Menunggu Pencairan</TableHead></TableRow></TableHeader>
         <TableBody>{groups.slice((current - 1) * 10, current * 10).map(g => <Fragment key={g.id}>
           <TableRow className="bg-muted/40 font-semibold" data-shop-id={g.id}>
-            <TableCell className="px-1"><button type="button" aria-label={`${expanded.has(g.id) ? 'Tutup' : 'Buka'} rincian ${g.name}`} aria-expanded={expanded.has(g.id)} className="inline-flex h-9 w-9 items-center justify-center rounded border text-lg" onClick={() => setExpanded(previous => { const next = new Set(previous); if (next.has(g.id)) next.delete(g.id); else next.add(g.id); return next })}>{expanded.has(g.id) ? '−' : '+'}</button></TableCell>
+            <TableCell className="px-1" style={{ paddingLeft: 4 }}><button type="button" aria-label={`${expanded.has(g.id) ? 'Tutup' : 'Buka'} rincian ${g.name}`} aria-expanded={expanded.has(g.id)} className="inline-flex h-9 w-9 items-center justify-center rounded border text-lg" onClick={() => setExpanded(previous => { const next = new Set(previous); if (next.has(g.id)) next.delete(g.id); else next.add(g.id); return next })}>{expanded.has(g.id) ? '−' : '+'}</button></TableCell>
             <TableCell className="min-w-24 whitespace-normal">{g.name}</TableCell><TableCell className="text-right">{g.rows.length}</TableCell>
-            <TableCell className="text-right whitespace-nowrap">{money(g.totals)}{g.unknown > 0 && <small className="block font-normal">{g.unknown} belum ada estimasi</small>}</TableCell>
+            <TableCell className="text-right whitespace-nowrap" style={{ paddingRight: 8 }}>{money(g.totals)}{g.unknown > 0 && <small className="block font-normal">{g.unknown} belum ada estimasi</small>}</TableCell>
           </TableRow>
           {expanded.has(g.id) && g.rows.map(r => <TableRow key={r.key} data-order={r.number}>
-            <TableCell className="px-1 text-center text-muted-foreground">↳</TableCell>
+            <TableCell className="px-1 text-center text-muted-foreground" style={{ paddingLeft: 4 }}>↳</TableCell>
             <TableCell className="whitespace-normal"><div className="font-mono break-all">{r.number}</div>
               {r.products.map((p, i) => <div key={i} className="mt-1">{p}<span className="block text-xs text-muted-foreground">Varian: {r.variants[i] ?? '—'}</span></div>)}
               <div className="mt-1 text-xs text-muted-foreground"><div>Status Pengiriman: {r.shipping ?? '—'}</div>{dates(r)}</div>
-            </TableCell><TableCell /><TableCell className="text-right align-top whitespace-nowrap">{r.amount == null ? '—' : fmtMoney(r.amount, r.currency)}</TableCell>
+            </TableCell><TableCell /><TableCell className="text-right align-top whitespace-nowrap" style={{ paddingRight: 8 }}>{r.amount == null ? '—' : fmtMoney(r.amount, r.currency)}</TableCell>
           </TableRow>)}
         </Fragment>)}</TableBody>
-        <TableFooter><TableRow className="font-semibold"><TableCell colSpan={2}>Total {groups.length} toko{unknown > 0 && <small className="block font-normal">{unknown} pesanan belum ada estimasi dana</small>}</TableCell><TableCell className="text-right">{count}</TableCell><TableCell className="text-right whitespace-nowrap">{money(totals)}</TableCell></TableRow></TableFooter>
+        <TableFooter><TableRow className="font-semibold"><TableCell colSpan={2}>Total {groups.length} toko{unknown > 0 && <small className="block font-normal">{unknown} pesanan belum ada estimasi dana</small>}</TableCell><TableCell className="text-right">{count}</TableCell><TableCell className="text-right whitespace-nowrap" style={{ paddingRight: 8 }}>{money(totals)}</TableCell></TableRow></TableFooter>
       </Table>
     </div>
     {!groups.length && <p className="text-sm text-muted-foreground">Tidak ada pesanan sesuai pencarian.</p>}
