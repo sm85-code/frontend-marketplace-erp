@@ -1,0 +1,25 @@
+.product-analysis .pa-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border)}
+.product-analysis button,.product-analysis input,.product-analysis select{font:inherit}
+.product-analysis .pa-tabs button{padding:8px 12px;border-bottom:2px solid transparent}
+.product-analysis .pa-tabs [aria-selected=true]{border-color:var(--primary);font-weight:600}
+.product-analysis .pa-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.product-analysis label{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.product-analysis input,.product-analysis select,.product-analysis .pa-filters button,.product-analysis .pa-pagination button{border:1px solid var(--border);border-radius:4px;padding:5px 8px;background:var(--background);min-height:32px}
+.product-analysis .pa-search{flex:1;min-width:160px}
+.product-analysis .pa-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:4px}
+.product-analysis table{display:table;width:100%;border-collapse:collapse;font-size:12px}
+.product-analysis th,.product-analysis td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;text-align:left}
+.product-analysis th{background:var(--muted);font-weight:600}
+.product-analysis table[aria-label="Produk terlaris"] td:nth-child(n+2),.product-analysis table[aria-label="Produk terlaris"] th:nth-child(n+2){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.product-analysis .pa-product{font-weight:600}
+.product-analysis .pa-variant td:first-child{padding-left:24px}
+.product-analysis small{display:block;font-size:11px;font-weight:400;color:var(--muted-foreground)}
+.product-analysis .pa-shop{font-size:11px}
+.product-analysis .pa-expand{width:24px;height:24px;border:1px solid var(--border);border-radius:3px;margin-right:6px;font-weight:600}
+.product-analysis .pa-actions{display:flex;flex-wrap:wrap;gap:5px;min-width:120px}
+.product-analysis .pa-actions button{border:1px solid var(--border);border-radius:3px;padding:3px 5px;font-size:11px}
+.product-analysis a{color:var(--primary);text-decoration:underline}
+.product-analysis .pa-pagination{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px}
+.product-analysis button:disabled{opacity:.4}
+.product-analysis details li{margin-top:5px}
+@media(max-width:480px){.product-analysis th,.product-analysis td{padding:6px 5px}.product-analysis table{font-size:11px}.product-analysis .pa-filters{gap:5px}.product-analysis .pa-filters label{max-width:100%}.product-analysis .pa-pagination{font-size:11px}}
