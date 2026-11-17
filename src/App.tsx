@@ -41,6 +41,7 @@ const PerformaTokoPage = lazy(muat(() => import('@/pages/PerformaTokoPage')))
 const LoginPage = lazy(muat(() => import('@/pages/LoginPage')))
 const GantiPasswordPage = lazy(muat(() => import('@/pages/GantiPasswordPage')))
 const ProfilePage = lazy(muat(() => import('@/pages/ProfilePage')))
+const ProductAnalysisPage = lazy(muat(() => import('@/pages/ProductAnalysisPage')))
 const SummaryPage = lazy(muat(() => import('@/pages/SummaryPage')))
 const DashboardPage = lazy(muat(() => import('@/pages/DashboardPage')))
 const AkunPage = lazy(muat(() => import('@/pages/AkunPage')))
@@ -145,6 +146,7 @@ export default function App() {
               <Route path="/operasional-packing" element={<Protected halaman="operasional_packing"><LazyPage><OperasionalPackingPage /></LazyPage></Protected>} />
               <Route path="/arus-kas" element={<Protected halaman={["arus_kas", "arus_kas_rekening"]}><LazyPage><ArusKas /></LazyPage></Protected>} />
               <Route path="/laporan-keuangan/*" element={<Protected halaman={["laporan_keuangan", "laporan_tutup_buku"]}><LazyPage><FinancialReportsPage /></LazyPage></Protected>} />
+              <Route path="/analisis-produk" element={<Protected halaman="analisis-produk"><LazyPage><ProductAnalysisPage /></LazyPage></Protected>} />
               <Route path="/summary" element={<Protected halaman="summary"><LazyPage><SummaryPage /></LazyPage></Protected>} />
               <Route path="/dashboard" element={<Protected halaman="dashboard"><LazyPage><DashboardPage /></LazyPage></Protected>} />
               <Route path="/toko" element={<Protected halaman={["kelola_toko", "toko_penjualan"]}><LazyPage><AkunPage /></LazyPage></Protected>} />
